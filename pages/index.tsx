@@ -156,7 +156,7 @@ class GlobalAudio {
 
 onChange(cb: () => void) {
   this.listeners.add(cb);
-  return () => { this.listeners.delete(cb); };
+  return () => { this.listeners.delete(cb); };   // <- returns void
 }
   }
 
@@ -180,8 +180,11 @@ export default function TranceAwardsVoting() {
   }, [dir]);
 
   // ensure only one audio preview at a time
-  const [, force] = useState(0);
-  useEffect(() => GlobalAudio.inst.onChange(() => force((n) => n + 1)), []);
+const [, force] = useState(0);
+useEffect(() => {
+  const unsubscribe = GlobalAudio.inst.onChange(() => force((n) => n + 1));
+  return () => { unsubscribe(); };   // <- cleanup returns void
+}, []);
 
   function toggleChoice(category: Category, nomineeId: string) {
     setSelections((prev) => {
