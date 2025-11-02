@@ -1,14 +1,21 @@
-// pages/index.tsx
+// pages/awards.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 
-/** ───────────────────────── TYPES ───────────────────────── */
+/** ───────────────── BRAND ───────────────── */
+const BRAND = {
+  logo: "/logo.png", // put your logo in public/logo.png
+  title: "פרסי השנה 2025",
+};
+
+/** ───────────────── TYPES ───────────────── */
 export type Nominee = {
   id: string;
   name: string;
   artwork?: string;
-  audioPreview?: string; // used only for Best Track category if provided
+  audioPreview?: string; // used only by 'best-track'
 };
-
 export type Category = {
   id: string;
   title: string;
@@ -16,16 +23,11 @@ export type Category = {
   nominees: Nominee[];
 };
 
-/** ───────────────────────── SMART-FIT ARTWORK ─────────────────────────
- * Portrait/square => object-contain (no crop)
- * Landscape      => object-cover (fills)
- * Card box is consistent (aspect 4/3 on mobile, 16/9 on larger screens)
- */
+/** ─────────────── SMART-FIT ARTWORK (portrait = contain, landscape = cover) ─────────────── */
 function Artwork({ src, alt }: { src?: string; alt: string }) {
   const [isPortrait, setIsPortrait] = React.useState(false);
-
   return (
-    <div className="relative w-full overflow-hidden rounded-t-xl bg-black/60 aspect-[4/3] sm:aspect-[16/9]">
+    <div className="relative w-full overflow-hidden rounded-t-2xl bg-black/60 aspect-[4/3] sm:aspect-[16/9]">
       {src ? (
         <img
           src={src}
@@ -49,17 +51,15 @@ function Artwork({ src, alt }: { src?: string; alt: string }) {
   );
 }
 
-/** ───────────────────────── GLOBAL AUDIO (only for track category) ───────────────────────── */
+/** ─────────────── GLOBAL AUDIO for 'best-track' only ─────────────── */
 class GlobalAudio {
   private static _inst: GlobalAudio;
   private current?: HTMLAudioElement | null;
   private listeners = new Set<() => void>();
-
   static get inst() {
     if (!this._inst) this._inst = new GlobalAudio();
     return this._inst;
   }
-
   play(src: string) {
     if (this.current) {
       this.current.pause();
@@ -71,7 +71,6 @@ class GlobalAudio {
     a.addEventListener("ended", () => this.notify());
     this.notify();
   }
-
   stop() {
     if (!this.current) return;
     this.current.pause();
@@ -79,35 +78,25 @@ class GlobalAudio {
     this.current = null;
     this.notify();
   }
-
   isPlaying(src?: string) {
     return !!this.current && (!src || this.current.src.endsWith(src));
   }
-
   onChange(cb: () => void) {
     this.listeners.add(cb);
-    return () => {
-      this.listeners.delete(cb);
-    };
+    return () => this.listeners.delete(cb);
   }
-
   private notify() {
     this.listeners.forEach((cb) => cb());
   }
 }
 
-/** ───────────────────────── DATA ─────────────────────────
- * Artwork paths match your uploaded filenames exactly.
- * If you later add audio snippets, place them in /public/audio and
- * set audioPreview: "/audio/your-file.mp3" ONLY for best-track nominees.
- */
+/** ─────────────── DATA (same filenames you uploaded) ─────────────── */
 const CATEGORIES: Category[] = [
   {
     id: "best-artist",
     title: "אמן השנה",
     description: "אמן ישראלי שהוציא מוזיקה השנה והכי נתן בראש, כולל ברחבות בארץ",
     nominees: [
-      // no explicit Libra artist image was in the screenshot -> leave empty if you don't have it
       { id: "libra", name: "Libra" },
       { id: "gorovich", name: "Gorovich", artwork: "/images/Gorovich.webp" },
       { id: "freedom-fighters", name: "Freedom Fighters", artwork: "/images/Freedom Fighters.png" },
@@ -155,48 +144,13 @@ const CATEGORIES: Category[] = [
     title: "טראק השנה",
     description: "הטראק הכי טוב שיצא השנה",
     nominees: [
-      {
-        id: "libra-subjective-track",
-        name: "Libra - Subjective",
-        artwork: "/images/libra subjective track.jpg",
-        // audioPreview: "/audio/libra-subjective.mp3", // add if you upload
-      },
-      {
-        id: "mystic-reborn",
-        name: "Mystic - Reborn",
-        artwork: "/images/mystic - reborn.jpg",
-        // audioPreview: "/audio/mystic-reborn.mp3",
-      },
-      {
-        id: "2minds-nova",
-        name: "2Minds - Nova",
-        artwork: "/images/2minds nova track.jpg",
-        // audioPreview: "/audio/2minds-nova.mp3",
-      },
-      {
-        id: "uncharted-brain-event",
-        name: "Uncharted Territory - Brain Event",
-        artwork: "/images/Uncharted Territory - brain event track.webp",
-        // audioPreview: "/audio/uncharted-brain-event.mp3",
-      },
-      {
-        id: "bigitam-dubel",
-        name: "Bigitam & Detune - Dubel K",
-        artwork: "/images/bigitam & detune dubel k track.jpg",
-        // audioPreview: "/audio/bigitam-dubel-k.mp3",
-      },
-      {
-        id: "artmis-momentum",
-        name: "Artmis - Momentum",
-        artwork: "/images/artmis momentum track.jpg",
-        // audioPreview: "/audio/artmis-momentum.mp3",
-      },
-      {
-        id: "nevo-some1-guide",
-        name: "Nevo & Some1 - Guide",
-        artwork: "/images/nevo & some1 guide track.jpg",
-        // audioPreview: "/audio/nevo-some1-guide.mp3",
-      },
+      { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective track.jpg" /*, audioPreview: "/audio/libra-subjective.mp3"*/ },
+      { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg" /*, audioPreview: "/audio/mystic-reborn.mp3"*/ },
+      { id: "2minds-nova", name: "2Minds - Nova", artwork: "/images/2minds nova track.jpg" /*, audioPreview: "/audio/2minds-nova.mp3"*/ },
+      { id: "uncharted-brain-event", name: "Uncharted Territory - Brain Event", artwork: "/images/Uncharted Territory - brain event track.webp" /*, audioPreview: "/audio/uncharted-brain-event.mp3"*/ },
+      { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg" /*, audioPreview: "/audio/bigitam-dubel-k.mp3"*/ },
+      { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg" /*, audioPreview: "/audio/artmis-momentum.mp3"*/ },
+      { id: "nevo-some1-guide", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg" /*, audioPreview: "/audio/nevo-some1-guide.mp3"*/ },
     ],
   },
   {
@@ -212,76 +166,86 @@ const CATEGORIES: Category[] = [
   },
 ];
 
-/** ───────────────────────── PAGE ───────────────────────── */
-export default function TranceAwardsVoting() {
+/** ─────────────── PAGE ─────────────── */
+export default function Awards() {
   const [selections, setSelections] = useState<Record<string, string>>({});
 
-  // keep <html dir="rtl">
   useEffect(() => {
-    document.documentElement.setAttribute("dir", "rtl");
+    document.documentElement.setAttribute("dir", "rtl"); // Hebrew flow
   }, []);
 
-  // re-render when audio changes (only for track category) without TypeScript cleanup issues
+  // re-render on audio change (safe cleanup)
   const [, force] = useState(0);
   useEffect(() => {
     const unsub = GlobalAudio.inst.onChange(() => force((n) => n + 1));
-    return () => {
-      unsub();
-    };
+    return () => { unsub(); };
   }, []);
 
-  const canSubmit = useMemo(() => {
-    return CATEGORIES.every((c) => !!selections[c.id]);
-  }, [selections]);
+  const canSubmit = useMemo(
+    () => CATEGORIES.every((c) => !!selections[c.id]),
+    [selections]
+  );
 
-  const toggleChoice = (categoryId: string, nomineeId: string) => {
+  const choose = (categoryId: string, nomineeId: string) =>
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
-  };
 
   const submitVote = async () => {
-    alert("הצבעה נשלחה (דמו). חיבור ל-API יתווסף בהמשך.");
+    alert("הצבעה נשלחה (דמו). חיבור לשרת יתווסף בהמשך.");
   };
 
   return (
-    <main className="min-h-screen bg-black text-white px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-10">
-        פרסי הטראנס הישראלי 2025 🎧
-      </h1>
+    <main className="neon-backdrop min-h-screen text-white font-gan">
+      {/* Header */}
+      <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src={BRAND.logo}
+              alt="יוצאים לטראק"
+              width={40}
+              height={40}
+              className="rounded-full border border-white/15"
+            />
+            <span className="text-sm opacity-80">חזרה לדף הראשי</span>
+          </Link>
+          <div className="ms-auto text-sm opacity-80">{BRAND.title}</div>
+        </div>
+      </header>
 
-      <div className="space-y-16 max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-16">
         {CATEGORIES.map((cat) => (
           <section key={cat.id}>
             <div className="flex items-end justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-2xl font-extrabold">{cat.title}</h2>
+                <h2 className="gradient-title text-2xl sm:text-3xl font-[700] leading-tight">
+                  {cat.title}
+                </h2>
                 {cat.description && (
-                  <p className="text-white/70">{cat.description}</p>
+                  <p className="text-white/70 text-sm mt-1">{cat.description}</p>
                 )}
               </div>
-              <div className="text-sm text-white/60">
-                בחירה אחת
-              </div>
+              <div className="text-sm text-white/60">בחירה אחת</div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {cat.nominees.map((n) => {
                 const selected = selections[cat.id] === n.id;
-                const isTrackCategory = cat.id === "best-track";
-                const canPlay = isTrackCategory && !!n.audioPreview;
+                const isTrack = cat.id === "best-track";
+                const canPlay = isTrack && !!n.audioPreview;
                 const playing = canPlay && GlobalAudio.inst.isPlaying(n.audioPreview!);
 
                 return (
                   <article
                     key={n.id}
-                    className={`group relative overflow-hidden rounded-2xl border bg-white/5 backdrop-blur transition ${
-                      selected ? "ring-2 ring-pink-500 border-transparent" : "border-white/10 hover:border-white/20"
-                    }`}
+                    className={
+                      "group relative overflow-hidden rounded-2xl glass transition " +
+                      (selected ? "ring-2 ring-[var(--brand-pink)]" : "hover:border-white/25")
+                    }
                   >
-                    {/* Artwork */}
                     <Artwork src={n.artwork} alt={n.name} />
 
-                    {/* Optional audio controls ONLY for Track of the Year */}
-                    {isTrackCategory && canPlay && (
+                    {/* Audio controls ONLY for 'best-track' where audio exists */}
+                    {isTrack && canPlay && (
                       <div className="absolute top-2 end-2 z-10 flex items-center gap-2">
                         {!playing ? (
                           <button
@@ -290,7 +254,6 @@ export default function TranceAwardsVoting() {
                               GlobalAudio.inst.play(n.audioPreview!);
                             }}
                             className="px-3 py-1.5 text-xs rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
-                            aria-label={`Play preview: ${n.name}`}
                           >
                             ▶︎ האזנה
                           </button>
@@ -301,7 +264,6 @@ export default function TranceAwardsVoting() {
                               GlobalAudio.inst.stop();
                             }}
                             className="px-3 py-1.5 text-xs rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
-                            aria-label={`Stop preview: ${n.name}`}
                           >
                             ⏹ עצור
                           </button>
@@ -309,18 +271,18 @@ export default function TranceAwardsVoting() {
                       </div>
                     )}
 
-                    {/* Footer / Select */}
                     <div
                       className="p-4 flex items-center justify-between gap-3 cursor-pointer"
-                      onClick={() => toggleChoice(cat.id, n.id)}
+                      onClick={() => choose(cat.id, n.id)}
                     >
                       <div className="font-semibold truncate">{n.name}</div>
                       <button
-                        className={`px-4 py-2 rounded-xl border text-sm transition ${
-                          selected
-                            ? "bg-pink-500 border-transparent text-black font-semibold"
-                            : "bg-transparent border-white/15 hover:border-white/30"
-                        }`}
+                        className={
+                          "px-4 py-2 rounded-xl border text-sm transition " +
+                          (selected
+                            ? "btn-primary border-transparent"
+                            : "btn-ghost")
+                        }
                         aria-pressed={selected}
                       >
                         {selected ? "נבחר" : "בחר"}
@@ -334,25 +296,26 @@ export default function TranceAwardsVoting() {
         ))}
 
         {/* Submit */}
-        <div className="mt-10 p-4 rounded-2xl border border-white/10 bg-white/5">
+        <div className="glass rounded-2xl p-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="text-white/70 text-sm">
-              ודאו שבחרתם בכל הקטגוריות. לפני שליחה תוכלו עדיין לשנות.
+            <div className="text-white/80 text-sm">
+              ודאו שבחרתם בכל הקטגוריות. תמיד אפשר לשנות לפני שליחה.
             </div>
             <button
               onClick={submitVote}
               disabled={!canSubmit}
-              className={`px-6 py-3 rounded-2xl text-black font-semibold ${
-                canSubmit ? "bg-pink-400 hover:bg-pink-300" : "bg-white/30 cursor-not-allowed"
-              }`}
+              className={
+                "rounded-2xl px-6 py-3 font-semibold " +
+                (canSubmit ? "btn-primary" : "btn-ghost cursor-not-allowed")
+              }
             >
               שליחת ההצבעה
             </button>
           </div>
         </div>
 
-        <footer className="mt-14 mb-10 text-center text-xs text-white/50">
-          © {new Date().getFullYear()} יוצאים לטראק — פרסי הטרנס הישראלי. כל הזכויות שמורות.
+        <footer className="text-center text-xs text-white/60 py-8">
+          © {new Date().getFullYear()} יוצאים לטראק — פרסי השנה.
         </footer>
       </div>
     </main>
