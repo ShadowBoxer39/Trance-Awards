@@ -4,3 +4,66 @@
 
 html, body, #__next { height: 100%; }
 body { background: #0B0B0F; color: #fff; }
+
+/* --- Brand Fonts --- */
+@font-face {
+  font-family: "GanCLM";
+  src: url("/fonts/GanCLM-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+  unicode-range: U+0590-05FF, U+FB00-FB4F; /* Hebrew */
+}
+@font-face {
+  font-family: "GanCLM";
+  src: url("/fonts/GanCLM-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+  unicode-range: U+0590-05FF, U+FB00-FB4F; /* Hebrew */
+}
+@font-face {
+  font-family: "MilkyWay";
+  src: url("/fonts/MilkyWay-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+/* --- Brand Colors (from your logo) --- */
+:root{
+  --brand-pink: #FF5AA5;
+  --brand-orange: #FFB400;
+  --brand-cyan: #00D1FF;
+  --brand-purple:#7A3CFF;
+  --brand-bg:#090a0f;
+}
+html, body { background: var(--brand-bg); }
+
+.font-gan   { font-family: "GanCLM", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+.font-milky { font-family: "MilkyWay", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+/* Rainbow title gradient */
+.gradient-title{
+  background: conic-gradient(from 180deg, var(--brand-orange), var(--brand-pink), var(--brand-purple), var(--brand-cyan), var(--brand-orange));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Soft neon background */
+.neon-backdrop{
+  background:
+    radial-gradient(60rem 40rem at 15% -10%, color-mix(in oklab, var(--brand-cyan), transparent 80%), transparent),
+    radial-gradient(80rem 50rem at 85% 0%, color-mix(in oklab, var(--brand-pink), transparent 83%), transparent),
+    radial-gradient(100rem 70rem at 50% 110%, color-mix(in oklab, var(--brand-purple), transparent 86%), transparent),
+    var(--brand-bg);
+}
+
+/* Glass card */
+.glass{
+  background: color-mix(in oklab, white 6%, transparent);
+  border: 1px solid color-mix(in oklab, white 15%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+/* Buttons */
+.btn-primary{
+  background-image: linear-gradient(90deg, var(--brand-orange), var(--brand-pink), var(--brand-purple));
+  color: #0b0b0b; font-weight: 700;
+}
+.btn-primary:hover{ filter: saturate(120%) brightness(1.04); }
+.btn-ghost{ border: 1px solid color-mix(in oklab, white 20%, transparent); }
+.btn-ghost:hover{ border-color: color-mix(in oklab, white 40%, transparent); }
