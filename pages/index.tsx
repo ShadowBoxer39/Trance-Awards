@@ -154,9 +154,10 @@ class GlobalAudio {
     return !!this.current && (!src || this.current.src === src);
   }
 
-  onChange(cb: () => void) {
-    this.listeners.add(cb);
-    return () => this.listeners.delete(cb);
+onChange(cb: () => void) {
+  this.listeners.add(cb);
+  return () => { this.listeners.delete(cb); };
+}
   }
 
   private notify() {
