@@ -182,8 +182,12 @@ export default function TranceAwardsVoting() {
   // ensure only one audio preview at a time
 const [, force] = useState(0);
 useEffect(() => {
-  const unsubscribe = GlobalAudio.inst.onChange(() => force((n) => n + 1));
-  return () => { unsubscribe(); };   // <- cleanup returns void
+  const unsubscribe = GlobalAudio.inst.onChange(() => {
+    force((n) => n + 1);
+  });
+  return () => {
+    unsubscribe();
+  };
 }, []);
 
   function toggleChoice(category: Category, nomineeId: string) {
