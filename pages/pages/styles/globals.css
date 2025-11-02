@@ -1,7 +1,0 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* basic dark background + RTL support */
-html, body, #__next { height: 100%; }
-body { background: #0B0B0F; color: #fff; margin: 0; }
