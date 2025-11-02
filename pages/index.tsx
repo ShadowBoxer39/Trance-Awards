@@ -38,7 +38,8 @@ const SAMPLE_DATA: Category[] = [
       "אמן ישראלי שהוציא מוזיקה השנה והכי נתן בראש, כולל ברחבות בארץ",
     maxChoices: 1,
     nominees: [
-      { id: "libra", name: "Libra" },
+{ id: "libra", name: "Libra", artwork: "https://drive.google.com/uc?id=1LeXtNHt_HuyoqUFH7eaQam4xKJRDlTU" },
+
       { id: "gorovich", name: "Gorovich" },
       { id: "freedom-fighters", name: "Freedom Fighters" },
       { id: "mystic", name: "Mystic" },
