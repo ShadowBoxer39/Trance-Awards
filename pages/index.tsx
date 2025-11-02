@@ -245,7 +245,7 @@ export default function TranceAwardsVoting() {
   return (
     <main className="min-h-screen bg-black text-white px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-10">
-        פרסי הטרנס הישראלי 2025 🎧
+        פרסי הטראנס הישראלי 2025 🎧
       </h1>
 
       <div className="space-y-16 max-w-7xl mx-auto">
