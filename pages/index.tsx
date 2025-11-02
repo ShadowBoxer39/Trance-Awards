@@ -34,21 +34,21 @@ const SAMPLE_DATA: Category[] = [
   {
     id: "best-artist",
     title: "אמן השנה",
-    description: "בחרו את אמן הטרנס הישראלי של השנה",
+    description: "בחרו את אמן הטראנס הישראלי של השנה",
     nominees: [
       {
         id: "artist-1",
-        name: "אמן א",
+        name: "Libra",
         artwork:
-          "https://images.unsplash.com/photo-1542751110-97427bbecf20?q=80&w=1200&auto=format&fit=crop",
+          "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.facebook.com%2FComfort13%2Fposts%2Flibra%25D7%2599%25D7%2595%25D7%25A0%25D7%2599-%25D7%2593%25D7%2592%25D7%259F-%25D7%2594%25D7%25A2%25D7%2599%25D7%259C%25D7%2595%25D7%2599-%25D7%259C%25D7%25A9%25D7%25A0%25D7%25AA-2017-18-%25D7%2595%25D7%2591%25D7%25A2%25D7%2599%25D7%25A7%25D7%25A8-%25D7%2599%25D7%25A7%25D7%2599%25D7%25A8%25D7%2599%25D7%25A0%25D7%2595-%25D7%259E%25D7%2592%25D7%2599%25D7%25A2-%25D7%2591%25D7%2599%25D7%2595%25D7%259D-%25D7%2597%25D7%259E%25D7%2599%25D7%25A9%25D7%2599-%25D7%25A2%25D7%259D-%25D7%259E%25D7%2595%25D7%2596%25D7%2599%25D7%25A7%25D7%2594-%25D7%2597%25D7%2593%25D7%25A9%25D7%2594-%2F10157213320818998%2F&psig=AOvVaw3vnqhan70LKH0fHfEhaZwX&ust=1762163562163000&source=images&cd=vfe&opi=89978449&ved=0CBUQjRxqFwoTCPjvp4GZ05ADFQAAAAAdAAAAABAE",
         audioPreview:
           "https://upload.wikimedia.org/wikipedia/commons/4/45/ASL_applause.wav",
       },
       {
         id: "artist-2",
-        name: "אמן ב",
+        name: "Gorovich",
         artwork:
-          "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200&auto=format&fit=crop",
+          "https://geo-media.beatport.com/image_size/590x404/c29146e8-2d24-42a7-9604-fef1a4f84398.jpg",
         audioPreview:
           "https://upload.wikimedia.org/wikipedia/commons/1/19/Short_Funk_Guitar_Riff.ogg",
       },
