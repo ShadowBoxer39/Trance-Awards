@@ -1,24 +1,10 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
-// --- BRANDING --------------------------------------------------------------
-const BRAND = {
-  siteTitle: "פרסי הטרנס הישראלי 2025 – יוצאים לטראק",
-  logoUrl:
-    "https://upload.wikimedia.org/wikipedia/commons/3/3f/Logo_placeholder.png",
-  primary: "#FF3E80",
-  secondary: "#00E5FF",
-  dark: "#0B0B0F",
-};
-
-// --- DATA SHAPE ------------------------------------------------------------
+// --- TYPES --------------------------------------------------------------
 export type Nominee = {
   id: string;
   name: string;
-  logo?: string;
   artwork?: string;
-  audioPreview?: string;
-  link?: string;
 };
 
 export type Category = {
@@ -26,454 +12,138 @@ export type Category = {
   title: string;
   description?: string;
   nominees: Nominee[];
-  maxChoices?: number;
 };
 
-// --- SAMPLE DATA (CUSTOM) --------------------------------------------------
-const SAMPLE_DATA: Category[] = [
+// --- DATA ---------------------------------------------------------------
+const CATEGORIES: Category[] = [
   {
     id: "best-artist",
     title: "אמן השנה",
-    description:
-      "אמן ישראלי שהוציא מוזיקה השנה והכי נתן בראש, כולל ברחבות בארץ",
-    maxChoices: 1,
+    description: "אמן ישראלי שהוציא מוזיקה השנה והכי נתן בראש, כולל ברחבות בארץ",
     nominees: [
-{ id: "libra", name: "Libra", artwork: "https://drive.google.com/uc?id=1LeXtNHt_HuyoqUFH7eaQam4xKJRDlTU" },
-
-      { id: "gorovich", name: "Gorovich" },
-      { id: "freedom-fighters", name: "Freedom Fighters" },
-      { id: "mystic", name: "Mystic" },
-      { id: "bliss", name: "Bliss" },
-      { id: "cosmic-flow", name: "Cosmic Flow" },
+      { id: "libra", name: "Libra", artwork: "/images/libra.jpg" },
+      { id: "gorovich", name: "Gorovich", artwork: "/images/Gorovich.webp" },
+      { id: "freedom-fighters", name: "Freedom Fighters", artwork: "/images/Freedom Fighters.png" },
+      { id: "mystic", name: "Mystic", artwork: "/images/Mystic.jpg" },
+      { id: "bliss", name: "Bliss", artwork: "/images/bliss.jpg" },
+      { id: "cosmic-flow", name: "Cosmic Flow", artwork: "/images/cosmic flow.webp" },
     ],
   },
   {
     id: "best-female-artist",
     title: "אמנית השנה",
-    description:
-      "אמנית ישראלית שהוציאה מוזיקה השנה והכי נתנה בראש, כולל ברחבות בארץ",
-    maxChoices: 1,
+    description: "אמנית ישראלית שהוציאה מוזיקה השנה והכי נתנה בראש, כולל ברחבות בארץ",
     nominees: [
-      { id: "artmis", name: "Artmis" },
-      { id: "amigdala", name: "Amigdala" },
-      { id: "chuka", name: "Chuka" },
+      { id: "artmis", name: "Artmis", artwork: "/images/artmis.jpg" },
+      { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
+      { id: "chuka", name: "Chuka", artwork: "/images/chuka.jpg" },
     ],
   },
   {
     id: "best-group",
     title: "הרכב השנה",
-    description:
-      "הרכב ישראלי שהוציא מוזיקה השנה והכי נתן בראש, כולל ברחבות בארץ",
-    maxChoices: 1,
+    description: "הרכב ישראלי שהוציא מוזיקה השנה והכי נתן בראש, כולל ברחבות בארץ",
     nominees: [
-      { id: "bigitam-detune", name: "Bigitam & Detune" },
-      { id: "uncharted-territory", name: "Uncharted Territory" },
-      { id: "humanoids", name: "Humanoids" },
-      { id: "outsiders", name: "Outsiders" },
-      { id: "rising-dust", name: "Rising Dust" },
+      { id: "bigitam-detune", name: "Bigitam & Detune", artwork: "/images/bigitam & detune.png" },
+      { id: "uncharted-territory", name: "Uncharted Territory", artwork: "/images/Uncharted Territory.webp" },
+      { id: "humanoids", name: "Humanoids", artwork: "/images/Humanoids.jpg" },
+      { id: "outsiders", name: "Outsiders", artwork: "/images/Outsiders.webp" },
+      { id: "rising-dust", name: "Rising Dust", artwork: "/images/rising dust.jpg" },
     ],
   },
   {
-    id: "album-of-the-year",
+    id: "best-album",
     title: "אלבום השנה",
     description: "אלבום מלא הכי טוב שיצא השנה",
-    maxChoices: 1,
     nominees: [
-      { id: "libra-subjective", name: "Libra – Subjective" },
-      { id: "gorovich-creative-acts", name: "Gorovich – Creative Acts" },
-      { id: "bliss-me-vs-me", name: "Bliss – Me vs Me" },
-      { id: "cosmic-flow-infinity", name: "Cosmic Flow – Infinity" },
-      { id: "2minds-acid-therapy", name: "2Minds – Acid Therapy" },
+      { id: "libra-subjective", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg" },
+      { id: "gorovich-creative", name: "Gorovich - Creative Acts", artwork: "/images/gorovich creative acts album.jpg" },
+      { id: "bliss-me-vs-me", name: "Bliss - Me vs Me", artwork: "/images/bliss me vs me album.jpg" },
+      { id: "cosmic-flow-infinity", name: "Cosmic Flow - Infinity", artwork: "/images/cosmic flow infinity album.jpg" },
+      { id: "2minds-acid", name: "2Minds - Acid Therapy", artwork: "/images/2minds acid therapy album.jpg" },
     ],
   },
   {
-    id: "track-of-the-year",
+    id: "best-track",
     title: "טראק השנה",
     description: "הטראק הכי טוב שיצא השנה",
-    maxChoices: 1,
     nominees: [
-      { id: "libra-subjective-track", name: "Libra – Subjective" },
-      { id: "mystic-reborn", name: "Mystic – Reborn" },
-      { id: "2minds-nova", name: "2Minds – Nova" },
-      { id: "uncharted-territory-brain-event", name: "Uncharted Territory – Brain Event" },
-      { id: "bigitam-detune-dubel-k", name: "Bigitam & Detune – Dubel K" },
-      { id: "artmis-momentum", name: "Artmis – Momentum" },
-      { id: "nevo-some1-guide", name: "Nevo & Some1 – Guide" },
+      { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective track.jpg" },
+      { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg" },
+      { id: "2minds-nova", name: "2Minds - Nova", artwork: "/images/2minds nova track.jpg" },
+      { id: "uncharted-brain-event", name: "Uncharted Territory - Brain Event", artwork: "/images/Uncharted Territory - brain event track.webp" },
+      { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg" },
+      { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg" },
+      { id: "nevo-some1", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg" },
     ],
   },
   {
-    id: "breakthrough-of-the-year",
+    id: "breakthrough",
     title: "פריצת השנה",
-    description:
-      "אמן שהיה באיזור וכבר שמעתם עליו אבל פתאום הוא התפוצץ ופרץ עם מוזיקה חדשה וסטים מפוצצים",
-    maxChoices: 1,
+    description: "אמן שהתפוצץ השנה עם מוזיקה חדשה וסטים מפוצצים",
     nominees: [
-      { id: "bigitam", name: "Bigitam" },
-      { id: "mystic-break", name: "Mystic" },
-      { id: "artmis-break", name: "Artmis" },
-      { id: "amigdala-break", name: "Amigdala" },
-      { id: "mr-wilson", name: "Mr. Wilson" },
-      { id: "event-horizon", name: "Event Horizon" },
+      { id: "bigitam", name: "Bigitam", artwork: "/images/bigitam & detune.png" },
+      { id: "mystic", name: "Mystic", artwork: "/images/Mystic.jpg" },
+      { id: "artmis", name: "Artmis", artwork: "/images/artmis.jpg" },
+      { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
     ],
   },
   {
-    id: "production-of-the-year",
+    id: "best-production",
     title: "הפקת השנה",
-    description:
-      "ההפקה שהכי נתנה בראש השנה, עשתה מסיבות מטורפות ודאגה לקהילה שלה",
-    maxChoices: 1,
+    description: "ההפקה שהכי נתנה בראש השנה ועשתה מסיבות מטורפות ודאגה לקהילה שלה",
     nominees: [
-      { id: "miri-bamidbar", name: "מירי במדבר" },
-      { id: "proppelor", name: "פרופלור" },
-      { id: "tractor-bateva", name: "טרקטור בטבע" },
+      { id: "miri-bamidbar", name: "מירי במדבר", artwork: "/images/miri-bamidbar.jpg" },
+      { id: "propeller", name: "פרופלור", artwork: "/images/propeller.jpg" },
+      { id: "tractor", name: "טרקטור בטבע", artwork: "/images/tractor.jpg" },
     ],
   },
 ];
 
-// --- UTILITIES -------------------------------------------------------------
-function classNames(...arr: Array<string | false | null | undefined>) {
-  return arr.filter(Boolean).join(" ");
-}
-
-function heb(n: number): string {
-  return n.toLocaleString("he-IL");
-}
-
-// --- AUDIO CONTROLLER ------------------------------------------------------
-class GlobalAudio {
-  private static _inst: GlobalAudio;
-  private current?: HTMLAudioElement | null;
-  private listeners = new Set<() => void>();
-
-  static get inst() {
-    if (!this._inst) this._inst = new GlobalAudio();
-    return this._inst;
-  }
-
-  play(src: string) {
-    if (this.current) {
-      this.current.pause();
-      this.current.currentTime = 0;
-    }
-    const audio = new Audio(src);
-    audio.play();
-    this.current = audio;
-    audio.addEventListener("ended", () => this.notify());
-    this.notify();
-  }
-
-  stop() {
-    if (this.current) {
-      this.current.pause();
-      this.current.currentTime = 0;
-      this.current = null;
-      this.notify();
-    }
-  }
-
-  isPlaying(src?: string) {
-    return !!this.current && (!src || this.current.src === src);
-  }
-
-  onChange(cb: () => void) {
-    this.listeners.add(cb);
-    return () => {
-      this.listeners.delete(cb);
-    };
-  }
-
-  private notify() {
-    this.listeners.forEach((cb) => cb());
-  }
-}
-
-// --- MAIN COMPONENT --------------------------------------------------------
+// --- COMPONENT -----------------------------------------------------------
 export default function TranceAwardsVoting() {
-  const [categories, setCategories] = useState<Category[]>(SAMPLE_DATA);
-  const [selections, setSelections] = useState<Record<string, string[]>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [dir, setDir] = useState<"rtl" | "ltr">("rtl");
+  const [votes, setVotes] = useState<Record<string, string>>({});
 
-  // update <html dir="rtl"> for proper Hebrew flow
-  useEffect(() => {
-    document.documentElement.setAttribute("dir", dir);
-  }, [dir]);
-
-  // ensure only one audio preview at a time
-  const [, force] = useState(0);
-  useEffect(() => {
-    const unsubscribe = GlobalAudio.inst.onChange(() => {
-      force((n) => n + 1);
-    });
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  function toggleChoice(category: Category, nomineeId: string) {
-    setSelections((prev) => {
-      const max = category.maxChoices ?? 1;
-      const existing = prev[category.id] ?? [];
-      const has = existing.includes(nomineeId);
-      let next: string[];
-      if (max === 1) {
-        next = has ? [] : [nomineeId];
-      } else {
-        next = has
-          ? existing.filter((x) => x !== nomineeId)
-          : [...existing, nomineeId].slice(0, max);
-      }
-      return { ...prev, [category.id]: next };
-    });
-  }
-
-  const canSubmit = useMemo(() => {
-    return categories.every((c) => (selections[c.id]?.length ?? 0) >= 1);
-  }, [categories, selections]);
-
-  async function submitVote() {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ballotVersion: 1,
-          selections,
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          userAgent: navigator.userAgent,
-        }),
-      });
-      if (!res.ok) throw new Error(`Submit failed: ${res.status}`);
-      setSubmitted(true);
-    } catch (e: any) {
-      setError(e?.message ?? "שגיאה בשליחה");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const handleVote = (categoryId: string, nomineeId: string) => {
+    setVotes({ ...votes, [categoryId]: nomineeId });
+  };
 
   return (
-    <div
-      className="min-h-screen text-white"
-      style={{
-        background: `radial-gradient(80rem 60rem at 20% 0%, ${BRAND.secondary}10, transparent), radial-gradient(80rem 60rem at 80% 20%, ${BRAND.primary}10, ${BRAND.dark})`,
-      }}
-    >
-      {/* Header */}
-      <header className="sticky top-0 z-10 backdrop-blur bg-black/40 border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-4">
-          <img
-            src={BRAND.logoUrl}
-            alt="logo"
-            className="w-10 h-10 rounded-full border border-white/20"
-          />
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-            {BRAND.siteTitle}
-          </h1>
-          <div className="ms-auto flex items-center gap-2">
-            <button
-              onClick={() => setDir(dir === "rtl" ? "ltr" : "rtl")}
-              className="px-3 py-1.5 text-sm rounded-xl border border-white/10 hover:bg-white/10"
-              aria-label="Toggle direction"
-            >
-              {dir === "rtl" ? "RTL" : "LTR"}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid gap-8">
-          {categories.map((cat) => (
-            <section key={cat.id}>
-              <div className="flex items-end justify-between flex-wrap gap-3 mb-4">
-                <div>
-                  <h2 className="text-2xl font-extrabold">{cat.title}</h2>
-                  {cat.description && (
-                    <p className="text-white/70">{cat.description}</p>
+    <main dir="rtl" className="min-h-screen bg-black text-white p-4">
+      <h1 className="text-3xl font-bold text-center mb-10">פרסי הטרנס הישראלי 2025 🎧</h1>
+      <div className="space-y-16">
+        {CATEGORIES.map((cat) => (
+          <section key={cat.id}>
+            <h2 className="text-2xl font-bold mb-2">{cat.title}</h2>
+            <p className="text-gray-400 mb-6">{cat.description}</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cat.nominees.map((n) => (
+                <div
+                  key={n.id}
+                  onClick={() => handleVote(cat.id, n.id)}
+                  className={`cursor-pointer border-2 rounded-xl overflow-hidden transition ${
+                    votes[cat.id] === n.id ? "border-pink-500" : "border-white/20 hover:border-pink-400"
+                  }`}
+                >
+                  {n.artwork && (
+                    <img
+                      src={n.artwork}
+                      alt={n.name}
+                      className="w-full h-48 object-cover"
+                      loading="lazy"
+                    />
                   )}
+                  <div className="p-4 text-center font-semibold">{n.name}</div>
                 </div>
-                <div className="text-sm text-white/60">
-                  {cat.maxChoices && cat.maxChoices > 1 ? (
-                    <span>בחרו עד {heb(cat.maxChoices)} מועמדים</span>
-                  ) : (
-                    <span>בחירה אחת</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {cat.nominees.map((n) => {
-                  const selected = selections[cat.id]?.includes(n.id);
-                  return (
-                    <article
-                      key={n.id}
-                      className={classNames(
-                        "group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur transition",
-                        selected ? "ring-2 ring-[--brand]" : "hover:border-white/20"
-                      )}
-                      style={{
-                        // @ts-ignore
-                        "--brand": BRAND.primary,
-                      }}
-                    >
-                      {/* Artwork */}
-                      <div className="relative aspect-[16/10] bg-black/40">
-                        {n.artwork ? (
-                          <img
-                            src={n.artwork}
-                            alt={n.name}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center text-white/40">
-                            ללא ארט
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
-                        {/* Logo + Name */}
-                        <div className="absolute bottom-2 start-2 end-2 flex items-center gap-3">
-                          {n.logo && (
-                            <img
-                              src={n.logo}
-                              alt="logo"
-                              className="w-10 h-10 rounded-xl border border-white/20 bg-black/30 backdrop-blur"
-                              loading="lazy"
-                            />
-                          )}
-                          <div className="min-w-0">
-                            <div className="font-bold tracking-tight line-clamp-1">
-                              {n.name}
-                            </div>
-                            {n.link && (
-                              <a
-                                className="text-xs text-white/70 hover:text-white underline underline-offset-4"
-                                href={n.link}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                פרטים נוספים ↗
-                              </a>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Audio Controls */}
-                        {n.audioPreview && (
-                          <div className="absolute top-2 end-2 flex items-center gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                GlobalAudio.inst.play(n.audioPreview!);
-                              }}
-                              className="px-3 py-1.5 text-xs rounded-full bg-black/60 border border-white/10 hover:bg-black/80"
-                            >
-                              ▶︎ האזנה
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                GlobalAudio.inst.stop();
-                              }}
-                              className="px-3 py-1.5 text-xs rounded-full bg-black/60 border border-white/10 hover:bg-black/80"
-                            >
-                              ⏹ עצור
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Footer / Select */}
-                      <div className="p-4 flex items-center justify-between gap-3">
-                        <span className="text-sm text-white/80">
-                          בחרו {cat.maxChoices && cat.maxChoices > 1 ? "מועמדים" : "מועמד"}
-                        </span>
-                        <button
-                          onClick={() => toggleChoice(cat, n.id)}
-                          className={classNames(
-                            "px-4 py-2 rounded-xl border text-sm transition",
-                            selected
-                              ? "bg-[--brand] border-transparent text-black font-semibold"
-                              : "bg-transparent border-white/15 hover:border-white/30"
-                          )}
-                          style={{
-                            // @ts-ignore
-                            "--brand": BRAND.primary,
-                          }}
-                          aria-pressed={selected}
-                        >
-                          {selected ? "נבחר" : "בחר"}
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
-        </div>
-
-        {/* Submit */}
-        <div className="mt-10 p-4 rounded-2xl border border-white/10 bg-white/5">
-          {error && (
-            <div className="mb-3 text-red-300 text-sm">שגיאה: {error}</div>
-          )}
-          {submitted ? (
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="text-green-300">תודה! ההצבעה נקלטה ✅</div>
-              <a
-                href="#"
-                className="text-sm underline underline-offset-4 text-white/80"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSubmitted(false);
-                }}
-              >
-                שלחו הצבעה נוספת (לבדיקות בלבד)
-              </a>
+              ))}
             </div>
-          ) : (
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="text-white/70 text-sm">
-                ודאו שבחרתם בכל הקטגוריות. לפני שליחה תוכלו עדיין לשנות.
-              </div>
-              <button
-                onClick={submitVote}
-                disabled={!canSubmit || submitting}
-                className={classNames(
-                  "px-6 py-3 rounded-2xl text-black font-semibold",
-                  canSubmit && !submitting
-                    ? "bg-[--brand]"
-                    : "bg-white/30 cursor-not-allowed"
-                )}
-                style={{
-                  // @ts-ignore
-                  "--brand": BRAND.secondary,
-                }}
-              >
-                {submitting ? "שולח…" : "שליחת ההצבעה"}
-              </button>
-            </div>
-          )}
-        </div>
+          </section>
+        ))}
+      </div>
 
-        {/* Footer small print */}
-        <footer className="mt-14 mb-10 text-center text-xs text-white/50">
-          © {new Date().getFullYear()} יוצאים לטראק — פרסי הטרנס הישראלי. כל הזכויות שמורות.
-          <span className="mx-1">•</span>
-          <a href="#" className="underline underline-offset-4">
-            מדיניות פרטיות
-          </a>
-        </footer>
-      </main>
-    </div>
+      <footer className="mt-16 text-center text-sm text-gray-500">
+        © {new Date().getFullYear()} יוצאים לטראק — פרסי הטרנס הישראלי
+      </footer>
+    </main>
   );
 }
