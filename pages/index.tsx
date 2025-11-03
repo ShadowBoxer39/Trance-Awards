@@ -160,7 +160,7 @@ export default function Landing() {
           <div className="flex flex-wrap gap-8" role="list">
             <a
               className="text-sm px-4 py-2 rounded-xl"
-              href="https://instagram.com/"
+              href="https://www.instagram.com/track_trip.trance/"
               target="_blank"
               rel="noreferrer"
               aria-label="Instagram"
@@ -170,7 +170,7 @@ export default function Landing() {
             </a>
             <a
               className="text-sm px-4 py-2 rounded-xl"
-              href="https://youtube.com/"
+              href="https://www.youtube.com/@tracktripil"
               target="_blank"
               rel="noreferrer"
               aria-label="YouTube"
@@ -180,7 +180,7 @@ export default function Landing() {
             </a>
             <a
               className="text-sm px-4 py-2 rounded-xl"
-              href="https://open.spotify.com/"
+              href="https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ?si=ab86a2f7b9b84093"
               target="_blank"
               rel="noreferrer"
               aria-label="Spotify"
@@ -190,7 +190,7 @@ export default function Landing() {
             </a>
             <a
               className="text-sm px-4 py-2 rounded-xl btn-ghost"
-              href="https://tiktok.com/"
+              href="https://www.tiktok.com/@tracktripil"
               target="_blank"
               rel="noreferrer"
               aria-label="TikTok"
