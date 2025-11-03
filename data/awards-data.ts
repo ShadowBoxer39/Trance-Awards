@@ -122,3 +122,39 @@ export function getNominee(catId: string, nomineeId: string) {
   const cat = CATEGORIES_BY_ID[catId];
   return cat?.nominees.find(n => n.id === nomineeId);
 }
+
+
+// /data/awards-data.ts
+export type Nominee = {
+  id: string;
+  name: string;
+  artwork?: string;
+  audioPreview?: string;     // URL to your 30s MP3 *or* full track
+  previewFrom?: number;      // optional start position (sec) if you use a full track
+};
+
+export type Category = {
+  id: string;
+  title: string;
+  description?: string;
+  nominees: Nominee[];
+};
+
+// Example: in the "best-track" category
+{
+  id: "best-track",
+  title: "טראק השנה",
+  description: "הטראק הכי טוב שיצא השנה",
+  nominees: [
+    {
+      id: "mystic-reborn",
+      name: "Mystic - Reborn",
+      artwork: "/images/mystic - reborn.jpg",
+      audioPreview: "/audio/mystic-reborn-30.mp3" // already trimmed to 30s
+      // OR if you only have the full song:
+      // audioPreview: "https://cdn.example.com/mystic-reborn-full.mp3",
+      // previewFrom: 45, // start at 00:45 and we’ll auto-stop after 30s
+    },
+    // ...rest
+  ]
+}
