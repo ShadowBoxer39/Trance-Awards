@@ -217,7 +217,7 @@ async function buildStoryImage(selections: Record<string, string>) {
         ctx.restore();
       } catch {
         ctx.fillStyle = "rgba(255,255,255,0.15)";
-        roundRect(ctx, artX, artY, artSize, 16);
+        roundRect(ctx, artX, artY, artSize, artSize, 16);
         ctx.fill();
       }
     }
