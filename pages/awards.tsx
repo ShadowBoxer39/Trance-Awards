@@ -11,18 +11,7 @@ const BRAND = {
 };
 
 /** ───────────────── TYPES ───────────────── */
-export type Nominee = {
-  id: string;
-  name: string;
-  artwork?: string;
-  audioPreview?: string; // used only by 'best-track'
-};
-export type Category = {
-  id: string;
-  title: string;
-  description?: string;
-  nominees: Nominee[];
-};
+import { CATEGORIES, Category, Nominee } from "@/data/awards-data";
 
 /** ─────────────── SMART-FIT ARTWORK ─────────────── */
 function Artwork({ src, alt }: { src?: string; alt: string }) {
