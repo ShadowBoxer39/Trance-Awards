@@ -3,85 +3,15 @@ import Head from "next/head";
 import Link from "next/link";
 import React from "react";
 
+import { CATEGORIES } from "@/data/awards-data";
+import type { Category, Nominee } from "@/data/awards-data";
+
 /** ───────── BRAND ───────── */
 const BRAND = {
   title: "פרסי השנה 2025",
   logo: "/images/logo.png",
   siteUrl: "https://trance-awards.vercel.app",
 };
-
-/** ───────── DATA (mirror categories used on awards page) ───────── */
-type Nominee = { id: string; name: string; artwork?: string };
-type Category = { id: string; title: string; nominees: Nominee[] };
-
-const CATEGORIES: Category[] = [
-  {
-    id: "best-artist",
-    title: "אמן השנה",
-    nominees: [
-      { id: "libra", name: "Libra" },
-      { id: "gorovich", name: "Gorovich", artwork: "/images/Gorovich.webp" },
-      { id: "freedom-fighters", name: "Freedom Fighters", artwork: "/images/Freedom Fighters.png" },
-      { id: "mystic", name: "Mystic", artwork: "/images/Mystic.jpg" },
-      { id: "bliss", name: "Bliss", artwork: "/images/bliss.jpg" },
-      { id: "cosmic-flow", name: "Cosmic Flow", artwork: "/images/cosmic flow.webp" },
-    ],
-  },
-  {
-    id: "best-female-artist",
-    title: "אמנית השנה",
-    nominees: [
-      { id: "artmis", name: "Artmis", artwork: "/images/artmis.jpg" },
-      { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
-      { id: "chuka", name: "Chuka", artwork: "/images/chuka.jpg" },
-    ],
-  },
-  {
-    id: "best-group",
-    title: "הרכב השנה",
-    nominees: [
-      { id: "bigitam-detune", name: "Bigitam & Detune", artwork: "/images/bigitam & detune.png" },
-      { id: "uncharted-territory", name: "Uncharted Territory", artwork: "/images/Uncharted Territory.webp" },
-      { id: "humanoids", name: "Humanoids", artwork: "/images/Humanoids.jpg" },
-      { id: "outsiders", name: "Outsiders", artwork: "/images/Outsiders.webp" },
-      { id: "rising-dust", name: "Rising Dust", artwork: "/images/rising dust.jpg" },
-    ],
-  },
-  {
-    id: "best-album",
-    title: "אלבום השנה",
-    nominees: [
-      { id: "libra-subjective", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg" },
-      { id: "gorovich-creative", name: "Gorovich - Creative Acts", artwork: "/images/gorovich creative acts album.jpg" },
-      { id: "bliss-me-vs-me", name: "Bliss - Me vs Me", artwork: "/images/bliss me vs me album.jpg" },
-      { id: "cosmic-flow-infinity", name: "Cosmic Flow - Infinity", artwork: "/images/cosmic flow infinity album.jpg" },
-      { id: "2minds-acid", name: "2Minds - Acid Therapy", artwork: "/images/2minds acid therapy album.jpg" },
-    ],
-  },
-  {
-    id: "best-track",
-    title: "טראק השנה",
-    nominees: [
-      { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective track.jpg" },
-      { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg" },
-      { id: "2minds-nova", name: "2Minds - Nova", artwork: "/images/2minds nova track.jpg" },
-      { id: "uncharted-brain-event", name: "Uncharted Territory - Brain Event", artwork: "/images/Uncharted Territory - brain event track.webp" },
-      { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg" },
-      { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg" },
-      { id: "nevo-some1-guide", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg" },
-    ],
-  },
-  {
-    id: "breakthrough",
-    title: "פריצת השנה",
-    nominees: [
-      { id: "bigitam", name: "Bigitam", artwork: "/images/bigitam & detune.png" },
-      { id: "mystic", name: "Mystic", artwork: "/images/Mystic.jpg" },
-      { id: "artmis", name: "Artmis", artwork: "/images/artmis.jpg" },
-      { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
-    ],
-  },
-];
 
 /** ───────── UTIL ───────── */
 function getChosen(selections: Record<string, string> | null) {
@@ -110,7 +40,13 @@ function roundRect(
   ctx.closePath();
 }
 
-function fitRtlText(ctx: CanvasRenderingContext2D, text: string, xRight: number, y: number, maxWidth: number) {
+function fitRtlText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  xRight: number,
+  y: number,
+  maxWidth: number
+) {
   if (ctx.measureText(text).width <= maxWidth) {
     ctx.fillText(text, xRight + maxWidth, y, maxWidth);
     return;
@@ -125,7 +61,7 @@ function fitRtlText(ctx: CanvasRenderingContext2D, text: string, xRight: number,
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
-    img.crossOrigin = "anonymous";
+    img.crossOrigin = "anonymous"; // safe for same-origin /images
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
@@ -135,7 +71,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 /** Build a 1080×1920 IG Story PNG and return dataURL */
 async function buildStoryImage(selections: Record<string, string>) {
   const W = 1080;
-  const H = 1920;
+  const H = 1920; // Instagram Story
   const padX = 64;
   const padY = 64;
 
@@ -145,7 +81,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   const ctx = canvas.getContext("2d")!;
   ctx.direction = "rtl";
 
-  // Background
+  // Background gradient
   const bg = ctx.createLinearGradient(0, 0, W, H);
   bg.addColorStop(0, "#141320");
   bg.addColorStop(1, "#0a0b10");
@@ -169,7 +105,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   ctx.arc(W * 0.15, H * 0.18, 650, 0, Math.PI * 2);
   ctx.fill();
 
-  // Logo
+  // Logo (top-right)
   try {
     const logo = await loadImage(BRAND.logo);
     const L = 140;
@@ -187,9 +123,9 @@ async function buildStoryImage(selections: Record<string, string>) {
   ctx.fillText("הצבעתי!", W - padX, 360);
 
   ctx.font = "700 68px 'Arial'";
-  ctx.fillText("פרסי השנה בטראנס 2025", W - padX, 440);
+  ctx.fillText("פרסי השנה 2025", W - padX, 440);
 
-  // Picks grid
+  // Picks grid (2 cols × 3 rows)
   const chosen = getChosen(selections);
   const COLS = 2;
   const ROWS = 3;
@@ -203,11 +139,12 @@ async function buildStoryImage(selections: Record<string, string>) {
     const x = padX + col * (cellW + 28);
     const y = startY + row * (cellH + 24);
 
+    // panel
     ctx.fillStyle = "rgba(255,255,255,0.07)";
     roundRect(ctx, x, y, cellW, cellH, 22);
     ctx.fill();
 
-    // artwork
+    // artwork (square, right side)
     const artSize = 180;
     const artX = x + cellW - 18 - artSize;
     const artY = y + 18;
@@ -217,7 +154,7 @@ async function buildStoryImage(selections: Record<string, string>) {
       try {
         const img = await loadImage(artSrc);
         ctx.save();
-        roundRect(ctx, artX, artY, artSize, artSize, 16); // width & height passed
+        roundRect(ctx, artX, artY, artSize, artSize, 16);
         ctx.clip();
         ctx.drawImage(img, artX, artY, artSize, artSize);
         ctx.restore();
@@ -253,7 +190,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   return canvas.toDataURL("image/png");
 }
 
-/** Lightweight confetti */
+/** Lightweight confetti (no dependencies) */
 function burstConfetti() {
   const canvas = document.createElement("canvas");
   canvas.className = "pointer-events-none fixed inset-0 z-50";
@@ -275,10 +212,12 @@ function burstConfetti() {
     spin: -0.2 + Math.random() * 0.4,
   }));
 
-  let running = true;
-  setTimeout(() => (running = false), 1800);
+  let last = performance.now();
+  const endAt = last + 1800;
 
-  function tick() {
+  function tick(now: number) {
+    const dt = Math.min(32, now - last);
+    last = now;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const p of pieces) {
       p.x += p.vx;
@@ -291,28 +230,16 @@ function burstConfetti() {
       ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
       ctx.restore();
     }
-    if (running) requestAnimationFrame(tick);
+    if (now < endAt) requestAnimationFrame(tick);
     else document.body.removeChild(canvas);
   }
   requestAnimationFrame(tick);
-}
-
-/** Helpers for sharing */
-function isMobile() {
-  if (typeof navigator === "undefined") return false;
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
-  const res = await fetch(dataUrl);
-  const blob = await res.blob();
-  return new File([blob], filename, { type: blob.type || "image/png" });
 }
 
 /** ───────── PAGE ───────── */
 export default function Thanks() {
   const [imgUrl, setImgUrl] = React.useState<string | null>(null);
   const [selections, setSelections] = React.useState<Record<string, string> | null>(null);
-  const [sharing, setSharing] = React.useState(false);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
@@ -336,50 +263,42 @@ export default function Thanks() {
   const caption =
     "הצבעתי בפרסי השנה של יוצאים לטראק! 🎶 trance-awards.vercel.app";
 
-  async function shareStory() {
+  async function shareImage() {
     if (!imgUrl) return;
-    setSharing(true);
     try {
-      const file = await dataUrlToFile(imgUrl, "trance-awards-story.png");
+      const res = await fetch(imgUrl);
+      const blob = await res.blob();
+      const file = new File([blob], "trance-awards-story.png", { type: "image/png" });
 
-      // @ts-ignore - TS doesn't know canShare(files)
+      // @ts-ignore - canShare typing varies
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         // @ts-ignore
         await navigator.share({
+          text: caption,
           files: [file],
           title: "Trance Awards 2025",
-          text: caption,
         });
-        setSharing(false);
         return;
       }
-
-      // Fallback: download + open IG camera (user chooses from gallery)
+      // Fallback: download
       const a = document.createElement("a");
       a.href = imgUrl;
       a.download = "trance-awards-story.png";
       a.click();
-
-      if (isMobile()) {
-        window.location.href = "instagram://story-camera";
-      } else {
-        alert("התמונה נשמרה. פתחו את אינסטגרם ובחרו אותה מהגלריה לסטורי.");
-      }
-    } catch (err) {
-      console.log("share failed", err);
-      alert("אם השיתוף לא נתמך, שמרו את התמונה ושתפו אותה לסטורי מהגלריה.");
-    } finally {
-      setSharing(false);
+      alert("שמרנו את התמונה. פתחו אותה ושיתפו ל-Instagram Story.");
+    } catch {
+      const a = document.createElement("a");
+      a.href = imgUrl!;
+      a.download = "trance-awards-story.png";
+      a.click();
     }
   }
 
   async function copyCaption() {
     try {
       await navigator.clipboard.writeText(caption);
-      alert("הכיתוב הועתק. הדביקו אותו בסטורי ✨");
-    } catch {
-      alert("לא הצלחנו להעתיק. נסו ידנית.");
-    }
+      alert("הטקסט הועתק ✓");
+    } catch {}
   }
 
   return (
@@ -407,7 +326,7 @@ export default function Thanks() {
 
             {imgUrl ? (
               <>
-                {/* Phone-like frame preview */}
+                {/* phone-like preview */}
                 <div className="mx-auto w-full max-w-[420px]">
                   <div className="relative rounded-[2.2rem] border border-white/10 shadow-2xl overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
@@ -415,19 +334,15 @@ export default function Thanks() {
                       src={imgUrl}
                       alt="Instagram Story — I Voted"
                       className="w-full aspect-[9/16] object-cover"
+                      style={{ display: "block" }}
                     />
                   </div>
                 </div>
 
                 <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
-                  <button
-                    className="btn-primary rounded-2xl px-5 py-2 disabled:opacity-50"
-                    onClick={shareStory}
-                    disabled={sharing}
-                  >
-                    {sharing ? "משתף…" : "שתף לסטורי (נייד)"}
+                  <button className="btn-primary rounded-2xl px-5 py-2" onClick={shareImage}>
+                    שתפו לסטורי
                   </button>
-
                   <a
                     className="btn-ghost rounded-2xl px-5 py-2"
                     href={imgUrl}
@@ -435,19 +350,16 @@ export default function Thanks() {
                   >
                     שמור כתמונה
                   </a>
-
                   <button className="btn-ghost rounded-2xl px-5 py-2" onClick={copyCaption}>
-                    העתק כיתוב
+                    העתק טקסט לשיתוף
                   </button>
-
                   <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
                     חזרה לדף הראשי
                   </Link>
                 </div>
 
-                <div className="text-xs text-white/60 mt-4 leading-relaxed space-y-1">
-                  <div>באנדרואיד השיתוף לרוב עובד ישירות. ב-iOS שמרו ואז פתחו Instagram → Story ובחרו מהגלריה.</div>
-                  <div>אם נפתח מסך המצלמה של אינסטגרם – בחרו את התמונה שהורדתם מהגלריה.</div>
+                <div className="text-xs text-white/60 mt-4 leading-relaxed">
+                  אם לחיצה על “שתפו לסטורי” לא פותחת שיתוף – שמרו את התמונה ושתפו אותה ידנית ל-Instagram Story.
                 </div>
               </>
             ) : (
