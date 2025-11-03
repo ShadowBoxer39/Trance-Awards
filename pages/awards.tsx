@@ -2,17 +2,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CATEGORIES, Category, Nominee } from "@/data/awards-data";
 import { useRouter } from "next/router";
+
+// ✅ one source of truth for data & types
+import { CATEGORIES } from "@/data/awards-data";
+import type { Category, Nominee } from "@/data/awards-data";
 
 /** ───────────────── BRAND ───────────────── */
 const BRAND = {
   logo: "/images/logo.png",
   title: "פרסי השנה 2025",
 };
-
-/** ───────────────── TYPES ───────────────── */
-import { CATEGORIES, Category, Nominee } from "@/data/awards-data";
 
 /** ─────────────── SMART-FIT ARTWORK ─────────────── */
 function Artwork({ src, alt }: { src?: string; alt: string }) {
@@ -84,9 +84,6 @@ class GlobalAudio {
   }
 }
 
-/** ─────────────── DATA ─────────────── */
-
-
 /** ─────────────── PAGE ─────────────── */
 export default function Awards() {
   const [selections, setSelections] = useState<Record<string, string>>({});
@@ -100,9 +97,7 @@ export default function Awards() {
   const [, force] = useState(0);
   useEffect(() => {
     const unsub = GlobalAudio.inst.onChange(() => force((n) => n + 1));
-    return () => {
-      unsub();
-    };
+    return () => unsub();
   }, []);
 
   const canSubmit = useMemo(
@@ -229,8 +224,7 @@ export default function Awards() {
                     <div className="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div
                         dir="ltr"
-                        className="font-bold text-[13px] sm:text-sm leading-snug text-white text-center
-                                   break-words hyphens-auto line-clamp-2 min-h-[2.9em]"
+                        className="font-bold text-[13px] sm:text-sm leading-snug text-white text-center break-words hyphens-auto line-clamp-2 min-h-[2.9em]"
                         title={n.name}
                       >
                         {n.name}
