@@ -32,6 +32,7 @@ export const CATEGORIES: Category[] = [
       { id: "captain-hook", name: "Captain Hook", artwork: "/images/.jpg" },
       { id: "hujaboy", name: "Hujaboy", artwork: "/images/.jpg" },
       { id: "skizologic", name: "Skizologic", artwork: "/images/.jpg" },
+      { id: "outoforbit", name: "Out Of Orbit", artwork: "/images/.jpg" },
     ],
   },
   {
