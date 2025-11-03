@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 /** ───────────────── BRAND ───────────────── */
 const BRAND = {
@@ -171,6 +172,7 @@ const CATEGORIES: Category[] = [
 /** ─────────────── PAGE ─────────────── */
 export default function Awards() {
   const [selections, setSelections] = useState<Record<string, string>>({});
+  const router = useRouter();
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl"); // Hebrew flow
@@ -191,32 +193,32 @@ export default function Awards() {
   const choose = (categoryId: string, nomineeId: string) =>
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
- const submitVote = async () => {
-  try {
-    const r = await fetch("/api/submit-vote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selections }),
-    });
+  const submitVote = async () => {
+    try {
+      const r = await fetch("/api/submit-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selections }),
+      });
 
-    if (r.ok) {
-      alert("תודה! הקול שלך נקלט 🙌");
-      return;
-    }
+      if (r.ok) {
+        // ✅ on success, go to thank-you page
+        router.push("/thanks");
+        return;
+      }
 
-    const j = await r.json().catch(() => ({}));
-    if (r.status === 409 || j?.error === "duplicate_vote") {
-      alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
-    } else if (r.status === 400) {
-      alert("נראה שחסר מידע להצבעה. נסו שוב.");
-    } else {
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 409 || j?.error === "duplicate_vote") {
+        alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
+      } else if (r.status === 400) {
+        alert("נראה שחסר מידע להצבעה. נסו שוב.");
+      } else {
+        alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+      }
+    } catch {
       alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
     }
-  } catch {
-    alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
-  }
-};
-
+  };
 
   return (
     <main className="neon-backdrop min-h-screen text-white">
