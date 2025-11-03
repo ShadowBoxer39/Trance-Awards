@@ -138,10 +138,10 @@ async function buildStoryImage(selections: Record<string, string>) {
   const ctx = canvas.getContext("2d")!;
   ctx.direction = "rtl";
 
-  // Background
+  // Background gradient
   const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, "#0a0b10");
-  bg.addColorStop(1, "#0b0b0f");
+  bg.addColorStop(0, "#141320");
+  bg.addColorStop(1, "#0a0b10");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
@@ -176,7 +176,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   // Title & subtitle
   ctx.fillStyle = "#fff";
   ctx.textAlign = "right";
-  ctx.font = "700 96px 'Arial'";
+  ctx.font = "700 100px 'Arial'";
   ctx.fillText("הצבעתי!", W - padX, 360);
 
   ctx.font = "700 68px 'Arial'";
@@ -217,7 +217,7 @@ async function buildStoryImage(selections: Record<string, string>) {
         ctx.restore();
       } catch {
         ctx.fillStyle = "rgba(255,255,255,0.15)";
-        roundRect(ctx, artX, artY, artSize, artSize, 16);
+        roundRect(ctx, artX, artY, artSize, 16);
         ctx.fill();
       }
     }
@@ -247,10 +247,56 @@ async function buildStoryImage(selections: Record<string, string>) {
   return canvas.toDataURL("image/png");
 }
 
+/** Lightweight confetti (no dependencies) */
+function burstConfetti(refEl: HTMLElement | null) {
+  if (!refEl) return;
+  const canvas = document.createElement("canvas");
+  canvas.className = "pointer-events-none fixed inset-0 z-50";
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext("2d")!;
+  document.body.appendChild(canvas);
+
+  const COUNT = 160;
+  const colors = ["#FF5AA5", "#7B61FF", "#FFD166", "#06D6A0", "#4ECDC4", "#ffffff"];
+  const pieces = new Array(COUNT).fill(0).map(() => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * 80,
+    r: 4 + Math.random() * 6,
+    vx: -2 + Math.random() * 4,
+    vy: 2 + Math.random() * 3,
+    color: colors[(Math.random() * colors.length) | 0],
+    tilt: Math.random() * Math.PI,
+    spin: -0.2 + Math.random() * 0.4,
+  }));
+
+  let t0 = performance.now();
+  function tick(t: number) {
+    const dt = Math.min(32, t - t0);
+    t0 = t;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of pieces) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.tilt += p.spin;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.tilt);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
+      ctx.restore();
+    }
+    if (t - (performance.now() - 1800) < 1800) requestAnimationFrame(tick);
+    else document.body.removeChild(canvas);
+  }
+  requestAnimationFrame(tick);
+}
+
 /** ───────── PAGE ───────── */
 export default function Thanks() {
   const [imgUrl, setImgUrl] = React.useState<string | null>(null);
   const [selections, setSelections] = React.useState<Record<string, string> | null>(null);
+  const cardRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
@@ -259,13 +305,62 @@ export default function Thanks() {
       if (raw) {
         const parsed = JSON.parse(raw);
         setSelections(parsed);
-        // build story image right away
-        buildStoryImage(parsed).then(setImgUrl).catch(() => setImgUrl(null));
+        buildStoryImage(parsed)
+          .then((url) => {
+            setImgUrl(url);
+            // celebrate 🎉
+            burstConfetti(cardRef.current);
+          })
+          .catch(() => setImgUrl(null));
       }
     } catch {
       setImgUrl(null);
     }
   }, []);
+
+  const caption =
+    "הצבעתי בפרסי השנה של יוצאים לטראק! 🎶 trance-awards.vercel.app";
+
+  async function shareImage() {
+    if (!imgUrl) return;
+    try {
+      const res = await fetch(imgUrl);
+      const blob = await res.blob();
+      const file = new File([blob], "trance-awards-story.png", { type: "image/png" });
+
+      // Web Share with files (Android Chrome, iOS 15+ Safari (some versions))
+      // @ts-ignore
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        // @ts-ignore
+        await navigator.share({
+          text: caption,
+          files: [file],
+          title: "Trance Awards 2025",
+        });
+        return;
+      }
+      // Fallback: direct download
+      const a = document.createElement("a");
+      a.href = imgUrl;
+      a.download = "trance-awards-story.png";
+      a.click();
+      alert("שמרנו את התמונה. פתחו אותה ושיתפו ל-Instagram Story.");
+    } catch {
+      const a = document.createElement("a");
+      a.href = imgUrl;
+      a.download = "trance-awards-story.png";
+      a.click();
+    }
+  }
+
+  async function copyCaption() {
+    try {
+      await navigator.clipboard.writeText(caption);
+      alert("הטקסט הועתק ✓");
+    } catch {
+      // ignore
+    }
+  }
 
   return (
     <>
@@ -285,32 +380,51 @@ export default function Thanks() {
         </header>
 
         <section className="max-w-6xl mx-auto px-4 py-10">
-          <div className="glass rounded-3xl p-6 md:p-8 text-center max-w-3xl mx-auto">
+          <div ref={cardRef} className="glass rounded-3xl p-6 md:p-8 text-center max-w-3xl mx-auto">
             <p className="text-white/80 mb-6">
-              הנה תמונת שיתוף בגודל סטורי (1080×1920). שמרו ושתפו באינסטגרם!
+              הכנו לך תמונת שיתוף מותאמת לסטורי (1080×1920). שתפו אותה ב-Instagram!
             </p>
 
             {imgUrl ? (
               <>
-                <img
-                  src={imgUrl}
-                  alt="Instagram Story — I Voted"
-                  className="mx-auto w-full max-w-[420px] rounded-2xl border border-white/10 shadow-lg"
-                />
+                {/* Pretty phone-frame preview */}
+                <div className="mx-auto w-full max-w-[420px]">
+                  <div className="relative rounded-[2.2rem] border border-white/10 shadow-2xl overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+                    <img
+                      src={imgUrl}
+                      alt="Instagram Story — I Voted"
+                      className="w-full aspect-[9/16] object-cover"
+                      style={{ display: "block" }}
+                    />
+                  </div>
+                </div>
+
                 <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
-                  <a
+                  <button
                     className="btn-primary rounded-2xl px-5 py-2"
+                    onClick={shareImage}
+                  >
+                    שתפו לסטורי
+                  </button>
+                  <a
+                    className="btn-ghost rounded-2xl px-5 py-2"
                     href={imgUrl}
                     download="i-voted-trance-awards-2025-story.png"
                   >
                     שמור כתמונה
                   </a>
+                  <button className="btn-ghost rounded-2xl px-5 py-2" onClick={copyCaption}>
+                    העתק טקסט לשיתוף
+                  </button>
                   <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
                     חזרה לדף הראשי
                   </Link>
                 </div>
-                <div className="text-xs text-white/60 mt-3">
-                  טיפ: ב-iOS/Android פתחו את התמונה ושתפו ל-Instagram Story.
+
+                <div className="text-xs text-white/60 mt-4 leading-relaxed">
+                  בטלפונים נתמכים לחיצה על “שתפו לסטורי” תפתח את חלון השיתוף עם התמונה.
+                  אם לא נפתח שיתוף – שמרו את התמונה ושתפו אותה ידנית ל-Instagram Story.
                 </div>
               </>
             ) : (
