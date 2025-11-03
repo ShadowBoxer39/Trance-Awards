@@ -1,11 +1,10 @@
-// pages/_app.tsx
-import "../styles/globals.css";            // ⬅️ use relative path
+import "../styles/globals.css";
 import type { AppProps } from "next/app";
-import { milkyway } from "../lib/fonts";   // ⬅️ already relative
+import { milkyway, gan } from "../lib/fonts";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <main className={`${milkyway.variable} font-milkyway`}>
+    <main className={`${milkyway.variable} ${gan.variable} font-gan`}>
       <Component {...pageProps} />
     </main>
   );
