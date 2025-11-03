@@ -84,9 +84,12 @@ class GlobalAudio {
     return !!this.current && (!src || this.current.src.endsWith(src));
   }
   onChange(cb: () => void) {
-    this.listeners.add(cb);
-    return () => this.listeners.delete(cb);
-  }
+  this.listeners.add(cb);
+  // return a void cleanup
+  return () => {
+    this.listeners.delete(cb);
+  };
+}
   private notify() {
     this.listeners.forEach((cb) => cb());
   }
