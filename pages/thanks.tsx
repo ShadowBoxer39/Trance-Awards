@@ -187,7 +187,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   ctx.fillText("הצבעתי!", W - padX, 360);
 
   ctx.font = "700 68px 'Arial'";
-  ctx.fillText("פרסי השנה 2025", W - padX, 440);
+  ctx.fillText("פרסי השנה בטראנס 2025", W - padX, 440);
 
   // Picks grid
   const chosen = getChosen(selections);
