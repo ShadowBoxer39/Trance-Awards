@@ -14,7 +14,7 @@ export type Nominee = {
   id: string;
   name: string;
   artwork?: string;
-  audioPreview?: string;
+  audioPreview?: string; // used only by 'best-track'
 };
 export type Category = {
   id: string;
@@ -27,6 +27,7 @@ export type Category = {
 function Artwork({ src, alt }: { src?: string; alt: string }) {
   const [isPortrait, setIsPortrait] = React.useState(false);
   return (
+    // smaller + squarer on mobile to reduce vertical scroll
     <div className="relative w-full overflow-hidden rounded-t-xl bg-black/60 aspect-[1/1] sm:aspect-[4/3] md:aspect-[16/9]">
       {src ? (
         <img
@@ -56,21 +57,24 @@ class GlobalAudio {
   private static _inst: GlobalAudio;
   private current?: HTMLAudioElement | null;
   private listeners = new Set<() => void>();
+
   static get inst() {
     if (!this._inst) this._inst = new GlobalAudio();
     return this._inst;
   }
+
   play(src: string) {
     if (this.current) {
       this.current.pause();
       this.current.currentTime = 0;
     }
     const a = new Audio(src);
-    void a.play();
+    void a.play(); // ignore promise
     this.current = a;
     a.addEventListener("ended", () => this.notify());
     this.notify();
   }
+
   stop() {
     if (!this.current) return;
     this.current.pause();
@@ -78,14 +82,22 @@ class GlobalAudio {
     this.current = null;
     this.notify();
   }
+
   isPlaying(src?: string) {
     return !!this.current && (!src || this.current.src.endsWith(src));
   }
+
+  // subscribe to changes; returns cleanup fn
   onChange(cb: () => void): () => void {
     this.listeners.add(cb);
     return () => {
       this.listeners.delete(cb);
     };
+  }
+
+  // ✅ the method that was missing
+  private notify(): void {
+    this.listeners.forEach((cb) => cb());
   }
 }
 
@@ -170,14 +182,15 @@ export default function Awards() {
   const [selections, setSelections] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    document.documentElement.setAttribute("dir", "rtl");
+    document.documentElement.setAttribute("dir", "rtl"); // Hebrew flow
   }, []);
 
+  // re-render on audio change (safe cleanup)
   const [, force] = useState(0);
   useEffect(() => {
     const unsub: () => void = GlobalAudio.inst.onChange(() => force((n) => n + 1));
     return () => {
-      unsub();
+      unsub(); // cleanup
     };
   }, []);
 
@@ -194,7 +207,6 @@ export default function Awards() {
   };
 
   return (
-    // NOTE: removed font-gan
     <main className="neon-backdrop min-h-screen text-white">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
@@ -228,6 +240,7 @@ export default function Awards() {
               <div className="text-xs sm:text-sm text-white/60">בחירה אחת</div>
             </div>
 
+            {/* smaller grid on mobile */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {cat.nominees.map((n) => {
                 const selected = selections[cat.id] === n.id;
@@ -245,6 +258,7 @@ export default function Awards() {
                   >
                     <Artwork src={n.artwork} alt={n.name} />
 
+                    {/* Audio controls ONLY for 'best-track' where audio exists */}
                     {isTrack && canPlay && (
                       <div className="absolute top-2 end-2 z-10 flex items-center gap-2">
                         {!playing ? (
@@ -271,6 +285,7 @@ export default function Awards() {
                       </div>
                     )}
 
+                    {/* footer: stronger contrast + LTR title + 2 lines */}
                     <div
                       className="p-3 flex items-center justify-between gap-2 cursor-pointer bg-black/30"
                       onClick={() => choose(cat.id, n.id)}
@@ -299,6 +314,7 @@ export default function Awards() {
           </section>
         ))}
 
+        {/* Submit */}
         <div className="glass rounded-xl p-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="text-white/80 text-xs sm:text-sm">
