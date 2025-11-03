@@ -70,6 +70,7 @@ export const CATEGORIES: Category[] = [
       { id: "bliss-me-vs-me", name: "Bliss - Me vs Me", artwork: "/images/bliss me vs me album.jpg" },
       { id: "cosmic-flow-infinity", name: "Cosmic Flow - Infinity", artwork: "/images/cosmic flow infinity album.jpg" },
       { id: "2minds-acid", name: "2Minds - Acid Therapy", artwork: "/images/2minds acid therapy album.jpg" },
+      { id: "detune-echoes", name: "Detune - Echoes", artwork: "/images/.jpg" },
       { id: "astral-mankind", name: "Astral Projection - for All Mankind", artwork: "/images/.jpg" },
       { id: "some1-message", name: "Some1 - Message From The Deep", artwork: "/images/.jpg" },
       { id: "persona-interplay", name: "Persona - Interplay", artwork: "/images/.jpg" },
