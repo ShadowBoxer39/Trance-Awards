@@ -6,15 +6,15 @@ import React from "react";
 
 const BRAND = {
   title: "פרסי השנה 2025",
-  // if your file is at /public/images/logo.png, change to "/images/logo.png"
-  logo: "images/logo.png",
+  // file must be at /public/images/logo.png
+  logo: "/images/logo.png",
 };
 
 const SOCIALS = [
-  { name: "TikTok", url: "https://www.tiktok.com/@tracktripil" },
-  { name: "Spotify", url: "https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ" },
-  { name: "YouTube", url: "https://www.youtube.com/@tracktripil" },
-  { name: "Instagram", url: "https://www.instagram.com/track_trip.trance/" },
+  { name: "Instagram", url: "https://www.instagram.com/track_trip.trance/", style: { background: "#E1306C", color: "#fff" } },
+  { name: "YouTube",   url: "https://www.youtube.com/@tracktripil",        style: { background: "#FF0000", color: "#fff" } },
+  { name: "Spotify",   url: "https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ", style: { background: "#1DB954", color: "#0b0b0b" } },
+  { name: "TikTok",    url: "https://www.tiktok.com/@tracktripil",         style: { background: "#000000", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" } },
 ];
 
 export default function Landing() {
@@ -48,14 +48,17 @@ export default function Landing() {
               <span className="text-sm opacity-80 hidden sm:inline">יוצאים לטראק</span>
             </Link>
             <div className="ms-auto">
-              <Link href="/awards" className="btn-primary rounded-2xl px-4 py-2 inline-block">
+              <Link
+                href="/awards"
+                className="btn-primary rounded-2xl px-4 py-2 inline-flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 overflow-hidden"
+              >
                 התחילו הצבעה
               </Link>
             </div>
           </div>
         </header>
 
-        {/* HERO (single-column content only) */}
+        {/* HERO */}
         <section className="max-w-6xl mx-auto px-4 pt-10 sm:pt-16">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
@@ -80,7 +83,10 @@ export default function Landing() {
               הקהילה בוחרת את ההיילייטס של השנה.
             </p>
 
-            <Link href="/awards" className="btn-primary rounded-2xl px-6 py-3 text-base inline-block">
+            <Link
+              href="/awards"
+              className="btn-primary rounded-2xl px-6 py-3 text-base inline-flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 overflow-hidden"
+            >
               המשך להצבעה
             </Link>
           </div>
@@ -104,10 +110,11 @@ export default function Landing() {
             {SOCIALS.map((s) => (
               <a
                 key={s.name}
-                className="px-4 py-2 rounded-xl btn-ghost"
                 href={s.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="px-4 py-2 rounded-xl font-medium"
+                style={s.style as React.CSSProperties}
               >
                 {s.name}
               </a>
@@ -122,7 +129,10 @@ export default function Landing() {
               <div className="text-base md:text-lg font-[700]">מוכנים לבחור?</div>
               <div className="text-white/70 text-sm">ההצבעה פתוחה עכשיו.</div>
             </div>
-            <Link href="/awards" className="btn-primary rounded-2xl px-6 py-3 text-base">
+            <Link
+              href="/awards"
+              className="btn-primary rounded-2xl px-6 py-3 text-base inline-flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 overflow-hidden"
+            >
               התחילו הצבעה
             </Link>
           </div>
