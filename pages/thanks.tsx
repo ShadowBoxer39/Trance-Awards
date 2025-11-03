@@ -93,7 +93,14 @@ function getChosen(selections: Record<string, string> | null) {
   }).filter((x) => x.nomineeName !== "-");
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -118,7 +125,7 @@ function fitRtlText(ctx: CanvasRenderingContext2D, text: string, xRight: number,
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
-    img.crossOrigin = "anonymous"; // safe for same-origin /images
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
@@ -128,7 +135,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 /** Build a 1080×1920 IG Story PNG and return dataURL */
 async function buildStoryImage(selections: Record<string, string>) {
   const W = 1080;
-  const H = 1920; // Instagram Story
+  const H = 1920;
   const padX = 64;
   const padY = 64;
 
@@ -138,7 +145,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   const ctx = canvas.getContext("2d")!;
   ctx.direction = "rtl";
 
-  // Background gradient
+  // Background
   const bg = ctx.createLinearGradient(0, 0, W, H);
   bg.addColorStop(0, "#141320");
   bg.addColorStop(1, "#0a0b10");
@@ -162,7 +169,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   ctx.arc(W * 0.15, H * 0.18, 650, 0, Math.PI * 2);
   ctx.fill();
 
-  // Logo (top-right)
+  // Logo
   try {
     const logo = await loadImage(BRAND.logo);
     const L = 140;
@@ -182,7 +189,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   ctx.font = "700 68px 'Arial'";
   ctx.fillText("פרסי השנה 2025", W - padX, 440);
 
-  // Picks grid (2 cols × 3 rows)
+  // Picks grid
   const chosen = getChosen(selections);
   const COLS = 2;
   const ROWS = 3;
@@ -196,12 +203,11 @@ async function buildStoryImage(selections: Record<string, string>) {
     const x = padX + col * (cellW + 28);
     const y = startY + row * (cellH + 24);
 
-    // panel
     ctx.fillStyle = "rgba(255,255,255,0.07)";
     roundRect(ctx, x, y, cellW, cellH, 22);
     ctx.fill();
 
-    // artwork (square, right side)
+    // artwork
     const artSize = 180;
     const artX = x + cellW - 18 - artSize;
     const artY = y + 18;
@@ -211,7 +217,7 @@ async function buildStoryImage(selections: Record<string, string>) {
       try {
         const img = await loadImage(artSrc);
         ctx.save();
-        roundRect(ctx, artX, artY, artSize, artSize, 16);
+        roundRect(ctx, artX, artY, artSize, artSize, 16); // width & height passed
         ctx.clip();
         ctx.drawImage(img, artX, artY, artSize, artSize);
         ctx.restore();
@@ -247,9 +253,8 @@ async function buildStoryImage(selections: Record<string, string>) {
   return canvas.toDataURL("image/png");
 }
 
-/** Lightweight confetti (no dependencies) */
-function burstConfetti(refEl: HTMLElement | null) {
-  if (!refEl) return;
+/** Lightweight confetti */
+function burstConfetti() {
   const canvas = document.createElement("canvas");
   canvas.className = "pointer-events-none fixed inset-0 z-50";
   canvas.width = window.innerWidth;
@@ -270,10 +275,10 @@ function burstConfetti(refEl: HTMLElement | null) {
     spin: -0.2 + Math.random() * 0.4,
   }));
 
-  let t0 = performance.now();
-  function tick(t: number) {
-    const dt = Math.min(32, t - t0);
-    t0 = t;
+  let running = true;
+  setTimeout(() => (running = false), 1800);
+
+  function tick() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const p of pieces) {
       p.x += p.vx;
@@ -286,17 +291,28 @@ function burstConfetti(refEl: HTMLElement | null) {
       ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
       ctx.restore();
     }
-    if (t - (performance.now() - 1800) < 1800) requestAnimationFrame(tick);
+    if (running) requestAnimationFrame(tick);
     else document.body.removeChild(canvas);
   }
   requestAnimationFrame(tick);
+}
+
+/** Helpers for sharing */
+function isMobile() {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type || "image/png" });
 }
 
 /** ───────── PAGE ───────── */
 export default function Thanks() {
   const [imgUrl, setImgUrl] = React.useState<string | null>(null);
   const [selections, setSelections] = React.useState<Record<string, string> | null>(null);
-  const cardRef = React.useRef<HTMLDivElement | null>(null);
+  const [sharing, setSharing] = React.useState(false);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
@@ -308,8 +324,7 @@ export default function Thanks() {
         buildStoryImage(parsed)
           .then((url) => {
             setImgUrl(url);
-            // celebrate 🎉
-            burstConfetti(cardRef.current);
+            burstConfetti();
           })
           .catch(() => setImgUrl(null));
       }
@@ -321,44 +336,49 @@ export default function Thanks() {
   const caption =
     "הצבעתי בפרסי השנה של יוצאים לטראק! 🎶 trance-awards.vercel.app";
 
-  async function shareImage() {
+  async function shareStory() {
     if (!imgUrl) return;
+    setSharing(true);
     try {
-      const res = await fetch(imgUrl);
-      const blob = await res.blob();
-      const file = new File([blob], "trance-awards-story.png", { type: "image/png" });
+      const file = await dataUrlToFile(imgUrl, "trance-awards-story.png");
 
-      // Web Share with files (Android Chrome, iOS 15+ Safari (some versions))
-      // @ts-ignore
+      // @ts-ignore - TS doesn't know canShare(files)
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         // @ts-ignore
         await navigator.share({
-          text: caption,
           files: [file],
           title: "Trance Awards 2025",
+          text: caption,
         });
+        setSharing(false);
         return;
       }
-      // Fallback: direct download
+
+      // Fallback: download + open IG camera (user chooses from gallery)
       const a = document.createElement("a");
       a.href = imgUrl;
       a.download = "trance-awards-story.png";
       a.click();
-      alert("שמרנו את התמונה. פתחו אותה ושיתפו ל-Instagram Story.");
-    } catch {
-      const a = document.createElement("a");
-      a.href = imgUrl;
-      a.download = "trance-awards-story.png";
-      a.click();
+
+      if (isMobile()) {
+        window.location.href = "instagram://story-camera";
+      } else {
+        alert("התמונה נשמרה. פתחו את אינסטגרם ובחרו אותה מהגלריה לסטורי.");
+      }
+    } catch (err) {
+      console.log("share failed", err);
+      alert("אם השיתוף לא נתמך, שמרו את התמונה ושתפו אותה לסטורי מהגלריה.");
+    } finally {
+      setSharing(false);
     }
   }
 
   async function copyCaption() {
     try {
       await navigator.clipboard.writeText(caption);
-      alert("הטקסט הועתק ✓");
+      alert("הכיתוב הועתק. הדביקו אותו בסטורי ✨");
     } catch {
-      // ignore
+      alert("לא הצלחנו להעתיק. נסו ידנית.");
     }
   }
 
@@ -380,14 +400,14 @@ export default function Thanks() {
         </header>
 
         <section className="max-w-6xl mx-auto px-4 py-10">
-          <div ref={cardRef} className="glass rounded-3xl p-6 md:p-8 text-center max-w-3xl mx-auto">
+          <div className="glass rounded-3xl p-6 md:p-8 text-center max-w-3xl mx-auto">
             <p className="text-white/80 mb-6">
               הכנו לך תמונת שיתוף מותאמת לסטורי (1080×1920). שתפו אותה ב-Instagram!
             </p>
 
             {imgUrl ? (
               <>
-                {/* Pretty phone-frame preview */}
+                {/* Phone-like frame preview */}
                 <div className="mx-auto w-full max-w-[420px]">
                   <div className="relative rounded-[2.2rem] border border-white/10 shadow-2xl overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
@@ -395,18 +415,19 @@ export default function Thanks() {
                       src={imgUrl}
                       alt="Instagram Story — I Voted"
                       className="w-full aspect-[9/16] object-cover"
-                      style={{ display: "block" }}
                     />
                   </div>
                 </div>
 
                 <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
                   <button
-                    className="btn-primary rounded-2xl px-5 py-2"
-                    onClick={shareImage}
+                    className="btn-primary rounded-2xl px-5 py-2 disabled:opacity-50"
+                    onClick={shareStory}
+                    disabled={sharing}
                   >
-                    שתפו לסטורי
+                    {sharing ? "משתף…" : "שתף לסטורי (נייד)"}
                   </button>
+
                   <a
                     className="btn-ghost rounded-2xl px-5 py-2"
                     href={imgUrl}
@@ -414,17 +435,19 @@ export default function Thanks() {
                   >
                     שמור כתמונה
                   </a>
+
                   <button className="btn-ghost rounded-2xl px-5 py-2" onClick={copyCaption}>
-                    העתק טקסט לשיתוף
+                    העתק כיתוב
                   </button>
+
                   <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
                     חזרה לדף הראשי
                   </Link>
                 </div>
 
-                <div className="text-xs text-white/60 mt-4 leading-relaxed">
-                  בטלפונים נתמכים לחיצה על “שתפו לסטורי” תפתח את חלון השיתוף עם התמונה.
-                  אם לא נפתח שיתוף – שמרו את התמונה ושתפו אותה ידנית ל-Instagram Story.
+                <div className="text-xs text-white/60 mt-4 leading-relaxed space-y-1">
+                  <div>באנדרואיד השיתוף לרוב עובד ישירות. ב-iOS שמרו ואז פתחו Instagram → Story ובחרו מהגלריה.</div>
+                  <div>אם נפתח מסך המצלמה של אינסטגרם – בחרו את התמונה שהורדתם מהגלריה.</div>
                 </div>
               </>
             ) : (
