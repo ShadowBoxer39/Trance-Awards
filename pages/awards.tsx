@@ -303,14 +303,32 @@ export default function Awards() {
                     )}
 
                     {/* Footer: name full-width on mobile; side-by-side from sm up */}
-                    <div className="p-3 sm:p-3.5 grid gap-2 sm:grid-cols-[1fr_auto] items-center">
-                      <div
-                        className="font-bold text-[13px] sm:text-base leading-snug text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)] text-center px-1 line-clamp-2"
-                        style={{ minHeight: "2.8em" }}
-                        title={n.name}
-                      >
-                        {n.name}
-                      </div>
+                  <div
+  className="p-3 flex items-center justify-between gap-2 cursor-pointer md:flex-col md:items-stretch"
+  onClick={() => choose(cat.id, n.id)}
+>
+  <div
+    dir="ltr"
+    className="font-bold text-[13px] sm:text-sm leading-snug text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)] text-center line-clamp-2 min-h-[2.9em]"
+    title={n.name}
+  >
+    {n.name}
+  </div>
+
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      choose(cat.id, n.id);
+    }}
+    className={
+      "px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition shrink-0 md:w-full md:mt-1 " +
+      (selected ? "btn-primary border-transparent" : "btn-ghost")
+    }
+    aria-pressed={selected}
+  >
+    {selected ? "נבחר" : "בחר"}
+  </button>
+</div>
 
                       <button
                         onClick={(e) => {
