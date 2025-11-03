@@ -27,7 +27,8 @@ export type Category = {
 function Artwork({ src, alt }: { src?: string; alt: string }) {
   const [isPortrait, setIsPortrait] = React.useState(false);
   return (
-    <div className="relative w-full overflow-hidden rounded-t-2xl bg-black/60 aspect-[4/3] sm:aspect-[16/9]">
+    // smaller + squarer on mobile to reduce vertical scroll
+    <div className="relative w-full overflow-hidden rounded-t-xl bg-black/60 aspect-[1/1] sm:aspect-[4/3] md:aspect-[16/9]">
       {src ? (
         <img
           src={src}
@@ -43,7 +44,7 @@ function Artwork({ src, alt }: { src?: string; alt: string }) {
           loading="lazy"
         />
       ) : (
-        <div className="absolute inset-0 grid place-items-center text-white/50 text-sm">
+        <div className="absolute inset-0 grid place-items-center text-white/50 text-xs">
           ללא תמונה
         </div>
       )}
@@ -178,7 +179,9 @@ export default function Awards() {
   const [, force] = useState(0);
   useEffect(() => {
     const unsub = GlobalAudio.inst.onChange(() => force((n) => n + 1));
-    return () => { unsub(); };
+    return () => {
+      unsub();
+    };
   }, []);
 
   const canSubmit = useMemo(
@@ -197,37 +200,38 @@ export default function Awards() {
     <main className="neon-backdrop min-h-screen text-white font-gan">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3">
             <Image
               src={BRAND.logo}
               alt="יוצאים לטראק"
-              width={40}
-              height={40}
+              width={32}
+              height={32}
               className="rounded-full border border-white/15"
             />
-            <span className="text-sm opacity-80">חזרה לדף הראשי</span>
+            <span className="text-xs sm:text-sm opacity-80">חזרה לדף הראשי</span>
           </Link>
-          <div className="ms-auto text-sm opacity-80">{BRAND.title}</div>
+          <div className="ms-auto text-xs sm:text-sm opacity-80">{BRAND.title}</div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-16">
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-10">
         {CATEGORIES.map((cat) => (
           <section key={cat.id}>
-            <div className="flex items-end justify-between gap-3 mb-4">
+            <div className="flex items-end justify-between gap-3 mb-3">
               <div>
-                <h2 className="gradient-title text-2xl sm:text-3xl font-[700] leading-tight">
+                <h2 className="gradient-title text-xl sm:text-2xl font-[700] leading-tight">
                   {cat.title}
                 </h2>
                 {cat.description && (
-                  <p className="text-white/70 text-sm mt-1">{cat.description}</p>
+                  <p className="text-white/70 text-xs sm:text-sm mt-1">{cat.description}</p>
                 )}
               </div>
-              <div className="text-sm text-white/60">בחירה אחת</div>
+              <div className="text-xs sm:text-sm text-white/60">בחירה אחת</div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* SMALLER GRID: 2 on mobile, 3 on small screens, 4 on large */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {cat.nominees.map((n) => {
                 const selected = selections[cat.id] === n.id;
                 const isTrack = cat.id === "best-track";
@@ -238,7 +242,7 @@ export default function Awards() {
                   <article
                     key={n.id}
                     className={
-                      "group relative overflow-hidden rounded-2xl glass transition " +
+                      "group relative overflow-hidden rounded-xl glass transition " +
                       (selected ? "ring-2 ring-[var(--brand-pink)]" : "hover:border-white/25")
                     }
                   >
@@ -253,7 +257,7 @@ export default function Awards() {
                               e.stopPropagation();
                               GlobalAudio.inst.play(n.audioPreview!);
                             }}
-                            className="px-3 py-1.5 text-xs rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
+                            className="px-2.5 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
                           >
                             ▶︎ האזנה
                           </button>
@@ -263,7 +267,7 @@ export default function Awards() {
                               e.stopPropagation();
                               GlobalAudio.inst.stop();
                             }}
-                            className="px-3 py-1.5 text-xs rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
+                            className="px-2.5 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
                           >
                             ⏹ עצור
                           </button>
@@ -272,16 +276,14 @@ export default function Awards() {
                     )}
 
                     <div
-                      className="p-4 flex items-center justify-between gap-3 cursor-pointer"
+                      className="p-3 flex items-center justify-between gap-2 cursor-pointer"
                       onClick={() => choose(cat.id, n.id)}
                     >
-                      <div className="font-semibold truncate">{n.name}</div>
+                      <div className="font-semibold truncate text-sm">{n.name}</div>
                       <button
                         className={
-                          "px-4 py-2 rounded-xl border text-sm transition " +
-                          (selected
-                            ? "btn-primary border-transparent"
-                            : "btn-ghost")
+                          "px-3 py-1.5 rounded-lg border text-xs transition " +
+                          (selected ? "btn-primary border-transparent" : "btn-ghost")
                         }
                         aria-pressed={selected}
                       >
@@ -296,16 +298,16 @@ export default function Awards() {
         ))}
 
         {/* Submit */}
-        <div className="glass rounded-2xl p-4">
+        <div className="glass rounded-xl p-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="text-white/80 text-sm">
+            <div className="text-white/80 text-xs sm:text-sm">
               ודאו שבחרתם בכל הקטגוריות. תמיד אפשר לשנות לפני שליחה.
             </div>
             <button
               onClick={submitVote}
               disabled={!canSubmit}
               className={
-                "rounded-2xl px-6 py-3 font-semibold " +
+                "rounded-xl px-5 py-2.5 text-sm font-semibold " +
                 (canSubmit ? "btn-primary" : "btn-ghost cursor-not-allowed")
               }
             >
@@ -314,7 +316,7 @@ export default function Awards() {
           </div>
         </div>
 
-        <footer className="text-center text-xs text-white/60 py-8">
+        <footer className="text-center text-[11px] sm:text-xs text-white/60 py-6">
           © {new Date().getFullYear()} יוצאים לטראק — פרסי השנה.
         </footer>
       </div>
