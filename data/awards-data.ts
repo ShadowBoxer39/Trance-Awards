@@ -31,10 +31,12 @@ export const CATEGORIES: Category[] = [
   {
     id: "best-female-artist",
     title: "אמנית השנה",
+    description: "אמנית ישראלית שהוציאה מוזיקה השנה ונתנה בראש, כולל ברחבות בארץ",
     nominees: [
       { id: "artmis", name: "Artmis", artwork: "/images/artmis.jpg" },
       { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
       { id: "chuka", name: "Chuka", artwork: "/images/chuka.jpg" },
+      { id: "atara", name: "Atara", artwork: "/images/atara.jpg" },
     ],
   },
   {
@@ -52,6 +54,7 @@ export const CATEGORIES: Category[] = [
   {
     id: "best-album",
     title: "אלבום השנה",
+    description: "אלבום שיצא השנה והעיף לכם את המוח",
     nominees: [
       { id: "libra-subjective", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg" },
       { id: "gorovich-creative", name: "Gorovich - Creative Acts", artwork: "/images/gorovich creative acts album.jpg" },
@@ -63,6 +66,7 @@ export const CATEGORIES: Category[] = [
   {
     id: "best-track",
     title: "טראק השנה",
+    description: "הטראק שהכי עשה לכם את השנה",
     nominees: [
       { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective track.jpg" },
       { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg" },
