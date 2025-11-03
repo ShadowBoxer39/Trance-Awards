@@ -123,7 +123,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   ctx.fillText("הצבעתי!", W - padX, 360);
 
   ctx.font = "700 68px 'Arial'";
-  ctx.fillText("פרסי השנה 2025", W - padX, 440);
+  ctx.fillText("פרסי השנה בטראנס 2025", W - padX, 440);
 
   // Picks grid (2 cols × 3 rows)
   const chosen = getChosen(selections);
@@ -369,7 +369,7 @@ export default function Thanks() {
                   נסו להצביע שוב או להשתמש באותו מכשיר/חלון.
                 </div>
                 <div className="mt-6">
-                  <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
+                  <Link href="/" className="btn-ghost rounded-צxl px-5 py-2">
                     חזרה לדף הראשי
                   </Link>
                 </div>
