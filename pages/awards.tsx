@@ -191,31 +191,32 @@ export default function Awards() {
   const choose = (categoryId: string, nomineeId: string) =>
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
-  const submitVote = async () => {
+ const submitVote = async () => {
   try {
-    const res = await fetch("/api/submit-vote", {
+    const r = await fetch("/api/submit-vote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ selections }),
     });
-    const data = await res.json().catch(() => ({}));
 
-    if (res.status === 409 && (data?.error === "already_voted" || data?.error === "duplicate_ballot")) {
-      alert("נראה שכבר הצבעת מהמכשיר/חיבור הזה. תודה!");
+    if (r.ok) {
+      alert("תודה! הקול שלך נקלט 🙌");
       return;
     }
 
-    if (!res.ok || !data?.ok) {
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 409 || j?.error === "duplicate_vote") {
+      alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
+    } else if (r.status === 400) {
+      alert("נראה שחסר מידע להצבעה. נסו שוב.");
+    } else {
       alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
-      return;
     }
-
-    alert("תודה! ההצבעה נקלטה 🙌");
-  } catch (e) {
-    console.error(e);
+  } catch {
     alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
   }
 };
+
 
   return (
     <main className="neon-backdrop min-h-screen text-white">
