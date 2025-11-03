@@ -80,7 +80,7 @@ export default function Landing() {
             </h1>
 
             <p className="text-white/80 text-lg mb-8">
-              הקהילה בוחרת את ההיילייטס של השנה.
+              הקהילה בוחרת את פרסי השנה בטראנס.
             </p>
 
             <Link
@@ -97,7 +97,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="glass rounded-3xl p-6">
               <h2 className="text-xl font-[700] mb-2">מי אנחנו — יוצאים לטראק</h2>
-              <p className="text-white/75">פודקאסט/קהילה שמספרים את סיפור הטרנס הישראלי.</p>
+              <p className="text-white/75">תכנית הטראנס הכי גדולה בישראל, הצטרפו לקהילה שלנו .</p>
             </div>
             {/* removed the “מה זה המיזם?” card */}
           </div>
