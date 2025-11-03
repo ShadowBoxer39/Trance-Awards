@@ -1,19 +1,22 @@
 // /data/awards-data.ts
+
+/** TYPES */
 export type Nominee = {
-  id: string;              // unique slug
-  name: string;            // display name
-  artwork?: string;        // /images/my-image.jpg (under /public)
-  audioPreview?: string;   // optional (best-track only)
+  id: string;               // unique slug
+  name: string;             // display name
+  artwork?: string;         // /images/... (under /public)
+  audioPreview?: string;    // optional (best-track only)
+  previewFrom?: number;     // optional start position (sec) if you use a full track
 };
 
 export type Category = {
-  id: string;              // unique slug (e.g., "best-artist")
-  title: string;           // Hebrew title
-  description?: string;    // optional sub text
+  id: string;               // e.g., "best-artist"
+  title: string;            // Hebrew title
+  description?: string;     // optional sub text
   nominees: Nominee[];
 };
 
-/** ---- SINGLE SOURCE OF TRUTH ---- */
+/** DATA — single source of truth */
 export const CATEGORIES: Category[] = [
   {
     id: "best-artist",
@@ -57,8 +60,6 @@ export const CATEGORIES: Category[] = [
       { id: "outsiders", name: "Outsiders", artwork: "/images/Outsiders.webp" },
       { id: "rising-dust", name: "Rising Dust", artwork: "/images/rising dust.jpg" },
       { id: "astral-projection", name: "Astral Projection", artwork: "/images/astral.jpeg" },
-
-    
     ],
   },
   {
@@ -82,19 +83,17 @@ export const CATEGORIES: Category[] = [
     title: "טראק השנה",
     description: "הטראק שהכי עשה לכם את השנה",
     nominees: [
-      { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg" },
-      { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg" },
-      { id: "2minds-nova", name: "2Minds - Nova", artwork: "/images/2minds nova track.jpg" },
-      { id: "uncharted-brain-event", name: "Uncharted Territory - Brain Event", artwork: "/images/Uncharted Territory - brain event track.webp" },
-      { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg" },
-      { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg" },
-      { id: "nevo-some1-guide", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg" },
-      { id: "jupiter", name: "Mystic & Detune - Jupiter", artwork: "/images/jupiter.jpeg" },
-      { id: "mindscam", name: "Amigdala - Mindscam", artwork: "/images/mindscam.jpg" },
-      { id: "lemonade", name: "Out of Orbit & Sandman - Moon Lemonade Pt.2", artwork: "/images/moonlemonade.jpeg" },
-      { id: "barry", name: "Chaos604 - Barry's Trip", artwork: "/images/barrytrip.jpg" },
-      
-      
+      { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg", audioPreview: "/audio/libra-subjective-30.mp3" },
+      { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg", audioPreview: "/audio/mystic-reborn-30.mp3" },
+      { id: "2minds-nova", name: "2Minds - Nova", artwork: "/images/2minds nova track.jpg", audioPreview: "/audio/2minds-nova-30.mp3" },
+      { id: "uncharted-brain-event", name: "Uncharted Territory - Brain Event", artwork: "/images/Uncharted Territory - brain event track.webp", audioPreview: "/audio/uncharted-brain-event-30.mp3" },
+      { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg", audioPreview: "/audio/dubel-k-30.mp3" },
+      { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg", audioPreview: "/audio/artmis-momentum-30.mp3" },
+      { id: "nevo-some1-guide", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg", audioPreview: "/audio/guide-30.mp3" },
+      { id: "jupiter", name: "Mystic & Detune - Jupiter", artwork: "/images/jupiter.jpeg", audioPreview: "/audio/jupiter-30.mp3" },
+      { id: "mindscam", name: "Amigdala - Mindscam", artwork: "/images/mindscam.jpg", audioPreview: "/audio/mindscam-30.mp3" },
+      { id: "lemonade", name: "Out of Orbit & Sandman - Moon Lemonade Pt.2", artwork: "/images/moonlemonade.jpeg", audioPreview: "/audio/moon-lemonade-30.mp3" },
+      { id: "barry", name: "Chaos604 - Barry's Trip", artwork: "/images/barrytrip.jpg", audioPreview: "/audio/barrys-trip-30.mp3" },
     ],
   },
   {
@@ -111,50 +110,15 @@ export const CATEGORIES: Category[] = [
       { id: "chaos604", name: "Chaos604", artwork: "/images/chaos.jpg" },
       { id: "industria", name: "Industria", artwork: "/images/industria.jpg" },
       { id: "mrwilson", name: "Mr. Wilson", artwork: "/images/mrwilson.jpg" },
-      
     ],
   },
 ];
 
-/** Helpers */
-export const CATEGORIES_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+/** HELPERS */
+export const CATEGORIES_BY_ID: Record<string, Category> =
+  Object.fromEntries(CATEGORIES.map(c => [c.id, c])) as Record<string, Category>;
+
 export function getNominee(catId: string, nomineeId: string) {
   const cat = CATEGORIES_BY_ID[catId];
   return cat?.nominees.find(n => n.id === nomineeId);
-}
-
-
-// /data/awards-data.ts
-export type Nominee = {
-  id: string;
-  name: string;
-  artwork?: string;
-  audioPreview?: string;     // URL to your 30s MP3 *or* full track
-  previewFrom?: number;      // optional start position (sec) if you use a full track
-};
-
-export type Category = {
-  id: string;
-  title: string;
-  description?: string;
-  nominees: Nominee[];
-};
-
-// Example: in the "best-track" category
-{
-  id: "best-track",
-  title: "טראק השנה",
-  description: "הטראק הכי טוב שיצא השנה",
-  nominees: [
-    {
-      id: "mystic-reborn",
-      name: "Mystic - Reborn",
-      artwork: "/images/mystic - reborn.jpg",
-      audioPreview: "/audio/mystic-reborn-30.mp3" // already trimmed to 30s
-      // OR if you only have the full song:
-      // audioPreview: "https://cdn.example.com/mystic-reborn-full.mp3",
-      // previewFrom: 45, // start at 00:45 and we’ll auto-stop after 30s
-    },
-    // ...rest
-  ]
 }
