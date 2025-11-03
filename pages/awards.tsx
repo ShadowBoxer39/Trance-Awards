@@ -192,23 +192,30 @@ export default function Awards() {
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
   const submitVote = async () => {
-    try {
-      const res = await fetch("/api/submit-vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selections }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) {
-        alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
-        return;
-      }
-      alert("תודה! ההצבעה נקלטה 🙌");
-    } catch (e) {
-      console.error(e);
-      alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+  try {
+    const res = await fetch("/api/submit-vote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selections }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 409 && (data?.error === "already_voted" || data?.error === "duplicate_ballot")) {
+      alert("נראה שכבר הצבעת מהמכשיר/חיבור הזה. תודה!");
+      return;
     }
-  };
+
+    if (!res.ok || !data?.ok) {
+      alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+      return;
+    }
+
+    alert("תודה! ההצבעה נקלטה 🙌");
+  } catch (e) {
+    console.error(e);
+    alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+  }
+};
 
   return (
     <main className="neon-backdrop min-h-screen text-white">
