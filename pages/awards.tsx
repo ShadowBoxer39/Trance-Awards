@@ -194,31 +194,35 @@ export default function Awards() {
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
   const submitVote = async () => {
-    try {
-      const r = await fetch("/api/submit-vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selections }),
-      });
+  try {
+    const r = await fetch("/api/submit-vote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selections }),
+    });
 
-      if (r.ok) {
-        // ✅ on success, go to thank-you page
-        router.push("/thanks");
-        return;
-      }
+    if (r.ok) {
+      // ✅ save the picks for the thank-you page share image
+      try {
+        sessionStorage.setItem("lastSelections", JSON.stringify(selections));
+      } catch {}
+      // go to thank-you page
+      router.push("/thanks");
+      return;
+    }
 
-      const j = await r.json().catch(() => ({}));
-      if (r.status === 409 || j?.error === "duplicate_vote") {
-        alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
-      } else if (r.status === 400) {
-        alert("נראה שחסר מידע להצבעה. נסו שוב.");
-      } else {
-        alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
-      }
-    } catch {
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 409 || j?.error === "duplicate_vote") {
+      alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
+    } else if (r.status === 400) {
+      alert("נראה שחסר מידע להצבעה. נסו שוב.");
+    } else {
       alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
     }
-  };
+  } catch {
+    alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+  }
+};
 
   return (
     <main className="neon-backdrop min-h-screen text-white">
