@@ -22,10 +22,7 @@ export default function Landing() {
   const [scrolled, setScrolled] = React.useState(false);
 
   React.useEffect(() => {
-    // Force RTL at the document level
     document.documentElement.setAttribute("dir", "rtl");
-
-    // Header style on scroll
     const onScroll = () => setScrolled(window.scrollY > 2);
     onScroll();
     window.addEventListener("scroll", onScroll);
@@ -44,7 +41,8 @@ export default function Landing() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
 
-      <main className="min-h-screen neon-backdrop text-white font-gan">
+      {/* NOTE: removed font-gan */}
+      <main className="min-h-screen neon-backdrop text-white">
         {/* Header */}
         <header
           className={[
@@ -77,7 +75,6 @@ export default function Landing() {
 
         {/* HERO */}
         <section className="relative overflow-hidden">
-          {/* soft radial glow */}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_80%_0%,rgba(255,90,165,.18),transparent_60%)]" />
           <div className="max-w-6xl mx-auto px-4 pt-10 sm:pt-16 pb-10 sm:pb-16 grid lg:grid-cols-[1.2fr,0.8fr] gap-10 items-center">
             <div>
@@ -112,7 +109,6 @@ export default function Landing() {
                 </a>
               </div>
 
-              {/* Category chips (horizontal scroll on mobile) */}
               <div className="mt-8 overflow-x-auto" aria-label="קטגוריות">
                 <ul className="flex gap-2 min-w-max pr-1">
                   {CATEGORIES.map((t) => (
@@ -130,7 +126,6 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* right column – simple cards grid */}
             <div className="grid grid-cols-2 gap-3">
               {CATEGORIES.map((t) => (
                 <div key={t} className="glass rounded-2xl px-4 py-3 text-sm text-white/90">
@@ -164,7 +159,7 @@ export default function Landing() {
           <h3 className="text-lg font-[800] mb-3">עקבו אחרינו</h3>
           <div className="flex flex-wrap gap-8" role="list">
             <a
-              className="font-milky text-sm px-4 py-2 rounded-xl"
+              className="text-sm px-4 py-2 rounded-xl"
               href="https://instagram.com/"
               target="_blank"
               rel="noreferrer"
@@ -174,7 +169,7 @@ export default function Landing() {
               Instagram
             </a>
             <a
-              className="font-milky text-sm px-4 py-2 rounded-xl"
+              className="text-sm px-4 py-2 rounded-xl"
               href="https://youtube.com/"
               target="_blank"
               rel="noreferrer"
@@ -184,7 +179,7 @@ export default function Landing() {
               YouTube
             </a>
             <a
-              className="font-milky text-sm px-4 py-2 rounded-xl"
+              className="text-sm px-4 py-2 rounded-xl"
               href="https://open.spotify.com/"
               target="_blank"
               rel="noreferrer"
@@ -194,7 +189,7 @@ export default function Landing() {
               Spotify
             </a>
             <a
-              className="font-milky text-sm px-4 py-2 rounded-xl btn-ghost"
+              className="text-sm px-4 py-2 rounded-xl btn-ghost"
               href="https://tiktok.com/"
               target="_blank"
               rel="noreferrer"
@@ -218,7 +213,6 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Footer */}
         <footer className="border-t border-white/10 bg-black/40">
           <div className="max-w-6xl mx-auto px-4 py-6 text-xs text-white/60">
             © {new Date().getFullYear()} יוצאים לטראק — פרסי השנה.
