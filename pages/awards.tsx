@@ -303,13 +303,13 @@ export default function Awards() {
                       onClick={() => choose(cat.id, n.id)}
                     >
                       {/* 2 visible lines for names */}
-                      <div
-                        className="font-semibold text-[12px] sm:text-sm leading-snug line-clamp-2 pr-1"
-                        style={{ minHeight: "2.6em" }}
-                        title={n.name}
-                      >
-                        {n.name}
-                      </div>
+                     <div
+  className="font-bold text-[13px] sm:text-base leading-snug text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)] text-center px-1 line-clamp-2"
+  style={{ minHeight: "2.8em" }}
+  title={n.name}
+>
+  {n.name}
+</div>
                       <button
                         className={
                           "px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition shrink-0 " +
