@@ -5,9 +5,7 @@ type Tally = Record<string, Record<string, number>>;
 
 export default function Admin() {
   const [key, setKey] = React.useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("ADMIN_KEY") || "";
-    }
+    if (typeof window !== "undefined") return localStorage.getItem("ADMIN_KEY") || "";
     return "";
   });
 
@@ -17,7 +15,12 @@ export default function Admin() {
   const [error, setError] = React.useState<string | null>(null);
   const [info, setInfo] = React.useState<string | null>(null);
 
-  const fetchStats = async (e?: React.FormEvent) => {
+  React.useEffect(() => {
+    // keep Hebrew layout consistent
+    document.documentElement.setAttribute("dir", "rtl");
+  }, []);
+
+  async function fetchStats(e?: React.FormEvent) {
     e?.preventDefault();
     setLoading(true);
     setError(null);
@@ -26,9 +29,7 @@ export default function Admin() {
     try {
       const r = await fetch(`/api/stats?key=${encodeURIComponent(key)}`);
       const j = await r.json();
-      if (!r.ok || !j?.ok) {
-        throw new Error(j?.error || "request_failed");
-      }
+      if (!r.ok || !j?.ok) throw new Error(j?.error || "request_failed");
       setTally(j.tally as Tally);
       if (typeof window !== "undefined") localStorage.setItem("ADMIN_KEY", key);
     } catch (err: any) {
@@ -36,33 +37,35 @@ export default function Admin() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const clearVotes = async () => {
-    if (!key) return;
-    if (!confirm("למחוק הצבעות? פעולה זו אינה הפיכה.")) return;
+  async function callClear(mode: "all" | "me") {
+    if (!key) return alert("אין מפתח ניהול.");
+    const msg =
+      mode === "all"
+        ? "למחוק את כל ההצבעות? פעולה זו אינה הפיכה."
+        : "למחוק רק את ההצבעות מהמכשיר הזה?";
+    if (!confirm(msg)) return;
 
     setClearing(true);
     setError(null);
     setInfo(null);
-
     try {
-      const r = await fetch(`/api/dev-clear?key=${encodeURIComponent(key)}`, {
+      const r = await fetch(`/api/dev-clear`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, mode }),
       });
       const j = await r.json();
-      if (!r.ok || !j?.ok) {
-        throw new Error(j?.error || "request_failed");
-      }
+      if (!r.ok || !j?.ok) throw new Error(j?.error || "request_failed");
       setInfo(`נמחקו ${j?.deleted ?? 0} הצבעות.`);
-      // Refresh results after clearing
-      await fetchStats();
+      await fetchStats(); // refresh tally
     } catch (err: any) {
       setError(err?.message || "error");
     } finally {
       setClearing(false);
     }
-  };
+  }
 
   return (
     <main className="min-h-screen text-white neon-backdrop">
@@ -79,7 +82,7 @@ export default function Admin() {
             placeholder="Paste ADMIN_KEY"
           />
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               className="btn-primary rounded-2xl px-4 py-2 disabled:opacity-50"
               disabled={!key || loading}
@@ -88,14 +91,26 @@ export default function Admin() {
               {loading ? "טוען…" : "טען תוצאות"}
             </button>
 
+            {/* Clear THIS device votes (requires API support for mode:"me") */}
             <button
               type="button"
-              onClick={clearVotes}
+              onClick={() => callClear("me")}
+              className="rounded-2xl px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm disabled:opacity-50"
+              disabled={!key || clearing}
+              title="מוחק רק הצבעות שיוחסו למכשיר/אייפי הנוכחי (אם נתמך ב-API)."
+            >
+              {clearing ? "מוחק…" : "נקה הצבעות (מכשיר זה)"}
+            </button>
+
+            {/* Clear ALL votes */}
+            <button
+              type="button"
+              onClick={() => callClear("all")}
               className="btn-ghost rounded-2xl px-4 py-2 disabled:opacity-50"
               disabled={!key || clearing}
-              title="Deletes votes per your dev-clear rule (e.g., by IP/season)."
+              title="מוחק את כל ההצבעות במסד הנתונים."
             >
-              {clearing ? "מוחק…" : "נקה הצבעות"}
+              {clearing ? "מוחק…" : "נקה את כל ההצבעות"}
             </button>
           </div>
 
