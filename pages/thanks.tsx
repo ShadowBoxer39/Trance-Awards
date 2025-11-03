@@ -1,17 +1,16 @@
 // pages/thanks.tsx
 import Head from "next/head";
 import Link from "next/link";
-import NextImage from "next/image";
 import React from "react";
 
-/** ───────────────── BRAND ───────────────── */
+/** ───────── BRAND ───────── */
 const BRAND = {
   title: "פרסי השנה 2025",
   logo: "/images/logo.png",
-  siteUrl: "https://trance-awards.vercel.app", // optional: set your final domain
+  siteUrl: "https://trance-awards.vercel.app",
 };
 
-/** ───────────────── DATA (same as awards page) ───────────────── */
+/** ───────── DATA (mirror categories used on awards page) ───────── */
 type Nominee = { id: string; name: string; artwork?: string };
 type Category = { id: string; title: string; nominees: Nominee[] };
 
@@ -84,160 +83,14 @@ const CATEGORIES: Category[] = [
   },
 ];
 
-/** ───────────────── UTIL ───────────────── */
+/** ───────── UTIL ───────── */
 function getChosen(selections: Record<string, string> | null) {
   if (!selections) return [];
   return CATEGORIES.map((cat) => {
     const id = selections[cat.id];
     const n = cat.nominees.find((x) => x.id === id);
     return { catTitle: cat.title, nomineeName: n?.name || "-", artwork: n?.artwork };
-  });
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-
-/**
- * Builds a 1080×1350 PNG with brand bg + picks + artworks
- * and triggers a download. All client-side, free.
- */
-async function buildAndDownloadShareImage(selections: Record<string, string>) {
-  const W = 1080;
-  const H = 1350; // Instagram portrait
-  const padX = 64;
-  const padY = 64;
-
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d")!;
-  ctx.direction = "rtl";
-
-  // Background (dark + glow)
-  const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, "#0a0b10");
-  bg.addColorStop(1, "#0b0b0f");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
-
-  const glow = ctx.createRadialGradient(W * 0.8, H * 0.2, 50, W * 0.8, H * 0.2, 600);
-  glow.addColorStop(0, "rgba(255,90,165,0.28)");
-  glow.addColorStop(1, "rgba(255,90,165,0)");
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(W * 0.8, H * 0.2, 600, 0, Math.PI * 2);
-  ctx.fill();
-
-  const glow2 = ctx.createRadialGradient(W * 0.2, H * 0.15, 50, W * 0.2, H * 0.15, 500);
-  glow2.addColorStop(0, "rgba(123,97,255,0.22)");
-  glow2.addColorStop(1, "rgba(123,97,255,0)");
-  ctx.fillStyle = glow2;
-  ctx.beginPath();
-  ctx.arc(W * 0.2, H * 0.15, 500, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Logo
-  try {
-    const logo = await loadImage(BRAND.logo);
-    const L = 140;
-    ctx.save();
-    roundRect(ctx, W - padX - L, padY, L, L, 28);
-    ctx.clip();
-    ctx.drawImage(logo, W - padX - L, padY, L, L);
-    ctx.restore();
-  } catch {}
-
-  // Titles
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "right";
-  ctx.font = "700 86px 'Gan CLM', 'Arial'";
-  ctx.fillText("הצבעתי!", W - padX, 300);
-
-  ctx.font = "700 60px 'Gan CLM', 'Arial'";
-  ctx.fillText("פרסי השנה 2025", W - padX, 370);
-
-  // Picks + artworks grid (2 cols x 3 rows for 6 categories)
-  const chosen = getChosen(selections).filter((x) => x.nomineeName !== "-");
-  const COLS = 2;
-  const ROWS = 3;
-  const cellW = (W - padX * 2 - 24) / COLS;
-  const cellH = 220;
-  let startY = 440;
-
-  for (let i = 0; i < Math.min(chosen.length, COLS * ROWS); i++) {
-    const row = Math.floor(i / COLS);
-    const col = i % COLS;
-    const x = padX + col * (cellW + 24);
-    const y = startY + row * (cellH + 18);
-
-    // cell bg
-    ctx.fillStyle = "rgba(255,255,255,0.06)";
-    roundRect(ctx, x, y, cellW, cellH, 18);
-    ctx.fill();
-
-    // artwork (square)
-    const artSize = 160;
-    const artX = x + cellW - 16 - artSize; // right side
-    const artY = y + 16;
-
-    const artSrc = chosen[i].artwork;
-    if (artSrc) {
-      try {
-        const img = await loadImage(artSrc);
-        ctx.save();
-        roundRect(ctx, artX, artY, artSize, artSize, 14);
-        ctx.clip();
-        ctx.drawImage(img, artX, artY, artSize, artSize);
-        ctx.restore();
-      } catch {
-        // no-op on load error
-      }
-    } else {
-      // placeholder
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
-      roundRect(ctx, artX, artY, artSize, artSize, 14);
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.6)";
-      ctx.font = "400 22px 'Arial'";
-      ctx.fillText("ללא תמונה", artX + artSize - 12, artY + artSize / 2 + 8);
-    }
-
-    // text block
-    const textX = x + 18;
-    const textW = artX - textX - 12; // space left of artwork
-
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.font = "700 30px 'Gan CLM','Arial'";
-    fitRtlText(ctx, chosen[i].catTitle, textX, y + 52, textW);
-
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.font = "400 28px 'Gan CLM','Arial'";
-    fitRtlText(ctx, chosen[i].nomineeName, textX, y + 96, textW);
-  }
-
-  // Footer
-  ctx.font = "400 30px 'Gan CLM','Arial'";
-  ctx.fillStyle = "rgba(255,255,255,0.8)";
-  ctx.fillText("מגישים: יוצאים לטראק", W - padX, H - 100);
-
-  ctx.font = "400 28px 'Gan CLM','Arial'";
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.fillText(BRAND.siteUrl.replace(/^https?:\/\//, ""), W - padX, H - 56);
-
-  // Download
-  const data = canvas.toDataURL("image/png");
-  const a = document.createElement("a");
-  a.href = data;
-  a.download = "i-voted-trance-awards-2025.png";
-  a.click();
+  }).filter((x) => x.nomineeName !== "-");
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -251,34 +104,168 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 function fitRtlText(ctx: CanvasRenderingContext2D, text: string, xRight: number, y: number, maxWidth: number) {
-  // simple one-line clamp with ellipsis from the right
   if (ctx.measureText(text).width <= maxWidth) {
     ctx.fillText(text, xRight + maxWidth, y, maxWidth);
     return;
   }
   let truncated = text;
   while (truncated.length > 0 && ctx.measureText(truncated + "…").width > maxWidth) {
-    truncated = truncated.slice(1); // remove from start for RTL
+    truncated = truncated.slice(1);
   }
   ctx.fillText("…" + truncated, xRight + maxWidth, y, maxWidth);
 }
 
-/** ───────────────── PAGE ───────────────── */
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous"; // safe for same-origin /images
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+/** Build a 1080×1920 IG Story PNG and return dataURL */
+async function buildStoryImage(selections: Record<string, string>) {
+  const W = 1080;
+  const H = 1920; // Instagram Story
+  const padX = 64;
+  const padY = 64;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+  ctx.direction = "rtl";
+
+  // Background
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#0a0b10");
+  bg.addColorStop(1, "#0b0b0f");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // neon glows
+  const g1 = ctx.createRadialGradient(W * 0.85, H * 0.12, 60, W * 0.85, H * 0.12, 700);
+  g1.addColorStop(0, "rgba(255,90,165,0.28)");
+  g1.addColorStop(1, "rgba(255,90,165,0)");
+  ctx.fillStyle = g1;
+  ctx.beginPath();
+  ctx.arc(W * 0.85, H * 0.12, 700, 0, Math.PI * 2);
+  ctx.fill();
+
+  const g2 = ctx.createRadialGradient(W * 0.15, H * 0.18, 60, W * 0.15, H * 0.18, 650);
+  g2.addColorStop(0, "rgba(123,97,255,0.22)");
+  g2.addColorStop(1, "rgba(123,97,255,0)");
+  ctx.fillStyle = g2;
+  ctx.beginPath();
+  ctx.arc(W * 0.15, H * 0.18, 650, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Logo (top-right)
+  try {
+    const logo = await loadImage(BRAND.logo);
+    const L = 140;
+    ctx.save();
+    roundRect(ctx, W - padX - L, padY, L, L, 28);
+    ctx.clip();
+    ctx.drawImage(logo, W - padX - L, padY, L, L);
+    ctx.restore();
+  } catch {}
+
+  // Title & subtitle
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "right";
+  ctx.font = "700 96px 'Arial'";
+  ctx.fillText("הצבעתי!", W - padX, 360);
+
+  ctx.font = "700 68px 'Arial'";
+  ctx.fillText("פרסי השנה 2025", W - padX, 440);
+
+  // Picks grid (2 cols × 3 rows)
+  const chosen = getChosen(selections);
+  const COLS = 2;
+  const ROWS = 3;
+  const cellW = (W - padX * 2 - 28) / COLS;
+  const cellH = 260;
+  let startY = 540;
+
+  for (let i = 0; i < Math.min(chosen.length, COLS * ROWS); i++) {
+    const row = Math.floor(i / COLS);
+    const col = i % COLS;
+    const x = padX + col * (cellW + 28);
+    const y = startY + row * (cellH + 24);
+
+    // panel
+    ctx.fillStyle = "rgba(255,255,255,0.07)";
+    roundRect(ctx, x, y, cellW, cellH, 22);
+    ctx.fill();
+
+    // artwork (square, right side)
+    const artSize = 180;
+    const artX = x + cellW - 18 - artSize;
+    const artY = y + 18;
+
+    const artSrc = chosen[i].artwork;
+    if (artSrc) {
+      try {
+        const img = await loadImage(artSrc);
+        ctx.save();
+        roundRect(ctx, artX, artY, artSize, artSize, 16);
+        ctx.clip();
+        ctx.drawImage(img, artX, artY, artSize, artSize);
+        ctx.restore();
+      } catch {
+        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        roundRect(ctx, artX, artY, artSize, artSize, 16);
+        ctx.fill();
+      }
+    }
+
+    // text block
+    const textX = x + 20;
+    const textW = artX - textX - 12;
+
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.font = "700 34px 'Arial'";
+    fitRtlText(ctx, chosen[i].catTitle, textX, y + 66, textW);
+
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.font = "400 30px 'Arial'";
+    fitRtlText(ctx, chosen[i].nomineeName, textX, y + 118, textW);
+  }
+
+  // Footer
+  ctx.font = "400 32px 'Arial'";
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fillText("מגישים: יוצאים לטראק", W - padX, H - 120);
+
+  ctx.font = "400 28px 'Arial'";
+  ctx.fillStyle = "rgba(255,255,255,0.65)";
+  ctx.fillText(BRAND.siteUrl.replace(/^https?:\/\//, ""), W - padX, H - 70);
+
+  return canvas.toDataURL("image/png");
+}
+
+/** ───────── PAGE ───────── */
 export default function Thanks() {
+  const [imgUrl, setImgUrl] = React.useState<string | null>(null);
   const [selections, setSelections] = React.useState<Record<string, string> | null>(null);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
     try {
       const raw = sessionStorage.getItem("lastSelections");
-      if (raw) setSelections(JSON.parse(raw));
-    } catch {}
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setSelections(parsed);
+        // build story image right away
+        buildStoryImage(parsed).then(setImgUrl).catch(() => setImgUrl(null));
+      }
+    } catch {
+      setImgUrl(null);
+    }
   }, []);
-
-  const hasPicks =
-    selections &&
-    Object.keys(selections).length > 0 &&
-    getChosen(selections).some((x) => x.nomineeName !== "-");
 
   return (
     <>
@@ -291,73 +278,56 @@ export default function Thanks() {
       </Head>
 
       <main className="min-h-screen neon-backdrop text-white">
-        {/* Header */}
         <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3">
-              <NextImage
-                src={BRAND.logo}
-                alt="יוצאים לטראק"
-                width={36}
-                height={36}
-                className="rounded-full border border-white/15"
-                priority
-              />
-              <span className="text-sm opacity-80 hidden sm:inline">יוצאים לטראק</span>
-            </Link>
+          <div className="max-w-6xl mx-auto px-4 py-3">
+            <h1 className="text-2xl font-bold">תודה שהצבעת!</h1>
           </div>
         </header>
 
-        {/* Content */}
-        <section className="max-w-6xl mx-auto px-4 py-16">
-          <div className="glass rounded-3xl p-8 md:p-12 text-center max-w-2xl mx-auto">
-            <div className="flex justify-center mb-6">
-              <NextImage
-                src={BRAND.logo}
-                alt="לוגו יוצאים לטראק"
-                width={80}
-                height={80}
-                className="rounded-2xl border border-white/15"
-              />
-            </div>
-            <h1 className="gradient-title text-3xl sm:text-4xl font-[700] mb-3">
-              תודה שהצבעת!
-            </h1>
-            <p className="text-white/80 text-base sm:text-lg mb-8">
-              הקול שלך נקלט. רוצים לשתף את הבחירות שלכם?
+        <section className="max-w-6xl mx-auto px-4 py-10">
+          <div className="glass rounded-3xl p-6 md:p-8 text-center max-w-3xl mx-auto">
+            <p className="text-white/80 mb-6">
+              הנה תמונת שיתוף בגודל סטורי (1080×1920). שמרו ושתפו באינסטגרם!
             </p>
 
-            <div className="flex flex-col items-center gap-3">
-              <Link href="/" className="btn-ghost rounded-2xl px-6 py-3 text-base">
-                חזרה לדף הראשי
-              </Link>
-
-              {/* Share button */}
-              <button
-                className="btn-primary rounded-2xl px-6 py-3 text-base"
-                onClick={() => {
-                  if (!selections) return;
-                  void buildAndDownloadShareImage(selections);
-                }}
-                disabled={!hasPicks}
-              >
-                הורד תמונת שיתוף (אינסטגרם 1080×1350)
-              </button>
-
-              {!hasPicks && (
-                <div className="text-xs text-white/60">
-                  (לא מצאנו את הבחירות מהדפדפן — נסו להצביע שוב או להשתמש באותו מכשיר/חלון)
+            {imgUrl ? (
+              <>
+                <img
+                  src={imgUrl}
+                  alt="Instagram Story — I Voted"
+                  className="mx-auto w-full max-w-[420px] rounded-2xl border border-white/10 shadow-lg"
+                />
+                <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+                  <a
+                    className="btn-primary rounded-2xl px-5 py-2"
+                    href={imgUrl}
+                    download="i-voted-trance-awards-2025-story.png"
+                  >
+                    שמור כתמונה
+                  </a>
+                  <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
+                    חזרה לדף הראשי
+                  </Link>
                 </div>
-              )}
-            </div>
+                <div className="text-xs text-white/60 mt-3">
+                  טיפ: ב-iOS/Android פתחו את התמונה ושתפו ל-Instagram Story.
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-white/70">לא מצאנו את הבחירות להצגה.</div>
+                <div className="text-white/60 text-sm mt-2">
+                  נסו להצביע שוב או להשתמש באותו מכשיר/חלון.
+                </div>
+                <div className="mt-6">
+                  <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
+                    חזרה לדף הראשי
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </section>
-
-        <footer className="border-t border-white/10 bg-black/40">
-          <div className="max-w-6xl mx-auto px-4 py-6 text-xs text-white/60 text-center">
-            © {new Date().getFullYear()} יוצאים לטראק — פרסי השנה.
-          </div>
-        </footer>
       </main>
     </>
   );
