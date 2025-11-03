@@ -28,7 +28,7 @@ export type Category = {
 function Artwork({ src, alt }: { src?: string; alt: string }) {
   const [isPortrait, setIsPortrait] = React.useState(false);
   return (
-    <div className="relative w-full overflow-hidden rounded-t-2xl bg-black/60 aspect-[4/3] sm:aspect-[16/9]">
+    <div className="relative w-full overflow-hidden rounded-t-xl bg-black/60 aspect-square">
       {src ? (
         <img
           src={src}
@@ -44,12 +44,12 @@ function Artwork({ src, alt }: { src?: string; alt: string }) {
           loading="lazy"
         />
       ) : (
-        <div className="absolute inset-0 grid place-items-center text-white/50 text-sm">
+        <div className="absolute inset-0 grid place-items-center text-white/50 text-[10px]">
           ללא תמונה
         </div>
       )}
-      {/* subtle gradient so text is readable */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/65 to-transparent" />
+      {/* small gradient for readability */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/60 to-transparent" />
     </div>
   );
 }
@@ -178,7 +178,7 @@ export default function Awards() {
     document.documentElement.setAttribute("dir", "rtl"); // Hebrew flow
   }, []);
 
-  // re-render on audio change (safe cleanup)
+  // re-render on audio change
   const [, force] = useState(0);
   useEffect(() => {
     const unsub = GlobalAudio.inst.onChange(() => force((n) => n + 1));
@@ -194,35 +194,33 @@ export default function Awards() {
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
   const submitVote = async () => {
-  try {
-    const r = await fetch("/api/submit-vote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selections }),
-    });
+    try {
+      const r = await fetch("/api/submit-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selections }),
+      });
 
-    if (r.ok) {
-      // ✅ save the picks for the thank-you page share image
-      try {
-        sessionStorage.setItem("lastSelections", JSON.stringify(selections));
-      } catch {}
-      // go to thank-you page
-      router.push("/thanks");
-      return;
-    }
+      if (r.ok) {
+        try {
+          sessionStorage.setItem("lastSelections", JSON.stringify(selections));
+        } catch {}
+        router.push("/thanks");
+        return;
+      }
 
-    const j = await r.json().catch(() => ({}));
-    if (r.status === 409 || j?.error === "duplicate_vote") {
-      alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
-    } else if (r.status === 400) {
-      alert("נראה שחסר מידע להצבעה. נסו שוב.");
-    } else {
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 409 || j?.error === "duplicate_vote") {
+        alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
+      } else if (r.status === 400) {
+        alert("נראה שחסר מידע להצבעה. נסו שוב.");
+      } else {
+        alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+      }
+    } catch {
       alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
     }
-  } catch {
-    alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
-  }
-};
+  };
 
   return (
     <main className="neon-backdrop min-h-screen text-white">
@@ -233,32 +231,33 @@ export default function Awards() {
             <Image
               src={BRAND.logo}
               alt="יוצאים לטראק"
-              width={40}
-              height={40}
+              width={36}
+              height={36}
               className="rounded-full border border-white/15"
             />
-            <span className="text-sm opacity-80">חזרה לדף הראשי</span>
+            <span className="text-xs sm:text-sm opacity-80">חזרה לדף הראשי</span>
           </Link>
-          <div className="ms-auto text-sm opacity-80">{BRAND.title}</div>
+          <div className="ms-auto text-xs sm:text-sm opacity-80">{BRAND.title}</div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6 space-y-10">
         {CATEGORIES.map((cat) => (
           <section key={cat.id}>
-            <div className="flex items-end justify-between gap-3 mb-4">
+            <div className="flex items-end justify-between gap-3 mb-3">
               <div>
-                <h2 className="gradient-title text-2xl sm:text-3xl font-[700] leading-tight">
+                <h2 className="gradient-title text-xl sm:text-2xl font-[700] leading-tight">
                   {cat.title}
                 </h2>
                 {cat.description && (
-                  <p className="text-white/70 text-sm mt-1">{cat.description}</p>
+                  <p className="text-white/70 text-xs sm:text-sm mt-1">{cat.description}</p>
                 )}
               </div>
-              <div className="text-sm text-white/60">בחירה אחת</div>
+              <div className="text-xs sm:text-sm text-white/60">בחירה אחת</div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* COMPACT GRID: 4 per row on mobile, 6 on sm, 8 on md+ */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2 sm:gap-3">
               {cat.nominees.map((n) => {
                 const selected = selections[cat.id] === n.id;
                 const isTrack = cat.id === "best-track";
@@ -269,24 +268,24 @@ export default function Awards() {
                   <article
                     key={n.id}
                     className={
-                      "group relative overflow-hidden rounded-2xl glass transition " +
+                      "group relative overflow-hidden rounded-xl glass transition " +
                       (selected ? "ring-2 ring-[var(--brand-pink)]" : "hover:border-white/25")
                     }
                   >
                     <Artwork src={n.artwork} alt={n.name} />
 
-                    {/* Audio controls ONLY for 'best-track' where audio exists */}
+                    {/* Audio bubble (only for best-track when we have preview) */}
                     {isTrack && canPlay && (
-                      <div className="absolute top-2 end-2 z-10 flex items-center gap-2">
+                      <div className="absolute top-1 end-1 z-10">
                         {!playing ? (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               GlobalAudio.inst.play(n.audioPreview!);
                             }}
-                            className="px-3 py-1.5 text-xs rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
+                            className="px-2 py-1 text-[10px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
                           >
-                            ▶︎ האזנה
+                            ▶︎
                           </button>
                         ) : (
                           <button
@@ -294,24 +293,24 @@ export default function Awards() {
                               e.stopPropagation();
                               GlobalAudio.inst.stop();
                             }}
-                            className="px-3 py-1.5 text-xs rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
+                            className="px-2 py-1 text-[10px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
                           >
-                            ⏹ עצור
+                            ⏹
                           </button>
                         )}
                       </div>
                     )}
 
                     <div
-                      className="p-3 sm:p-4 flex items-center justify-between gap-3 cursor-pointer"
+                      className="p-2 sm:p-3 flex items-center justify-between gap-2 cursor-pointer"
                       onClick={() => choose(cat.id, n.id)}
                     >
-                      <div className="font-semibold truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+                      <div className="font-semibold truncate text-[11px] sm:text-sm drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
                         {n.name}
                       </div>
                       <button
                         className={
-                          "px-3 py-1.5 rounded-xl border text-sm transition " +
+                          "px-2 py-1 rounded-lg border text-[11px] sm:text-xs transition " +
                           (selected ? "btn-primary border-transparent" : "btn-ghost")
                         }
                         aria-pressed={selected}
@@ -327,16 +326,16 @@ export default function Awards() {
         ))}
 
         {/* Submit */}
-        <div className="glass rounded-2xl p-4">
+        <div className="glass rounded-2xl p-3 sm:p-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="text-white/80 text-sm">
+            <div className="text-white/80 text-xs sm:text-sm">
               ודאו שבחרתם בכל הקטגוריות. תמיד אפשר לשנות לפני שליחה.
             </div>
             <button
               onClick={submitVote}
               disabled={!canSubmit}
               className={
-                "rounded-2xl px-6 py-3 font-semibold " +
+                "rounded-2xl px-5 py-2.5 text-sm font-semibold " +
                 (canSubmit ? "btn-primary" : "btn-ghost cursor-not-allowed")
               }
             >
@@ -345,7 +344,7 @@ export default function Awards() {
           </div>
         </div>
 
-        <footer className="text-center text-xs text-white/60 py-8">
+        <footer className="text-center text-[11px] sm:text-xs text-white/60 py-8">
           © {new Date().getFullYear()} יוצאים לטראק — פרסי השנה.
         </footer>
       </div>
