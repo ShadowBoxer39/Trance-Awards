@@ -1,7 +1,7 @@
 // pages/_app.tsx
-import "@/styles/globals.css";
+import "../styles/globals.css";            // ⬅️ use relative path
 import type { AppProps } from "next/app";
-import { milkyway } from "../lib/fonts"; // ← relative import (no @ alias)
+import { milkyway } from "../lib/fonts";   // ⬅️ already relative
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
