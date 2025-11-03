@@ -24,7 +24,7 @@ export type Category = {
   nominees: Nominee[];
 };
 
-/** ─────────────── SMART-FIT ARTWORK (portrait = contain, landscape = cover) ─────────────── */
+/** ─────────────── SMART-FIT ARTWORK ─────────────── */
 function Artwork({ src, alt }: { src?: string; alt: string }) {
   const [isPortrait, setIsPortrait] = React.useState(false);
   return (
@@ -48,13 +48,12 @@ function Artwork({ src, alt }: { src?: string; alt: string }) {
           ללא תמונה
         </div>
       )}
-      {/* small gradient for readability */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/60 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
     </div>
   );
 }
 
-/** ─────────────── GLOBAL AUDIO for 'best-track' only ─────────────── */
+/** ─────────────── GLOBAL AUDIO for 'best-track' ─────────────── */
 class GlobalAudio {
   private static _inst: GlobalAudio;
   private current?: HTMLAudioElement | null;
@@ -175,10 +174,9 @@ export default function Awards() {
   const router = useRouter();
 
   useEffect(() => {
-    document.documentElement.setAttribute("dir", "rtl"); // Hebrew flow
+    document.documentElement.setAttribute("dir", "rtl");
   }, []);
 
-  // re-render on audio change
   const [, force] = useState(0);
   useEffect(() => {
     const unsub = GlobalAudio.inst.onChange(() => force((n) => n + 1));
@@ -256,8 +254,8 @@ export default function Awards() {
               <div className="text-xs sm:text-sm text-white/60">בחירה אחת</div>
             </div>
 
-            {/* COMPACT GRID: 4 per row on mobile, 6 on sm, 8 on md+ */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2 sm:gap-3">
+            {/* Bigger than before: 3 per row on the smallest screens, then 4/6/8 */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
               {cat.nominees.map((n) => {
                 const selected = selections[cat.id] === n.id;
                 const isTrack = cat.id === "best-track";
@@ -274,7 +272,6 @@ export default function Awards() {
                   >
                     <Artwork src={n.artwork} alt={n.name} />
 
-                    {/* Audio bubble (only for best-track when we have preview) */}
                     {isTrack && canPlay && (
                       <div className="absolute top-1 end-1 z-10">
                         {!playing ? (
@@ -283,7 +280,7 @@ export default function Awards() {
                               e.stopPropagation();
                               GlobalAudio.inst.play(n.audioPreview!);
                             }}
-                            className="px-2 py-1 text-[10px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
+                            className="px-2 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
                           >
                             ▶︎
                           </button>
@@ -293,7 +290,7 @@ export default function Awards() {
                               e.stopPropagation();
                               GlobalAudio.inst.stop();
                             }}
-                            className="px-2 py-1 text-[10px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
+                            className="px-2 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
                           >
                             ⏹
                           </button>
@@ -302,15 +299,20 @@ export default function Awards() {
                     )}
 
                     <div
-                      className="p-2 sm:p-3 flex items-center justify-between gap-2 cursor-pointer"
+                      className="p-3 flex items-center justify-between gap-2 cursor-pointer"
                       onClick={() => choose(cat.id, n.id)}
                     >
-                      <div className="font-semibold truncate text-[11px] sm:text-sm drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+                      {/* 2 visible lines for names */}
+                      <div
+                        className="font-semibold text-[12px] sm:text-sm leading-snug line-clamp-2 pr-1"
+                        style={{ minHeight: "2.6em" }}
+                        title={n.name}
+                      >
                         {n.name}
                       </div>
                       <button
                         className={
-                          "px-2 py-1 rounded-lg border text-[11px] sm:text-xs transition " +
+                          "px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition shrink-0 " +
                           (selected ? "btn-primary border-transparent" : "btn-ghost")
                         }
                         aria-pressed={selected}
