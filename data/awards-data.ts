@@ -28,10 +28,10 @@ export const CATEGORIES: Category[] = [
       { id: "shtuby", name: "Shtuby", artwork: "/images/shtuby.jpg" },
       { id: "astrix", name: "Astrix", artwork: "/images/astrix.jpeg" },
       { id: "newborn", name: "New Born", artwork: "/images/newborn.jpg" },
-      { id: "shidapu", name: "Shidapu", artwork: "/images/shidapu.jpg" },
+      { id: "shidapu", name: "Shidapu", artwork: "/images/shidapu.jpeg" },
       { id: "captain-hook", name: "Captain Hook", artwork: "/images/captain.jpg" },
-      { id: "hujaboy", name: "Hujaboy", artwork: "/images/hujaboy.jpg" },
-      { id: "skizologic", name: "Skizologic", artwork: "/images/skizologic.jpg" },
+      { id: "hujaboy", name: "Hujaboy", artwork: "/images/hujaboy.jpeg" },
+      { id: "skizologic", name: "Skizologic", artwork: "/images/skizologic.jpeg" },
       { id: "outoforbit", name: "Out Of Orbit", artwork: "/images/outoforbit.jpg" },
     ],
   },
@@ -56,7 +56,7 @@ export const CATEGORIES: Category[] = [
       { id: "humanoids", name: "Humanoids", artwork: "/images/Humanoids.jpg" },
       { id: "outsiders", name: "Outsiders", artwork: "/images/Outsiders.webp" },
       { id: "rising-dust", name: "Rising Dust", artwork: "/images/rising dust.jpg" },
-      { id: "astral-projection", name: "Astral Projection", artwork: "/images/astral.jpg" },
+      { id: "astral-projection", name: "Astral Projection", artwork: "/images/astral.jpeg" },
 
     
     ],
@@ -68,13 +68,13 @@ export const CATEGORIES: Category[] = [
     nominees: [
       { id: "libra-subjective", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg" },
       { id: "gorovich-creative", name: "Gorovich - Creative Acts", artwork: "/images/gorovich creative acts album.jpg" },
-      { id: "bliss-me-vs-me", name: "Bliss - Me vs Me", artwork: "/images/bliss me vs me album.jpg" },
+      { id: "bliss-me-vs-me", name: "Bliss - Me vs Me", artwork: "/images/blissalbum.jpg" },
       { id: "cosmic-flow-infinity", name: "Cosmic Flow - Infinity", artwork: "/images/cosmic flow infinity album.jpg" },
       { id: "2minds-acid", name: "2Minds - Acid Therapy", artwork: "/images/2minds acid therapy album.jpg" },
       { id: "detune-echoes", name: "Detune - Echoes", artwork: "/images/echoes.jpg" },
       { id: "astral-mankind", name: "Astral Projection - for All Mankind", artwork: "/images/astralforall.jpg" },
       { id: "some1-message", name: "Some1 - Message From The Deep", artwork: "/images/some1message.jpg" },
-      { id: "persona-interplay", name: "Persona - Interplay", artwork: "/images/personainter.jpg" },
+      { id: "persona-interplay", name: "Persona - Interplay", artwork: "/images/perosnainter.jpg" },
     ],
   },
   {
@@ -89,10 +89,10 @@ export const CATEGORIES: Category[] = [
       { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg" },
       { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg" },
       { id: "nevo-some1-guide", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg" },
-      { id: "jupiter", name: "Mystic & Detune - Jupiter", artwork: "/images/jupiter.jpg" },
+      { id: "jupiter", name: "Mystic & Detune - Jupiter", artwork: "/images/jupiter.jpeg" },
       { id: "mindscam", name: "Amigdala - Mindscam", artwork: "/images/mindscam.jpg" },
-      { id: "lemonade", name: "Out of Orbit & Sandman - Moon Lemonade Pt.2", artwork: "/images/lemonade.jpg" },
-      { id: "barry", name: "Chaos604 - Barry's Trip", artwork: "/images/barry.jpg" },
+      { id: "lemonade", name: "Out of Orbit & Sandman - Moon Lemonade Pt.2", artwork: "/images/moonlemonade.jpeg" },
+      { id: "barry", name: "Chaos604 - Barry's Trip", artwork: "/images/barrytrip.jpg" },
       
       
     ],
@@ -102,8 +102,8 @@ export const CATEGORIES: Category[] = [
     title: "פריצת השנה",
     description: "אמן שהתפוצץ השנה עם מוזיקה חדשה וסטים מפוצצים",
     nominees: [
-      { id: "bigitam", name: "Bigitam", artwork: "/images/bigitam.png" },
-      { id: "mystic", name: "Mystic", artwork: "/images/Mystic.jpg" },
+      { id: "bigitam", name: "Bigitam", artwork: "/images/bigitam.jpg" },
+      { id: "mystic", name: "Mystic", artwork: "/images/mystic.jpg" },
       { id: "artmis", name: "Artmis", artwork: "/images/artmis.jpg" },
       { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
       { id: "nevo", name: "Nevo", artwork: "/images/nevo.jpg" },
