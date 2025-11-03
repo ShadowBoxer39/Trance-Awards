@@ -84,12 +84,11 @@ class GlobalAudio {
     return !!this.current && (!src || this.current.src.endsWith(src));
   }
   onChange(cb: () => void) {
-  this.listeners.add(cb);
-  // return a void cleanup
-  return () => {
-    this.listeners.delete(cb);
-  };
-}
+    this.listeners.add(cb);
+    return () => {
+      this.listeners.delete(cb);
+    };
+  }
   private notify() {
     this.listeners.forEach((cb) => cb());
   }
@@ -184,7 +183,9 @@ export default function Awards() {
   const [, force] = useState(0);
   useEffect(() => {
     const unsub = GlobalAudio.inst.onChange(() => force((n) => n + 1));
-    return () => unsub();
+    return () => {
+      unsub();
+    };
   }, []);
 
   const canSubmit = useMemo(
@@ -196,36 +197,36 @@ export default function Awards() {
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
   const submitVote = async () => {
-  try {
-    const r = await fetch("/api/submit-vote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selections }),
-    });
+    try {
+      const r = await fetch("/api/submit-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selections }),
+      });
 
-    if (r.ok) {
-      try {
-        sessionStorage.setItem("lastSelections", JSON.stringify(selections));
-      } catch {}
-      router.push("/thanks");
-      return;
-    }
+      if (r.ok) {
+        try {
+          sessionStorage.setItem("lastSelections", JSON.stringify(selections));
+        } catch {}
+        router.push("/thanks");
+        return;
+      }
 
-    const j = await r.json().catch(() => ({}));
+      const j = await r.json().catch(() => ({}));
 
-    if (r.status === 403 || j?.error === "invalid_region") {
-      alert("ההצבעה פתוחה לתושבי ישראל בלבד 🇮🇱");
-    } else if (r.status === 409 || j?.error === "duplicate_vote") {
-      alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
-    } else if (r.status === 400 || j?.error === "bad_request") {
-      alert("נראה שחסר מידע להצבעה. נסו שוב.");
-    } else {
+      if (r.status === 403 || j?.error === "invalid_region") {
+        alert("ההצבעה פתוחה לתושבי ישראל בלבד 🇮🇱");
+      } else if (r.status === 409 || j?.error === "duplicate_vote") {
+        alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
+      } else if (r.status === 400 || j?.error === "bad_request") {
+        alert("נראה שחסר מידע להצבעה. נסו שוב.");
+      } else {
+        alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+      }
+    } catch {
       alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
     }
-  } catch {
-    alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
-  }
-};
+  };
 
   return (
     <main className="neon-backdrop min-h-screen text-white">
@@ -307,11 +308,12 @@ export default function Awards() {
                       </div>
                     )}
 
-                    {/* Footer: name (full width), button below on md+ so the name is never covered */}
-                    <div className="p-3 flex items-center justify-between gap-2 md:flex-col md:items-stretch">
+                    {/* Footer: name full width on mobile; button below (prevents text clipping) */}
+                    <div className="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div
                         dir="ltr"
-                        className="font-bold text-[13px] sm:text-sm leading-snug text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)] text-center line-clamp-2 min-h-[2.9em]"
+                        className="font-bold text-[13px] sm:text-sm leading-snug text-white text-center
+                                   break-words hyphens-auto line-clamp-2 min-h-[2.9em]"
                         title={n.name}
                       >
                         {n.name}
@@ -323,7 +325,7 @@ export default function Awards() {
                           choose(cat.id, n.id);
                         }}
                         className={
-                          "px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition shrink-0 md:w-full md:mt-1 " +
+                          "w-full sm:w-auto px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition " +
                           (selected ? "btn-primary border-transparent" : "btn-ghost")
                         }
                         aria-pressed={selected}
