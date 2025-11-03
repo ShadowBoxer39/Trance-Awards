@@ -177,12 +177,11 @@ export default function Awards() {
     document.documentElement.setAttribute("dir", "rtl");
   }, []);
 
+  // re-render when global audio state changes
   const [, force] = useState(0);
   useEffect(() => {
     const unsub = GlobalAudio.inst.onChange(() => force((n) => n + 1));
-    return () => {
-      unsub();
-    };
+    return () => unsub();
   }, []);
 
   const canSubmit = useMemo(
@@ -267,15 +266,15 @@ export default function Awards() {
                 return (
                   <article
                     key={n.id}
-                    onClick={() => choose(cat.id, n.id)}
                     className={
                       "group relative overflow-hidden rounded-xl glass transition cursor-pointer " +
                       (selected ? "ring-2 ring-[var(--brand-pink)]" : "hover:border-white/25")
                     }
+                    onClick={() => choose(cat.id, n.id)}
                   >
                     <Artwork src={n.artwork} alt={n.name} />
 
-                    {/* tiny track controls (if used) */}
+                    {/* small track controls (if used) */}
                     {isTrack && canPlay && (
                       <div className="absolute top-1 end-1 z-10">
                         {!playing ? (
@@ -302,33 +301,15 @@ export default function Awards() {
                       </div>
                     )}
 
-                    {/* Footer: name full-width on mobile; side-by-side from sm up */}
-                  <div
-  className="p-3 flex items-center justify-between gap-2 cursor-pointer md:flex-col md:items-stretch"
-  onClick={() => choose(cat.id, n.id)}
->
-  <div
-    dir="ltr"
-    className="font-bold text-[13px] sm:text-sm leading-snug text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)] text-center line-clamp-2 min-h-[2.9em]"
-    title={n.name}
-  >
-    {n.name}
-  </div>
-
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
-      choose(cat.id, n.id);
-    }}
-    className={
-      "px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition shrink-0 md:w-full md:mt-1 " +
-      (selected ? "btn-primary border-transparent" : "btn-ghost")
-    }
-    aria-pressed={selected}
-  >
-    {selected ? "נבחר" : "בחר"}
-  </button>
-</div>
+                    {/* Footer: name (full width), button below on md+ so the name is never covered */}
+                    <div className="p-3 flex items-center justify-between gap-2 md:flex-col md:items-stretch">
+                      <div
+                        dir="ltr"
+                        className="font-bold text-[13px] sm:text-sm leading-snug text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)] text-center line-clamp-2 min-h-[2.9em]"
+                        title={n.name}
+                      >
+                        {n.name}
+                      </div>
 
                       <button
                         onClick={(e) => {
@@ -336,7 +317,7 @@ export default function Awards() {
                           choose(cat.id, n.id);
                         }}
                         className={
-                          "justify-self-center sm:justify-self-end px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition shrink-0 " +
+                          "px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition shrink-0 md:w-full md:mt-1 " +
                           (selected ? "btn-primary border-transparent" : "btn-ghost")
                         }
                         aria-pressed={selected}
