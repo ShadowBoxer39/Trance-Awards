@@ -20,12 +20,12 @@ export const CATEGORIES: Category[] = [
     title: "אמן השנה",
     description: "אמן ישראלי שהוציא מוזיקה השנה והכי נתן בראש, כולל ברחבות בארץ",
     nominees: [
-      { id: "libra", name: "Libra" },
+      { id: "libra", name: "Libra", artwork: "/images/libra.jpg" },
       { id: "gorovich", name: "Gorovich", artwork: "/images/Gorovich.webp" },
       { id: "freedom-fighters", name: "Freedom Fighters", artwork: "/images/Freedom Fighters.png" },
       { id: "mystic", name: "Mystic", artwork: "/images/Mystic.jpg" },
-      { id: "bliss", name: "Bliss", artwork: "/images/bliss.jpg" },
-      { id: "cosmic-flow", name: "Cosmic Flow", artwork: "/images/cosmic flow.webp" },
+      { id: "dekel", name: "Dekel", artwork: "/images/dekel.jpg" },
+      { id: "shtuby", name: "Shtuby", artwork: "/images/shtuby.jpg" },
     ],
   },
   {
