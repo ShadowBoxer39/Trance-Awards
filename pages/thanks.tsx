@@ -1,7 +1,7 @@
 // pages/thanks.tsx
 import Head from "next/head";
 import Link from "next/link";
-import Image from "next/image";
+import NextImage from "next/image";
 import React from "react";
 
 /** ───────────────── BRAND ───────────────── */
@@ -96,13 +96,14 @@ function getChosen(selections: Record<string, string> | null) {
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous"; // safe; our images are same-origin
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
   });
 }
+
 
 /**
  * Builds a 1080×1350 PNG with brand bg + picks + artworks
