@@ -1,41 +1,29 @@
 // pages/api/dev-clear.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import supabase from "../../lib/supabaseServer";
-import crypto from "crypto";
+import { createClient } from "@supabase/supabase-js";
 
-function getClientIP(req: NextApiRequest): string {
-  const xf = (req.headers["x-forwarded-for"] as string) || "";
-  const real = (req.headers["x-real-ip"] as string) || "";
-  return xf.split(",")[0]?.trim() || real || (req.socket?.remoteAddress || "") || "";
-}
-function hashIP(ip: string, pepper: string) {
-  return crypto.createHash("sha256").update(ip + "|" + pepper).digest("hex");
-}
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const key = (req.query.key as string) || "";
-  if (!process.env.ADMIN_KEY || key !== process.env.ADMIN_KEY) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
+  if (req.method !== "POST") return res.status(405).end();
+
+  const { key, ip_hash, season } = req.body || {};
+  if (key !== process.env.AdminKey) {
+    return res.status(401).json({ error: "unauthorized" });
   }
 
-  const season = "2025"; // same season you use in submit-vote
-  const pepper = process.env.VOTE_PEPPER || "dev-pepper";
-  const ip = getClientIP(req);
-  if (!ip) return res.status(400).json({ ok: false, error: "no_ip" });
+  const q = supabase.from("votes").delete();
 
-  const ip_hash = hashIP(ip, pepper);
+  if (season) q.eq("season", season);
+  if (ip_hash) q.eq("ip_hash", ip_hash);
 
-  const { error, count } = await supabase
-    .from("votes")
-    .delete()
-    .eq("season", season)
-    .eq("ip_hash", ip_hash)
-    .select("id", { count: "exact", head: true });
+  const { data, error } = await q.select("id"); // <- no options here
 
-  if (error) {
-    console.error("dev-clear error:", error);
-    return res.status(500).json({ ok: false, error: "db_error" });
-  }
+  if (error) return res.status(500).json({ error: error.message });
 
-  return res.status(200).json({ ok: true, cleared: count || 0 });
+  const deleted = data?.length ?? 0;
+  return res.json({ deleted });
 }
