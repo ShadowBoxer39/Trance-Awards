@@ -5,35 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* -------------------------------------------------------
-   Base
-------------------------------------------------------- */
-:root {
-  --brand-pink: #ff5aa5;
-  --brand-purple: #7b61ff;
-  --brand-orange: #ffb86b;
-  --card-bg: rgba(255, 255, 255, 0.04);
-  --card-border: rgba(255, 255, 255, 0.12);
-}
-
-html, body, #__next {
-  height: 100%;
-}
-
-html {
-  color-scheme: dark;
-}
-
+/* Base */
+html, body, #__next { height: 100%; }
+html { color-scheme: dark; }
 body {
-  @apply text-white antialiased;
   background: #090a0f;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* -------------------------------------------------------
-   Helpers
-------------------------------------------------------- */
-
-/* Global backdrop used on both pages */
+/* Utilities we use in pages (kept simple, no CSS variables) */
 .neon-backdrop {
   background:
     radial-gradient(1200px 600px at 80% -10%, rgba(255, 90, 165, 0.14), transparent 60%),
@@ -41,16 +23,14 @@ body {
     linear-gradient(180deg, #0a0b10 0%, #0b0b0f 60%, #0a0b10 100%);
 }
 
-/* Glass card */
 .glass {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
-/* Buttons consistent with your design tokens */
 .btn-primary {
-  background: linear-gradient(90deg, var(--brand-orange), var(--brand-pink), var(--brand-purple));
+  background: linear-gradient(90deg, #ffb86b, #ff5aa5, #7b61ff);
   color: #0b0b0b;
   border: 1px solid transparent;
   transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
@@ -59,9 +39,7 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 8px 28px rgba(255, 90, 165, 0.35);
 }
-.btn-primary:disabled {
-  opacity: 0.5;
-}
+.btn-primary:disabled { opacity: 0.5; }
 
 .btn-ghost {
   background: rgba(255, 255, 255, 0.06);
@@ -69,7 +47,6 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-/* Gradient heading treatment */
 .gradient-title {
   background: linear-gradient(90deg, #e0f2ff, #ffcfe6, #ffd9b3);
   -webkit-background-clip: text;
@@ -78,7 +55,7 @@ body {
   text-shadow: 0 0 10px rgba(255, 90, 165, 0.25);
 }
 
-/* Line clamp utility (so we don’t need the Tailwind plugin) */
+/* 2-line clamp without plugin */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -86,14 +63,5 @@ body {
   overflow: hidden;
 }
 
-/* Improve image rendering */
-img {
-  image-rendering: auto;
-  -webkit-user-drag: none;
-}
-
-/* Optional: smoother focus ring for keyboard users */
-:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
-  outline-offset: 2px;
-}
+img { image-rendering: auto; -webkit-user-drag: none; }
+:focus-visible { outline: 2px solid rgba(255,255,255,0.5); outline-offset: 2px; }
