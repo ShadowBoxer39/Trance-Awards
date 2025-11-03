@@ -1,11 +1,12 @@
+// pages/_app.tsx
+import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import "../styles/globals.css";
-import { gan, milky } from "../lib/fonts";
+import { milkyway } from "@/lib/fonts";
 
-export default function MyApp({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps }: AppProps) {
   return (
-    <div className={`${gan.variable} ${milky.variable}`}>
+    <main className={`${milkyway.variable} font-milkyway`}>
       <Component {...pageProps} />
-    </div>
+    </main>
   );
 }
