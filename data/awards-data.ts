@@ -26,6 +26,11 @@ export const CATEGORIES: Category[] = [
       { id: "mystic", name: "Mystic", artwork: "/images/Mystic.jpg" },
       { id: "dekel", name: "Dekel", artwork: "/images/dekel.jpg" },
       { id: "shtuby", name: "Shtuby", artwork: "/images/shtuby.jpg" },
+      { id: "astrix", name: "Astrix", artwork: "/images/.jpg" },
+      { id: "newborn", name: "New Born", artwork: "/images/.jpg" },
+      { id: "shidapu", name: "Shidapu", artwork: "/images/.jpg" },
+      { id: "captain-hook", name: "Captain Hook", artwork: "/images/.jpg" },
+      { id: "hujaboy", name: "Hujaboy", artwork: "/images/.jpg" },
     ],
   },
   {
@@ -49,6 +54,9 @@ export const CATEGORIES: Category[] = [
       { id: "humanoids", name: "Humanoids", artwork: "/images/Humanoids.jpg" },
       { id: "outsiders", name: "Outsiders", artwork: "/images/Outsiders.webp" },
       { id: "rising-dust", name: "Rising Dust", artwork: "/images/rising dust.jpg" },
+      { id: "astral-projection", name: "Astral Projection", artwork: "/images/.jpg" },
+
+    
     ],
   },
   {
@@ -61,6 +69,9 @@ export const CATEGORIES: Category[] = [
       { id: "bliss-me-vs-me", name: "Bliss - Me vs Me", artwork: "/images/bliss me vs me album.jpg" },
       { id: "cosmic-flow-infinity", name: "Cosmic Flow - Infinity", artwork: "/images/cosmic flow infinity album.jpg" },
       { id: "2minds-acid", name: "2Minds - Acid Therapy", artwork: "/images/2minds acid therapy album.jpg" },
+      { id: "astral-mankind", name: "Astral Projection - for All Mankind", artwork: "/images/.jpg" },
+      { id: "some1-message", name: "Some1 - Message From The Deep", artwork: "/images/.jpg" },
+      { id: "persona-interplay", name: "Persona - Interplay", artwork: "/images/.jpg" },
     ],
   },
   {
@@ -75,6 +86,11 @@ export const CATEGORIES: Category[] = [
       { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg" },
       { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg" },
       { id: "nevo-some1-guide", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg" },
+      { id: "jupiter", name: "Mystic & Detune - Jupiter", artwork: "/images/.jpg" },
+      { id: "mindscam", name: "Amigdala - Mindscam", artwork: "/images/.jpg" },
+      { id: "lemonade", name: "Out of Orbit & Sandman - Moon Lemonade Pt.2", artwork: "/images/.jpg" },
+      
+      
     ],
   },
   {
