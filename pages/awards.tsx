@@ -203,7 +203,23 @@ export default function Awards() {
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
   const submitVote = async () => {
-    alert("הצבעה נשלחה (דמו). חיבור לשרת יתווסף בהמשך.");
+  try {
+    const res = await fetch("/api/submit-vote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selections }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data?.ok) {
+      alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+      return;
+    }
+    alert("תודה! ההצבעה נקלטה 🙌");
+  } catch (e) {
+    console.error(e);
+    alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+  }
+};
   };
 
   return (
