@@ -295,7 +295,7 @@ export default function Thanks() {
         <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3">
-              <Image
+              <NextImage
                 src={BRAND.logo}
                 alt="יוצאים לטראק"
                 width={36}
@@ -312,7 +312,7 @@ export default function Thanks() {
         <section className="max-w-6xl mx-auto px-4 py-16">
           <div className="glass rounded-3xl p-8 md:p-12 text-center max-w-2xl mx-auto">
             <div className="flex justify-center mb-6">
-              <Image
+              <NextImage
                 src={BRAND.logo}
                 alt="לוגו יוצאים לטראק"
                 width={80}
