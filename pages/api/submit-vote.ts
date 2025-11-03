@@ -3,14 +3,29 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import supabase from "../../lib/supabaseServer";
 
+// 🔹 Helper to extract client IP
 function getClientIP(req: NextApiRequest): string {
   const xf = (req.headers["x-forwarded-for"] as string) || "";
   const real = (req.headers["x-real-ip"] as string) || "";
   return xf.split(",")[0]?.trim() || real || (req.socket?.remoteAddress || "") || "0.0.0.0";
 }
 
+// 🔹 Hash IP with pepper
 function hashIP(ip: string, pepper: string) {
   return crypto.createHash("sha256").update(ip + "|" + pepper).digest("hex");
+}
+
+// 🔹 Simple country check
+async function isFromIsrael(ip: string): Promise<boolean> {
+  try {
+    const res = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,countryCode`);
+    const data = await res.json();
+    return data?.status === "success" && data.countryCode === "IL";
+  } catch (err) {
+    console.error("Geo check failed:", err);
+    // Safer default: block on lookup failure
+    return false;
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -22,23 +37,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ ok: false, error: "bad_request" });
     }
 
-    const season = "2025"; // change here next year if you want
+    const season = "2025";
     const ip = getClientIP(req);
+
+    // 🛑 Block users not from Israel
+    const allowed = await isFromIsrael(ip);
+    if (!allowed) {
+      return res.status(403).json({ ok: false, error: "invalid_region" });
+    }
+
     const pepper = process.env.VOTE_PEPPER || "dev-pepper";
     const ip_hash = hashIP(ip, pepper);
     const ua = req.headers["user-agent"] || "";
 
     const { error } = await supabase.from("votes").insert([
       {
-        season,     // new column we added
-        ip_hash,    // hashed IP
-        ua,         // your existing column name
-        selections, // jsonb ballot
+        season,
+        ip_hash,
+        ua,
+        selections,
       },
     ]);
 
     if (error) {
-      // Postgres duplicate key
       if ((error as any)?.code === "23505") {
         return res.status(409).json({ ok: false, error: "duplicate_vote" });
       }
