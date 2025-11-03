@@ -5,7 +5,7 @@ import Image from "next/image";
 
 /** ───────────────── BRAND ───────────────── */
 const BRAND = {
-  logo: "/logo.png",
+  logo: "/images/logo.png",
   title: "פרסי השנה 2025",
 };
 
@@ -23,12 +23,11 @@ export type Category = {
   nominees: Nominee[];
 };
 
-/** ─────────────── SMART-FIT ARTWORK ─────────────── */
+/** ─────────────── SMART-FIT ARTWORK (portrait = contain, landscape = cover) ─────────────── */
 function Artwork({ src, alt }: { src?: string; alt: string }) {
   const [isPortrait, setIsPortrait] = React.useState(false);
   return (
-    // smaller + squarer on mobile to reduce vertical scroll
-    <div className="relative w-full overflow-hidden rounded-t-xl bg-black/60 aspect-[1/1] sm:aspect-[4/3] md:aspect-[16/9]">
+    <div className="relative w-full overflow-hidden rounded-t-2xl bg-black/60 aspect-[4/3] sm:aspect-[16/9]">
       {src ? (
         <img
           src={src}
@@ -44,37 +43,36 @@ function Artwork({ src, alt }: { src?: string; alt: string }) {
           loading="lazy"
         />
       ) : (
-        <div className="absolute inset-0 grid place-items-center text-white/50 text-xs">
+        <div className="absolute inset-0 grid place-items-center text-white/50 text-sm">
           ללא תמונה
         </div>
       )}
+      {/* subtle gradient so text is readable */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/65 to-transparent" />
     </div>
   );
 }
 
-/** ─────────────── GLOBAL AUDIO ─────────────── */
+/** ─────────────── GLOBAL AUDIO for 'best-track' only ─────────────── */
 class GlobalAudio {
   private static _inst: GlobalAudio;
   private current?: HTMLAudioElement | null;
   private listeners = new Set<() => void>();
-
   static get inst() {
     if (!this._inst) this._inst = new GlobalAudio();
     return this._inst;
   }
-
   play(src: string) {
     if (this.current) {
       this.current.pause();
       this.current.currentTime = 0;
     }
     const a = new Audio(src);
-    void a.play(); // ignore promise
+    void a.play();
     this.current = a;
     a.addEventListener("ended", () => this.notify());
     this.notify();
   }
-
   stop() {
     if (!this.current) return;
     this.current.pause();
@@ -82,21 +80,14 @@ class GlobalAudio {
     this.current = null;
     this.notify();
   }
-
   isPlaying(src?: string) {
     return !!this.current && (!src || this.current.src.endsWith(src));
   }
-
-  // subscribe to changes; returns cleanup fn
-  onChange(cb: () => void): () => void {
+  onChange(cb: () => void) {
     this.listeners.add(cb);
-    return () => {
-      this.listeners.delete(cb);
-    };
+    return () => this.listeners.delete(cb);
   }
-
-  // ✅ the method that was missing
-  private notify(): void {
+  private notify() {
     this.listeners.forEach((cb) => cb());
   }
 }
@@ -188,10 +179,8 @@ export default function Awards() {
   // re-render on audio change (safe cleanup)
   const [, force] = useState(0);
   useEffect(() => {
-    const unsub: () => void = GlobalAudio.inst.onChange(() => force((n) => n + 1));
-    return () => {
-      unsub(); // cleanup
-    };
+    const unsub = GlobalAudio.inst.onChange(() => force((n) => n + 1));
+    return () => { unsub(); };
   }, []);
 
   const canSubmit = useMemo(
@@ -203,61 +192,59 @@ export default function Awards() {
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
   const submitVote = async () => {
-  try {
-    const res = await fetch("/api/submit-vote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selections }),
-    });
-    const data = await res.json();
-    if (!res.ok || !data?.ok) {
+    try {
+      const res = await fetch("/api/submit-vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selections }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+        return;
+      }
+      alert("תודה! ההצבעה נקלטה 🙌");
+    } catch (e) {
+      console.error(e);
       alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
-      return;
     }
-    alert("תודה! ההצבעה נקלטה 🙌");
-  } catch (e) {
-    console.error(e);
-    alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
-  }
-};
   };
 
   return (
     <main className="neon-backdrop min-h-screen text-white">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3">
             <Image
               src={BRAND.logo}
               alt="יוצאים לטראק"
-              width={32}
-              height={32}
+              width={40}
+              height={40}
               className="rounded-full border border-white/15"
             />
-            <span className="text-xs sm:text-sm opacity-80">חזרה לדף הראשי</span>
+            <span className="text-sm opacity-80">חזרה לדף הראשי</span>
           </Link>
-          <div className="ms-auto text-xs sm:text-sm opacity-80">{BRAND.title}</div>
+          <div className="ms-auto text-sm opacity-80">{BRAND.title}</div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-10">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
         {CATEGORIES.map((cat) => (
           <section key={cat.id}>
-            <div className="flex items-end justify-between gap-3 mb-3">
+            <div className="flex items-end justify-between gap-3 mb-4">
               <div>
-                <h2 className="gradient-title text-xl sm:text-2xl font-[700] leading-tight">
+                <h2 className="gradient-title text-2xl sm:text-3xl font-[700] leading-tight">
                   {cat.title}
                 </h2>
                 {cat.description && (
-                  <p className="text-white/70 text-xs sm:text-sm mt-1">{cat.description}</p>
+                  <p className="text-white/70 text-sm mt-1">{cat.description}</p>
                 )}
               </div>
-              <div className="text-xs sm:text-sm text-white/60">בחירה אחת</div>
+              <div className="text-sm text-white/60">בחירה אחת</div>
             </div>
 
-            {/* smaller grid on mobile */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {cat.nominees.map((n) => {
                 const selected = selections[cat.id] === n.id;
                 const isTrack = cat.id === "best-track";
@@ -268,7 +255,7 @@ export default function Awards() {
                   <article
                     key={n.id}
                     className={
-                      "group relative overflow-hidden rounded-xl glass transition " +
+                      "group relative overflow-hidden rounded-2xl glass transition " +
                       (selected ? "ring-2 ring-[var(--brand-pink)]" : "hover:border-white/25")
                     }
                   >
@@ -283,7 +270,7 @@ export default function Awards() {
                               e.stopPropagation();
                               GlobalAudio.inst.play(n.audioPreview!);
                             }}
-                            className="px-2.5 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
+                            className="px-3 py-1.5 text-xs rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
                           >
                             ▶︎ האזנה
                           </button>
@@ -293,7 +280,7 @@ export default function Awards() {
                               e.stopPropagation();
                               GlobalAudio.inst.stop();
                             }}
-                            className="px-2.5 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
+                            className="px-3 py-1.5 text-xs rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
                           >
                             ⏹ עצור
                           </button>
@@ -301,21 +288,16 @@ export default function Awards() {
                       </div>
                     )}
 
-                    {/* footer: stronger contrast + LTR title + 2 lines */}
                     <div
-                      className="p-3 flex items-center justify-between gap-2 cursor-pointer bg-black/30"
+                      className="p-3 sm:p-4 flex items-center justify-between gap-3 cursor-pointer"
                       onClick={() => choose(cat.id, n.id)}
                     >
-                      <div
-                        dir="ltr"
-                        className="font-semibold text-sm leading-snug line-clamp-2"
-                        title={n.name}
-                      >
+                      <div className="font-semibold truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
                         {n.name}
                       </div>
                       <button
                         className={
-                          "px-3 py-1.5 rounded-lg border text-xs transition whitespace-nowrap " +
+                          "px-3 py-1.5 rounded-xl border text-sm transition " +
                           (selected ? "btn-primary border-transparent" : "btn-ghost")
                         }
                         aria-pressed={selected}
@@ -331,16 +313,16 @@ export default function Awards() {
         ))}
 
         {/* Submit */}
-        <div className="glass rounded-xl p-4">
+        <div className="glass rounded-2xl p-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="text-white/80 text-xs sm:text-sm">
+            <div className="text-white/80 text-sm">
               ודאו שבחרתם בכל הקטגוריות. תמיד אפשר לשנות לפני שליחה.
             </div>
             <button
               onClick={submitVote}
               disabled={!canSubmit}
               className={
-                "rounded-xl px-5 py-2.5 text-sm font-semibold " +
+                "rounded-2xl px-6 py-3 font-semibold " +
                 (canSubmit ? "btn-primary" : "btn-ghost cursor-not-allowed")
               }
             >
@@ -349,7 +331,7 @@ export default function Awards() {
           </div>
         </div>
 
-        <footer className="text-center text-[11px] sm:text-xs text-white/60 py-6">
+        <footer className="text-center text-xs text-white/60 py-8">
           © {new Date().getFullYear()} יוצאים לטראק — פרסי השנה.
         </footer>
       </div>
