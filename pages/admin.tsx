@@ -5,20 +5,23 @@ type Tally = Record<string, Record<string, number>>;
 
 export default function Admin() {
   const [key, setKey] = React.useState<string>(() => {
-    // remember key locally so you don’t paste every refresh
     if (typeof window !== "undefined") {
       return localStorage.getItem("ADMIN_KEY") || "";
     }
     return "";
   });
+
   const [loading, setLoading] = React.useState(false);
+  const [clearing, setClearing] = React.useState(false);
   const [tally, setTally] = React.useState<Tally | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [info, setInfo] = React.useState<string | null>(null);
 
   const fetchStats = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setLoading(true);
     setError(null);
+    setInfo(null);
     setTally(null);
     try {
       const r = await fetch(`/api/stats?key=${encodeURIComponent(key)}`);
@@ -32,6 +35,32 @@ export default function Admin() {
       setError(err?.message || "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearVotes = async () => {
+    if (!key) return;
+    if (!confirm("למחוק הצבעות? פעולה זו אינה הפיכה.")) return;
+
+    setClearing(true);
+    setError(null);
+    setInfo(null);
+
+    try {
+      const r = await fetch(`/api/dev-clear?key=${encodeURIComponent(key)}`, {
+        method: "POST",
+      });
+      const j = await r.json();
+      if (!r.ok || !j?.ok) {
+        throw new Error(j?.error || "request_failed");
+      }
+      setInfo(`נמחקו ${j?.deleted ?? 0} הצבעות.`);
+      // Refresh results after clearing
+      await fetchStats();
+    } catch (err: any) {
+      setError(err?.message || "error");
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -49,14 +78,29 @@ export default function Admin() {
             onChange={(e) => setKey(e.target.value)}
             placeholder="Paste ADMIN_KEY"
           />
-          <button
-            className="btn-primary rounded-2xl px-4 py-2 disabled:opacity-50"
-            disabled={!key || loading}
-            type="submit"
-          >
-            {loading ? "טוען…" : "טען תוצאות"}
-          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              className="btn-primary rounded-2xl px-4 py-2 disabled:opacity-50"
+              disabled={!key || loading}
+              type="submit"
+            >
+              {loading ? "טוען…" : "טען תוצאות"}
+            </button>
+
+            <button
+              type="button"
+              onClick={clearVotes}
+              className="btn-ghost rounded-2xl px-4 py-2 disabled:opacity-50"
+              disabled={!key || clearing}
+              title="Deletes votes per your dev-clear rule (e.g., by IP/season)."
+            >
+              {clearing ? "מוחק…" : "נקה הצבעות"}
+            </button>
+          </div>
+
           {error && <div className="text-red-400 text-sm">שגיאה: {error}</div>}
+          {info && <div className="text-green-400 text-sm">{info}</div>}
         </form>
 
         {tally && (
