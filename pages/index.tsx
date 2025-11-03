@@ -6,7 +6,7 @@ import React from "react";
 
 const BRAND = {
   title: "פרסי השנה 2025",
-  logo: "/logo.png",
+  logo: "/images/logo.png",
 };
 
 const CATEGORIES = [
