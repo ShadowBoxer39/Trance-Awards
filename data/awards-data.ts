@@ -31,6 +31,7 @@ export const CATEGORIES: Category[] = [
       { id: "shidapu", name: "Shidapu", artwork: "/images/.jpg" },
       { id: "captain-hook", name: "Captain Hook", artwork: "/images/.jpg" },
       { id: "hujaboy", name: "Hujaboy", artwork: "/images/.jpg" },
+      { id: "skizologic", name: "Skizologic", artwork: "/images/.jpg" },
     ],
   },
   {
@@ -89,6 +90,7 @@ export const CATEGORIES: Category[] = [
       { id: "jupiter", name: "Mystic & Detune - Jupiter", artwork: "/images/.jpg" },
       { id: "mindscam", name: "Amigdala - Mindscam", artwork: "/images/.jpg" },
       { id: "lemonade", name: "Out of Orbit & Sandman - Moon Lemonade Pt.2", artwork: "/images/.jpg" },
+      { id: "barry", name: "Chaos604 - Barry's Trip", artwork: "/images/.jpg" },
       
       
     ],
@@ -98,10 +100,16 @@ export const CATEGORIES: Category[] = [
     title: "פריצת השנה",
     description: "אמן שהתפוצץ השנה עם מוזיקה חדשה וסטים מפוצצים",
     nominees: [
-      { id: "bigitam", name: "Bigitam", artwork: "/images/bigitam & detune.png" },
+      { id: "bigitam", name: "Bigitam", artwork: "/images/bigitam.png" },
       { id: "mystic", name: "Mystic", artwork: "/images/Mystic.jpg" },
       { id: "artmis", name: "Artmis", artwork: "/images/artmis.jpg" },
       { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
+      { id: "nevo", name: "Nevo", artwork: "/images/nevo.jpg" },
+      { id: "event", name: "Event Horizon", artwork: "/images/event.jpg" },
+      { id: "chaos604", name: "Chaos604", artwork: "/images/.jpg" },
+      { id: "industria", name: "Industria", artwork: "/images/industria.jpg" },
+      { id: "mrwilson", name: "Mr. Wilson", artwork: "/images/.jpg" },
+      
     ],
   },
 ];
