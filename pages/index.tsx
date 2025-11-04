@@ -3,6 +3,8 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
+import { FaInstagram, FaYoutube, FaSpotify, FaTiktok, FaWhatsapp } from "react-icons/fa";
+
 
 const BRAND = {
   title: "פרסי השנה 2025",
@@ -45,35 +47,34 @@ const IconWhatsApp = ({ className }: IconProps) => (
 
 const SOCIALS = [
   {
-    name: "Instagram",
-    url: "https://www.instagram.com/track_trip.trance/",
-    style: { background: "#E1306C", color: "#fff" },
-    Icon: IconInstagram,
-  },
-  {
-    name: "YouTube",
-    url: "https://www.youtube.com/@tracktripil",
-    style: { background: "#FF0000", color: "#fff" },
-    Icon: IconYouTube,
-  },
-  {
-    name: "Spotify",
-    url: "https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ",
-    style: { background: "#1DB954", color: "#0b0b0b" },
-    Icon: IconSpotify,
+    name: "WhatsApp",
+    url: "https://https://chat.whatsapp.com/LSZaHTgYXPn4HRvrsCnmTc",
+    color: "#25D366",
+    Icon: FaWhatsapp,
   },
   {
     name: "TikTok",
     url: "https://www.tiktok.com/@tracktripil",
-    style: { background: "#000000", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" },
-    Icon: IconTikTok,
+    color: "#000000",
+    Icon: FaTiktok,
   },
   {
-    name: "WhatsApp",
-    // ⬇️ replace with your community/invite link or phone: https://wa.me/<number>
-    url: "https://chat.whatsapp.com/LSZaHTgYXPn4HRvrsCnmTc",
-    style: { background: "#25D366", color: "#0b0b0b" },
-    Icon: IconWhatsApp,
+    name: "Spotify",
+    url: "https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ",
+    color: "#1DB954",
+    Icon: FaSpotify,
+  },
+  {
+    name: "YouTube",
+    url: "https://www.youtube.com/@tracktripil",
+    color: "#FF0000",
+    Icon: FaYoutube,
+  },
+  {
+    name: "Instagram",
+    url: "https://www.instagram.com/track_trip.trance/",
+    color: "#E1306C",
+    Icon: FaInstagram,
   },
 ];
 
@@ -168,21 +169,21 @@ export default function Landing() {
         <section className="max-w-6xl mx-auto px-4 pb-16">
           <h3 className="text-lg font-[700] mb-3">עקבו אחרינו</h3>
          <div className="flex flex-wrap gap-3">
-  {SOCIALS.map((s) => (
+  {SOCIALS.map(({ name, url, color, Icon }) => (
     <a
-      key={s.name}
-      href={s.url}
+      key={name}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl font-medium ring-1 ring-white/0 hover:ring-white/20 transition"
-      style={s.style as React.CSSProperties}
-      aria-label={s.name}
+      className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-medium hover:scale-105 transition-transform shadow-md"
+      style={{ backgroundColor: color }}
     >
-      <s.Icon className="w-5 h-5" />
-      <span className="hidden sm:inline">{s.name}</span>
+      <Icon className="w-5 h-5" />
+      <span>{name}</span>
     </a>
   ))}
 </div>
+
         </section>
 
         {/* FINAL CTA */}
