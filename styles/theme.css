@@ -65,6 +65,14 @@
   hyphens: manual;
 }
 
+/* Prevent long nominee titles from clipping too early */
+.nominee-title {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: unset;
+}
+
+
 
 /* Base tweaks */
 html, body, #__next { height: 100%; }
