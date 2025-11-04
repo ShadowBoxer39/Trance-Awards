@@ -53,14 +53,16 @@
   overflow: hidden;
 }
 
-/* --- Text clamping + hyphen control --- */
-.clamp-2{
+/* Better text clamping */
+.line-clamp-3 {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: none;
 }
-
 
 /* Prevent long nominee titles from clipping too early */
 .nominee-title{
