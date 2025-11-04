@@ -25,8 +25,6 @@ type SoundMeta = {
 export default function PlayerProvider({ children }: { children: React.ReactNode }) {
   const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
   const widgetRef = React.useRef<any>(null);
-
-  // IMPORTANT: this type works in both browser & Node typings
   const pollTimer = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [apiReady, setApiReady] = React.useState(false);
@@ -38,6 +36,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [position, setPosition] = React.useState(0); // seconds
   const [meta, setMeta] = React.useState<SoundMeta>({});
 
+  // --- Initialize the SoundCloud widget ---
   function setupWidget() {
     if (!iframeRef.current) return;
     // @ts-ignore
@@ -58,8 +57,9 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     });
   }
 
+  // --- Load and play a SoundCloud track ---
   function loadAndPlay(scUrl: string) {
-    const clean = scUrl.split("?")[0]; // drop tracking params
+    const clean = scUrl.split("?")[0]; // remove tracking params
     setUrl(clean);
     setVisible(true);
 
@@ -73,7 +73,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       hide_related: true,
     });
 
-    // fetch meta & start polling
+    // fetch metadata & duration
     setTimeout(() => {
       const w = widgetRef.current;
       if (!w) return;
@@ -90,7 +90,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
         }
       });
 
-      // clear previous interval (if any), then start a new one
+      // start a polling timer for playback progress
       if (pollTimer.current !== null) {
         clearInterval(pollTimer.current);
         pollTimer.current = null;
@@ -102,7 +102,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     }, 250);
   }
 
-  // cleanup on unmount
+  // --- Cleanup on unmount ---
   React.useEffect(() => {
     return () => {
       if (pollTimer.current !== null) {
@@ -112,6 +112,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     };
   }, []);
 
+  // --- Expose control API ---
   const api: PlayerAPI = {
     playUrl: (u: string) => {
       if (!widgetRef.current) return;
@@ -150,28 +151,12 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
         {children}
 
         {visible && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/60 backdrop-blur">
+          <div
+            className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/60 backdrop-blur"
+            dir="ltr"
+          >
             <div className="mx-auto max-w-6xl px-3 py-2 flex items-center gap-3 text-white">
-              {/* artwork */}
-              {meta.artwork_url ? (
-                <img
-                  src={meta.artwork_url.replace("-large.jpg", "-t300x300.jpg")}
-                  alt=""
-                  className="w-8 h-8 rounded-md object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-md bg-white/10" />
-              )}
-
-              {/* title/artist */}
-              <div className="min-w-0">
-                <div className="text-xs font-medium truncate">{meta.title || url}</div>
-                <div className="text-[11px] text-white/70 truncate">
-                  {meta.user?.username || "SoundCloud"}
-                </div>
-              </div>
-
-              {/* play/pause */}
+              {/* Play / Pause */}
               <button
                 onClick={api.toggle}
                 disabled={!apiReady}
@@ -181,25 +166,12 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
                 {isPlaying ? "⏸" : "▶"}
               </button>
 
-              {/* skip -/+ 15s */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => api.seek(position - 15)}
-                  className="border rounded-xl px-2 py-1 text-xs hover:bg-white/10"
-                  title="חזרה 15 שניות"
-                >
-                  « 15s
-                </button>
-                <button
-                  onClick={() => api.seek(position + 15)}
-                  className="border rounded-xl px-2 py-1 text-xs hover:bg-white/10"
-                  title="קדימה 15 שניות"
-                >
-                  15s »
-                </button>
+              {/* Current time */}
+              <div className="text-xs tabular-nums text-white/80 shrink-0">
+                {formatTime(position)}
               </div>
 
-              {/* seek slider */}
+              {/* Seek slider */}
               <input
                 type="range"
                 min={0}
@@ -209,24 +181,34 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
                 className="mx-2 w-full"
               />
 
-              {/* time */}
-              <div className="text-xs tabular-nums text-white/80">
-                {formatTime(position)} / {formatTime(duration)}
+              {/* Duration */}
+              <div className="text-xs tabular-nums text-white/80 shrink-0">
+                {formatTime(duration)}
               </div>
 
-              {/* open in SC */}
+              {/* Track info */}
+              <div className="min-w-0 pl-2">
+                <div className="text-xs font-medium truncate">
+                  {meta.title || url}
+                </div>
+                <div className="text-[11px] text-white/70 truncate">
+                  {meta.user?.username || "SoundCloud"}
+                </div>
+              </div>
+
+              {/* Open in SC */}
               {meta.permalink_url && (
                 <a
                   href={meta.permalink_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="border rounded-xl px-3 py-1 text-xs hover:bg-white/10"
+                  className="shrink-0 border rounded-xl px-3 py-1 text-xs hover:bg-white/10"
                 >
                   Open
                 </a>
               )}
 
-              {/* close */}
+              {/* Close */}
               <button
                 onClick={() => {
                   setVisible(false);
@@ -239,8 +221,8 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
                     pollTimer.current = null;
                   }
                 }}
-                className="ml-1 border rounded-xl px-2 py-1 text-xs hover:bg-white/10"
-                title="סגור נגן"
+                className="ml-1 shrink-0 border rounded-xl px-2 py-1 text-xs hover:bg-white/10"
+                title="Close Player"
               >
                 ✕
               </button>
@@ -248,7 +230,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
           </div>
         )}
 
-        {/* Hidden SC widget iframe (stable src; we swap tracks via widget.load) */}
+        {/* Hidden SoundCloud iframe */}
         <iframe
           ref={iframeRef}
           title="SoundCloud Player"
