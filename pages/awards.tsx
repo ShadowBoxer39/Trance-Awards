@@ -241,9 +241,10 @@ const submitVote = async () => {
   <button
     onClick={(e) => { e.stopPropagation(); choose(cat.id, n.id); }}
     className={
-      "w-full px-3 py-2 rounded-lg border text-xs transition " +
-      (selected ? "btn-primary border-transparent" : "btn-ghost")
-    }
+  "w-full px-3 py-2 rounded-lg text-xs transition " +
+  (selected ? "btn-primary border-0" : "btn-ghost border")
+}
+
     aria-pressed={selected}
   >
     {selected ? "נבחר ✓" : "בחר"}
