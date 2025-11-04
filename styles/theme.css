@@ -86,3 +86,28 @@
 html, body, #__next { height: 100%; }
 html { color-scheme: dark; }
 body { background: #090a0f; color: #ffffff; }
+
+
+/* === Share Preview / Story Export helpers === */
+
+/* Square thumbnails: never stretch the image */
+.thumb {
+  aspect-ratio: 1 / 1;       /* square frame */
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;          /* crop to fill */
+  border-radius: 10px;
+}
+
+/* Main headings / titles inside the share preview */
+.share-title {
+  white-space: normal;
+  overflow-wrap: anywhere;    /* allow wrapping at any point if needed */
+  word-break: break-word;     /* break long english words sensibly */
+  line-height: 1.25;
+}
+
+/* Direction utilities (because you mix Hebrew and English) */
+.rtl { direction: rtl; }
+.ltr { direction: ltr; text-align: left; }
