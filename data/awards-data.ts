@@ -104,6 +104,7 @@ export const CATEGORIES = [
       { id: "industria", name: "Industria", artwork: "/images/industria.jpg" },
       { id: "mrwilson", name: "Mr. Wilson", artwork: "/images/mrwilson.jpg" },
       { id: "gordon", name: "Eran Gordon", artwork: "/images/.jpg" },
+      { id: "migdalor", name: "Migdalor", artwork: "/images/migdalor.jpg" },
     ],
   },
 ];
