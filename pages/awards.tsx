@@ -6,7 +6,9 @@ import { useRouter } from "next/router";
 
 // ✅ one source of truth for data & types
 import { CATEGORIES } from "@/data/awards-data";
-import type { Category, Nominee } from "@/data/awards-data";
+// If you actually need the types, use:
+// import type { AwardCategory, AwardNominee } from "@/data/awards-data";
+
 
 /** ───────────────── BRAND ───────────────── */
 const BRAND = {
