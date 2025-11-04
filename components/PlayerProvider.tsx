@@ -36,7 +36,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [meta, setMeta] = React.useState<SoundMeta>({});
 
   // keep a small polling timer for position (widget events are not always frequent)
-  const pollTimer = React.useRef<NodeJS.Timer | null>(null);
+  const pollTimer = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   function setupWidget() {
     if (!iframeRef.current) return;
@@ -93,19 +93,24 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       });
 
       // start polling position (250ms)
-      if (pollTimer.current) clearInterval(pollTimer.current);
-      pollTimer.current = setInterval(() => {
-        w.getPosition((ms: number) => setPosition(Math.round((ms || 0) / 1000)));
-        w.getDuration((ms: number) => setDuration(Math.round((ms || 0) / 1000)));
-      }, 250);
-    }, 250);
+     if (pollTimer.current !== null) {
+  clearInterval(pollTimer.current);
+  pollTimer.current = null;
+}
+pollTimer.current = setInterval(() => {
+  w.getPosition((ms: number) => setPosition(Math.round((ms || 0) / 1000)));
+  w.getDuration((ms: number) => setDuration(Math.round((ms || 0) / 1000)));
+}, 250);
   }
 
   React.useEffect(() => {
-    return () => {
-      if (pollTimer.current) clearInterval(pollTimer.current);
-    };
-  }, []);
+  return () => {
+    if (pollTimer.current !== null) {
+      clearInterval(pollTimer.current);
+      pollTimer.current = null;
+    }
+  };
+}, []);
 
   const api: PlayerAPI = {
     playUrl: (u: string) => {
