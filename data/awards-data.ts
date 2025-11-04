@@ -1,23 +1,28 @@
 // /data/awards-data.ts
 
 /** TYPES */
-export type Nominee = {
+// /data/awards-data.ts
+
+export type AwardNominee = {
   id: string;               // unique slug
   name: string;             // display name
   artwork?: string;         // /images/... (under /public)
   audioPreview?: string;    // optional (best-track only)
-  previewFrom?: number;     // optional start position (sec) if you use a full track
+  previewFrom?: number;     // optional start position (sec)
 };
 
-export type Category = {
+export type AwardCategory = {
   id: string;               // e.g., "best-artist"
   title: string;            // Hebrew title
-  description?: string;     // optional sub text
-  nominees: Nominee[];
+  description?: string;
+  nominees: AwardNominee[];
 };
 
-/** DATA — single source of truth */
-export const CATEGORIES: Category[] = [
+// NOTE: just change the annotation to AwardCategory[]
+export const CATEGORIES: AwardCategory[] = [
+  // ... your data unchanged ...
+];
+
   {
     id: "best-artist",
     title: "אמן השנה",
