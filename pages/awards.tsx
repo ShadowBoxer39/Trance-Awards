@@ -227,12 +227,12 @@ export default function Awards() {
  {/* Title area */}
 <div className="min-w-0 xl:flex-1">
   <div
-    dir="ltr"
-    title={n.name}
-    className="font-bold text-[13px] leading-snug text-white text-center xl:text-start clamp-2 break-keep no-hyphen"
-  >
-    {n.name}
-  </div>
+  dir="ltr"
+  title={n.name}
+  className="nominee-title font-bold text-[13px] leading-snug text-white text-center xl:text-start clamp-2 break-keep no-hyphen"
+>
+  {n.name}
+</div>
 </div>
 
 {/* Select button */}
