@@ -53,6 +53,7 @@ export const CATEGORIES = [
       { id: "outsiders", name: "Outsiders", artwork: "/images/Outsiders.webp" },
       { id: "rising-dust", name: "Rising Dust", artwork: "/images/rising dust.jpg" },
       { id: "astral-projection", name: "Astral Projection", artwork: "/images/astral.jpeg" },
+      { id: "alienart", name: "Alien Art", artwork: "/images/alienart.jpeg" },
     ],
   },
   {
