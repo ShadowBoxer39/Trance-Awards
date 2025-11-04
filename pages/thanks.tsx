@@ -383,7 +383,7 @@ export default function Thanks() {
         <section className="max-w-6xl mx-auto px-4 py-10">
           <div className="glass rounded-3xl p-6 md:p-8 text-center max-w-3xl mx-auto">
             <p className="text-white/80 mb-6">
-              הכנו לך תמונת שיתוף לסטורי. שתפו ותגו אותנו! 🎉
+              הכנו לך תמונת שיתוף לסטורי. שתפו ותייגו אותנו! 🎉
             </p>
 
             {imgUrl ? (
