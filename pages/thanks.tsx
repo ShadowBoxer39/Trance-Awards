@@ -461,7 +461,7 @@ export default function Thanks() {
                 📋 העתק טקסט
               </button>
               
-              
+              <a
                 href={imgUrl}
                 download="trance-awards-2025-story.png"
                 className="flex-1 glass rounded-xl px-4 py-3 text-sm font-medium hover:bg-white/10 transition text-center"
