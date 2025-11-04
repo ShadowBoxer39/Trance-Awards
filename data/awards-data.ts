@@ -77,7 +77,7 @@ export const CATEGORIES = [
     description: "הטראק שהכי עשה לכם את השנה",
     nominees: [
       { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg", soundcloudUrl: "https://on.soundcloud.com/LCsMeIMf7RveiIAwPZ" },
-      { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg", soundcloudUrl: "https://on.soundcloud.com/kGfZHT61QKDpyhJQEc" },
+      { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg", soundcloudUrl: "https://soundcloud.com/mystic_psytrance/reborn?si=651f223b97fc4e81a92c81c35623ea5d&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing" },
       { id: "2minds-nova", name: "2Minds - Nova", artwork: "/images/2minds nova track.jpg", audioPreview: "/audio/2minds-nova-30.mp3" },
       { id: "uncharted-brain-event", name: "Uncharted Territory - Brain Event", artwork: "/images/Uncharted Territory - brain event track.webp", audioPreview: "/audio/uncharted-brain-event-30.mp3" },
       { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg", audioPreview: "/audio/dubel-k-30.mp3" },
