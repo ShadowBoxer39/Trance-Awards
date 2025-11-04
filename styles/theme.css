@@ -54,6 +54,19 @@
   overflow: hidden;
 }
 
+/* --- Text clamping + hyphen control --- */
+.clamp-2{
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.no-hyphen{
+  hyphens: manual;
+}
+
+
 /* Base tweaks */
 html, body, #__next { height: 100%; }
 html { color-scheme: dark; }
