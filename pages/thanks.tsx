@@ -7,8 +7,6 @@ import { CATEGORIES } from "@/data/awards-data";
 type Category = (typeof CATEGORIES)[number];
 type Nominee = Category["nominees"][number];
 
-
-
 /** ───────── BRAND ───────── */
 const BRAND = {
   title: "פרסי השנה 2025",
@@ -26,6 +24,7 @@ function getChosen(selections: Record<string, string> | null) {
   }).filter((x) => x.nomineeName !== "-");
 }
 
+/** draw rounded rect path */
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -43,153 +42,213 @@ function roundRect(
   ctx.closePath();
 }
 
-function fitRtlText(
+/** cover-fit image (no stretching; crops like CSS object-fit: cover) */
+function drawImageCover(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+) {
+  const iw = img.naturalWidth || img.width;
+  const ih = img.naturalHeight || img.height;
+  const scale = Math.max(w / iw, h / ih);
+  const nw = iw * scale;
+  const nh = ih * scale;
+  const dx = x + (w - nw) / 2;
+  const dy = y + (h - nh) / 2;
+  ctx.drawImage(img, dx, dy, nw, nh);
+}
+
+/** wrap text with max lines + ellipsis on last line (LTR or RTL) */
+function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
-  xRight: number,
+  x: number,
   y: number,
-  maxWidth: number
+  maxWidth: number,
+  lineHeight: number,
+  maxLines = 2
 ) {
-  if (ctx.measureText(text).width <= maxWidth) {
-    ctx.fillText(text, xRight + maxWidth, y, maxWidth);
-    return;
+  const words = String(text ?? "").split(/\s+/);
+  let line = "";
+  let lines = 0;
+
+  for (let i = 0; i < words.length; i++) {
+    const test = line ? `${line} ${words[i]}` : words[i];
+    if (ctx.measureText(test).width > maxWidth && i > 0) {
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines++;
+
+      if (lines >= maxLines - 1) {
+        // ellipsize the tail
+        let tail = words.slice(i).join(" ");
+        while (ctx.measureText(`${tail}…`).width > maxWidth && tail.length > 0) {
+          tail = tail.slice(0, -1);
+        }
+        ctx.fillText(`${tail}…`, x, y);
+        return;
+      }
+      line = words[i];
+    } else {
+      line = test;
+    }
   }
-  let truncated = text;
-  while (truncated.length > 0 && ctx.measureText(truncated + "…").width > maxWidth) {
-    truncated = truncated.slice(1);
-  }
-  ctx.fillText("…" + truncated, xRight + maxWidth, y, maxWidth);
+  ctx.fillText(line, x, y);
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
-    img.crossOrigin = "anonymous"; // safe for same-origin /images
+    img.crossOrigin = "anonymous"; // safe for local /images too
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
   });
 }
 
-/** Build a 1080×1920 IG Story PNG and return dataURL */
+/** Build a crisp IG Story PNG (1080×1920, rendered at 2× for quality) */
 async function buildStoryImage(selections: Record<string, string>) {
-  const W = 1080;
-  const H = 1920; // Instagram Story
-  const padX = 64;
-  const padY = 64;
+  // High-res export
+  const SCALE = 2;
+  const W = 1080 * SCALE;
+  const H = 1920 * SCALE;
+  const padX = 64 * SCALE;
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
-  ctx.direction = "rtl";
+  ctx.imageSmoothingQuality = "high";
+  await document.fonts?.ready; // better glyph metrics
 
-  // Background gradient
-  const bg = ctx.createLinearGradient(0, 0, W, H);
+  // Background gradient + soft glows
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, "#141320");
   bg.addColorStop(1, "#0a0b10");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  // neon glows
-  const g1 = ctx.createRadialGradient(W * 0.85, H * 0.12, 60, W * 0.85, H * 0.12, 700);
+  const g1 = ctx.createRadialGradient(W * 0.82, H * 0.10, 60 * SCALE, W * 0.82, H * 0.10, 700 * SCALE);
   g1.addColorStop(0, "rgba(255,90,165,0.28)");
   g1.addColorStop(1, "rgba(255,90,165,0)");
   ctx.fillStyle = g1;
   ctx.beginPath();
-  ctx.arc(W * 0.85, H * 0.12, 700, 0, Math.PI * 2);
+  ctx.arc(W * 0.82, H * 0.10, 700 * SCALE, 0, Math.PI * 2);
   ctx.fill();
 
-  const g2 = ctx.createRadialGradient(W * 0.15, H * 0.18, 60, W * 0.15, H * 0.18, 650);
+  const g2 = ctx.createRadialGradient(W * 0.18, H * 0.16, 60 * SCALE, W * 0.18, H * 0.16, 650 * SCALE);
   g2.addColorStop(0, "rgba(123,97,255,0.22)");
   g2.addColorStop(1, "rgba(123,97,255,0)");
   ctx.fillStyle = g2;
   ctx.beginPath();
-  ctx.arc(W * 0.15, H * 0.18, 650, 0, Math.PI * 2);
+  ctx.arc(W * 0.18, H * 0.16, 650 * SCALE, 0, Math.PI * 2);
   ctx.fill();
 
   // Logo (top-right)
   try {
     const logo = await loadImage(BRAND.logo);
-    const L = 140;
+    const L = 140 * SCALE;
     ctx.save();
-    roundRect(ctx, W - padX - L, padY, L, L, 28);
+    roundRect(ctx, W - padX - L, 64 * SCALE, L, L, 28 * SCALE);
     ctx.clip();
-    ctx.drawImage(logo, W - padX - L, padY, L, L);
+    drawImageCover(ctx, logo, W - padX - L, 64 * SCALE, L, L);
     ctx.restore();
   } catch {}
 
-  // Title & subtitle
-  ctx.fillStyle = "#fff";
+  // Title (Hebrew / RTL)
+  ctx.save();
+  ctx.direction = "rtl";
   ctx.textAlign = "right";
-  ctx.font = "700 100px 'Arial'";
-  ctx.fillText("הצבעתי!", W - padX, 360);
+  ctx.fillStyle = "#fff";
+  ctx.font = `700 ${100 * SCALE}px Arial`;
+  ctx.fillText("הצבעתי!", W - padX, 360 * SCALE);
 
-  ctx.font = "700 68px 'Arial'";
-  ctx.fillText("פרסי השנה בטראנס 2025", W - padX, 440);
+  ctx.font = `700 ${68 * SCALE}px Arial`;
+  ctx.fillText("פרסי השנה בטראנס 2025", W - padX, 440 * SCALE);
+  ctx.restore();
 
-  // Picks grid (2 cols × 3 rows)
+  // Picks grid
   const chosen = getChosen(selections);
   const COLS = 2;
   const ROWS = 3;
-  const cellW = (W - padX * 2 - 28) / COLS;
-  const cellH = 260;
-  let startY = 540;
+  const CELL_W = ((W - padX * 2) - 28 * SCALE) / COLS;
+  const CELL_H = 260 * SCALE;
+  const START_Y = 540 * SCALE;
+  const GAP_X = 28 * SCALE;
+  const GAP_Y = 24 * SCALE;
 
   for (let i = 0; i < Math.min(chosen.length, COLS * ROWS); i++) {
     const row = Math.floor(i / COLS);
     const col = i % COLS;
-    const x = padX + col * (cellW + 28);
-    const y = startY + row * (cellH + 24);
+    const x = padX + col * (CELL_W + GAP_X);
+    const y = START_Y + row * (CELL_H + GAP_Y);
 
     // panel
     ctx.fillStyle = "rgba(255,255,255,0.07)";
-    roundRect(ctx, x, y, cellW, cellH, 22);
+    roundRect(ctx, x, y, CELL_W, CELL_H, 22 * SCALE);
     ctx.fill();
 
-    // artwork (square, right side)
-    const artSize = 180;
-    const artX = x + cellW - 18 - artSize;
-    const artY = y + 18;
+    // artwork (square, cover-fit; right side)
+    const artSize = 180 * SCALE;
+    const artX = x + CELL_W - 18 * SCALE - artSize;
+    const artY = y + 18 * SCALE;
 
     const artSrc = chosen[i].artwork;
     if (artSrc) {
       try {
         const img = await loadImage(artSrc);
         ctx.save();
-        roundRect(ctx, artX, artY, artSize, artSize, 16);
+        roundRect(ctx, artX, artY, artSize, artSize, 16 * SCALE);
         ctx.clip();
-        ctx.drawImage(img, artX, artY, artSize, artSize);
+        drawImageCover(ctx, img, artX, artY, artSize, artSize);
         ctx.restore();
       } catch {
         ctx.fillStyle = "rgba(255,255,255,0.15)";
-        roundRect(ctx, artX, artY, artSize, artSize, 16);
+        roundRect(ctx, artX, artY, artSize, artSize, 16 * SCALE);
         ctx.fill();
       }
     }
 
     // text block
-    const textX = x + 20;
-    const textW = artX - textX - 12;
+    const textX = x + 20 * SCALE;
+    const textW = artX - textX - 12 * SCALE;
 
+    // Hebrew category label (RTL)
+    ctx.save();
+    ctx.direction = "rtl";
+    ctx.textAlign = "right";
     ctx.fillStyle = "rgba(255,255,255,0.92)";
-    ctx.font = "700 34px 'Arial'";
-    fitRtlText(ctx, chosen[i].catTitle, textX, y + 66, textW);
+    ctx.font = `700 ${34 * SCALE}px Arial`;
+    ctx.fillText(chosen[i].catTitle, textX + textW, y + 66 * SCALE);
+    ctx.restore();
 
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.font = "400 30px 'Arial'";
-    fitRtlText(ctx, chosen[i].nomineeName, textX, y + 118, textW);
+    // English (or mixed) nominee name (LTR, wrapped)
+    ctx.save();
+    ctx.direction = "ltr";
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.font = `400 ${30 * SCALE}px Arial`;
+    wrapText(ctx, chosen[i].nomineeName, textX, y + 114 * SCALE, textW, 34 * SCALE, 2);
+    ctx.restore();
   }
 
   // Footer
-  ctx.font = "400 32px 'Arial'";
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.fillText("מגישים: יוצאים לטראק", W - padX, H - 120);
+  ctx.save();
+  ctx.direction = "rtl";
+  ctx.textAlign = "right";
+  ctx.font = `400 ${32 * SCALE}px Arial`;
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.fillText("מגישים: יוצאים לטראק", W - padX, H - 120 * SCALE);
 
-  ctx.font = "400 28px 'Arial'";
+  ctx.font = `400 ${28 * SCALE}px Arial`;
   ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.fillText(BRAND.siteUrl.replace(/^https?:\/\//, ""), W - padX, H - 70);
+  ctx.fillText(BRAND.siteUrl.replace(/^https?:\/\//, ""), W - padX, H - 70 * SCALE);
+  ctx.restore();
 
+  // export (downscale by browser when saving/sharing)
   return canvas.toDataURL("image/png");
 }
 
@@ -324,7 +383,7 @@ export default function Thanks() {
         <section className="max-w-6xl mx-auto px-4 py-10">
           <div className="glass rounded-3xl p-6 md:p-8 text-center max-w-3xl mx-auto">
             <p className="text-white/80 mb-6">
-           שתף את הדירוג שלך באינסטגרם ואל תשכח לתייג אותנו!
+              הכנו לך תמונת שיתוף לסטורי. שתפו ותגו אותנו! 🎉
             </p>
 
             {imgUrl ? (
@@ -362,7 +421,7 @@ export default function Thanks() {
                 </div>
 
                 <div className="text-xs text-white/60 mt-4 leading-relaxed">
-                  אם לחיצה על “שתפו לסטורי” לא פותחת שיתוף – שמרו את התמונה ושתפו אותה ידנית ל-Instagram Story.
+                  אם “שתפו לסטורי” לא נפתח — שמרו את התמונה ושתפו ידנית ב-Instagram Story.
                 </div>
               </>
             ) : (
@@ -372,7 +431,7 @@ export default function Thanks() {
                   נסו להצביע שוב או להשתמש באותו מכשיר/חלון.
                 </div>
                 <div className="mt-6">
-                  <Link href="/" className="btn-ghost rounded-צxl px-5 py-2">
+                  <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
                     חזרה לדף הראשי
                   </Link>
                 </div>
