@@ -61,16 +61,24 @@
   overflow: hidden;
 }
 
-.no-hyphen{
-  hyphens: manual;
-}
 
 /* Prevent long nominee titles from clipping too early */
-.nominee-title {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  text-overflow: unset;
+.nominee-title{
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  text-overflow: clip !important;
 }
+
+/* desktop: bump to 3 lines */
+@media (min-width: 1280px){ /* xl breakpoint */
+  .clamp-desktop-3{
+    -webkit-line-clamp: 3;
+  }
+}
+
+/* keep hyphens off */
+.no-hyphen{ hyphens: manual; }
 
 
 
