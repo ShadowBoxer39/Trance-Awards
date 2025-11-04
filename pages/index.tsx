@@ -5,7 +5,7 @@ import Image from "next/image";
 import React from "react";
 
 const BRAND = {
-  title: "פרסי השנה 2025",
+  title: "פרסי השנה 2025 בטראנס הישראלי",
   // file must be at /public/images/logo.png
   logo: "/images/logo.png",
 };
