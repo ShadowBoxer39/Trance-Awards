@@ -89,6 +89,7 @@ export const CATEGORIES = [
       { id: "mindscam", name: "Amigdala - Mindscam", artwork: "/images/mindscam.jpg", soundcloudUrl: "https://soundcloud.com/user-169756492/amigdala-mindscam" },
       { id: "lemonade", name: "Out of Orbit & Sandman - Moon Lemonade Pt.2", artwork: "/images/moonlemonade.jpeg", soundcloudUrl: "https://soundcloud.com/shamanictales/out-of-orbit-sandman-moon-lemonade-pt2-sample" },
       { id: "barry", name: "Chaos604 - Barry's Trip", artwork: "/images/barrytrip.jpg", soundcloudUrl: "https://soundcloud.com/chaos604/barrys-trip" },
+      { id: "highway", name: "Laughing Skull - Extraterestrial Lover", artwork: "/images/highway.jpg", soundcloudUrl: "https://soundcloud.com/laughingskullmusic/laughing-skull-extraterestrial-lover" },
     ],
   },
   {
@@ -107,6 +108,7 @@ export const CATEGORIES = [
       { id: "mrwilson", name: "Mr. Wilson", artwork: "/images/mrwilson.jpg" },
       { id: "gordon", name: "Eran Gordon", artwork: "/images/gordon.jpg" },
       { id: "migdalor", name: "Migdalor", artwork: "/images/migdalor.jpg" },
+      { id: "adiros", name: "Adiros", artwork: "/images/adiros.jpeg" },
     ],
   },
 ];
