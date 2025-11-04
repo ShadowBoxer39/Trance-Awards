@@ -113,3 +113,19 @@ body { background: #090a0f; color: #ffffff; }
 /* Direction utilities (because you mix Hebrew and English) */
 .rtl { direction: rtl; }
 .ltr { direction: ltr; text-align: left; }
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-5%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
