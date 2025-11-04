@@ -229,7 +229,9 @@ export default function Awards() {
   <div
   dir="ltr"
   title={n.name}
-className="nominee-title clamp-2 no-hyphen break-normal font-bold text-[13px] leading-snug text-white text-center xl:text-start"
+className="nominee-title clamp-2 clamp-desktop-3 no-hyphen
+             font-bold text-[13px] leading-snug text-white
+             text-center xl:text-start"
 >
   {n.name}
 </div>
