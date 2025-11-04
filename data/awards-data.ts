@@ -3,25 +3,10 @@
 /** TYPES */
 // /data/awards-data.ts
 
-export type AwardNominee = {
-  id: string;               // unique slug
-  name: string;             // display name
-  artwork?: string;         // /images/... (under /public)
-  audioPreview?: string;    // optional (best-track only)
-  previewFrom?: number;     // optional start position (sec)
-};
 
-export type AwardCategory = {
-  id: string;               // e.g., "best-artist"
-  title: string;            // Hebrew title
-  description?: string;
-  nominees: AwardNominee[];
-};
-
-// NOTE: just change the annotation to AwardCategory[]
-export const CATEGORIES: AwardCategory[] = [
-  // ... your data unchanged ...
-];
+export const CATEGORIES = [
+  // ... your categories & nominees objects ...
+] as const;
 
   {
     id: "best-artist",
