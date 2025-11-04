@@ -268,10 +268,13 @@ className="nominee-title clamp-2 clamp-desktop-3 no-hyphen
             </div>
             <button
   onClick={submitVote}
-  disabled={!canSubmit || isSubmitting} // 👈 CHANGED: Also disable when submitting
-  className={...}
+  disabled={!canSubmit || isSubmitting}
+  className={
+    "rounded-2xl px-5 py-2.5 text-sm font-semibold " +
+    (canSubmit ? "btn-primary" : "btn-ghost cursor-not-allowed")
+  }
 >
-  {isSubmitting ? "שולח..." : "שליחת ההצבעה"} {/* 👈 CHANGED: Show different text */}
+  {isSubmitting ? "שולח..." : "שליחת ההצבעה"}
 </button>
           </div>
         </div>
