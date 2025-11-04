@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePlayer } from "../components/PlayerProvider";
 import { useRouter } from "next/router";
 
 // ✅ one source of truth for data & types
@@ -91,6 +92,8 @@ export default function Awards() {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const player = usePlayer();
+
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
@@ -200,31 +203,21 @@ const submitVote = async () => {
                     <Artwork src={n.artwork} alt={n.name} />
 
                     {/* small track controls (if used) */}
-                    {isTrack && canPlay && (
-                      <div className="absolute top-1 end-1 z-10">
-                        {!playing ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              GlobalAudio.inst.play(n.audioPreview!);
-                            }}
-                            className="px-2 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
-                          >
-                            ▶︎
-                          </button>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              GlobalAudio.inst.stop();
-                            }}
-                            className="px-2 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90"
-                          >
-                            ⏹
-                          </button>
-                        )}
-                      </div>
-                    )}
+                   {isTrack && n.soundcloudUrl && (
+  <div className="absolute top-1 end-1 z-10">
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        player.playUrl(n.soundcloudUrl!);
+      }}
+      className="px-2 py-1 text-[11px] rounded-full bg-black/70 border border-white/10 hover:bg-black/90 text-white"
+      title="נגן ב-SoundCloud"
+    >
+      ▶
+    </button>
+  </div>
+)}
+
 
                     {/* Footer: name full width on mobile; button below (prevents text clipping) */}
                   <div className="p-3 space-y-2">
