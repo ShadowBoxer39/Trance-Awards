@@ -4,7 +4,10 @@ import Link from "next/link";
 import React from "react";
 
 import { CATEGORIES } from "@/data/awards-data";
-import type { Category, Nominee } from "@/data/awards-data";
+type Category = (typeof CATEGORIES)[number];
+type Nominee = Category["nominees"][number];
+
+
 
 /** ───────── BRAND ───────── */
 const BRAND = {
