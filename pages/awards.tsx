@@ -267,15 +267,12 @@ className="nominee-title clamp-2 clamp-desktop-3 no-hyphen
               ודאו שבחרתם בכל הקטגוריות. תמיד אפשר לשנות לפני שליחה.
             </div>
             <button
-              onClick={submitVote}
-              disabled={!canSubmit}
-              className={
-                "rounded-2xl px-5 py-2.5 text-sm font-semibold " +
-                (canSubmit ? "btn-primary" : "btn-ghost cursor-not-allowed")
-              }
-            >
-              שליחת ההצבעה
-            </button>
+  onClick={submitVote}
+  disabled={!canSubmit || isSubmitting} // 👈 CHANGED: Also disable when submitting
+  className={...}
+>
+  {isSubmitting ? "שולח..." : "שליחת ההצבעה"} {/* 👈 CHANGED: Show different text */}
+</button>
           </div>
         </div>
 
