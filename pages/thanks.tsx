@@ -364,82 +364,159 @@ export default function Thanks() {
   }
 
   return (
-    <>
-      <Head>
-        <title>תודה שהצבעת — יוצאים לטראק</title>
-        <meta name="theme-color" content="#090a0f" />
-        <meta name="description" content="תודה על ההצבעה לפרסי השנה של יוצאים לטראק" />
-        <meta property="og:title" content="תודה שהצבעת — יוצאים לטראק" />
-        <meta property="og:image" content={BRAND.logo} />
-      </Head>
+<>
+  <Head>
+    <title>🎉 הצבעת בפרסי השנה! — יוצאים לטראק</title>
+    <meta name="theme-color" content="#FF5AA5" />
+    <meta name="description" content="הצבעתי בפרסי השנה של יוצאים לטראק! בואו גם אתם 🎶" />
+    <meta property="og:title" content="הצבעתי בפרסי השנה בטראנס! 🎉" />
+    <meta property="og:image" content={BRAND.logo} />
+  </Head>
 
-      <main className="min-h-screen neon-backdrop text-white">
-        <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
-          <div className="max-w-6xl mx-auto px-4 py-3">
-            <h1 className="text-2xl font-bold">תודה שהצבעת!</h1>
+  <main className="min-h-screen neon-backdrop text-white relative overflow-hidden">
+    {/* Animated background blobs */}
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="absolute top-20 right-10 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-20 left-10 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}} />
+    </div>
+
+    {/* Content */}
+    <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 sm:py-12">
+      
+      {/* Hero Section */}
+      <div className="text-center mb-8">
+        {/* Big celebration emoji */}
+        <div className="text-7xl sm:text-8xl mb-4 animate-bounce">🎉</div>
+        
+        {/* Main title */}
+        <h1 className="gradient-title text-4xl sm:text-5xl font-bold mb-3 leading-tight">
+          תודה שהצבעת!
+        </h1>
+        
+        <p className="text-white/80 text-lg sm:text-xl mb-6">
+          קולך נספר ✓
+        </p>
+
+        {/* Stats teaser */}
+        <div className="glass rounded-2xl p-4 inline-block">
+          <div className="text-sm text-white/70 mb-1">הצטרפת לקהילה של</div>
+          <div className="text-3xl font-bold gradient-title">מאות מצביעים</div>
+        </div>
+      </div>
+
+      {/* Preview Card */}
+      {imgUrl ? (
+        <div className="mb-8 space-y-4">
+          {/* Phone mockup */}
+          <div className="relative mx-auto w-full max-w-[320px] sm:max-w-[380px]">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-purple-500/30 blur-2xl rounded-[3rem]" />
+            
+            {/* Phone frame */}
+            <div className="relative bg-black/40 backdrop-blur rounded-[2.5rem] p-3 border-2 border-white/20 shadow-2xl">
+              <img
+                src={imgUrl}
+                alt="Instagram Story - הצבעתי!"
+                className="w-full aspect-[9/16] object-cover rounded-[2rem]"
+              />
+            </div>
+
+            {/* Floating Instagram icon */}
+            <div className="absolute -top-4 -right-4 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 p-3 rounded-2xl shadow-xl animate-pulse">
+              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              </svg>
+            </div>
           </div>
-        </header>
 
-        <section className="max-w-6xl mx-auto px-4 py-10">
-          <div className="glass rounded-3xl p-6 md:p-8 text-center max-w-3xl mx-auto">
-            <p className="text-white/80 mb-6">
-              הכנו לך תמונת שיתוף לסטורי. שתפו ותייגו אותנו! 🎉
+          {/* CTA Text */}
+          <div className="text-center">
+            <p className="text-white/90 font-semibold text-lg mb-2">
+              שתפו את הבחירות שלכם! 🚀
             </p>
-
-            {imgUrl ? (
-              <>
-                {/* phone-like preview */}
-                <div className="mx-auto w-full max-w-[420px]">
-                  <div className="relative rounded-[2.2rem] border border-white/10 shadow-2xl overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-                    <img
-                      src={imgUrl}
-                      alt="Instagram Story — I Voted"
-                      className="w-full aspect-[9/16] object-cover"
-                      style={{ display: "block" }}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
-                  <button className="btn-primary rounded-2xl px-5 py-2" onClick={shareImage}>
-                    שתפו לסטורי
-                  </button>
-                  <a
-                    className="btn-ghost rounded-2xl px-5 py-2"
-                    href={imgUrl}
-                    download="i-voted-trance-awards-2025-story.png"
-                  >
-                    שמור כתמונה
-                  </a>
-                  <button className="btn-ghost rounded-2xl px-5 py-2" onClick={copyCaption}>
-                    העתק טקסט לשיתוף
-                  </button>
-                  <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
-                    חזרה לדף הראשי
-                  </Link>
-                </div>
-
-                <div className="text-xs text-white/60 mt-4 leading-relaxed">
-                  אם “שתפו לסטורי” לא נפתח — שמרו את התמונה ושתפו ידנית ב-Instagram Story.
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="text-white/70">לא מצאנו את הבחירות להצגה.</div>
-                <div className="text-white/60 text-sm mt-2">
-                  נסו להצביע שוב או להשתמש באותו מכשיר/חלון.
-                </div>
-                <div className="mt-6">
-                  <Link href="/" className="btn-ghost rounded-2xl px-5 py-2">
-                    חזרה לדף הראשי
-                  </Link>
-                </div>
-              </>
-            )}
+            <p className="text-white/60 text-sm">
+              עזרו לנו להפוך את זה ויראלי ולהגיע ליותר חובבי טראנס
+            </p>
           </div>
-        </section>
-      </main>
-    </>
+
+          {/* Action Buttons - BIG and clear */}
+          <div className="space-y-3">
+            {/* Primary CTA */}
+            <button 
+              onClick={shareImage}
+              className="w-full btn-primary rounded-2xl px-6 py-4 text-base font-bold flex items-center justify-center gap-2 transform hover:scale-105 transition-all shadow-xl"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              שתפו עכשיו לסטורי! 
+            </button>
+
+            {/* Secondary actions */}
+            <div className="flex gap-2">
+              <button
+                onClick={copyCaption}
+                className="flex-1 glass rounded-xl px-4 py-3 text-sm font-medium hover:bg-white/10 transition"
+              >
+                📋 העתק טקסט
+              </button>
+              
+              
+                href={imgUrl}
+                download="trance-awards-2025-story.png"
+                className="flex-1 glass rounded-xl px-4 py-3 text-sm font-medium hover:bg-white/10 transition text-center"
+              >
+                💾 שמור תמונה
+              </a>
+            </div>
+          </div>
+
+          {/* Social proof */}
+          <div className="glass rounded-xl p-4 text-center">
+            <p className="text-white/70 text-sm mb-2">
+              💬 תייגו אותנו בסטורי:
+            </p>
+            <p className="text-white font-bold">
+              @track_trip.trance
+            </p>
+          </div>
+
+          {/* Bonus incentive */}
+          <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-xl p-4 text-center">
+            <p className="text-sm text-white/90">
+              <span className="font-bold">🎁 בונוס:</span> מי שמשתף יכנס להגרלה על פרסים!
+            </p>
+          </div>
+        </div>
+      ) : (
+        // Loading or error state
+        <div className="glass rounded-2xl p-8 text-center">
+          <div className="text-6xl mb-4">⏳</div>
+          <p className="text-white/70 mb-4">מכין את התמונה שלך...</p>
+          <p className="text-white/50 text-sm">
+            אם זה לוקח יותר מדי זמן, נסו לרענן את הדף
+          </p>
+        </div>
+      )}
+
+      {/* Back button - less prominent */}
+      <div className="text-center pt-6">
+        <Link 
+          href="/" 
+          className="text-white/50 hover:text-white/80 text-sm transition inline-flex items-center gap-1"
+        >
+          ← חזרה לדף הבית
+        </Link>
+      </div>
+
+      {/* Footer encouragement */}
+      <div className="text-center pt-8 pb-4">
+        <p className="text-white/40 text-xs">
+          תודה שאתם חלק מקהילת הטראנס הישראלית! 🇮🇱🎶
+        </p>
+      </div>
+    </div>
+  </main>
+</>
   );
 }
