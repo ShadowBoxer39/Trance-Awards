@@ -223,7 +223,7 @@ export default function Awards() {
                     )}
 
                     {/* Footer: name full width on mobile; button below (prevents text clipping) */}
-                    <div className="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                    <div className="p-3 flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between xl:gap-3">
   {/* Title area */}
   <div className="min-w-0 sm:flex-1">
     <div
