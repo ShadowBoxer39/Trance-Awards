@@ -484,7 +484,7 @@ export default function Thanks() {
           {/* Bonus incentive */}
           <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-xl p-4 text-center">
             <p className="text-sm text-white/90">
-              <span className="font-bold">נשתדל לשתף:</span> כמה שיותק מהבחירות שלכם
+              <span className="font-bold">נשתדל לשתף</span> כמה שיותר מהבחירות שלכם
             </p>
           </div>
         </div>
