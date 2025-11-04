@@ -83,7 +83,7 @@ export const CATEGORIES: Category[] = [
     title: "טראק השנה",
     description: "הטראק שהכי עשה לכם את השנה",
     nominees: [
-      { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg", audioPreview: "/audio/libra-subjective-30.mp3" },
+      { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg", audioPreview: "/audio/Libra - Subjective.mp3" },
       { id: "mystic-reborn", name: "Mystic - Reborn", artwork: "/images/mystic - reborn.jpg", audioPreview: "/audio/mystic-reborn-30.mp3" },
       { id: "2minds-nova", name: "2Minds - Nova", artwork: "/images/2minds nova track.jpg", audioPreview: "/audio/2minds-nova-30.mp3" },
       { id: "uncharted-brain-event", name: "Uncharted Territory - Brain Event", artwork: "/images/Uncharted Territory - brain event track.webp", audioPreview: "/audio/uncharted-brain-event-30.mp3" },
