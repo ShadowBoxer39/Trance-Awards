@@ -481,9 +481,9 @@ export default function Thanks() {
             </p>
           </div>
 
-          {/* Bonus incentive */}
-   </div>  {/* closes .mb-8 space-y-4 */}
-) : (
+         {/* Bonus incentive */}
+</div>  {/* closes .mb-8 space-y-4 */}
+      ) : (
         // Loading or error state
         <div className="glass rounded-2xl p-8 text-center">
           <div className="text-6xl mb-4">⏳</div>
