@@ -482,7 +482,7 @@ export default function Thanks() {
           </div>
 
           {/* Bonus incentive */}
-          
+          </div>   {/
       ) : (
         // Loading or error state
         <div className="glass rounded-2xl p-8 text-center">
