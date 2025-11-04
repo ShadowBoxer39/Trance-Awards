@@ -54,6 +54,7 @@ export const CATEGORIES = [
       { id: "rising-dust", name: "Rising Dust", artwork: "/images/rising dust.jpg" },
       { id: "astral-projection", name: "Astral Projection", artwork: "/images/astral.jpeg" },
       { id: "alienart", name: "Alien Art", artwork: "/images/alienart.jpeg" },
+      { id: "absolute", name: "Absolute Hypnotic", artwork: "/images/absolute.jpg" },
     ],
   },
   {
