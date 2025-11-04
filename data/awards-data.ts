@@ -109,10 +109,12 @@ export const CATEGORIES = [
 ];
 
 /** HELPERS */
-export const CATEGORIES_BY_ID: Record<string, Category> =
-  Object.fromEntries(CATEGORIES.map(c => [c.id, c])) as Record<string, Category>;
+/** HELPERS (type-safe via inference) */
+export const CATEGORIES_BY_ID = Object.fromEntries(
+  CATEGORIES.map((c) => [c.id, c] as const)
+) as Record<string, (typeof CATEGORIES)[number]>;
 
 export function getNominee(catId: string, nomineeId: string) {
   const cat = CATEGORIES_BY_ID[catId];
-  return cat?.nominees.find(n => n.id === nomineeId);
+  return cat?.nominees.find((n) => n.id === nomineeId);
 }
