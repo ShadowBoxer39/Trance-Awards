@@ -27,7 +27,7 @@ export const CATEGORIES = [
       { id: "skizologic", name: "Skizologic", artwork: "/images/skizologic.jpeg" },
       { id: "outoforbit", name: "Out Of Orbit", artwork: "/images/outoforbit.jpg" },
       { id: "modus", name: "Modus", artwork: "/images/modus.jpg" },
-      { id: "skull", name: "Laughing Skull", artwork: "/images/.jpg" },
+      { id: "skull", name: "Laughing Skull", artwork: "/images/skull.jpeg" },
     ],
   },
   {
@@ -39,7 +39,7 @@ export const CATEGORIES = [
       { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
       { id: "chuka", name: "Chuka", artwork: "/images/chuka.jpg" },
       { id: "atara", name: "Atara", artwork: "/images/atara.jpg" },
-      { id: "astrogano", name: "Astrogano", artwork: "/images/.jpg" },
+      { id: "astrogano", name: "Astrogano", artwork: "/images/astrogano.jpeg" },
     ],
   },
   {
@@ -103,7 +103,7 @@ export const CATEGORIES = [
       { id: "chaos604", name: "Chaos604", artwork: "/images/chaos.jpg" },
       { id: "industria", name: "Industria", artwork: "/images/industria.jpg" },
       { id: "mrwilson", name: "Mr. Wilson", artwork: "/images/mrwilson.jpg" },
-      { id: "gordon", name: "Eran Gordon", artwork: "/images/.jpg" },
+      { id: "gordon", name: "Eran Gordon", artwork: "/images/gordon.jpg" },
       { id: "migdalor", name: "Migdalor", artwork: "/images/migdalor.jpg" },
     ],
   },
