@@ -76,7 +76,7 @@ export const CATEGORIES = [
   },
   {
     id: "best-track",
-    title: "טראק השנה - לחצו על הטראק כדי לשמוע אותו",
+    title: "טראק השנה -          לחצו על הטראק כדי לשמוע אותו",
     description: "הטראק שהכי עשה לכם את השנה",
     nominees: [
       { id: "libra-subjective-track", name: "Libra - Subjective", artwork: "/images/libra subjective album.jpg", soundcloudUrl: "https://soundcloud.com/libra_0fficial/subjective" },
