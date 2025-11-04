@@ -26,7 +26,7 @@ export const CATEGORIES = [
       { id: "hujaboy", name: "Hujaboy", artwork: "/images/hujaboy.jpeg" },
       { id: "skizologic", name: "Skizologic", artwork: "/images/skizologic.jpeg" },
       { id: "outoforbit", name: "Out Of Orbit", artwork: "/images/outoforbit.jpg" },
-      { id: "modus", name: "Modus", artwork: "/images/modus.jpg" },
+      { id: "modus", name: "Modus", artwork: "/images/modus.jpeg" },
       { id: "skull", name: "Laughing Skull", artwork: "/images/skull.jpeg" },
     ],
   },
