@@ -399,8 +399,8 @@ export default function Thanks() {
 
         {/* Stats teaser */}
         <div className="glass rounded-2xl p-4 inline-block">
-          <div className="text-sm text-white/70 mb-1">הצטרפת לקהילת</div>
-          <div className="text-3xl font-bold gradient-title">הטראנס של ישראל</div>
+          <div className="text-sm text-white/70 mb-1">הצטרפת לקהילה של</div>
+          <div className="text-3xl font-bold gradient-title">מאות מצביעים</div>
         </div>
       </div>
 
@@ -435,7 +435,7 @@ export default function Thanks() {
               שתפו את הבחירות שלכם! 🚀
             </p>
             <p className="text-white/60 text-sm">
-              עזרו לנו להפוך את זה לויראלי ולגרום לכולם להצביע
+              עזרו לנו להפוך את זה ויראלי ולהגיע ליותר חובבי טראנס
             </p>
           </div>
 
@@ -481,8 +481,13 @@ export default function Thanks() {
             </p>
           </div>
 
-         {/* Bonus incentive */}
-</div>  {/* closes .mb-8 space-y-4 */}
+          {/* Bonus incentive */}
+          <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-xl p-4 text-center">
+            <p className="text-sm text-white/90">
+              <span className="font-bold">🎁 בונוס:</span> מי שמשתף יכנס להגרלה על פרסים!
+            </p>
+          </div>
+        </div>
       ) : (
         // Loading or error state
         <div className="glass rounded-2xl p-8 text-center">
