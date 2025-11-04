@@ -227,31 +227,27 @@ const submitVote = async () => {
                     )}
 
                     {/* Footer: name full width on mobile; button below (prevents text clipping) */}
-                    <div className="p-3 flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between xl:gap-3">
- {/* Title area */}
-<div className="min-w-0 xl:flex-1">
+                  <div className="p-3 space-y-2">
+  {/* Title - full width, more lines allowed */}
   <div
-  dir="ltr"
-  title={n.name}
-className="nominee-title clamp-2 clamp-desktop-3 no-hyphen
-             font-bold text-[13px] leading-snug text-white
-             text-center xl:text-start"
->
-  {n.name}
-</div>
-</div>
+    dir="ltr"
+    title={n.name}
+    className="font-bold text-[13px] sm:text-sm leading-tight text-white text-center line-clamp-3 min-h-[3.9em]"
+  >
+    {n.name}
+  </div>
 
-{/* Select button */}
-<button
-  onClick={(e) => { e.stopPropagation(); choose(cat.id, n.id); }}
-  className={
-    "xl:shrink-0 w-full xl:w-auto px-2.5 py-1.5 rounded-lg border text-[12px] xl:text-xs transition " +
-    (selected ? "btn-primary border-transparent" : "btn-ghost")
-  }
-  aria-pressed={selected}
->
-  {selected ? "נבחר" : "בחר"}
-</button>
+  {/* Select button - full width, easier to tap */}
+  <button
+    onClick={(e) => { e.stopPropagation(); choose(cat.id, n.id); }}
+    className={
+      "w-full px-3 py-2 rounded-lg border text-xs transition " +
+      (selected ? "btn-primary border-transparent" : "btn-ghost")
+    }
+    aria-pressed={selected}
+  >
+    {selected ? "נבחר ✓" : "בחר"}
+  </button>
 </div>
                   </article>
                 );
