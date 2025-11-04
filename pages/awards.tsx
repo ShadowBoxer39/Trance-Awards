@@ -223,29 +223,33 @@ export default function Awards() {
                     )}
 
                     {/* Footer: name full width on mobile; button below (prevents text clipping) */}
-                    <div className="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div
-                        dir="ltr"
-                        className="font-bold text-[13px] sm:text-sm leading-snug text-white text-center break-words hyphens-auto line-clamp-2 min-h-[2.9em]"
-                        title={n.name}
-                      >
-                        {n.name}
-                      </div>
+                    <div className="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+  {/* Title area */}
+  <div className="min-w-0 sm:flex-1">
+    <div
+      dir="ltr"
+      title={n.name}
+      className="font-bold text-[13px] leading-snug text-white text-center sm:text-start clamp-2 break-keep no-hyphen"
+    >
+      {n.name}
+    </div>
+  </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          choose(cat.id, n.id);
-                        }}
-                        className={
-                          "w-full sm:w-auto px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition " +
-                          (selected ? "btn-primary border-transparent" : "btn-ghost")
-                        }
-                        aria-pressed={selected}
-                      >
-                        {selected ? "נבחר" : "בחר"}
-                      </button>
-                    </div>
+  {/* Select button */}
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      choose(cat.id, n.id);
+    }}
+    className={
+      "shrink-0 w-full sm:w-auto px-2.5 py-1.5 rounded-lg border text-[12px] sm:text-xs transition " +
+      (selected ? "btn-primary border-transparent" : "btn-ghost")
+    }
+    aria-pressed={selected}
+  >
+    {selected ? "נבחר" : "בחר"}
+  </button>
+</div>
                   </article>
                 );
               })}
