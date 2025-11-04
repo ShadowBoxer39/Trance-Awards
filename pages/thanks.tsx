@@ -399,8 +399,8 @@ export default function Thanks() {
 
         {/* Stats teaser */}
         <div className="glass rounded-2xl p-4 inline-block">
-          <div className="text-sm text-white/70 mb-1">הצטרפת לקהילה של</div>
-          <div className="text-3xl font-bold gradient-title">מאות מצביעים</div>
+          <div className="text-sm text-white/70 mb-1">תודה על שלקחת חלק</div>
+          <div className="text-3xl font-bold gradient-title">בקהילת הטראנס</div>
         </div>
       </div>
 
@@ -435,7 +435,7 @@ export default function Thanks() {
               שתפו את הבחירות שלכם! 🚀
             </p>
             <p className="text-white/60 text-sm">
-              עזרו לנו להפוך את זה ויראלי ולהגיע ליותר חובבי טראנס
+              עזרו לנו וליוצרים לקבל יותר חשיפה
             </p>
           </div>
 
@@ -484,7 +484,7 @@ export default function Thanks() {
           {/* Bonus incentive */}
           <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-xl p-4 text-center">
             <p className="text-sm text-white/90">
-              <span className="font-bold">🎁 בונוס:</span> מי שמשתף יכנס להגרלה על פרסים!
+              <span className="font-bold">נשתדל לשתף:</span> כמה שיותק מהבחירות שלכם
             </p>
           </div>
         </div>
