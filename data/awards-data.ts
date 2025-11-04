@@ -6,7 +6,7 @@
 
 export const CATEGORIES = [
   // ... your categories & nominees objects ...
-] as const;
+
 
   {
     id: "best-artist",
