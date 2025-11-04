@@ -25,8 +25,11 @@ type SoundMeta = {
 export default function PlayerProvider({ children }: { children: React.ReactNode }) {
   const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
   const widgetRef = React.useRef<any>(null);
-  const [apiReady, setApiReady] = React.useState(false);
 
+  // IMPORTANT: this type works in both browser & Node typings
+  const pollTimer = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [apiReady, setApiReady] = React.useState(false);
   const [visible, setVisible] = React.useState(false);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [url, setUrl] = React.useState<string | null>(null);
@@ -34,9 +37,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [duration, setDuration] = React.useState(0); // seconds
   const [position, setPosition] = React.useState(0); // seconds
   const [meta, setMeta] = React.useState<SoundMeta>({});
-
-  // keep a small polling timer for position (widget events are not always frequent)
-  const pollTimer = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   function setupWidget() {
     if (!iframeRef.current) return;
@@ -48,12 +48,10 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     widgetRef.current = w;
     setApiReady(true);
 
-    // events
     w.bind("play", () => setIsPlaying(true));
     w.bind("pause", () => setIsPlaying(false));
     w.bind("finish", () => setIsPlaying(false));
     w.bind("playProgress", (e: any) => {
-      // e.currentPosition is in ms
       if (typeof e?.currentPosition === "number") {
         setPosition(Math.max(0, Math.round(e.currentPosition / 1000)));
       }
@@ -61,7 +59,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   }
 
   function loadAndPlay(scUrl: string) {
-    const clean = scUrl.split("?")[0]; // strip tracking params
+    const clean = scUrl.split("?")[0]; // drop tracking params
     setUrl(clean);
     setVisible(true);
 
@@ -75,7 +73,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       hide_related: true,
     });
 
-    // after load, fetch metadata & duration
+    // fetch meta & start polling
     setTimeout(() => {
       const w = widgetRef.current;
       if (!w) return;
@@ -92,29 +90,31 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
         }
       });
 
-      // start polling position (250ms)
-     if (pollTimer.current !== null) {
-  clearInterval(pollTimer.current);
-  pollTimer.current = null;
-}
-pollTimer.current = setInterval(() => {
-  w.getPosition((ms: number) => setPosition(Math.round((ms || 0) / 1000)));
-  w.getDuration((ms: number) => setDuration(Math.round((ms || 0) / 1000)));
-}, 250);
+      // clear previous interval (if any), then start a new one
+      if (pollTimer.current !== null) {
+        clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
+      pollTimer.current = setInterval(() => {
+        w.getPosition((ms: number) => setPosition(Math.round((ms || 0) / 1000)));
+        w.getDuration((ms: number) => setDuration(Math.round((ms || 0) / 1000)));
+      }, 250);
+    }, 250);
   }
 
+  // cleanup on unmount
   React.useEffect(() => {
-  return () => {
-    if (pollTimer.current !== null) {
-      clearInterval(pollTimer.current);
-      pollTimer.current = null;
-    }
-  };
-}, []);
+    return () => {
+      if (pollTimer.current !== null) {
+        clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
+    };
+  }, []);
 
   const api: PlayerAPI = {
     playUrl: (u: string) => {
-      if (!widgetRef.current) return; // script not ready yet
+      if (!widgetRef.current) return;
       loadAndPlay(u);
     },
     toggle: () => {
@@ -165,9 +165,7 @@ pollTimer.current = setInterval(() => {
 
               {/* title/artist */}
               <div className="min-w-0">
-                <div className="text-xs font-medium truncate">
-                  {meta.title || url}
-                </div>
+                <div className="text-xs font-medium truncate">{meta.title || url}</div>
                 <div className="text-[11px] text-white/70 truncate">
                   {meta.user?.username || "SoundCloud"}
                 </div>
@@ -183,7 +181,7 @@ pollTimer.current = setInterval(() => {
                 {isPlaying ? "⏸" : "▶"}
               </button>
 
-              {/* skip -15 / +15 */}
+              {/* skip -/+ 15s */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => api.seek(position - 15)}
@@ -236,6 +234,10 @@ pollTimer.current = setInterval(() => {
                   setMeta({});
                   setDuration(0);
                   setPosition(0);
+                  if (pollTimer.current !== null) {
+                    clearInterval(pollTimer.current);
+                    pollTimer.current = null;
+                  }
                 }}
                 className="ml-1 border rounded-xl px-2 py-1 text-xs hover:bg-white/10"
                 title="סגור נגן"
@@ -246,7 +248,7 @@ pollTimer.current = setInterval(() => {
           </div>
         )}
 
-        {/* Hidden SC widget iframe (stable src; we load tracks via widget.load) */}
+        {/* Hidden SC widget iframe (stable src; we swap tracks via widget.load) */}
         <iframe
           ref={iframeRef}
           title="SoundCloud Player"
