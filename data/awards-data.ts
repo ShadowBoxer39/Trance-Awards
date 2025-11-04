@@ -28,6 +28,7 @@ export const CATEGORIES = [
       { id: "outoforbit", name: "Out Of Orbit", artwork: "/images/outoforbit.jpg" },
       { id: "modus", name: "Modus", artwork: "/images/modus.jpeg" },
       { id: "skull", name: "Laughing Skull", artwork: "/images/skull.jpeg" },
+      { id: "darwish", name: "Darwish", artwork: "/images/darwish.jpeg" },
     ],
   },
   {
