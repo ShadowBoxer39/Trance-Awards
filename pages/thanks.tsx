@@ -167,7 +167,7 @@ async function buildStoryImage(selections: Record<string, string>) {
   ctx.fillText("הצבעתי!", W - padX, 360 * SCALE);
 
   ctx.font = `700 ${68 * SCALE}px Arial`;
-  ctx.fillText("פרסי השנה בטראנס 2025", W - padX, 440 * SCALE);
+  ctx.fillText("נבחרי השנה בטראנס 2025", W - padX, 440 * SCALE);
   ctx.restore();
 
   // Picks grid
@@ -323,7 +323,7 @@ export default function Thanks() {
   }, []);
 
   const caption =
-    "הצבעתי בפרסי השנה של יוצאים לטראק! 🎶 trance-awards.vercel.app";
+    "הצבעתי בנבחרי השנה של יוצאים לטראק! 🎶 trance-awards.vercel.app";
 
   async function shareImage() {
     if (!imgUrl) return;
@@ -366,7 +366,7 @@ export default function Thanks() {
   return (
 <>
   <Head>
-    <title>🎉 הצבעת בפרסי השנה! — יוצאים לטראק</title>
+    <title>🎉 הצבעת בנבחרי השנה! — יוצאים לטראק</title>
     <meta name="theme-color" content="#FF5AA5" />
     <meta name="description" content="הצבעתי בפרסי השנה של יוצאים לטראק! בואו גם אתם 🎶" />
     <meta property="og:title" content="הצבעתי בפרסי השנה בטראנס! 🎉" />
