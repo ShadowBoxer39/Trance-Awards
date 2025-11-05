@@ -31,6 +31,8 @@ export const CATEGORIES = [
       { id: "darwish", name: "Darwish", artwork: "/images/darwish.jpeg" },
       { id: "kobi", name: "Kobi", artwork: "/images/kobi.jpeg" },
       { id: "pettra", name: "Pettra", artwork: "/images/pettra.jpeg" },
+      { id: "bliss", name: "Bliss", artwork: "/images/bliss.jpg" },
+      { id: "afgin", name: "Agfin", artwork: "/images/afgin.jpeg" },
     ],
   },
   {
@@ -116,6 +118,7 @@ export const CATEGORIES = [
       { id: "adiros", name: "Adiros", artwork: "/images/adiros.jpeg" },
       { id: "adama", name: "Adama", artwork: "/images/adama.jpg" },
       { id: "elberg", name: "Elberg", artwork: "/images/elberg.jpeg" },
+      { id: "detune", name: "Detune", artwork: "/images/detune.jpg" },
     ],
   },
 ];
