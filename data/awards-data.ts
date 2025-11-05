@@ -93,6 +93,7 @@ export const CATEGORIES = [
       { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg", soundcloudUrl: "https://soundcloud.com/artmis_music/artmis-momentum" },
       { id: "nevo-some1-guide", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg", soundcloudUrl: "https://soundcloud.com/nevo-official/1-nevo-some1-guide-sample-1" },
       { id: "jupiter", name: "Mystic & Detune - Jupiter", artwork: "/images/jupiter.jpeg", soundcloudUrl: "https://soundcloud.com/mystic_psytrance/jupiter" },
+      { id: "psysync", name: "Invasion - Psysync", artwork: "/images/psysync.jpg", soundcloudUrl: "https://soundcloud.com/invasion_sound/psysync" },
       { id: "mindscam", name: "Amigdala - Mindscam", artwork: "/images/mindscam.jpg", soundcloudUrl: "https://soundcloud.com/user-169756492/amigdala-mindscam" },
       { id: "lemonade", name: "Out of Orbit & Sandman - Moon Lemonade Pt.2", artwork: "/images/moonlemonade.jpeg", soundcloudUrl: "https://soundcloud.com/shamanictales/out-of-orbit-sandman-moon-lemonade-pt2-sample" },
       { id: "barry", name: "Chaos604 - Barry's Trip", artwork: "/images/barrytrip.jpg", soundcloudUrl: "https://soundcloud.com/chaos604/barrys-trip" },
