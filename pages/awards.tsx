@@ -150,10 +150,10 @@ useEffect(() => {
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
 
 const submitVote = async () => {
-  setIsSubmitting(true); // 👈 ADD: Start loading
+  setIsSubmitting(true);
 
-   try {
-    // 🔹 STEP 1: Execute hCaptcha challenge (ADD THIS ENTIRE BLOCK)
+  try {
+    // Step 1: Execute hCaptcha challenge
     let captchaToken = "";
     try {
       if (widgetId.current === null || !window.hcaptcha) {
@@ -167,6 +167,43 @@ const submitVote = async () => {
       setIsSubmitting(false);
       return;
     }
+
+    // Step 2: Submit vote with captcha token
+    const r = await fetch("/api/submit-vote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selections, captchaToken }),
+    });
+
+    if (r.ok) {
+      try {
+        sessionStorage.setItem("lastSelections", JSON.stringify(selections));
+      } catch {}
+      router.push("/thanks");
+      return;
+    }
+
+    const j = await r.json().catch(() => ({}));
+
+    if (r.status === 403 || j?.error === "invalid_region") {
+      alert("ההצבעה פתוחה לתושבי ישראל בלבד 🇮🇱");
+    } else if (r.status === 409 || j?.error === "duplicate_vote") {
+      alert("כבר הצבעת מהמכשיר הזה עבור נבחרי השנה.");
+    } else if (r.status === 400) {
+      if (j?.error === "captcha_failed") {
+        alert("אימות נכשל. אנא נסו שוב.");
+      } else {
+        alert("נראה שחסר מידע להצבעה. נסו שוב.");
+      }
+    } else {
+      alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+    }
+  } catch {
+    alert("שגיאה בשליחת ההצבעה. נסו שוב בעוד רגע.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   try {
     const r = await fetch("/api/submit-vote", {
