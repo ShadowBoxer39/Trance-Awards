@@ -109,146 +109,175 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Build a crisp IG Story PNG (1080×1920, rendered at 2× for quality) */
 async function buildStoryImage(selections: Record<string, string>) {
-  // High-res export
   const SCALE = 2;
   const W = 1080 * SCALE;
   const H = 1920 * SCALE;
-  const padX = 64 * SCALE;
+  const padX = 80 * SCALE;
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
   ctx.imageSmoothingQuality = "high";
-  await document.fonts?.ready; // better glyph metrics
+  await document.fonts?.ready;
 
-  // Background gradient + soft glows
+  // Dynamic gradient background
   const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, "#141320");
-  bg.addColorStop(1, "#0a0b10");
+  bg.addColorStop(0, "#1a0e2e");
+  bg.addColorStop(0.5, "#16213e");
+  bg.addColorStop(1, "#0f0f1e");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  const g1 = ctx.createRadialGradient(W * 0.82, H * 0.10, 60 * SCALE, W * 0.82, H * 0.10, 700 * SCALE);
-  g1.addColorStop(0, "rgba(255,90,165,0.28)");
-  g1.addColorStop(1, "rgba(255,90,165,0)");
-  ctx.fillStyle = g1;
-  ctx.beginPath();
-  ctx.arc(W * 0.82, H * 0.10, 700 * SCALE, 0, Math.PI * 2);
-  ctx.fill();
+  // Animated glow circles
+  const glow1 = ctx.createRadialGradient(W * 0.8, H * 0.15, 0, W * 0.8, H * 0.15, 800 * SCALE);
+  glow1.addColorStop(0, "rgba(0, 255, 200, 0.3)");
+  glow1.addColorStop(0.5, "rgba(0, 255, 200, 0.1)");
+  glow1.addColorStop(1, "rgba(0, 255, 200, 0)");
+  ctx.fillStyle = glow1;
+  ctx.fillRect(0, 0, W, H);
 
-  const g2 = ctx.createRadialGradient(W * 0.18, H * 0.16, 60 * SCALE, W * 0.18, H * 0.16, 650 * SCALE);
-  g2.addColorStop(0, "rgba(123,97,255,0.22)");
-  g2.addColorStop(1, "rgba(123,97,255,0)");
-  ctx.fillStyle = g2;
-  ctx.beginPath();
-  ctx.arc(W * 0.18, H * 0.16, 650 * SCALE, 0, Math.PI * 2);
-  ctx.fill();
+  const glow2 = ctx.createRadialGradient(W * 0.2, H * 0.85, 0, W * 0.2, H * 0.85, 700 * SCALE);
+  glow2.addColorStop(0, "rgba(200, 100, 255, 0.3)");
+  glow2.addColorStop(0.5, "rgba(200, 100, 255, 0.1)");
+  glow2.addColorStop(1, "rgba(200, 100, 255, 0)");
+  ctx.fillStyle = glow2;
+  ctx.fillRect(0, 0, W, H);
 
-  // Logo (top-right)
+  // Logo (top center)
   try {
     const logo = await loadImage(BRAND.logo);
-    const L = 140 * SCALE;
+    const logoSize = 180 * SCALE;
+    const logoX = (W - logoSize) / 2;
+    const logoY = 80 * SCALE;
     ctx.save();
-    roundRect(ctx, W - padX - L, 64 * SCALE, L, L, 28 * SCALE);
+    ctx.beginPath();
+    ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
     ctx.clip();
-    drawImageCover(ctx, logo, W - padX - L, 64 * SCALE, L, L);
+    ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
     ctx.restore();
   } catch {}
 
-  // Title (Hebrew / RTL)
+  // Main title (Hebrew - RTL)
   ctx.save();
   ctx.direction = "rtl";
-  ctx.textAlign = "right";
-  ctx.fillStyle = "#fff";
-  ctx.font = `700 ${100 * SCALE}px Arial`;
-  ctx.fillText("הצבעתי!", W - padX, 360 * SCALE);
+  ctx.textAlign = "center";
+  
+  // "הצבעתי!"
+  const gradient = ctx.createLinearGradient(0, 320 * SCALE, 0, 380 * SCALE);
+  gradient.addColorStop(0, "#00ffcc");
+  gradient.addColorStop(1, "#ff00ff");
+  ctx.fillStyle = gradient;
+  ctx.font = `900 ${140 * SCALE}px Arial`;
+  ctx.fillText("הצבעתי!", W / 2, 360 * SCALE);
 
-  ctx.font = `700 ${68 * SCALE}px Arial`;
-  ctx.fillText("נבחרי השנה בטראנס 2025", W - padX, 440 * SCALE);
+  // "נבחרי השנה בטראנס 2025"
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 ${60 * SCALE}px Arial`;
+  ctx.fillText("נבחרי השנה בטראנס", W / 2, 450 * SCALE);
+  
+  ctx.fillStyle = "#00ffcc";
+  ctx.font = `900 ${70 * SCALE}px Arial`;
+  ctx.fillText("2025", W / 2, 530 * SCALE);
   ctx.restore();
 
-  // Picks grid
+  // Get selections
   const chosen = getChosen(selections);
   const COLS = 2;
-  const ROWS = 3;
-  const CELL_W = ((W - padX * 2) - 28 * SCALE) / COLS;
-  const CELL_H = 260 * SCALE;
-  const START_Y = 540 * SCALE;
-  const GAP_X = 28 * SCALE;
-  const GAP_Y = 24 * SCALE;
+  const CELL_W = (W - padX * 2 - 40 * SCALE) / COLS;
+  const CELL_H = 240 * SCALE;
+  const START_Y = 620 * SCALE;
+  const GAP = 40 * SCALE;
 
-  for (let i = 0; i < Math.min(chosen.length, COLS * ROWS); i++) {
+  // Draw selection cards
+  for (let i = 0; i < Math.min(chosen.length, 6); i++) {
     const row = Math.floor(i / COLS);
     const col = i % COLS;
-    const x = padX + col * (CELL_W + GAP_X);
-    const y = START_Y + row * (CELL_H + GAP_Y);
+    const x = padX + col * (CELL_W + GAP);
+    const y = START_Y + row * (CELL_H + GAP);
 
-    // panel
-    ctx.fillStyle = "rgba(255,255,255,0.07)";
-    roundRect(ctx, x, y, CELL_W, CELL_H, 22 * SCALE);
+    // Card background with glow
+    ctx.save();
+    ctx.shadowColor = "rgba(0, 255, 200, 0.4)";
+    ctx.shadowBlur = 20 * SCALE;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+    roundRect(ctx, x, y, CELL_W, CELL_H, 24 * SCALE);
     ctx.fill();
+    ctx.restore();
 
-    // artwork (square, cover-fit; right side)
-    const artSize = 180 * SCALE;
-    const artX = x + CELL_W - 18 * SCALE - artSize;
+    // Artwork (left side, square)
+    const artSize = CELL_H - 36 * SCALE;
+    const artX = x + 18 * SCALE;
     const artY = y + 18 * SCALE;
 
-    const artSrc = chosen[i].artwork;
-    if (artSrc) {
+    if (chosen[i].artwork) {
       try {
-        const img = await loadImage(artSrc);
+        const img = await loadImage(chosen[i].artwork);
         ctx.save();
         roundRect(ctx, artX, artY, artSize, artSize, 16 * SCALE);
         ctx.clip();
         drawImageCover(ctx, img, artX, artY, artSize, artSize);
         ctx.restore();
       } catch {
-        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
         roundRect(ctx, artX, artY, artSize, artSize, 16 * SCALE);
         ctx.fill();
       }
     }
 
-    // text block
-    const textX = x + 20 * SCALE;
-    const textW = artX - textX - 12 * SCALE;
+    // Text area (right side)
+    const textX = artX + artSize + 20 * SCALE;
+    const textW = CELL_W - artSize - 56 * SCALE;
 
-    // Hebrew category label (RTL)
+    // Category (Hebrew, RTL, smaller)
     ctx.save();
     ctx.direction = "rtl";
     ctx.textAlign = "right";
-    ctx.fillStyle = "rgba(255,255,255,0.92)";
-    ctx.font = `700 ${34 * SCALE}px Arial`;
-    ctx.fillText(chosen[i].catTitle, textX + textW, y + 66 * SCALE);
+    ctx.fillStyle = "#00ffcc";
+    ctx.font = `600 ${28 * SCALE}px Arial`;
+    ctx.fillText(chosen[i].catTitle, textX + textW, y + 50 * SCALE);
     ctx.restore();
 
-    // English (or mixed) nominee name (LTR, wrapped)
+    // Nominee name (English, LTR, wrapped, bigger)
     ctx.save();
     ctx.direction = "ltr";
     ctx.textAlign = "left";
-    ctx.fillStyle = "rgba(255,255,255,0.88)";
-    ctx.font = `400 ${30 * SCALE}px Arial`;
-    wrapText(ctx, chosen[i].nomineeName, textX, y + 114 * SCALE, textW, 34 * SCALE, 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `700 ${32 * SCALE}px Arial`;
+    wrapText(ctx, chosen[i].nomineeName, textX, y + 100 * SCALE, textW, 38 * SCALE, 3);
     ctx.restore();
   }
 
-  // Footer
+  // Footer section
+  const footerY = H - 200 * SCALE;
+  
+  // Call to action
   ctx.save();
   ctx.direction = "rtl";
-  ctx.textAlign = "right";
-  ctx.font = `400 ${32 * SCALE}px Arial`;
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.fillText("מגישים: יוצאים לטראק", W - padX, H - 120 * SCALE);
-
-  ctx.font = `400 ${28 * SCALE}px Arial`;
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.fillText(BRAND.siteUrl.replace(/^https?:\/\//, ""), W - padX, H - 70 * SCALE);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `600 ${40 * SCALE}px Arial`;
+  ctx.fillText("בואו גם אתם להצביע!", W / 2, footerY);
   ctx.restore();
 
-  // export (downscale by browser when saving/sharing)
+  // Brand name
+  ctx.save();
+  ctx.direction = "rtl";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#00ffcc";
+  ctx.font = `700 ${36 * SCALE}px Arial`;
+  ctx.fillText("יוצאים לטראק", W / 2, footerY + 60 * SCALE);
+  ctx.restore();
+
+  // Website
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.font = `400 ${28 * SCALE}px Arial`;
+  ctx.fillText("tracktrip.co.il", W / 2, footerY + 100 * SCALE);
+  ctx.restore();
+
   return canvas.toDataURL("image/png");
 }
 
