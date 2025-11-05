@@ -363,10 +363,11 @@ const submitVote = async () => {
         <footer className="text-center text-[11px] sm:text-xs text-white/60 py-8">
           © {new Date().getFullYear()} יוצאים לטראק — נבחרי השנה.
         </footer>
-      </div>
+     </div>
 
+      {/* Hidden hCaptcha container */}
       <div ref={captchaRef} className="fixed -bottom-[2000px]" />
-    </main>
-       </>
-  );
+    </main>  {/* 👈 Move </main> BELOW the captcha div */}
+  </>
+);
 }
