@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const baseVotes = 100;
     
     // Add 1 vote per minute since launch (adjust this date to your launch date)
-    const launchDate = new Date("2025-01-06T00:00:00Z"); // Change this!
+    const launchDate = new Date(2025, 11, 5, 0, 0, 0); // Year, Month (0=Jan), Day, Hour, Min, Sec // Change this!
     const now = new Date();
     const minutesSinceLaunch = Math.floor((now.getTime() - launchDate.getTime()) / 60000);
     const bonusVotes = Math.max(0, minutesSinceLaunch);
