@@ -3,6 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
+import LiveVoteCounter from "../components/LiveVoteCounter";
 import { FaInstagram, FaYoutube, FaSpotify, FaTiktok, FaWhatsapp } from "react-icons/fa";
 
 
@@ -145,6 +146,20 @@ export default function Landing() {
               הקהילה בוחרת את נבחרי השנה בטראנס.
             </p>
 
+             {/* 👇 ADD LIVE COUNTER HERE */}
+    <div className="mb-8">
+      <LiveVoteCounter />
+    </div>
+
+    <Link
+      href="/awards"
+      className="btn-primary rounded-2xl px-6 py-3 text-base inline-flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 overflow-hidden"
+    >
+      המשך להצבעה
+    </Link>
+  </div>
+</section>
+         
             <Link
               href="/awards"
               className="btn-primary rounded-2xl px-6 py-3 text-base inline-flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 overflow-hidden"
