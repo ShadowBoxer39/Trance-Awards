@@ -1,4 +1,3 @@
-
 /* styles/theme.css */
 
 /* Background used across pages */
@@ -82,13 +81,10 @@
 /* keep hyphens off */
 .no-hyphen{ hyphens: manual; }
 
-
-
 /* Base tweaks */
 html, body, #__next { height: 100%; }
 html { color-scheme: dark; }
 body { background: #090a0f; color: #ffffff; }
-
 
 /* === Share Preview / Story Export helpers === */
 
@@ -114,6 +110,9 @@ body { background: #090a0f; color: #ffffff; }
 .rtl { direction: rtl; }
 .ltr { direction: ltr; text-align: left; }
 
+/* === Animations === */
+
+/* Bounce animation (for thank you page) */
 @keyframes bounce {
   0%, 100% {
     transform: translateY(-5%);
@@ -129,3 +128,18 @@ body { background: #090a0f; color: #ffffff; }
   animation: bounce 1s infinite;
 }
 
+/* Slow pulse animation (for play buttons) */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
