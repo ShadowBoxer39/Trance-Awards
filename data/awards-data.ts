@@ -114,7 +114,7 @@ export const CATEGORIES = [
       { id: "gordon", name: "Eran Gordon", artwork: "/images/gordon.jpg" },
       { id: "migdalor", name: "Migdalor", artwork: "/images/migdalor.jpg" },
       { id: "adiros", name: "Adiros", artwork: "/images/adiros.jpeg" },
-      { id: "adama", name: "Adama", artwork: "/images/adama.jpeg" },
+      { id: "adama", name: "Adama", artwork: "/images/adama.jpg" },
       { id: "elberg", name: "Elberg", artwork: "/images/elberg.jpeg" },
     ],
   },
