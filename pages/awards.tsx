@@ -121,9 +121,10 @@ export default function Awards() {
     return () => unsub();
   }, []);
 
-  const sitekey = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY as string;
+ 
 
 useEffect(() => {
+   const sitekey = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY as string;
   const interval = setInterval(() => {
     if (typeof window !== "undefined" && window.hcaptcha && captchaRef.current && widgetId.current === null) {
       try {
