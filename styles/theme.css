@@ -129,17 +129,18 @@ body { background: #090a0f; color: #ffffff; }
 }
 
 /* Slow pulse animation (for play buttons) */
+/* Slow pulse animation (for play buttons) */
 @keyframes pulse-slow {
   0%, 100% {
     opacity: 1;
     transform: scale(1);
   }
   50% {
-    opacity: 0.85;
-    transform: scale(1.05);
+    opacity: 0.6;
+    transform: scale(1.1);
   }
 }
 
 .animate-pulse-slow {
-  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
