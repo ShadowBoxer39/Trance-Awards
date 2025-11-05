@@ -7,8 +7,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
+  // 🔒 Prevent Vercel caching (super important for live updates)
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+
   try {
-    // Count total votes in database
+    // 1️⃣ Count total votes in Supabase
     const { count, error } = await supabase
       .from("votes")
       .select("*", { count: "exact", head: true });
@@ -18,23 +23,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: "db_error" });
     }
 
-    // Start at 100, add real votes, add bonus votes based on time
+    // 2️⃣ Base + real + time-based bonus
     const realVotes = count || 0;
     const baseVotes = 100;
-    
-    // Add 1 vote per minute since launch (adjust this date to your launch date)
-    const launchDate = new Date(2025, 11, 5, 0, 0, 0); // Year, Month (0=Jan), Day, Hour, Min, Sec // Change this!
+
+    // 3️⃣ Launch date (⚠️ fix to your real launch date!)
+    // new Date(YEAR, MONTH-1, DAY, HOUR, MIN, SEC)
+    const launchDate = new Date(2025, 11, 4, 0, 0, 0); // Nov 5 2025, 00:00
     const now = new Date();
-    const minutesSinceLaunch = Math.floor((now.getTime() - launchDate.getTime()) / 60000);
-    const bonusVotes = Math.max(0, minutesSinceLaunch);
-    
+    const minutesSinceLaunch = Math.max(0, Math.floor((now.getTime() - launchDate.getTime()) / 60000));
+
+    const bonusVotes = minutesSinceLaunch;
     const totalVotes = baseVotes + realVotes + bonusVotes;
 
-    return res.status(200).json({ 
-      ok: true, 
+    // 4️⃣ Return live count
+    return res.status(200).json({
+      ok: true,
       count: totalVotes,
       realVotes,
-      bonusVotes 
+      bonusVotes,
     });
   } catch (e) {
     console.error("vote-count server error:", e);
