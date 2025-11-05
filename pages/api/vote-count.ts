@@ -2,18 +2,25 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import supabase from "../../lib/supabaseServer";
 
+/**
+ * Configure your starting number and launch time here.
+ * Month is 0-based: 0=Jan, 11=Dec.
+ */
+const BASE_VOTES = 100;
+const LAUNCH_DATE = new Date(2025, 10, 5, 0, 0, 0); // 2025-11-05 00:00 local time
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
-  // 🔒 Prevent Vercel caching (super important for live updates)
+  // 🔒 Prevent Vercel/browser caching so the number is always fresh
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
 
   try {
-    // 1️⃣ Count total votes in Supabase
+    // 1) Real votes from DB (cheap count-only query)
     const { count, error } = await supabase
       .from("votes")
       .select("*", { count: "exact", head: true });
@@ -23,20 +30,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: "db_error" });
     }
 
-    // 2️⃣ Base + real + time-based bonus
     const realVotes = count || 0;
-    const baseVotes = 100;
 
-    // 3️⃣ Launch date (⚠️ fix to your real launch date!)
-    // new Date(YEAR, MONTH-1, DAY, HOUR, MIN, SEC)
-    const launchDate = new Date(2025, 11, 4, 0, 0, 0); // Nov 5 2025, 00:00
+    // 2) +1 per minute since LAUNCH_DATE
     const now = new Date();
-    const minutesSinceLaunch = Math.max(0, Math.floor((now.getTime() - launchDate.getTime()) / 60000));
-
+    const minutesSinceLaunch = Math.max(
+      0,
+      Math.floor((now.getTime() - LAUNCH_DATE.getTime()) / 60000)
+    );
     const bonusVotes = minutesSinceLaunch;
-    const totalVotes = baseVotes + realVotes + bonusVotes;
 
-    // 4️⃣ Return live count
+    // 3) Total
+    const totalVotes = BASE_VOTES + realVotes + bonusVotes;
+
     return res.status(200).json({
       ok: true,
       count: totalVotes,
