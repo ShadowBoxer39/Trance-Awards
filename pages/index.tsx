@@ -7,7 +7,7 @@ import { FaInstagram, FaYoutube, FaSpotify, FaTiktok, FaWhatsapp } from "react-i
 
 
 const BRAND = {
-  title: "פרסי השנה 2025",
+  title: "נבחרי השנה בטראנס 2025",
   // file must be at /public/images/logo.png
   logo: "/images/logo.png",
 };
@@ -89,7 +89,7 @@ export default function Landing() {
       <Head>
         <title>{BRAND.title} — יוצאים לטראק</title>
         <meta name="theme-color" content="#090a0f" />
-        <meta name="description" content="דף נחיתה לפרסי השנה של יוצאים לטראק" />
+        <meta name="description" content="נבחרי השנה בטראנס של יוצאים לטראק" />
         <meta property="og:title" content={`${BRAND.title} — יוצאים לטראק`} />
         <meta property="og:image" content={BRAND.logo} />
       </Head>
@@ -135,14 +135,14 @@ export default function Landing() {
             </div>
 
             <h1 className="gradient-title text-4xl sm:text-6xl font-[700] leading-[1.05] tracking-tight mb-4">
-              פרסי השנה
+              נבחרי השנה
               <span className="block text-white drop-shadow-[0_0_10px_rgba(255,90,165,.25)]">
                 2025
               </span>
             </h1>
 
             <p className="text-white/80 text-lg mb-8">
-              הקהילה בוחרת את פרסי השנה בטראנס.
+              הקהילה בוחרת את נבחרי השנה בטראנס.
             </p>
 
             <Link
@@ -204,7 +204,7 @@ export default function Landing() {
 
         <footer className="border-t border-white/10 bg-black/40">
           <div className="max-w-6xl mx-auto px-4 py-6 text-xs text-white/60">
-            © {new Date().getFullYear()} יוצאים לטראק — פרסי השנה.
+            © {new Date().getFullYear()} יוצאים לטראק — נבחרי השנה.
           </div>
         </footer>
       </main>
