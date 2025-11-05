@@ -1,9 +1,22 @@
+// Tell TypeScript about window.hcaptcha
+declare global {
+  interface Window {
+    hcaptcha: {
+      execute: (opts: { async: boolean }) => Promise<{ response: string }>;
+      render: (el: HTMLElement, opts: { sitekey: string; size: string }) => number;
+    };
+  }
+}
+
+
 // pages/awards.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePlayer } from "../components/PlayerProvider";
 import { useRouter } from "next/router";
+import Script from "next/script";
+
 
 // ✅ one source of truth for data & types
 import { CATEGORIES } from "@/data/awards-data";
@@ -91,6 +104,8 @@ class GlobalAudio {
 export default function Awards() {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const captchaRef = React.useRef<HTMLDivElement | null>(null); // 👈 ADD THIS
+  const widgetId = React.useRef<number | null>(null); // 👈 ADD THIS
   const router = useRouter();
   const player = usePlayer();
 
@@ -106,6 +121,26 @@ export default function Awards() {
     return () => unsub();
   }, []);
 
+  const sitekey = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY as string;
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    if (typeof window !== "undefined" && window.hcaptcha && captchaRef.current && widgetId.current === null) {
+      try {
+        widgetId.current = window.hcaptcha.render(captchaRef.current, {
+          sitekey,
+          size: "invisible",
+        });
+        clearInterval(interval);
+      } catch (err) {
+        console.error("hCaptcha render error:", err);
+      }
+    }
+  }, 200);
+
+  return () => clearInterval(interval);
+}, [sitekey]);
+
   const canSubmit = useMemo(
     () => CATEGORIES.every((c) => !!selections[c.id]),
     [selections]
@@ -116,6 +151,22 @@ export default function Awards() {
 
 const submitVote = async () => {
   setIsSubmitting(true); // 👈 ADD: Start loading
+
+   try {
+    // 🔹 STEP 1: Execute hCaptcha challenge (ADD THIS ENTIRE BLOCK)
+    let captchaToken = "";
+    try {
+      if (widgetId.current === null || !window.hcaptcha) {
+        throw new Error("Captcha not ready");
+      }
+      const result = await window.hcaptcha.execute({ async: true });
+      captchaToken = result.response;
+    } catch (captchaError) {
+      console.error("Captcha error:", captchaError);
+      alert("שגיאה באימות. אנא רעננו את הדף ונסו שוב.");
+      setIsSubmitting(false);
+      return;
+    }
 
   try {
     const r = await fetch("/api/submit-vote", {
@@ -150,6 +201,9 @@ const submitVote = async () => {
   }
 };
   return (
+    <>
+    {/* Load hCaptcha */}
+    <Script src="https://js.hcaptcha.com/1/api.js" strategy="afterInteractive" />
     <main className="neon-backdrop min-h-screen text-white">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
@@ -273,6 +327,9 @@ const submitVote = async () => {
           © {new Date().getFullYear()} יוצאים לטראק — נבחרי השנה.
         </footer>
       </div>
+
+      <div ref={captchaRef} className="fixed -bottom-[2000px]" />
     </main>
+       </>
   );
 }
