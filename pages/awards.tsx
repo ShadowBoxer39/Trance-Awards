@@ -277,9 +277,7 @@ export default function Awards() {
 </div>
 
 {/* Small badge at top */}
-<div className="absolute top-2 left-2 bg-gradient-to-r from-cyan-500/90 to-lime-500/90 text-black font-bold text-[10px] px-2 py-1 rounded-full shadow-lg animate-pulse-slow">
-  🎵 לחץ לשמוע
-</div>
+
   </>
 )}
 
