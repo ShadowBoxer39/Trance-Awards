@@ -262,10 +262,15 @@ export default function Awards() {
       e.stopPropagation();
       player.playUrl(n.soundcloudUrl!);
     }}
-    className="pointer-events-auto w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-cyan-400 via-green-400 to-lime-500 flex items-center justify-center shadow-xl hover:scale-110 transition-transform animate-pulse-slow"
+    className="pointer-events-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full
+  bg-gradient-to-br from-cyan-400/60 via-green-400/60 to-lime-500/60
+  flex items-center justify-center shadow-md transition-transform
+  animate-pulse-subtle
+  opacity-90 md:opacity-0 md:group-hover:opacity-100
+  hover:scale-105 backdrop-blur-sm"
     title="השמע טראק"
   >
-    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white/90 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
       <path d="M8 5v14l11-7z"/>
     </svg>
   </button>
