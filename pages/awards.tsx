@@ -14,7 +14,7 @@ import { CATEGORIES } from "@/data/awards-data";
 /** ───────────────── BRAND ───────────────── */
 const BRAND = {
   logo: "/images/logo.png",
-  title: "פרסי השנה 2025",
+  title: "נבחרי השנה 2025",
 };
 
 /** ─────────────── SMART-FIT ARTWORK ─────────────── */
@@ -137,7 +137,7 @@ const submitVote = async () => {
     if (r.status === 403 || j?.error === "invalid_region") {
       alert("ההצבעה פתוחה לתושבי ישראל בלבד 🇮🇱");
     } else if (r.status === 409 || j?.error === "duplicate_vote") {
-      alert("כבר הצבעת מהמכשיר הזה עבור פרסי השנה.");
+      alert("כבר הצבעת מהמכשיר הזה עבור נבחרי השנה.");
     } else if (r.status === 400 || j?.error === "bad_request") {
       alert("נראה שחסר מידע להצבעה. נסו שוב.");
     } else {
@@ -270,7 +270,7 @@ const submitVote = async () => {
         </div>
 
         <footer className="text-center text-[11px] sm:text-xs text-white/60 py-8">
-          © {new Date().getFullYear()} יוצאים לטראק — פרסי השנה.
+          © {new Date().getFullYear()} יוצאים לטראק — נבחרי השנה.
         </footer>
       </div>
     </main>
