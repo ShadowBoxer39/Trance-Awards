@@ -93,6 +93,7 @@ export const CATEGORIES = [
       { id: "uncharted-brain-event", name: "Uncharted Territory - Brain Event", artwork: "/images/Uncharted Territory - brain event track.webp", soundcloudUrl: "https://soundcloud.com/stereo-society/uncharted-territory-brain-event-1" },
       { id: "bigitam-dubel", name: "Bigitam & Detune - Dubel K", artwork: "/images/bigitam & detune dubel k track.jpg", soundcloudUrl: "https://soundcloud.com/future-music-records1/bigitam-detune-dubel-k-2" },
       { id: "artmis-momentum", name: "Artmis - Momentum", artwork: "/images/artmis momentum track.jpg", soundcloudUrl: "https://soundcloud.com/artmis_music/artmis-momentum" },
+      { id: "modus - all roads", name: "Modus - All Roads Lead to Goa", artwork: "/images/allroads.jpeg", soundcloudUrl: "https://soundcloud.com/stereo-society/modus-all-roads-lead-to-goa-1" },
       { id: "nevo-some1-guide", name: "Nevo & Some1 - Guide", artwork: "/images/nevo & some1 guide track.jpg", soundcloudUrl: "https://soundcloud.com/nevo-official/1-nevo-some1-guide-sample-1" },
       { id: "jupiter", name: "Mystic & Detune - Jupiter", artwork: "/images/jupiter.jpeg", soundcloudUrl: "https://soundcloud.com/mystic_psytrance/jupiter" },
       { id: "psysync", name: "Invasion - Psysync", artwork: "/images/psysync.jpg", soundcloudUrl: "https://soundcloud.com/invasion_sound/psysync" },
