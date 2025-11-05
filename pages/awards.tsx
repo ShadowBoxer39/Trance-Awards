@@ -256,23 +256,23 @@ export default function Awards() {
                       {isTrack && n.soundcloudUrl && (
   <>
     {/* Big center play button */}
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-      <button
-  onClick={(e) => {
-    e.stopPropagation();
-    player.playUrl(n.soundcloudUrl!);
-  }}
-  className="pointer-events-auto w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 via-green-400 to-lime-500 flex items-center justify-center shadow-xl hover:scale-110 transition-transform animate-pulse-slow"
-  title="השמע טראק"
->
-        <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-      </button>
-    </div>
-    
-    {/* Small badge at top */}
-    <div className="absolute top-2 left-2 bg-gradient-to-r from-cyan-500/90 to-lime-500/90 text-black font-bold text-[10px] px-2 py-1 rounded-full shadow-lg">
+  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      player.playUrl(n.soundcloudUrl!);
+    }}
+    className="pointer-events-auto w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-cyan-400 via-green-400 to-lime-500 flex items-center justify-center shadow-xl hover:scale-110 transition-transform animate-pulse-slow"
+    title="השמע טראק"
+  >
+    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8 5v14l11-7z"/>
+    </svg>
+  </button>
+</div>
+
+{/* Small badge at top */}
+<div className="absolute top-2 left-2 bg-gradient-to-r from-cyan-500/90 to-lime-500/90 text-black font-bold text-[10px] px-2 py-1 rounded-full shadow-lg animate-pulse-slow">
   🎵 לחץ לשמוע
 </div>
   </>
