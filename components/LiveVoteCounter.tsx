@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 export default function LiveVoteCounter() {
-  // null = we haven't fetched yet (so we don't render a number)
+  // null = not yet fetched; we won't show a number until we have one
   const [count, setCount] = useState<number | null>(null);
   const [displayCount, setDisplayCount] = useState<number | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -29,14 +29,15 @@ export default function LiveVoteCounter() {
     }
   }
 
-  // First fetch, then resync every 15s
+  // First fetch + re-sync every 15s
   useEffect(() => {
     fetchCount();
     fetchTimer.current = setInterval(fetchCount, 15000);
     return () => { if (fetchTimer.current) clearInterval(fetchTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Local optimistic +1 every minute (starts only after we have an initial count)
+  // Local optimistic +1 per minute (only after we have an initial count)
   useEffect(() => {
     if (count === null) return;
     minuteTimer.current = setInterval(() => {
@@ -47,7 +48,7 @@ export default function LiveVoteCounter() {
     return () => { if (minuteTimer.current) clearInterval(minuteTimer.current); };
   }, [count]);
 
-  // Smoothly animate displayCount toward count
+  // Smoothly animate `displayCount` toward `count`
   useEffect(() => {
     if (count === null || displayCount === null) return;
     if (displayCount === count) return;
@@ -62,14 +63,15 @@ export default function LiveVoteCounter() {
     return () => clearTimeout(t);
   }, [displayCount, count]);
 
-  // UI
-  const shown = displayCount ?? count; // whichever we have first
+  const shown = displayCount ?? count; // whichever is available
+  const formatted = shown != null ? shown.toLocaleString("he-IL") : "…";
 
   return (
     <div className="relative">
-      {/* Glowing background */}
+      {/* Glowing background effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur-xl animate-pulse-slow" />
 
+      {/* Counter card */}
       <div className="relative glass rounded-2xl p-6 border-2 border-cyan-500/30 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 animate-gradient" />
 
@@ -82,7 +84,7 @@ export default function LiveVoteCounter() {
           <div className={`transition-all duration-500 ${isAnimating ? "scale-110" : "scale-100"}`}>
             <div className="text-4xl sm:text-5xl md:text-6xl font-black">
               <span className="bg-gradient-to-r from-cyan-400 via-green-400 to-purple-500 bg-clip-text text-transparent">
-                {shown != null ? shown.toLocaleString("he-IL") : "…"}
+                {formatted}
               </span>
             </div>
           </div>
@@ -96,7 +98,10 @@ export default function LiveVoteCounter() {
         {isAnimating && shown != null && (
           <>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-4 border-cyan-400/30 rounded-full animate-ping" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-4 border-purple-400/30 rounded-full animate-ping" style={{ animationDelay: "0.2s" }} />
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-4 border-purple-400/30 rounded-full animate-ping"
+              style={{ animationDelay: "0.2s" }}
+            />
           </>
         )}
       </div>
