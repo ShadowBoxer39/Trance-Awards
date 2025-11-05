@@ -29,6 +29,8 @@ export const CATEGORIES = [
       { id: "modus", name: "Modus", artwork: "/images/modus.jpeg" },
       { id: "skull", name: "Laughing Skull", artwork: "/images/skull.jpeg" },
       { id: "darwish", name: "Darwish", artwork: "/images/darwish.jpeg" },
+      { id: "kobi", name: "Kobi", artwork: "/images/kobi.jpeg" },
+      { id: "pettra", name: "Pettra", artwork: "/images/pettra.jpeg" },
     ],
   },
   {
@@ -72,6 +74,8 @@ export const CATEGORIES = [
       { id: "astral-mankind", name: "Astral Projection - for All Mankind", artwork: "/images/astralforall.jpg" },
       { id: "some1-message", name: "Some1 - Message From The Deep", artwork: "/images/some1message.jpg" },
       { id: "persona-interplay", name: "Persona - Interplay", artwork: "/images/perosnainter.jpg" },
+      { id: "roots", name: "Adama - Roots", artwork: "/images/roots.jpg" },
+
     ],
   },
   {
@@ -110,6 +114,8 @@ export const CATEGORIES = [
       { id: "gordon", name: "Eran Gordon", artwork: "/images/gordon.jpg" },
       { id: "migdalor", name: "Migdalor", artwork: "/images/migdalor.jpg" },
       { id: "adiros", name: "Adiros", artwork: "/images/adiros.jpeg" },
+      { id: "adama", name: "Adama", artwork: "/images/adama.jpeg" },
+      { id: "elberg", name: "Elberg", artwork: "/images/elberg.jpeg" },
     ],
   },
 ];
