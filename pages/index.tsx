@@ -3,7 +3,6 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import LiveVoteCounter from "../components/LiveVoteCounter";
 import { FaInstagram, FaYoutube, FaSpotify, FaTiktok, FaWhatsapp } from "react-icons/fa";
 import dynamic from "next/dynamic";
 
