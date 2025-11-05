@@ -5,6 +5,12 @@ import Image from "next/image";
 import React from "react";
 import LiveVoteCounter from "../components/LiveVoteCounter";
 import { FaInstagram, FaYoutube, FaSpotify, FaTiktok, FaWhatsapp } from "react-icons/fa";
+import dynamic from "next/dynamic";
+
+
+const LiveVoteCounter = dynamic(() => import("../components/LiveVoteCounter"), {
+  ssr: false,
+});
 
 const BRAND = {
   title: "נבחרי השנה בטראנס 2025",
