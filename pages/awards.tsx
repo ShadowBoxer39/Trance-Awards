@@ -258,13 +258,13 @@ export default function Awards() {
     {/* Big center play button */}
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          player.playUrl(n.soundcloudUrl!);
-        }}
-        className="pointer-events-auto w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center shadow-xl hover:scale-110 transition-transform animate-pulse"
-        title="השמע טראק"
-      >
+  onClick={(e) => {
+    e.stopPropagation();
+    player.playUrl(n.soundcloudUrl!);
+  }}
+  className="pointer-events-auto w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 via-green-400 to-lime-500 flex items-center justify-center shadow-xl hover:scale-110 transition-transform animate-pulse-slow"
+  title="השמע טראק"
+>
         <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
           <path d="M8 5v14l11-7z"/>
         </svg>
@@ -272,9 +272,9 @@ export default function Awards() {
     </div>
     
     {/* Small badge at top */}
-    <div className="absolute top-2 left-2 bg-black/80 text-white text-[10px] px-2 py-1 rounded-full border border-white/20">
-      🎵 לחץ לשמוע
-    </div>
+    <div className="absolute top-2 left-2 bg-gradient-to-r from-cyan-500/90 to-lime-500/90 text-black font-bold text-[10px] px-2 py-1 rounded-full shadow-lg">
+  🎵 לחץ לשמוע
+</div>
   </>
 )}
 
