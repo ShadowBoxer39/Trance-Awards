@@ -32,10 +32,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method_not_allowed" });
 
   try {
-    const { selections } = req.body || {};
-    if (!selections || typeof selections !== "object") {
-      return res.status(400).json({ ok: false, error: "bad_request" });
-    }
+  const { selections, captchaToken } = req.body || {};
+  
+  if (!selections || typeof selections !== "object") {
+    return res.status(400).json({ ok: false, error: "bad_request" });
+  }
+
+  // Verify captcha
+  if (!captchaToken) {
+    return res.status(400).json({ ok: false, error: "captcha_missing" });
+  }
+
+  const captchaSecret = process.env.HCAPTCHA_SECRET;
+  if (!captchaSecret) {
+    console.error("HCAPTCHA_SECRET not configured");
+    return res.status(500).json({ ok: false, error: "server_config" });
+  }
+
+  // Verify with hCaptcha
+  const captchaRes = await fetch("https://hcaptcha.com/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      secret: captchaSecret,
+      response: captchaToken,
+    }).toString(),
+  });
+
+  const captchaData = await captchaRes.json();
+  if (!captchaData.success) {
+    console.error("Captcha verification failed:", captchaData);
+    return res.status(400).json({ ok: false, error: "captcha_failed" });
+  }
 
     const season = "2025";
     const ip = getClientIP(req);
