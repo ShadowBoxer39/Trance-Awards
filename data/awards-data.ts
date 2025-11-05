@@ -34,7 +34,7 @@ export const CATEGORIES = [
       { id: "kobi", name: "Kobi", artwork: "/images/kobi.jpeg" },
       { id: "pettra", name: "Pettra", artwork: "/images/pettra.jpeg" },
       { id: "bliss", name: "Bliss", artwork: "/images/bliss.jpg" },
-      { id: "afgin", name: "Agfin", artwork: "/images/afgin.jpeg" },
+      { id: "afgin", name: "Afgin", artwork: "/images/afgin.jpeg" },
     ],
   },
   {
