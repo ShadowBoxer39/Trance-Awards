@@ -137,21 +137,23 @@ export default function Landing() {
       {/* SOCIALS */}
 <section className="max-w-6xl mx-auto px-4 pb-16">
   <h3 className="text-lg font-[700] mb-3">עקבו אחרינו</h3>
-  <div className="flex flex-wrap gap-3">
-    {SOCIALS.map((social) => (
-      
-        key={social.name}
-        href={social.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-medium hover:scale-105 transition-transform shadow-md"
-        style={{ backgroundColor: social.color }}
-      >
-        <social.Icon className="w-5 h-5" />
-        <span>{social.name}</span>
-      </a>
-    ))}
-  </div>
+ <div className="flex flex-wrap gap-3">
+  {SOCIALS.map((social) => (
+    <a
+      key={social.name}
+      href={social.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-medium hover:scale-105 transition-transform shadow-md"
+      style={{ backgroundColor: social.color }}
+      aria-label={social.name}
+    >
+      <social.Icon className="w-5 h-5" />
+      <span>{social.name}</span>
+    </a>
+  ))}
+</div>
+
 </section>
         {/* FINAL CTA */}
         <section className="max-w-6xl mx-auto px-4 pb-24">
