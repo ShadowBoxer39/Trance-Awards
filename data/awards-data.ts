@@ -122,6 +122,7 @@ export const CATEGORIES = [
       { id: "adama", name: "Adama", artwork: "/images/adama.jpg" },
       { id: "elberg", name: "Elberg", artwork: "/images/elberg.jpeg" },
       { id: "detune", name: "Detune", artwork: "/images/detune.jpg" },
+      { id: "oxiv", name: "Oxiv", artwork: "/images/oxiv.jpg" },
     ],
   },
 ];
