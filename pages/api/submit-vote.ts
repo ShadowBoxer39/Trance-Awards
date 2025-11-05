@@ -3,19 +3,16 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import supabase from "../../lib/supabaseServer";
 
-// 🔹 Helper to extract client IP
 function getClientIP(req: NextApiRequest): string {
   const xf = (req.headers["x-forwarded-for"] as string) || "";
   const real = (req.headers["x-real-ip"] as string) || "";
   return xf.split(",")[0]?.trim() || real || (req.socket?.remoteAddress || "") || "0.0.0.0";
 }
 
-// 🔹 Hash IP with pepper
 function hashIP(ip: string, pepper: string) {
   return crypto.createHash("sha256").update(ip + "|" + pepper).digest("hex");
 }
 
-// 🔹 Simple country check
 async function isFromIsrael(ip: string): Promise<boolean> {
   try {
     const res = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,countryCode`);
@@ -23,7 +20,6 @@ async function isFromIsrael(ip: string): Promise<boolean> {
     return data?.status === "success" && data.countryCode === "IL";
   } catch (err) {
     console.error("Geo check failed:", err);
-    // Safer default: block on lookup failure
     return false;
   }
 }
@@ -32,43 +28,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method_not_allowed" });
 
   try {
-  const { selections, captchaToken } = req.body || {};
-  
-  if (!selections || typeof selections !== "object") {
-    return res.status(400).json({ ok: false, error: "bad_request" });
-  }
+    const { selections, captchaToken } = req.body || {};
+    
+    if (!selections || typeof selections !== "object") {
+      return res.status(400).json({ ok: false, error: "bad_request" });
+    }
 
-  // Verify captcha
-  if (!captchaToken) {
-    return res.status(400).json({ ok: false, error: "captcha_missing" });
-  }
+    // Verify captcha
+    if (!captchaToken) {
+      return res.status(400).json({ ok: false, error: "captcha_missing" });
+    }
 
-  const captchaSecret = process.env.HCAPTCHA_SECRET;
-  if (!captchaSecret) {
-    console.error("HCAPTCHA_SECRET not configured");
-    return res.status(500).json({ ok: false, error: "server_config" });
-  }
+    const captchaSecret = process.env.HCAPTCHA_SECRET;
+    if (!captchaSecret) {
+      console.error("HCAPTCHA_SECRET not configured");
+      return res.status(500).json({ ok: false, error: "server_config" });
+    }
 
-  // Verify with hCaptcha
-  const captchaRes = await fetch("https://hcaptcha.com/siteverify", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      secret: captchaSecret,
-      response: captchaToken,
-    }).toString(),
-  });
+    // Verify with hCaptcha
+    const captchaRes = await fetch("https://hcaptcha.com/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        secret: captchaSecret,
+        response: captchaToken,
+      }).toString(),
+    });
 
-  const captchaData = await captchaRes.json();
-  if (!captchaData.success) {
-    console.error("Captcha verification failed:", captchaData);
-    return res.status(400).json({ ok: false, error: "captcha_failed" });
-  }
+    const captchaData = await captchaRes.json();
+    if (!captchaData.success) {
+      console.error("Captcha verification failed:", captchaData);
+      return res.status(400).json({ ok: false, error: "captcha_failed" });
+    }
 
     const season = "2025";
     const ip = getClientIP(req);
 
-    // 🛑 Block users not from Israel
+    // Block users not from Israel
     const allowed = await isFromIsrael(ip);
     if (!allowed) {
       return res.status(403).json({ ok: false, error: "invalid_region" });
