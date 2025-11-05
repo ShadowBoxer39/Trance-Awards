@@ -1,88 +1,75 @@
+// components/LiveVoteCounter.tsx
 import React, { useEffect, useRef, useState } from "react";
 
 export default function LiveVoteCounter() {
-  // 1) Source of truth in the UI
-  const [count, setCount] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const saved = window.localStorage.getItem("liveVoteCount");
-      if (saved) return Number(saved) || 100;
-    }
-    return 100; // temporary fallback; replaced on first fetch
-  });
-  const [displayCount, setDisplayCount] = useState<number>(count);
+  // null = we haven't fetched yet (so we don't render a number)
+  const [count, setCount] = useState<number | null>(null);
+  const [displayCount, setDisplayCount] = useState<number | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Guards for timers so we can clear them
   const fetchTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const minuteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Smooth animation to a new number
-  function animateTo(next: number) {
-    if (next === count) return;
-    setIsAnimating(true);
-    setCount(next);
-    // persist so refresh doesn't flash back
-    try {
-      window.localStorage.setItem("liveVoteCount", String(next));
-    } catch {}
-    setTimeout(() => setIsAnimating(false), 800);
-  }
 
   async function fetchCount() {
     try {
       const res = await fetch("/api/vote-count", { cache: "no-store" });
       const data = await res.json();
       if (data?.ok && typeof data.count === "number") {
-        // Snap to server value if we drifted
-        if (data.count !== count) animateTo(data.count);
+        if (count === null) {
+          setCount(data.count);
+          setDisplayCount(data.count);
+        } else if (data.count !== count) {
+          setIsAnimating(true);
+          setCount(data.count);
+          setTimeout(() => setIsAnimating(false), 800);
+        }
       }
     } catch (e) {
-      // silent retry next interval
       console.error("vote-count fetch failed", e);
     }
   }
 
-  // Initial fetch + periodic re-sync
+  // First fetch, then resync every 15s
   useEffect(() => {
-    fetchCount(); // first sync
-    // re-sync every 15s to stay accurate
+    fetchCount();
     fetchTimer.current = setInterval(fetchCount, 15000);
-    return () => {
-      if (fetchTimer.current) clearInterval(fetchTimer.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { if (fetchTimer.current) clearInterval(fetchTimer.current); };
   }, []);
 
-  // Local optimistic tick: +1 every 60s
+  // Local optimistic +1 every minute (starts only after we have an initial count)
   useEffect(() => {
+    if (count === null) return;
     minuteTimer.current = setInterval(() => {
-      animateTo(count + 1);
+      setIsAnimating(true);
+      setCount((c) => (c === null ? c : c + 1));
+      setTimeout(() => setIsAnimating(false), 800);
     }, 60000);
-    return () => {
-      if (minuteTimer.current) clearInterval(minuteTimer.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { if (minuteTimer.current) clearInterval(minuteTimer.current); };
   }, [count]);
 
-  // Incremental render animation toward `count`
+  // Smoothly animate displayCount toward count
   useEffect(() => {
+    if (count === null || displayCount === null) return;
     if (displayCount === count) return;
+
     const diff = count - displayCount;
     const step = Math.ceil(Math.abs(diff) / 20);
     const t = setTimeout(() => {
-      setDisplayCount((prev) =>
-        prev < count ? Math.min(prev + step, count) : count
-      );
+      const next = displayCount < count ? Math.min(displayCount + step, count) : count;
+      setDisplayCount(next);
     }, 30);
+
     return () => clearTimeout(t);
   }, [displayCount, count]);
 
+  // UI
+  const shown = displayCount ?? count; // whichever we have first
+
   return (
     <div className="relative">
-      {/* Glowing background effect */}
+      {/* Glowing background */}
       <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur-xl animate-pulse-slow" />
 
-      {/* Counter card */}
       <div className="relative glass rounded-2xl p-6 border-2 border-cyan-500/30 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 animate-gradient" />
 
@@ -95,7 +82,7 @@ export default function LiveVoteCounter() {
           <div className={`transition-all duration-500 ${isAnimating ? "scale-110" : "scale-100"}`}>
             <div className="text-4xl sm:text-5xl md:text-6xl font-black">
               <span className="bg-gradient-to-r from-cyan-400 via-green-400 to-purple-500 bg-clip-text text-transparent">
-                {displayCount.toLocaleString("he-IL")}
+                {shown != null ? shown.toLocaleString("he-IL") : "…"}
               </span>
             </div>
           </div>
@@ -106,13 +93,10 @@ export default function LiveVoteCounter() {
           </div>
         </div>
 
-        {isAnimating && (
+        {isAnimating && shown != null && (
           <>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-4 border-cyan-400/30 rounded-full animate-ping" />
-            <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-4 border-purple-400/30 rounded-full animate-ping"
-              style={{ animationDelay: "0.2s" }}
-            />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-4 border-purple-400/30 rounded-full animate-ping" style={{ animationDelay: "0.2s" }} />
           </>
         )}
       </div>
