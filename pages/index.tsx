@@ -121,32 +121,32 @@ export default function Landing() {
           </div>
         </header>
 
-        {/* HERO */}
-        <section className="max-w-6xl mx-auto px-4 pt-10 sm:pt-16">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <Image
-                src={BRAND.logo}
-                alt="לוגו יוצאים לטראק"
-                width={64}
-                height={64}
-                className="rounded-2xl border border-white/15"
-              />
-              <span className="text-white/80 text-sm">מגישים: יוצאים לטראק</span>
-            </div>
+  {/* HERO */}
+<section className="max-w-6xl mx-auto px-4 pt-10 sm:pt-16">
+  <div className="max-w-2xl">
+    <div className="flex items-center gap-3 mb-4">
+      <Image
+        src={BRAND.logo}
+        alt="לוגו יוצאים לטראק"
+        width={64}
+        height={64}
+        className="rounded-2xl border border-white/15"
+      />
+      <span className="text-white/80 text-sm">מגישים: יוצאים לטראק</span>
+    </div>
 
-            <h1 className="gradient-title text-4xl sm:text-6xl font-[700] leading-[1.05] tracking-tight mb-4">
-              נבחרי השנה בטראנס
-              <span className="block text-white drop-shadow-[0_0_10px_rgba(255,90,165,.25)]">
-                2025
-              </span>
-            </h1>
+    <h1 className="gradient-title text-4xl sm:text-6xl font-[700] leading-[1.05] tracking-tight mb-4">
+      נבחרי השנה בטראנס
+      <span className="block text-white drop-shadow-[0_0_10px_rgba(255,90,165,.25)]">
+        2025
+      </span>
+    </h1>
 
-            <p className="text-white/80 text-lg mb-8">
-              הקהילה בוחרת את נבחרי השנה בטראנס.
-            </p>
+    <p className="text-white/80 text-lg mb-8">
+      הקהילה בוחרת את נבחרי השנה בטראנס.
+    </p>
 
-             {/* 👇 ADD LIVE COUNTER HERE */}
+    {/* Live Counter */}
     <div className="mb-8">
       <LiveVoteCounter />
     </div>
@@ -157,7 +157,7 @@ export default function Landing() {
     >
       המשך להצבעה
     </Link>
-  </div>
+  </div>  {/* 👈 THIS WAS MISSING! */}
 </section>
          
             <Link
