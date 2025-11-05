@@ -135,7 +135,7 @@ export default function Landing() {
             </div>
 
             <h1 className="gradient-title text-4xl sm:text-6xl font-[700] leading-[1.05] tracking-tight mb-4">
-              נבחרי השנה
+              נבחרי השנה בטראנס
               <span className="block text-white drop-shadow-[0_0_10px_rgba(255,90,165,.25)]">
                 2025
               </span>
