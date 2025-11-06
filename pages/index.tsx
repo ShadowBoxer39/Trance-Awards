@@ -161,7 +161,7 @@ export default function Landing() {
     {/* Card 1 */}
     <div className="glass rounded-3xl p-6">
       <h2 className="text-xl font-[700] mb-2">מי אנחנו — יוצאים לטראק</h2>
-      <p className="text-white/75">תכנית הטראנס הכי גדולה בישראל, הצטרפו לקהילה שלנו.</p>
+      <p className="text-white/75">תכנית הטראנס הגדולה בישראל, הצטרפו לקהילה שלנו.</p>
     </div>
     
     {/* Card 2 */}
