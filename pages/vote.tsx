@@ -129,29 +129,30 @@ export default function Landing() {
         {/* HERO */}
         <section className="max-w-6xl mx-auto px-4 pt-10 sm:pt-16">
           <div className="max-w-2xl">
-          <div className="flex items-center gap-4 mb-4 flex-wrap">
+         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
   {/* Track Trip */}
-  <Image
-    src={BRAND.logo}
-    alt="לוגו יוצאים לטראק"
-    width={64}
-    height={64}
-    className="rounded-2xl border border-white/15"
-  />
-  <span className="text-white/80 text-sm">מגישים: יוצאים לטראק</span>
-
-  {/* Separator */}
-  <span className="text-white/40 text-xl">×</span>
+  <div className="flex items-center gap-3">
+    <Image
+      src={BRAND.logo}
+      alt="לוגו יוצאים לטראק"
+      width={56}
+      height={56}
+      className="rounded-2xl border border-white/15"
+    />
+    <span className="text-white/80 text-sm">מגישים: יוצאים לטראק</span>
+  </div>
 
   {/* Musikroom */}
-  <Image
-    src="/images/musikroom.png"
-    alt="Musikroom"
-    width={64}
-    height={64}
-    className="rounded-2xl border border-white/15 bg-white p-2"
-  />
-  <span className="text-white/80 text-sm">מיוזיק רום</span>
+  <div className="flex items-center gap-3">
+    <Image
+      src="/images/musikroom.png"
+      alt="Musikroom"
+      width={56}
+      height={56}
+      className="rounded-2xl border border-white/15 bg-white p-2"
+    />
+    <span className="text-white/80 text-sm">מיוזיק רום</span>
+  </div>
 </div>
 
             <h1 className="gradient-title text-4xl sm:text-6xl font-[700] leading-[1.05] tracking-tight mb-4">
