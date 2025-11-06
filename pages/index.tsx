@@ -155,17 +155,22 @@ export default function Landing() {
 
        
 
-        {/* ABOUT */}
-        <section id="about" className="max-w-6xl mx-auto px-4 py-10">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="glass rounded-3xl p-6">
-              <h2 className="text-xl font-[700] mb-2">מי אנחנו — יוצאים לטראק</h2>
-              <p className="text-white/75">תכנית הטראנס הגדולה בישראל, הצטרפו לקהילה שלנו.</p>
-              <h2 className="text-xl font-[700] mb-2">מיוזיק רום</h2>
-              <p className="text-white/75">אולפן הקלטות וצילומים הכי מתקדם בארץ.</p>
-            </div>
-          </div>
-        </section>
+      {/* ABOUT */}
+<section id="about" className="max-w-6xl mx-auto px-4 py-10">
+  <div className="grid md:grid-cols-2 gap-6">
+    {/* Card 1 */}
+    <div className="glass rounded-3xl p-6">
+      <h2 className="text-xl font-[700] mb-2">מי אנחנו — יוצאים לטראק</h2>
+      <p className="text-white/75">תכנית הטראנס הכי גדולה בישראל, הצטרפו לקהילה שלנו.</p>
+    </div>
+    
+    {/* Card 2 */}
+    <div className="glass rounded-3xl p-6">
+      <h2 className="text-xl font-[700] mb-2">שותף תוכני — אמיר אמגדלה</h2>
+      <p className="text-white/75">אולפן הקלטות וצילומים הכי מתקדם בארץ.</p>
+    </div>
+  </div>
+</section>
 
       {/* SOCIALS */}
 <section className="max-w-6xl mx-auto px-4 pb-16">
