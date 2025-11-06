@@ -13,17 +13,6 @@ function hashIP(ip: string, pepper: string) {
   return crypto.createHash("sha256").update(ip + "|" + pepper).digest("hex");
 }
 
-async function isFromIsrael(ip: string): Promise<boolean> {
-  try {
-    const res = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,countryCode`);
-    const data = await res.json();
-    return data?.status === "success" && data.countryCode === "IL";
-  } catch (err) {
-    console.error("Geo check failed:", err);
-    return false;
-  }
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "method_not_allowed" });
 
@@ -63,13 +52,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const season = "2025";
     const ip = getClientIP(req);
-
-    // Block users not from Israel
-    const allowed = await isFromIsrael(ip);
-    if (!allowed) {
-      return res.status(403).json({ ok: false, error: "invalid_region" });
-    }
-
     const pepper = process.env.VOTE_PEPPER || "dev-pepper";
     const ip_hash = hashIP(ip, pepper);
     const ua = req.headers["user-agent"] || "";
