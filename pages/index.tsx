@@ -311,7 +311,7 @@ export default function Landing() {
         תהיו חלק מההיסטוריה
       </h3>
       <p className="text-white/70 leading-relaxed">
-        פרסי השנה הראשונים של הקהילה! אתם עושים היסטוריה במוזיקה האלקטרונית בישראל
+        נבחרי השנה הראשונים של הקהילה! אתם עושים היסטוריה במוזיקה האלקטרונית בישראל
       </p>
       
       <div className="mt-6 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-pink-400 to-transparent opacity-50 group-hover:opacity-100 transition" />
