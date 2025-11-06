@@ -92,7 +92,7 @@ export default function Landing() {
         {/* Header */}
        <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
   <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-    <Link href="/" className="flex items-center gap-2" aria-label="חזרה לדף הבית">
+    <Link href="/" className="flex items-center gap-2" aria-label="חזרה לעמוד ההצבעה">
       {/* Track Trip Logo */}
       <Image
         src={BRAND.logo}
