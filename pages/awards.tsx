@@ -178,8 +178,8 @@ export default function Awards() {
 
       const j = await r.json().catch(() => ({}));
 
-      if (r.status === 403 || j?.error === "invalid_region") {
-        alert("ההצבעה פתוחה לתושבי ישראל בלבד 🇮🇱");
+    if (r.status === 403) {
+  alert("שגיאה בהצבעה. נסו שוב.");
       } else if (r.status === 409 || j?.error === "duplicate_vote") {
         alert("כבר הצבעת מהמכשיר הזה עבור נבחרי השנה.");
       } else if (r.status === 400) {
