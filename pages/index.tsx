@@ -125,7 +125,7 @@ export default function Landing() {
                 height={64}
                 className="rounded-2xl border border-white/15"
               />
-              <span className="text-white/80 text-sm">מגישים: יוצאים לטראק</span>
+              <span className="text-white/80 text-sm">מגישים: יוצאים לטראק והמיוזיק רום</span>
             </div>
 
             <h1 className="gradient-title text-4xl sm:text-6xl font-[700] leading-[1.05] tracking-tight mb-4">
