@@ -160,7 +160,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="glass rounded-3xl p-6">
               <h2 className="text-xl font-[700] mb-2">מי אנחנו — יוצאים לטראק</h2>
-              <p className="text-white/75">תכנית הטראנס הכי גדולה בישראל, הצטרפו לקהילה שלנו.</p>
+              <p className="text-white/75">תכנית הטראנס הגדולה בישראל, הצטרפו לקהילה שלנו.</p>
             </div>
           </div>
         </section>
@@ -233,7 +233,7 @@ export default function Landing() {
         השפיעו על הסצנה
       </h3>
       <p className="text-white/70 leading-relaxed">
-        הקול שלכם קובע מי יהיו הכוכבים הבאים של הטראנס הישראלי ומה המוזיקה שתשמע בפסטיבלים
+        הקול שלכם קובע מי יהיו הכוכבים הבאים של הטראנס הישראלי ומה המוזיקה שנשמע ברחבות
       </p>
       
       <div className="mt-6 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent opacity-50 group-hover:opacity-100 transition" />
@@ -250,7 +250,7 @@ export default function Landing() {
         תהיו חלק מההיסטוריה
       </h3>
       <p className="text-white/70 leading-relaxed">
-        פרסי השנה הראשונים של הקהילה! אתם עושים היסטוריה במוזיקה האלקטרונית הישראלית
+        פרסי השנה הראשונים של הקהילה! אתם עושים היסטוריה במוזיקה האלקטרונית בישראל
       </p>
       
       <div className="mt-6 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-pink-400 to-transparent opacity-50 group-hover:opacity-100 transition" />
