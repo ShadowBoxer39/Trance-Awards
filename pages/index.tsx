@@ -14,6 +14,7 @@ const LiveVoteCounter = dynamic(() => import("../components/LiveVoteCounter"), {
 const BRAND = {
   title: "נבחרי השנה בטראנס 2025",
   logo: "/images/logo.png",
+  logoFull: "https://tracktrip.co.il/images/logo.png", // For social sharing
 };
 
 const SOCIALS = [
@@ -57,12 +58,35 @@ export default function Landing() {
   return (
     <>
       <Head>
-        <title>{BRAND.title} — יוצאים לטראק</title>
-        <meta name="theme-color" content="#090a0f" />
-        <meta name="description" content="נבחרי השנה בטראנס של יוצאים לטראק" />
-        <meta property="og:title" content={`${BRAND.title} — יוצאים לטראק`} />
-        <meta property="og:image" content={BRAND.logo} />
-      </Head>
+  {/* Basic Meta */}
+  <title>{BRAND.title} — יוצאים לטראק</title>
+  <meta name="description" content="הצביעו לאמנים, הטראקים והאלבומים הכי טובים של 2025. פרסי הטראנס הראשונים של הקהילה הישראלית!" />
+  <meta name="theme-color" content="#FF5AA5" />
+  
+  {/* Favicon */}
+  <link rel="icon" type="image/png" href="/images/logo.png" />
+  <link rel="apple-touch-icon" href="/images/logo.png" />
+  
+  {/* Open Graph (Facebook, WhatsApp) */}
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tracktrip.co.il" />
+  <meta property="og:title" content="נבחרי השנה בטראנס 2025 — יוצאים לטראק" />
+  <meta property="og:description" content="הצביעו לאמנים, הטראקים והאלבומים הכי טובים! 🎵🔥" />
+  <meta property="og:image" content="https://tracktrip.co.il/images/logo.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:locale" content="he_IL" />
+  
+  {/* Twitter */}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="נבחרי השנה בטראנס 2025" />
+  <meta name="twitter:description" content="הצביעו לאמנים האהובים עליכם!" />
+  <meta name="twitter:image" content="https://tracktrip.co.il/images/logo.png" />
+  
+  {/* Additional */}
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="טראנס, פסיטראנס, מוזיקה אלקטרונית, ישראל, פרסים, הצבעה" />
+</Head>
 
       <main className="min-h-screen neon-backdrop text-white">
         {/* Header */}
@@ -128,6 +152,88 @@ export default function Landing() {
             </Link>
           </div>
         </section>
+
+        {/* WHY VOTE - New stunning section */}
+<section className="max-w-6xl mx-auto px-4 py-16">
+  {/* Section Header */}
+  <div className="text-center mb-12">
+    <h2 className="gradient-title text-3xl sm:text-4xl font-[700] mb-3">
+      למה כדאי להצביע?
+    </h2>
+    <p className="text-white/70 text-lg">
+      הקול שלכם משנה את הסצנה הישראלית
+    </p>
+  </div>
+
+  {/* Cards Grid */}
+  <div className="grid md:grid-cols-3 gap-6">
+    
+    {/* Card 1 */}
+    <div className="glass rounded-3xl p-8 text-center group hover:border-cyan-400/50 transition-all hover:shadow-xl hover:shadow-cyan-400/10">
+      {/* Icon with glow */}
+      <div className="relative inline-block mb-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 blur-2xl opacity-50 group-hover:opacity-75 transition" />
+        <div className="relative text-6xl sm:text-7xl">🎵</div>
+      </div>
+      
+      <h3 className="text-xl font-bold mb-3 text-white">
+        תמכו באמנים שלכם
+      </h3>
+      <p className="text-white/70 leading-relaxed">
+        עזרו לאמנים האהובים עליכם לקבל את ההכרה שמגיעה להם ולהמשיך ליצור מוזיקה מדהימה
+      </p>
+      
+      {/* Decorative line */}
+      <div className="mt-6 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50 group-hover:opacity-100 transition" />
+    </div>
+
+    {/* Card 2 */}
+    <div className="glass rounded-3xl p-8 text-center group hover:border-purple-400/50 transition-all hover:shadow-xl hover:shadow-purple-400/10">
+      <div className="relative inline-block mb-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-500 blur-2xl opacity-50 group-hover:opacity-75 transition" />
+        <div className="relative text-6xl sm:text-7xl">🏆</div>
+      </div>
+      
+      <h3 className="text-xl font-bold mb-3 text-white">
+        השפיעו על הסצנה
+      </h3>
+      <p className="text-white/70 leading-relaxed">
+        הקול שלכם קובע מי יהיו הכוכבים הבאים של הטראנס הישראלי ומה המוזיקה שתשמע בפסטיבלים
+      </p>
+      
+      <div className="mt-6 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-purple-400 to-transparent opacity-50 group-hover:opacity-100 transition" />
+    </div>
+
+    {/* Card 3 */}
+    <div className="glass rounded-3xl p-8 text-center group hover:border-pink-400/50 transition-all hover:shadow-xl hover:shadow-pink-400/10">
+      <div className="relative inline-block mb-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-orange-500 blur-2xl opacity-50 group-hover:opacity-75 transition" />
+        <div className="relative text-6xl sm:text-7xl">🎉</div>
+      </div>
+      
+      <h3 className="text-xl font-bold mb-3 text-white">
+        תהיו חלק מההיסטוריה
+      </h3>
+      <p className="text-white/70 leading-relaxed">
+        פרסי השנה הראשונים של הקהילה! אתם עושים היסטוריה במוזיקה האלקטרונית הישראלית
+      </p>
+      
+      <div className="mt-6 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-pink-400 to-transparent opacity-50 group-hover:opacity-100 transition" />
+    </div>
+
+  </div>
+
+  {/* Bottom CTA */}
+  <div className="mt-12 text-center">
+    <Link
+      href="/awards"
+      className="btn-primary rounded-2xl px-8 py-4 text-lg font-bold inline-flex items-center justify-center gap-2 hover:scale-105 transition-transform"
+    >
+      <span>מוכנים להצביע?</span>
+      <span>🚀</span>
+    </Link>
+  </div>
+</section>
 
         {/* ABOUT */}
         <section id="about" className="max-w-6xl mx-auto px-4 py-10">
