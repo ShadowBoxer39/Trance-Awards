@@ -76,33 +76,33 @@ export default function ComingSoon() {
             </Link>
           </div>
 
-          {/* Social Links */}
-          <div className="flex flex-wrap gap-3 justify-center">
-            
-              href="https://www.instagram.com/track_trip.trance/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass rounded-xl px-4 py-2 text-sm hover:bg-white/10 transition"
-            >
-              📱 Instagram
-            </a>
-            
-              href="https://www.youtube.com/@tracktripil"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass rounded-xl px-4 py-2 text-sm hover:bg-white/10 transition"
-            >
-              📺 YouTube
-            </a>
-            
-              href="https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass rounded-xl px-4 py-2 text-sm hover:bg-white/10 transition"
-            >
-              🎧 Spotify
-            </a>
-          </div>
+         {/* Social Links */}
+<div className="flex flex-wrap gap-3 justify-center">
+  
+    href="https://www.instagram.com/track_trip.trance/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="glass rounded-xl px-4 py-2 text-sm hover:bg-white/10 transition"
+  >
+    📱 Instagram
+  </a>
+  
+    href="https://www.youtube.com/@tracktripil"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="glass rounded-xl px-4 py-2 text-sm hover:bg-white/10 transition"
+  >
+    📺 YouTube
+  </a>
+  
+    href="https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="glass rounded-xl px-4 py-2 text-sm hover:bg-white/10 transition"
+  >
+    🎧 Spotify
+  </a>
+</div>
         </div>
       </main>
     </>
