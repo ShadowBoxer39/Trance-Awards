@@ -90,57 +90,68 @@ export default function Landing() {
 
       <main className="min-h-screen neon-backdrop text-white">
         {/* Header */}
-        <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3" aria-label="חזרה לדף הבית">
-              <Image
-                src={BRAND.logo}
-                alt="יוצאים לטראק"
-                width={36}
-                height={36}
-                className="rounded-full border border-white/15"
-                priority
-              />
-              <span className="text-sm opacity-80 hidden sm:inline">יוצאים לטראק</span>
-            </Link>
-            <div className="ms-auto">
-              <Link
-                href="/awards"
-                className="btn-primary rounded-2xl px-4 py-2 inline-flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 overflow-hidden"
-              >
-                התחילו הצבעה
-              </Link>
-            </div>
-          </div>
-        </header>
+       <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
+  <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+    <Link href="/" className="flex items-center gap-2" aria-label="חזרה לדף הבית">
+      {/* Track Trip Logo */}
+      <Image
+        src={BRAND.logo}
+        alt="יוצאים לטראק"
+        width={36}
+        height={36}
+        className="rounded-full border border-white/15"
+        priority
+      />
+      
+      {/* Musikroom Logo - close together */}
+      <Image
+        src="/images/musikroom.png"
+        alt="Musikroom"
+        width={36}
+        height={36}
+        className="rounded-full border border-white/15 bg-white p-1"
+      />
+      
+      <span className="text-sm opacity-80 hidden sm:inline">יוצאים לטראק × מיוזיק רום</span>
+    </Link>
+    
+    <div className="ms-auto">
+      <Link
+        href="/awards"
+        className="btn-primary rounded-2xl px-4 py-2 inline-flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 overflow-hidden"
+      >
+        התחילו הצבעה
+      </Link>
+    </div>
+  </div>
+</header>
 
         {/* HERO */}
         <section className="max-w-6xl mx-auto px-4 pt-10 sm:pt-16">
           <div className="max-w-2xl">
-           <div className="flex items-center justify-between gap-6 mb-4 flex-wrap">
-  {/* Left side - Track Trip */}
-  <div className="flex items-center gap-3">
-    <Image
-      src={BRAND.logo}
-      alt="לוגו יוצאים לטראק"
-      width={64}
-      height={64}
-      className="rounded-2xl border border-white/15"
-    />
-    <span className="text-white/80 text-sm">מגישים: יוצאים לטראק</span>
-  </div>
+          <div className="flex items-center gap-4 mb-4 flex-wrap">
+  {/* Track Trip */}
+  <Image
+    src={BRAND.logo}
+    alt="לוגו יוצאים לטראק"
+    width={64}
+    height={64}
+    className="rounded-2xl border border-white/15"
+  />
+  <span className="text-white/80 text-sm">מגישים: יוצאים לטראק</span>
 
-  {/* Right side - Musikroom */}
-  <div className="flex items-center gap-3">
-    <span className="text-white/80 text-sm">ומיוזיק רום</span>
-    <Image
-      src="/images/musikroom.png"
-      alt="Musikroom"
-      width={64}
-      height={64}
-      className="rounded-2xl border border-white/15 bg-white p-2"
-    />
-  </div>
+  {/* Separator */}
+  <span className="text-white/40 text-xl">×</span>
+
+  {/* Musikroom */}
+  <Image
+    src="/images/musikroom.png"
+    alt="Musikroom"
+    width={64}
+    height={64}
+    className="rounded-2xl border border-white/15 bg-white p-2"
+  />
+  <span className="text-white/80 text-sm">מיוזיק רום</span>
 </div>
 
             <h1 className="gradient-title text-4xl sm:text-6xl font-[700] leading-[1.05] tracking-tight mb-4">
