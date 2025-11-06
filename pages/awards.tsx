@@ -207,7 +207,7 @@ export default function Awards() {
         {/* Header */}
         <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3">
+            <Link href="/vote" className="flex items-center gap-3">
               <Image
                 src={BRAND.logo}
                 alt="יוצאים לטראק"
