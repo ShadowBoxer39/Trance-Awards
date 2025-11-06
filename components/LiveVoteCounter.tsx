@@ -66,38 +66,38 @@ export default function LiveVoteCounter() {
   const shown = displayCount ?? count; // whichever is available
   const formatted = shown != null ? shown.toLocaleString("he-IL") : "…";
 
-  return (
-    <div className="relative">
-      {/* Glowing background effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur-xl animate-pulse-slow" />
+ return (
+  <div className="relative">
+    {/* Glowing background effect */}
+    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur-xl animate-pulse-slow" />
 
-      {/* Counter card */}
-     <div className="relative glass rounded-2xl p-6 border-2 border-cyan-500/30 overflow-hidden min-h-[180px] sm:min-h-[200px]">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 animate-gradient" />
+    {/* Counter card */}
+    <div className="relative glass rounded-2xl p-6 border-2 border-cyan-500/30 overflow-hidden min-h-[180px] sm:min-h-[200px]">
+      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 animate-gradient" />
 
-        <div className="relative z-10 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-sm sm:text-base text-white/70">הצביעו עד כה</span>
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          </div>
+      <div className="relative z-10 text-center">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-sm sm:text-base text-white/70">הצביעו עד כה</span>
+          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        </div>
 
-         <div className="relative">
-  <div className={`transition-all duration-500 ${isAnimating ? "scale-110" : "scale-100"} will-change-transform`}>
-    <div className="text-4xl sm:text-5xl md:text-6xl font-black tabular-nums">
-      <span className="bg-gradient-to-r from-cyan-400 via-green-400 to-purple-500 bg-clip-text text-transparent">
-        {formatted}
-      </span>
-    </div>
-  </div>
-</div>
-
-          <div className="text-xs sm:text-sm text-white/60 mt-2 flex items-center justify-center gap-1">
-            <span>🔥</span>
-            <span>הצטרפו עכשיו!</span>
+        <div className="relative">
+          <div className={`transition-all duration-500 ${isAnimating ? "scale-110" : "scale-100"} will-change-transform`}>
+            <div className="text-4xl sm:text-5xl md:text-6xl font-black tabular-nums">
+              <span className="bg-gradient-to-r from-cyan-400 via-green-400 to-purple-500 bg-clip-text text-transparent">
+                {formatted}
+              </span>
+            </div>
           </div>
         </div>
 
-          {isAnimating && shown != null && (
+        <div className="text-xs sm:text-sm text-white/60 mt-2 flex items-center justify-center gap-1">
+          <span>🔥</span>
+          <span>הצטרפו עכשיו!</span>
+        </div>
+      </div>
+
+      {isAnimating && shown != null && (
         <div className="pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-4 border-cyan-400/30 rounded-full animate-ping" />
           <div
