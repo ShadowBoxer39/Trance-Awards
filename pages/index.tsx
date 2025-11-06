@@ -166,7 +166,7 @@ export default function Landing() {
     
     {/* Card 2 */}
     <div className="glass rounded-3xl p-6">
-      <h2 className="text-xl font-[700] mb-2">שותף תוכני — אמיר אמגדלה</h2>
+      <h2 className="text-xl font-[700] mb-2">בשיתוף - המיוזיק רום</h2>
       <p className="text-white/75">אולפן הקלטות וצילומים הכי מתקדם בארץ.</p>
     </div>
   </div>
