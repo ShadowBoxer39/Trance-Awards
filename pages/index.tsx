@@ -197,7 +197,7 @@ export default function Landing() {
             className="relative rounded-2xl border border-white/15"
           />
         </div>
-        <h2 className="text-xl font-[700]">מי אנחנו — יוצאים לטראק</h2>
+        <h2 className="text-xl font-[700]">מי אנחנו - יוצאים לטראק</h2>
       </div>
       <p className="text-white/75">
         תכנית הטראנס הגדולה בישראל, הצטרפו לקהילה שלנו.
