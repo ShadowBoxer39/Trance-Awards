@@ -117,16 +117,31 @@ export default function Landing() {
         {/* HERO */}
         <section className="max-w-6xl mx-auto px-4 pt-10 sm:pt-16">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <Image
-                src={BRAND.logo}
-                alt="לוגו יוצאים לטראק"
-                width={64}
-                height={64}
-                className="rounded-2xl border border-white/15"
-              />
-              <span className="text-white/80 text-sm">מגישים: יוצאים לטראק והמיוזיק רום</span>
-            </div>
+           <div className="flex items-center justify-between gap-6 mb-4 flex-wrap">
+  {/* Left side - Track Trip */}
+  <div className="flex items-center gap-3">
+    <Image
+      src={BRAND.logo}
+      alt="לוגו יוצאים לטראק"
+      width={64}
+      height={64}
+      className="rounded-2xl border border-white/15"
+    />
+    <span className="text-white/80 text-sm">מגישים: יוצאים לטראק</span>
+  </div>
+
+  {/* Right side - Musikroom */}
+  <div className="flex items-center gap-3">
+    <span className="text-white/80 text-sm">ומיוזיק רום</span>
+    <Image
+      src="/images/musikroom.png"
+      alt="Musikroom"
+      width={64}
+      height={64}
+      className="rounded-2xl border border-white/15 bg-white p-2"
+    />
+  </div>
+</div>
 
             <h1 className="gradient-title text-4xl sm:text-6xl font-[700] leading-[1.05] tracking-tight mb-4">
               נבחרי השנה בטראנס
@@ -158,16 +173,44 @@ export default function Landing() {
       {/* ABOUT */}
 <section id="about" className="max-w-6xl mx-auto px-4 py-10">
   <div className="grid md:grid-cols-2 gap-6">
-    {/* Card 1 */}
+    {/* Card 1 - Track Trip */}
     <div className="glass rounded-3xl p-6">
-      <h2 className="text-xl font-[700] mb-2">מי אנחנו — יוצאים לטראק</h2>
-      <p className="text-white/75">תכנית הטראנס הגדולה בישראל, הצטרפו לקהילה שלנו.</p>
+      <div className="flex items-center gap-4 mb-4">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-purple-500/20 blur-xl" />
+          <Image
+            src="/images/logo.png"
+            alt="יוצאים לטראק"
+            width={56}
+            height={56}
+            className="relative rounded-2xl border border-white/15"
+          />
+        </div>
+        <h2 className="text-xl font-[700]">מי אנחנו — יוצאים לטראק</h2>
+      </div>
+      <p className="text-white/75">
+        תכנית הטראנס הגדולה בישראל, הצטרפו לקהילה שלנו.
+      </p>
     </div>
     
-    {/* Card 2 */}
+    {/* Card 2 - Musikroom */}
     <div className="glass rounded-3xl p-6">
-      <h2 className="text-xl font-[700] mb-2">בשיתוף - המיוזיק רום</h2>
-      <p className="text-white/75">אולפן פודקאסטים ייחודי ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.</p>
+      <div className="flex items-center gap-4 mb-4">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 blur-xl" />
+          <Image
+            src="/images/musikroom.png"
+            alt="Musikroom"
+            width={56}
+            height={56}
+            className="relative rounded-2xl border border-white/15 bg-white p-2"
+          />
+        </div>
+        <h2 className="text-xl font-[700]">בשיתוף - המיוזיק רום</h2>
+      </div>
+      <p className="text-white/75">
+       אולפן פודקאסטים ייחודי ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
+      </p>
     </div>
   </div>
 </section>
