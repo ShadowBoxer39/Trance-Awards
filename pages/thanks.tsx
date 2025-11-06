@@ -531,7 +531,7 @@ export default function Thanks() {
       {/* Back button - less prominent */}
       <div className="text-center pt-6">
         <Link 
-          href="/" 
+          href="/vote" 
           className="text-white/50 hover:text-white/80 text-sm transition inline-flex items-center gap-1"
         >
           ← חזרה לדף הבית
