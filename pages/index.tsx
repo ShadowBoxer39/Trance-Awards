@@ -153,7 +153,42 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* WHY VOTE - New stunning section */}
+       
+
+        {/* ABOUT */}
+        <section id="about" className="max-w-6xl mx-auto px-4 py-10">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="glass rounded-3xl p-6">
+              <h2 className="text-xl font-[700] mb-2">מי אנחנו — יוצאים לטראק</h2>
+              <p className="text-white/75">תכנית הטראנס הכי גדולה בישראל, הצטרפו לקהילה שלנו.</p>
+            </div>
+          </div>
+        </section>
+
+      {/* SOCIALS */}
+<section className="max-w-6xl mx-auto px-4 pb-16">
+  <h3 className="text-lg font-[700] mb-3">עקבו אחרינו</h3>
+ <div className="flex flex-wrap gap-3">
+  {SOCIALS.map((social) => (
+    <a
+      key={social.name}
+      href={social.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-medium hover:scale-105 transition-transform shadow-md"
+      style={{ backgroundColor: social.color }}
+      aria-label={social.name}
+    >
+      <social.Icon className="w-5 h-5" />
+      <span>{social.name}</span>
+    </a>
+  ))}
+</div>
+
+</section>
+
+
+         {/* WHY VOTE - New stunning section */}
 <section className="max-w-6xl mx-auto px-4 py-16">
   {/* Section Header */}
   <div className="text-center mb-12">
@@ -233,38 +268,6 @@ export default function Landing() {
       <span>🚀</span>
     </Link>
   </div>
-</section>
-
-        {/* ABOUT */}
-        <section id="about" className="max-w-6xl mx-auto px-4 py-10">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="glass rounded-3xl p-6">
-              <h2 className="text-xl font-[700] mb-2">מי אנחנו — יוצאים לטראק</h2>
-              <p className="text-white/75">תכנית הטראנס הכי גדולה בישראל, הצטרפו לקהילה שלנו.</p>
-            </div>
-          </div>
-        </section>
-
-      {/* SOCIALS */}
-<section className="max-w-6xl mx-auto px-4 pb-16">
-  <h3 className="text-lg font-[700] mb-3">עקבו אחרינו</h3>
- <div className="flex flex-wrap gap-3">
-  {SOCIALS.map((social) => (
-    <a
-      key={social.name}
-      href={social.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-medium hover:scale-105 transition-transform shadow-md"
-      style={{ backgroundColor: social.color }}
-      aria-label={social.name}
-    >
-      <social.Icon className="w-5 h-5" />
-      <span>{social.name}</span>
-    </a>
-  ))}
-</div>
-
 </section>
         {/* FINAL CTA */}
         <section className="max-w-6xl mx-auto px-4 pb-24">
