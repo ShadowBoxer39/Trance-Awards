@@ -110,7 +110,6 @@ export const CATEGORIES = [
     nominees: [
       { id: "bigitam", name: "Bigitam", artwork: "/images/bigitam.jpg" },
       { id: "mystic", name: "Mystic", artwork: "/images/mystic.jpg" },
-      { id: "artmis", name: "Artmis", artwork: "/images/artmis.jpg" },
       { id: "amigdala", name: "Amigdala", artwork: "/images/Amigdala.jpg" },
       { id: "nevo", name: "Nevo", artwork: "/images/nevo.jpg" },
       { id: "event", name: "Event Horizon", artwork: "/images/event.jpg" },
