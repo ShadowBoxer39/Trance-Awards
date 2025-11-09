@@ -7,7 +7,7 @@ import supabase from "../../lib/supabaseServer";
  * Month is 0-based: 0=Jan, 11=Dec.
  */
 const BASE_VOTES = 100;
-const LAUNCH_DATE = new Date(2025, 11, 10, 0, 0, 0); // 2025-11-05 00:00 local time
+const LAUNCH_DATE = new Date(2025, 11, 11, 0, 0, 0); // 2025-11-05 00:00 local time
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
