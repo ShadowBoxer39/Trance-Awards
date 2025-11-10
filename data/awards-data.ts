@@ -79,6 +79,7 @@ export const CATEGORIES = [
       { id: "some1-message", name: "Some1 - Message From The Deep", artwork: "/images/some1message.jpg" },
       { id: "persona-interplay", name: "Persona - Interplay", artwork: "/images/perosnainter.jpg" },
       { id: "roots", name: "Adama - Roots", artwork: "/images/roots.jpg" },
+      { id: "dragonmami", name: "Acobas - Dragon Mami", artwork: "/images/dragonmami.jpg" },
 
     ],
   },
@@ -123,6 +124,7 @@ export const CATEGORIES = [
       { id: "elberg", name: "Elberg", artwork: "/images/elberg.jpeg" },
       { id: "detune", name: "Detune", artwork: "/images/detune.jpg" },
       { id: "oxiv", name: "Oxiv", artwork: "/images/oxiv.jpg" },
+      { id: "acobas", name: "Acobas", artwork: "/images/acobas.jpg" },
     ],
   },
 ];
