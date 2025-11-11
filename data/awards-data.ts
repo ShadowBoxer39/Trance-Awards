@@ -47,6 +47,7 @@ export const CATEGORIES = [
       { id: "chuka", name: "Chuka", artwork: "/images/chuka.jpg" },
       { id: "atara", name: "Atara", artwork: "/images/atara.jpg" },
       { id: "astrogano", name: "Astrogano", artwork: "/images/astrogano.jpeg" },
+      { id: "gula", name: "Gula K", artwork: "/images/gula.jpg" },
     ],
   },
   {
@@ -126,6 +127,8 @@ export const CATEGORIES = [
       { id: "detune", name: "Detune", artwork: "/images/detune.jpg" },
       { id: "oxiv", name: "Oxiv", artwork: "/images/oxiv.jpg" },
       { id: "acobas", name: "Acobas", artwork: "/images/acobas.jpg" },
+      { id: "zodiac", name: "Zodiac", artwork: "/images/zodiac.jpg" },
+      
     ],
   },
 ];
