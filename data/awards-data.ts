@@ -59,6 +59,7 @@ export const CATEGORIES = [
       { id: "humanoids", name: "Humanoids", artwork: "/images/Humanoids.jpg" },
       { id: "outsiders", name: "Outsiders", artwork: "/images/Outsiders.webp" },
       { id: "rising-dust", name: "Rising Dust", artwork: "/images/rising dust.jpg" },
+      { id: "infected", name: "Infected Mushroom", artwork: "/images/infected.jpg" },
       { id: "astral-projection", name: "Astral Projection", artwork: "/images/astral.jpeg" },
       { id: "alienart", name: "Alien Art", artwork: "/images/alienart.jpeg" },
       { id: "absolute", name: "Absolute Hypnotic", artwork: "/images/absolute.jpg" },
