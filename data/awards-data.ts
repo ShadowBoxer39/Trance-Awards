@@ -127,6 +127,8 @@ export const CATEGORIES = [
       { id: "detune", name: "Detune", artwork: "/images/detune.jpg" },
       { id: "oxiv", name: "Oxiv", artwork: "/images/oxiv.jpg" },
       { id: "acobas", name: "Acobas", artwork: "/images/acobas.jpg" },
+      { id: "tzabi", name: "Tzabi", artwork: "/images/tzabi.jpg" },
+      { id: "soulmeth", name: "SOULMETH", artwork: "/images/soulmeth.jpg" },
     
       
     ],
