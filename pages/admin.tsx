@@ -6,11 +6,7 @@ import { CATEGORIES } from "@/data/awards-data";
 type Tally = Record<string, Record<string, number>>;
 
 export default function Admin() {
-  const [key, setKey] = React.useState<string>(() => {
-    if (typeof window !== "undefined") return localStorage.getItem("ADMIN_KEY") || "";
-    return "";
-  });
-
+  const [key, setKey] = React.useState<string>("");
   const [loading, setLoading] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
   const [tally, setTally] = React.useState<Tally | null>(null);
@@ -18,12 +14,28 @@ export default function Admin() {
   const [info, setInfo] = React.useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
 
+  // Load key from localStorage on mount
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
+    
+    // Load saved admin key
+    const savedKey = localStorage.getItem("ADMIN_KEY");
+    if (savedKey) {
+      setKey(savedKey);
+    }
   }, []);
+
+  // Auto-load results if we have a saved key and haven't loaded yet
+  React.useEffect(() => {
+    if (key && !tally && !loading && !error) {
+      fetchStats();
+    }
+  }, [key]);
 
   async function fetchStats(e?: React.FormEvent) {
     e?.preventDefault();
+    if (!key) return;
+    
     setLoading(true);
     setError(null);
     setInfo(null);
@@ -33,7 +45,7 @@ export default function Admin() {
       const j = await r.json();
       if (!r.ok || !j?.ok) throw new Error(j?.error || "request_failed");
       setTally(j.tally as Tally);
-      if (typeof window !== "undefined") localStorage.setItem("ADMIN_KEY", key);
+      localStorage.setItem("ADMIN_KEY", key);
     } catch (err: any) {
       setError(err?.message || "error");
     } finally {
@@ -118,7 +130,7 @@ export default function Admin() {
           )}
         </div>
 
-        {/* Login Form */}
+        {/* Login Form - Only show if no results loaded */}
         {!tally && (
           <form onSubmit={fetchStats} className="glass p-6 rounded-2xl max-w-md mx-auto space-y-4">
             <label className="text-sm text-white/80">Admin Key</label>
