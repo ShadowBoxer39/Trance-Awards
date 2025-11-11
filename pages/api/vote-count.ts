@@ -32,16 +32,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const realVotes = count || 0;
 
-    // 2) +1 per minute since LAUNCH_DATE
-    const now = new Date();
-    const minutesSinceLaunch = Math.max(
-      0,
-      Math.floor((now.getTime() - LAUNCH_DATE.getTime()) / 60000)
-    );
-    const bonusVotes = minutesSinceLaunch;
+   // 2) +1 per 2 minutes since LAUNCH_DATE
+const now = new Date();
+const minutesSinceLaunch = Math.max(
+  0,
+  Math.floor((now.getTime() - LAUNCH_DATE.getTime()) / 60000)
+);
+const bonusVotes = Math.floor(minutesSinceLaunch / 2);  // ← ADD THIS DIVISION
 
-    // 3) Total
-    const totalVotes = BASE_VOTES + realVotes + bonusVotes;
+// 3) Total
+const totalVotes = BASE_VOTES + realVotes + bonusVotes;
 
     return res.status(200).json({
       ok: true,
