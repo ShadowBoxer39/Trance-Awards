@@ -412,30 +412,20 @@ export default function Thanks() {
     {/* Content */}
     <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 sm:py-12">
       
-      {/* Hero Section */}
-      <div className="text-center mb-8">
-        {/* Big celebration emoji */}
-        <div className="text-7xl sm:text-8xl mb-4 animate-bounce">🎉</div>
-        
-        {/* Main title */}
-        <h1 className="gradient-title text-4xl sm:text-5xl font-bold mb-3 leading-tight">
-          תודה שהצבעת!
-        </h1>
-        
-        <p className="text-white/80 text-lg sm:text-xl mb-6">
-          קולך נספר ✓
-        </p>
-
-        {/* Stats teaser */}
-        <div className="glass rounded-2xl p-4 inline-block">
-          <div className="text-sm text-white/70 mb-1">תודה על שלקחת חלק</div>
-          <div className="text-3xl font-bold gradient-title">בקהילת הטראנס</div>
-        </div>
-      </div>
-
-      {/* Preview Card */}
+      {/* Preview Card - MOVED TO TOP */}
       {imgUrl ? (
         <div className="mb-8 space-y-4">
+          {/* Big celebration emoji at top */}
+          <div className="text-center">
+            <div className="text-6xl sm:text-7xl mb-3 animate-bounce">🎉</div>
+            <h1 className="gradient-title text-3xl sm:text-4xl font-bold mb-2 leading-tight">
+              תודה שהצבעת!
+            </h1>
+            <p className="text-white/80 text-base sm:text-lg mb-4">
+              קולך נספר ✓
+            </p>
+          </div>
+
           {/* Phone mockup */}
           <div className="relative mx-auto w-full max-w-[320px] sm:max-w-[380px]">
             {/* Glow effect */}
@@ -516,15 +506,30 @@ export default function Thanks() {
               <span className="font-bold">נשתדל לשתף</span> כמה שיותר מהבחירות שלכם
             </p>
           </div>
+
+          {/* Stats teaser - moved below share section */}
+          <div className="glass rounded-2xl p-4 text-center">
+            <div className="text-sm text-white/70 mb-1">תודה על שלקחת חלק</div>
+            <div className="text-3xl font-bold gradient-title">בקהילת הטראנס</div>
+          </div>
         </div>
       ) : (
         // Loading or error state
-        <div className="glass rounded-2xl p-8 text-center">
-          <div className="text-6xl mb-4">⏳</div>
-          <p className="text-white/70 mb-4">מכין את התמונה שלך...</p>
-          <p className="text-white/50 text-sm">
-            אם זה לוקח יותר מדי זמן, נסו לרענן את הדף
-          </p>
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="text-6xl sm:text-7xl mb-3 animate-bounce">🎉</div>
+            <h1 className="gradient-title text-3xl sm:text-4xl font-bold mb-2 leading-tight">
+              תודה שהצבעת!
+            </h1>
+          </div>
+          
+          <div className="glass rounded-2xl p-8 text-center">
+            <div className="text-6xl mb-4">⏳</div>
+            <p className="text-white/70 mb-4">מכין את התמונה שלך...</p>
+            <p className="text-white/50 text-sm">
+              אם זה לוקח יותר מדי זמן, נסו לרענן את הדף
+            </p>
+          </div>
         </div>
       )}
 
