@@ -1,11 +1,7 @@
-// pages/api/stats.ts - COMPLETE FIXED VERSION
+// pages/api/stats.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import supabase from "../../lib/supabaseServer";
 
-/**
- * Returns tally counts per category/nominee.
- * Requires ?key=ADMIN_KEY
- */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const key = (req.query.key as string) || "";
@@ -13,36 +9,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ ok: false, error: "unauthorized" });
     }
 
-    // ✅ FIX: Add limit to get ALL votes (default is 1000!)
-    const { data, error, count } = await supabase
-      .from("votes")
-      .select("selections", { count: "exact" })
-      .limit(50000);  // ← ADDED THIS
+    const pageSize = 1000;
+    let from = 0;
+    const all: any[] = [];
 
-    if (error) {
-      console.error("stats select error:", error);
-      return res.status(500).json({ ok: false, error: "db_error" });
+    // page through everything
+    while (true) {
+      const { data, error } = await supabase
+        .from("votes")
+        .select("*")
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+
+      all.push(...(data ?? []));
+      if (!data || data.length < pageSize) break; // last page
+      from += pageSize;
     }
 
-    // Aggregate in Node (simple & free)
-    // shape: { [categoryId]: { [nomineeId]: number } }
+    // build tally: { [categoryId]: { [nomineeId]: count } }
     const tally: Record<string, Record<string, number>> = {};
-
-    for (const row of data || []) {
-      const selections = (row as any)?.selections || {};
-      if (selections && typeof selections === "object") {
-        for (const [catId, nomineeId] of Object.entries(selections as Record<string,string>)) {
-          if (!tally[catId]) tally[catId] = {};
-          tally[catId][nomineeId] = (tally[catId][nomineeId] || 0) + 1;
-        }
-      }
+    for (const v of all) {
+      const cat = v.category_id;       // adjust to your column names
+      const nom = v.nominee_id;
+      tally[cat] ??= {};
+      tally[cat][nom] = (tally[cat][nom] ?? 0) + 1;
     }
 
-    // ✅ FIX: Also return total votes
-    return res.status(200).json({ 
-      ok: true, 
+    return res.status(200).json({
+      ok: true,
       tally,
-      totalVotes: data?.length || 0  // ← ADDED THIS
+      totalVotes: all.length, // ← real total
     });
   } catch (e) {
     console.error("stats server error:", e);
