@@ -1,4 +1,4 @@
-// pages/api/stats.ts
+// pages/api/stats.ts - COMPLETE FIXED VERSION
 import type { NextApiRequest, NextApiResponse } from "next";
 import supabase from "../../lib/supabaseServer";
 
@@ -13,10 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ ok: false, error: "unauthorized" });
     }
 
-    // fetch all selections (JSONB)
-    const { data, error } = await supabase
+    // ✅ FIX: Add limit to get ALL votes (default is 1000!)
+    const { data, error, count } = await supabase
       .from("votes")
-      .select("selections");
+      .select("selections", { count: "exact" })
+      .limit(50000);  // ← ADDED THIS
 
     if (error) {
       console.error("stats select error:", error);
@@ -37,7 +38,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    return res.status(200).json({ ok: true, tally });
+    // ✅ FIX: Also return total votes
+    return res.status(200).json({ 
+      ok: true, 
+      tally,
+      totalVotes: data?.length || 0  // ← ADDED THIS
+    });
   } catch (e) {
     console.error("stats server error:", e);
     return res.status(500).json({ ok: false, error: "server_error" });
