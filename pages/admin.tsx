@@ -8,54 +8,74 @@ export default function Admin() {
   const [key, setKey] = React.useState<string>("");
   const [loading, setLoading] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
-  const [tally, setTally] = React.useState<Tally | null>(null);
+  const [tally, setTally] = React.useState<Tally>({});
   const [totalVotes, setTotalVotes] = React.useState<number>(0);
   const [error, setError] = React.useState<string | null>(null);
   const [info, setInfo] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    // RTL and saved key
     document.documentElement.setAttribute("dir", "rtl");
     const savedKey = typeof window !== "undefined" ? localStorage.getItem("ADMIN_KEY") : null;
     if (savedKey) setKey(savedKey);
   }, []);
 
   React.useEffect(() => {
-    if (key && !tally && !loading && !error) fetchStats();
+    if (key && !loading && !error && totalVotes === 0) fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  // ----- helpers (match DB ids to awards-data) -----
-  const findCategory = (catId: string | number | null | undefined) => {
-    const id = String(catId ?? "");
+  // ------------------------- STRING HELPERS --------------------------
+  const norm = (v: any) =>
+    String(v ?? "")
+      .trim()
+      .toLowerCase();
+
+  // Find which key inside tally matches a given category (by id OR slug OR title)
+  const findTallyKeyForCategory = (cat: any, t: Tally) => {
+    const candidates = new Set([
+      norm(cat.id),
+      norm(cat.slug),
+      norm(cat.title),
+    ]);
+    const keys = Object.keys(t);
+    for (const k of keys) {
+      const nk = norm(k);
+      if (candidates.has(nk)) return k; // original key (not normalized)
+    }
+    return null;
+  };
+
+  // Map nominee key from the API to this category's nominee object
+  const findNomineeInCategory = (cat: any, nomineeKey: string) => {
+    const nk = norm(nomineeKey);
     return (
-      CATEGORIES.find((c: any) => String(c.id) === id) ||
-      CATEGORIES.find((c: any) => String((c as any).slug) === id) ||
+      cat.nominees.find((n: any) => norm(n.id) === nk) ||
+      cat.nominees.find((n: any) => norm(n.slug) === nk) ||
+      cat.nominees.find((n: any) => norm(n.name) === nk) ||
       null
     );
   };
 
-  const getCategoryTitle = (catId: string | number | null | undefined) => {
-    const cat = findCategory(catId);
-    if (cat?.title) return cat.title;
-    const id = String(catId ?? "");
-    return id && id !== "undefined" ? id : "לא ידוע";
+  // Build a safe per-category count map aligned to CATEGORIES
+  const getCountsForCategory = (cat: any) => {
+    const tallyKey = findTallyKeyForCategory(cat, tally);
+    const src = (tallyKey ? tally[tallyKey] : {}) || {};
+
+    // Convert to { nomineeId(in awards-data): count }
+    const counts: Record<string, number> = {};
+    // 1) use any counts we have from API, matched to nominees
+    Object.entries(src).forEach(([k, v]) => {
+      const nom = findNomineeInCategory(cat, k);
+      if (nom) counts[String(nom.id)] = (counts[String(nom.id)] ?? 0) + (Number(v) || 0);
+    });
+    // 2) ensure all nominees exist, even if zero
+    for (const n of cat.nominees) {
+      if (!(String(n.id) in counts)) counts[String(n.id)] = 0;
+    }
+    return counts;
   };
 
-  const getNomineeName = (
-    catId: string | number | null | undefined,
-    nomineeId: string | number | null | undefined
-  ) => {
-    const cat = findCategory(catId);
-    const id = String(nomineeId ?? "");
-    const nominee =
-      cat?.nominees.find((n: any) => String(n.id) === id) ||
-      cat?.nominees.find((n: any) => String(n.name) === id);
-    if (nominee?.name) return nominee.name;
-    return id && id !== "undefined" ? id : "לא ידוע";
-  };
-
-  // ----- fetch stats (no filtering out keys; just coerce) -----
+  // ---------------------- FETCH / ACTIONS ---------------------------
   async function fetchStats(e?: React.FormEvent) {
     e?.preventDefault();
     if (!key) return;
@@ -69,9 +89,9 @@ export default function Admin() {
       const j = await r.json();
       if (!r.ok || !j?.ok) throw new Error(j?.error || "request_failed");
 
-      const rawTally = j.tally ?? {};
+      // Keep the raw structure, only coerce basic types; DON'T drop keys
       const normalized: Tally = Object.fromEntries(
-        Object.entries(rawTally).map(([catId, perNominee]: [any, any]) => [
+        Object.entries(j.tally ?? {}).map(([catId, perNominee]: [any, any]) => [
           String(catId),
           Object.fromEntries(
             Object.entries(perNominee || {}).map(([nomId, count]) => [
@@ -88,7 +108,7 @@ export default function Admin() {
     } catch (err: any) {
       console.error(err);
       setError(err?.message || "error");
-      setTally(null);
+      setTally({});
       setTotalVotes(0);
     } finally {
       setLoading(false);
@@ -125,18 +145,17 @@ export default function Admin() {
     }
   }
 
-  // ----- UI -----
+  // ----------------------------- UI --------------------------------
   return (
     <main className="min-h-screen text-white neon-backdrop">
       <div className="max-w-7xl mx-auto p-4 space-y-6">
-        {/* Header */}
+        {/* Title + total (like your original layout) */}
         <div className="flex items-center justify-between">
+          <h1 className="text-4xl font-bold gradient-title">Admin Dashboard</h1>
           <div className="glass rounded-2xl px-6 py-4">
             <div className="text-sm text-white/70">סך־הכל הצבעות</div>
             <div className="text-4xl font-extrabold text-cyan-300 tracking-wider">{totalVotes}</div>
           </div>
-
-          <h1 className="text-4xl font-bold gradient-title">Admin Dashboard</h1>
         </div>
 
         {/* Actions bar */}
@@ -146,16 +165,13 @@ export default function Admin() {
               onClick={() => callClear("all")}
               className="rounded-xl px-4 py-2 bg-red-600/25 hover:bg-red-600/35 border border-red-500/30 text-red-200 font-semibold"
               disabled={clearing}
-              title="Delete all votes"
             >
               נקה הכל 🗑️
             </button>
-
             <button
               onClick={() => callClear("me")}
               className="rounded-xl px-4 py-2 bg-white/10 hover:bg-white/20 text-white/90"
               disabled={clearing}
-              title="Delete votes from this device"
             >
               נקה הצבעות (מכשיר זה)
             </button>
@@ -172,8 +188,8 @@ export default function Admin() {
           </form>
         </div>
 
-        {/* Admin key prompt (when no data yet) */}
-        {!tally && (
+        {/* Admin key prompt when nothing loaded yet */}
+        {totalVotes === 0 && Object.keys(tally).length === 0 && (
           <form onSubmit={fetchStats} className="glass p-6 rounded-2xl max-w-md mx-auto space-y-4">
             <label className="text-sm text-white/80">Admin Key</label>
             <input
@@ -195,53 +211,56 @@ export default function Admin() {
         )}
 
         {info && <div className="glass rounded-xl p-4 text-green-400 text-center">{info}</div>}
-        {error && tally && <div className="glass rounded-xl p-4 text-red-400 text-center">{error}</div>}
+        {error && totalVotes > 0 && <div className="glass rounded-xl p-4 text-red-400 text-center">{error}</div>}
 
-        {/* Category grid */}
-        {tally && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(tally).map(([catId, perNominee]) => {
-              const rows = Object.entries(perNominee).sort((a, b) => b[1] - a[1]);
-              const totalInCategory = rows.reduce((sum, [, n]) => sum + n, 0);
-              const winner = rows[0];
+        {/* Always render ALL categories from CATEGORIES; fill counts from tally */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {CATEGORIES.map((cat: any) => {
+            const counts = getCountsForCategory(cat);
+            const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            const totalInCategory = rows.reduce((sum, [, n]) => sum + n, 0);
+            const winner = rows[0]; // [nomineeId, count] | undefined
 
-              return (
-                <div key={catId} className="rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-white/5">
-                  <div className="glass rounded-2xl p-6">
-                    {/* title centered (like your screenshot) */}
-                    <h3 className="text-2xl font-extrabold text-center text-cyan-300 mb-1">
-                      {getCategoryTitle(catId)}
-                    </h3>
-                    <div className="text-center text-white/70 mb-5">הצבעות {totalInCategory}</div>
+            return (
+              <div key={String(cat.id)} className="rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-white/5">
+                <div className="glass rounded-2xl p-6">
+                  <h3 className="text-2xl font-extrabold text-center text-cyan-300 mb-1">
+                    {cat.title}
+                  </h3>
+                  <div className="text-center text-white/70 mb-5">הצבעות {totalInCategory}</div>
 
-                    {/* winner card */}
-                    {winner && (
-                      <div className="rounded-xl p-[1px] bg-gradient-to-r from-cyan-500/50 to-fuchsia-500/50">
-                        <div className="rounded-xl p-5 bg-gradient-to-r from-slate-800/70 to-slate-800/40">
-                          <div className="text-xs text-cyan-300 mb-1">מוביל 🏆</div>
-                          <div className="text-lg font-semibold">
-                            {getNomineeName(catId, winner[0])}
-                          </div>
-                          <div className="text-sm text-white/80">
-                            {winner[1]} קולות ({totalInCategory ? Math.round((winner[1] / totalInCategory) * 100) : 0}
-                            %)
-                          </div>
+                  {winner && (
+                    <div className="rounded-xl p-[1px] bg-gradient-to-r from-cyan-500/50 to-fuchsia-500/50">
+                      <div className="rounded-xl p-5 bg-gradient-to-r from-slate-800/70 to-slate-800/40">
+                        <div className="text-xs text-cyan-300 mb-1">מוביל 🏆</div>
+                        <div className="text-lg font-semibold">
+                          {/* winner[0] is nomineeId from awards-data after mapping */}
+                          {(() => {
+                            const nomObj =
+                              cat.nominees.find((n: any) => String(n.id) === String(winner[0])) ||
+                              null;
+                            return nomObj ? nomObj.name : "לא ידוע";
+                          })()}
+                        </div>
+                        <div className="text-sm text-white/80">
+                          {winner[1]} קולות (
+                          {totalInCategory ? Math.round((winner[1] / totalInCategory) * 100) : 0}
+                          %)
                         </div>
                       </div>
-                    )}
-
-                    {/* link at bottom */}
-                    <div className="mt-4 text-center">
-                      <button className="text-cyan-300 hover:text-cyan-200 text-sm">
-                        → לחץ לפרטים מלאים
-                      </button>
                     </div>
+                  )}
+
+                  <div className="mt-4 text-center">
+                    <button className="text-cyan-300 hover:text-cyan-200 text-sm">
+                      → לחץ לפרטים מלאים
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </main>
   );
