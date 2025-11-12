@@ -1,8 +1,6 @@
 // pages/admin.tsx
 import React from "react";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
 
 type Tally = Record<string, Record<string, number>>;
@@ -12,12 +10,10 @@ export default function Admin() {
   const [loading, setLoading] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
   const [tally, setTally] = React.useState<Tally | null>(null);
+  const [totalVotes, setTotalVotes] = React.useState<number>(0);
   const [error, setError] = React.useState<string | null>(null);
   const [info, setInfo] = React.useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
-
-  // ✅ critical: totalVotes comes from the API (not computed from a possibly truncated list)
-  const [totalVotes, setTotalVotes] = React.useState<number>(0);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
@@ -26,11 +22,36 @@ export default function Admin() {
   }, []);
 
   React.useEffect(() => {
-    if (key && !tally && !loading && !error) {
-      fetchStats();
-    }
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (key && !tally && !loading && !error) fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
+  // ---- helpers to map IDs from API <-> awards-data --------------------------
+  const findCategory = (catId: string) => {
+    const id = String(catId);
+    return (
+      CATEGORIES.find((c: any) => String(c.id) === id) ||
+      CATEGORIES.find((c: any) => String((c as any).slug) === id) ||
+      CATEGORIES.find((c: any) => String(c.title) === id) ||
+      null
+    );
+  };
+
+  const getCategoryTitle = (catId: string) => {
+    const cat = findCategory(catId);
+    return cat?.title ?? String(catId);
+  };
+
+  const getNomineeName = (catId: string, nomineeId: string) => {
+    const cat = findCategory(catId);
+    const id = String(nomineeId);
+    const nominee =
+      cat?.nominees.find((n: any) => String(n.id) === id) ||
+      cat?.nominees.find((n: any) => String(n.name) === id);
+    return nominee?.name ?? String(nomineeId);
+  };
+
+  // ---- fetch & normalize -----------------------------------------------------
   async function fetchStats(e?: React.FormEvent) {
     e?.preventDefault();
     if (!key) return;
@@ -44,12 +65,25 @@ export default function Admin() {
       const j = await r.json();
       if (!r.ok || !j?.ok) throw new Error(j?.error || "request_failed");
 
-      // live data from API
-      setTally(j.tally as Tally);
-      setTotalVotes(Number(j.totalVotes) || 0);
+      // Normalize the tally so we NEVER get "undefined" in the UI
+      const normalized: Tally = Object.fromEntries(
+        Object.entries(j.tally || {})
+          .filter(([catId]) => catId != null && catId !== "undefined")
+          .map(([catId, perNominee]: [string, any]) => [
+            String(catId),
+            Object.fromEntries(
+              Object.entries(perNominee || {})
+                .filter(([nomId]) => nomId != null && nomId !== "undefined")
+                .map(([nomId, count]) => [String(nomId), Number(count) || 0])
+            ),
+          ])
+      );
 
+      setTally(normalized);
+      setTotalVotes(Number(j.totalVotes) || 0);
       localStorage.setItem("ADMIN_KEY", key);
     } catch (err: any) {
+      console.error(err);
       setError(err?.message || "error");
       setTally(null);
       setTotalVotes(0);
@@ -88,17 +122,6 @@ export default function Admin() {
     }
   }
 
-  const getCategoryTitle = (catId: string) => {
-    const cat = CATEGORIES.find((c) => c.id === catId);
-    return cat?.title || catId;
-  };
-
-  const getNomineeName = (catId: string, nomineeId: string) => {
-    const cat = CATEGORIES.find((c) => c.id === catId);
-    const nominee = cat?.nominees.find((n) => n.id === nomineeId);
-    return nominee?.name || nomineeId;
-  };
-
   return (
     <main className="min-h-screen text-white neon-backdrop">
       <div className="max-w-7xl mx-auto p-4 space-y-6">
@@ -111,7 +134,7 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Login / Load */}
+        {/* Login form */}
         {!tally && (
           <form onSubmit={fetchStats} className="glass p-6 rounded-2xl max-w-md mx-auto space-y-4">
             <label className="text-sm text-white/80">Admin Key</label>
@@ -164,7 +187,10 @@ export default function Admin() {
             {/* Category cards */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(tally).map(([catId, perNominee]) => {
-                const rows = Object.entries(perNominee).sort((a, b) => b[1] - a[1]);
+                const entries = Object.entries(perNominee);
+                if (!entries.length) return null;
+
+                const rows = entries.sort((a, b) => b[1] - a[1]);
                 const totalInCategory = rows.reduce((acc, [, n]) => acc + n, 0);
                 const winner = rows[0];
 
@@ -176,7 +202,6 @@ export default function Admin() {
                   >
                     <h3 className="text-lg font-bold mb-2 text-cyan-400">{getCategoryTitle(catId)}</h3>
 
-                    {/* ✅ dynamic per-category total (no '1000') */}
                     <div className="text-sm text-white/60 mb-4">{totalInCategory} הצבעות</div>
 
                     {winner && (
@@ -208,7 +233,6 @@ export default function Admin() {
                     </button>
                   </div>
 
-                  {/* Chart */}
                   <div className="mb-8 bg-black/30 rounded-xl p-4">
                     <ResponsiveContainer width="100%" height={400}>
                       <BarChart
@@ -227,7 +251,6 @@ export default function Admin() {
                     </ResponsiveContainer>
                   </div>
 
-                  {/* Table */}
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="text-white/70 border-b border-white/10">
@@ -262,6 +285,7 @@ export default function Admin() {
                                     <span className="text-white/80">{pct}%</span>
                                   </div>
                                 </td>
+                                <td />
                               </tr>
                             );
                           })}
