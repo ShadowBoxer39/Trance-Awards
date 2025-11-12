@@ -90,133 +90,166 @@ export default function ResultsInstagram() {
     canvas.width = 1080;
     canvas.height = 1080;
 
-    // Background gradient
+    // Background gradient - darker and more dramatic
     const gradient = ctx.createLinearGradient(0, 0, 0, 1080);
-    gradient.addColorStop(0, '#1a0e2e');
-    gradient.addColorStop(0.5, '#16213e');
-    gradient.addColorStop(1, '#0f0f1e');
+    gradient.addColorStop(0, '#0a0615');
+    gradient.addColorStop(0.5, '#0f0a1e');
+    gradient.addColorStop(1, '#050510');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 1080, 1080);
 
-    // Glow effects
-    const glow1 = ctx.createRadialGradient(850, 150, 0, 850, 150, 400);
-    glow1.addColorStop(0, 'rgba(0, 255, 200, 0.3)');
+    // Animated glow effects - more vibrant
+    const glow1 = ctx.createRadialGradient(900, 150, 0, 900, 150, 500);
+    glow1.addColorStop(0, 'rgba(0, 255, 200, 0.4)');
+    glow1.addColorStop(0.5, 'rgba(0, 255, 200, 0.15)');
     glow1.addColorStop(1, 'rgba(0, 255, 200, 0)');
     ctx.fillStyle = glow1;
     ctx.fillRect(0, 0, 1080, 1080);
 
-    const glow2 = ctx.createRadialGradient(200, 900, 0, 200, 900, 350);
-    glow2.addColorStop(0, 'rgba(200, 100, 255, 0.3)');
-    glow2.addColorStop(1, 'rgba(200, 100, 255, 0)');
+    const glow2 = ctx.createRadialGradient(180, 930, 0, 180, 930, 450);
+    glow2.addColorStop(0, 'rgba(255, 90, 165, 0.35)');
+    glow2.addColorStop(0.5, 'rgba(255, 90, 165, 0.12)');
+    glow2.addColorStop(1, 'rgba(255, 90, 165, 0)');
     ctx.fillStyle = glow2;
     ctx.fillRect(0, 0, 1080, 1080);
 
-    // Logo (top)
+    // Logo (top) - bigger
     try {
       const logo = await loadImage('/images/logo.png');
       ctx.save();
       ctx.beginPath();
-      ctx.arc(540, 100, 50, 0, Math.PI * 2);
+      ctx.arc(540, 110, 60, 0, Math.PI * 2);
       ctx.clip();
-      ctx.drawImage(logo, 490, 50, 100, 100);
+      ctx.drawImage(logo, 480, 50, 120, 120);
       ctx.restore();
+      
+      // Logo glow
+      ctx.shadowColor = 'rgba(0, 255, 200, 0.5)';
+      ctx.shadowBlur = 30;
+      ctx.beginPath();
+      ctx.arc(540, 110, 60, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(0, 255, 200, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
     } catch {}
 
     // Brand name
     ctx.fillStyle = '#00ffcc';
-    ctx.font = 'bold 32px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('יוצאים לטראק', 540, 180);
-
-    // Category title
-    ctx.save();
-    ctx.direction = 'rtl';
-    const titleGradient = ctx.createLinearGradient(0, 220, 0, 280);
-    titleGradient.addColorStop(0, '#00ffcc');
-    titleGradient.addColorStop(1, '#ff00ff');
-    ctx.fillStyle = titleGradient;
-    ctx.font = 'bold 52px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(getCategoryTitle(categoryId), 540, 250);
-    ctx.restore();
-
-    // Year
-    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 36px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('2025', 540, 300);
+    ctx.fillText('יוצאים לטראק', 540, 200);
 
-    // Top 5 list
+    // Category title - bigger and bolder
+    ctx.save();
+    ctx.direction = 'rtl';
+    const titleGradient = ctx.createLinearGradient(0, 240, 0, 310);
+    titleGradient.addColorStop(0, '#00ffcc');
+    titleGradient.addColorStop(0.5, '#00d4ff');
+    titleGradient.addColorStop(1, '#ff00ff');
+    ctx.fillStyle = titleGradient;
+    ctx.font = 'bold 64px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(getCategoryTitle(categoryId), 540, 275);
+    ctx.restore();
+
+    // Year with style
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 42px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('2025', 540, 330);
+
+    // Top 5 list - more spacing
     const top5 = getTop5(categoryId);
-    const startY = 370;
-    const itemHeight = 130;
+    const startY = 410;
+    const itemHeight = 120;
 
     for (let i = 0; i < top5.length; i++) {
       const item = top5[i];
       const nomineeData = getNomineeData(categoryId, item.nomineeId);
       const y = startY + (i * itemHeight);
 
-      // Card background
-      ctx.fillStyle = i === 0 
-        ? 'rgba(255, 215, 0, 0.15)' 
-        : 'rgba(255, 255, 255, 0.08)';
-      roundRect(ctx, 60, y, 960, 110, 20);
+      // Card background with gradient
+      if (i === 0) {
+        const cardGradient = ctx.createLinearGradient(50, y, 1030, y);
+        cardGradient.addColorStop(0, 'rgba(255, 215, 0, 0.08)');
+        cardGradient.addColorStop(0.5, 'rgba(255, 215, 0, 0.18)');
+        cardGradient.addColorStop(1, 'rgba(255, 165, 0, 0.12)');
+        ctx.fillStyle = cardGradient;
+      } else {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+      }
+      roundRect(ctx, 50, y, 980, 100, 16);
       ctx.fill();
 
-      // Border for winner
-      if (i === 0) {
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
-        ctx.lineWidth = 3;
-        roundRect(ctx, 60, y, 960, 110, 20);
-        ctx.stroke();
-      }
+      // Border
+      ctx.strokeStyle = i === 0 ? 'rgba(255, 215, 0, 0.6)' : 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = i === 0 ? 3 : 1.5;
+      roundRect(ctx, 50, y, 980, 100, 16);
+      ctx.stroke();
 
-      // Position emoji
+      // Position number with medal emoji
       const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
-      ctx.font = '48px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText(medals[i], 80, y + 70);
+      ctx.font = '56px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(medals[i], 105, y + 65);
 
-      // Artwork
+      // Artwork - bigger and better positioned
       try {
         const img = await loadImage(nomineeData.artwork);
         ctx.save();
         ctx.beginPath();
-        ctx.arc(200, y + 55, 40, 0, Math.PI * 2);
+        ctx.arc(215, y + 50, 42, 0, Math.PI * 2);
         ctx.clip();
-        ctx.drawImage(img, 160, y + 15, 80, 80);
+        // Cover fit the image
+        const scale = Math.max(84 / img.width, 84 / img.height);
+        const scaledW = img.width * scale;
+        const scaledH = img.height * scale;
+        const offsetX = 215 - scaledW / 2;
+        const offsetY = (y + 50) - scaledH / 2;
+        ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
         ctx.restore();
+        
+        // Artwork border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(215, y + 50, 42, 0, Math.PI * 2);
+        ctx.stroke();
       } catch {}
 
-      // Nominee name (LTR, left-aligned)
+      // Nominee name (LTR, left-aligned) - better positioning
       ctx.save();
       ctx.direction = 'ltr';
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 28px Arial';
+      ctx.font = 'bold 34px Arial';
       ctx.textAlign = 'left';
-      const maxWidth = 550;
+      const maxWidth = 600;
       const text = nomineeData.name;
-      let fontSize = 28;
+      let fontSize = 34;
       ctx.font = `bold ${fontSize}px Arial`;
-      while (ctx.measureText(text).width > maxWidth && fontSize > 18) {
+      while (ctx.measureText(text).width > maxWidth && fontSize > 20) {
         fontSize -= 2;
         ctx.font = `bold ${fontSize}px Arial`;
       }
-      ctx.fillText(text, 260, y + 50);
+      ctx.fillText(text, 280, y + 60);
       ctx.restore();
 
-      // Percentage
+      // Percentage - bigger and more prominent
       ctx.fillStyle = i === 0 ? '#FFD700' : '#00ffcc';
-      ctx.font = 'bold 32px Arial';
+      ctx.font = 'bold 42px Arial';
       ctx.textAlign = 'right';
-      ctx.fillText(`${item.percent.toFixed(1)}%`, 1000, y + 70);
+      ctx.fillText(`${item.percent.toFixed(1)}%`, 1000, y + 65);
     }
 
-    // Footer
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '24px Arial';
+    // Footer with better styling
+    ctx.save();
+    ctx.direction = 'rtl';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '28px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('נבחרי השנה בטראנס', 540, 1030);
+    ctx.fillText('נבחרי השנה בטראנס', 540, 1040);
+    ctx.restore();
 
     return canvas.toDataURL('image/png');
   }
