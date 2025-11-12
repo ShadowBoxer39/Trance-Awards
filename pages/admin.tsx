@@ -1,4 +1,4 @@
-// pages/admin.tsx
+// pages/admin.tsx - COMPLETE FIXED VERSION
 import React from "react";
 import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Legend } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
@@ -13,6 +13,9 @@ export default function Admin() {
   const [error, setError] = React.useState<string | null>(null);
   const [info, setInfo] = React.useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+
+  // ✅ FIXED: Use state instead of useMemo
+  const [totalVotes, setTotalVotes] = React.useState<number>(0);
 
   // Load key from localStorage on mount
   React.useEffect(() => {
@@ -45,6 +48,8 @@ export default function Admin() {
       const j = await r.json();
       if (!r.ok || !j?.ok) throw new Error(j?.error || "request_failed");
       setTally(j.tally as Tally);
+      // ✅ FIXED: Get totalVotes from API
+      setTotalVotes(j.totalVotes || 0);
       localStorage.setItem("ADMIN_KEY", key);
     } catch (err: any) {
       setError(err?.message || "error");
@@ -93,14 +98,6 @@ export default function Admin() {
     const nominee = cat?.nominees.find((n) => n.id === nomineeId);
     return nominee?.name || nomineeId;
   };
-
-  // Calculate total votes
-  const totalVotes = React.useMemo(() => {
-    if (!tally) return 0;
-    const firstCat = Object.values(tally)[0];
-    if (!firstCat) return 0;
-    return Object.values(firstCat).reduce((sum, count) => sum + count, 0);
-  }, [tally]);
 
   // Prepare data for overview pie chart
   const overviewData = React.useMemo(() => {
