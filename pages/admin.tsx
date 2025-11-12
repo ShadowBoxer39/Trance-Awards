@@ -1,6 +1,5 @@
 // pages/admin.tsx
 import React from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
 
 type Tally = Record<string, Record<string, number>>;
@@ -13,9 +12,9 @@ export default function Admin() {
   const [totalVotes, setTotalVotes] = React.useState<number>(0);
   const [error, setError] = React.useState<string | null>(null);
   const [info, setInfo] = React.useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    // RTL and saved key
     document.documentElement.setAttribute("dir", "rtl");
     const savedKey = typeof window !== "undefined" ? localStorage.getItem("ADMIN_KEY") : null;
     if (savedKey) setKey(savedKey);
@@ -26,32 +25,37 @@ export default function Admin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  // ---- helpers to map IDs from API <-> awards-data --------------------------
-  const findCategory = (catId: string) => {
-    const id = String(catId);
+  // ----- helpers (match DB ids to awards-data) -----
+  const findCategory = (catId: string | number | null | undefined) => {
+    const id = String(catId ?? "");
     return (
       CATEGORIES.find((c: any) => String(c.id) === id) ||
       CATEGORIES.find((c: any) => String((c as any).slug) === id) ||
-      CATEGORIES.find((c: any) => String(c.title) === id) ||
       null
     );
   };
 
-  const getCategoryTitle = (catId: string) => {
+  const getCategoryTitle = (catId: string | number | null | undefined) => {
     const cat = findCategory(catId);
-    return cat?.title ?? String(catId);
+    if (cat?.title) return cat.title;
+    const id = String(catId ?? "");
+    return id && id !== "undefined" ? id : "לא ידוע";
   };
 
-  const getNomineeName = (catId: string, nomineeId: string) => {
+  const getNomineeName = (
+    catId: string | number | null | undefined,
+    nomineeId: string | number | null | undefined
+  ) => {
     const cat = findCategory(catId);
-    const id = String(nomineeId);
+    const id = String(nomineeId ?? "");
     const nominee =
       cat?.nominees.find((n: any) => String(n.id) === id) ||
       cat?.nominees.find((n: any) => String(n.name) === id);
-    return nominee?.name ?? String(nomineeId);
+    if (nominee?.name) return nominee.name;
+    return id && id !== "undefined" ? id : "לא ידוע";
   };
 
-  // ---- fetch & normalize -----------------------------------------------------
+  // ----- fetch stats (no filtering out keys; just coerce) -----
   async function fetchStats(e?: React.FormEvent) {
     e?.preventDefault();
     if (!key) return;
@@ -65,18 +69,17 @@ export default function Admin() {
       const j = await r.json();
       if (!r.ok || !j?.ok) throw new Error(j?.error || "request_failed");
 
-      // Normalize the tally so we NEVER get "undefined" in the UI
+      const rawTally = j.tally ?? {};
       const normalized: Tally = Object.fromEntries(
-        Object.entries(j.tally || {})
-          .filter(([catId]) => catId != null && catId !== "undefined")
-          .map(([catId, perNominee]: [string, any]) => [
-            String(catId),
-            Object.fromEntries(
-              Object.entries(perNominee || {})
-                .filter(([nomId]) => nomId != null && nomId !== "undefined")
-                .map(([nomId, count]) => [String(nomId), Number(count) || 0])
-            ),
-          ])
+        Object.entries(rawTally).map(([catId, perNominee]: [any, any]) => [
+          String(catId),
+          Object.fromEntries(
+            Object.entries(perNominee || {}).map(([nomId, count]) => [
+              String(nomId),
+              Number(count) || 0,
+            ])
+          ),
+        ])
       );
 
       setTally(normalized);
@@ -122,19 +125,54 @@ export default function Admin() {
     }
   }
 
+  // ----- UI -----
   return (
     <main className="min-h-screen text-white neon-backdrop">
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl sm:text-4xl font-bold gradient-title">Admin Dashboard</h1>
-          <div className="glass rounded-2xl px-6 py-3">
-            <div className="text-sm text-white/60">סה״כ הצבעות</div>
-            <div className="text-3xl font-bold text-cyan-400">{totalVotes}</div>
+          <div className="glass rounded-2xl px-6 py-4">
+            <div className="text-sm text-white/70">סך־הכל הצבעות</div>
+            <div className="text-4xl font-extrabold text-cyan-300 tracking-wider">{totalVotes}</div>
           </div>
+
+          <h1 className="text-4xl font-bold gradient-title">Admin Dashboard</h1>
         </div>
 
-        {/* Login form */}
+        {/* Actions bar */}
+        <div className="glass rounded-2xl px-4 py-3 flex items-center justify-between">
+          <div className="flex gap-2">
+            <button
+              onClick={() => callClear("all")}
+              className="rounded-xl px-4 py-2 bg-red-600/25 hover:bg-red-600/35 border border-red-500/30 text-red-200 font-semibold"
+              disabled={clearing}
+              title="Delete all votes"
+            >
+              נקה הכל 🗑️
+            </button>
+
+            <button
+              onClick={() => callClear("me")}
+              className="rounded-xl px-4 py-2 bg-white/10 hover:bg-white/20 text-white/90"
+              disabled={clearing}
+              title="Delete votes from this device"
+            >
+              נקה הצבעות (מכשיר זה)
+            </button>
+          </div>
+
+          <form onSubmit={fetchStats} className="flex items-center gap-2">
+            <button
+              type="submit"
+              className="rounded-xl px-4 py-2 bg-gradient-to-r from-orange-400/70 to-fuchsia-500/70 hover:from-orange-400 hover:to-fuchsia-500 font-semibold"
+              disabled={loading}
+            >
+              ריענון תוצאות
+            </button>
+          </form>
+        </div>
+
+        {/* Admin key prompt (when no data yet) */}
         {!tally && (
           <form onSubmit={fetchStats} className="glass p-6 rounded-2xl max-w-md mx-auto space-y-4">
             <label className="text-sm text-white/80">Admin Key</label>
@@ -156,146 +194,53 @@ export default function Admin() {
           </form>
         )}
 
-        {/* Results */}
+        {info && <div className="glass rounded-xl p-4 text-green-400 text-center">{info}</div>}
+        {error && tally && <div className="glass rounded-xl p-4 text-red-400 text-center">{error}</div>}
+
+        {/* Category grid */}
         {tally && (
-          <>
-            {/* Actions */}
-            <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
-              <button onClick={fetchStats} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={loading}>
-                🔄 רענן תוצאות
-              </button>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => callClear("me")}
-                  className="rounded-xl px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm"
-                  disabled={clearing}
-                >
-                  נקה הצבעות (מכשיר זה)
-                </button>
-                <button
-                  onClick={() => callClear("all")}
-                  className="rounded-xl px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 text-sm border border-red-500/30"
-                  disabled={clearing}
-                >
-                  🗑️ נקה הכל
-                </button>
-              </div>
-            </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(tally).map(([catId, perNominee]) => {
+              const rows = Object.entries(perNominee).sort((a, b) => b[1] - a[1]);
+              const totalInCategory = rows.reduce((sum, [, n]) => sum + n, 0);
+              const winner = rows[0];
 
-            {info && <div className="glass rounded-xl p-4 text-green-400 text-center">{info}</div>}
+              return (
+                <div key={catId} className="rounded-2xl p-[1px] bg-gradient-to-b from-white/10 to-white/5">
+                  <div className="glass rounded-2xl p-6">
+                    {/* title centered (like your screenshot) */}
+                    <h3 className="text-2xl font-extrabold text-center text-cyan-300 mb-1">
+                      {getCategoryTitle(catId)}
+                    </h3>
+                    <div className="text-center text-white/70 mb-5">הצבעות {totalInCategory}</div>
 
-            {/* Category cards */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(tally).map(([catId, perNominee]) => {
-                const entries = Object.entries(perNominee);
-                if (!entries.length) return null;
-
-                const rows = entries.sort((a, b) => b[1] - a[1]);
-                const totalInCategory = rows.reduce((acc, [, n]) => acc + n, 0);
-                const winner = rows[0];
-
-                return (
-                  <div
-                    key={catId}
-                    className="glass rounded-2xl p-5 cursor-pointer hover:border-cyan-400/50 transition"
-                    onClick={() => setSelectedCategory(catId)}
-                  >
-                    <h3 className="text-lg font-bold mb-2 text-cyan-400">{getCategoryTitle(catId)}</h3>
-
-                    <div className="text-sm text-white/60 mb-4">{totalInCategory} הצבעות</div>
-
+                    {/* winner card */}
                     {winner && (
-                      <div className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-xl p-3 border border-cyan-500/30">
-                        <div className="text-xs text-cyan-400 mb-1">🏆 מוביל</div>
-                        <div className="font-bold text-white">{getNomineeName(catId, winner[0])}</div>
-                        <div className="text-sm text-white/80">
-                          {winner[1]} קולות ({Math.round((winner[1] / totalInCategory) * 100)}%)
+                      <div className="rounded-xl p-[1px] bg-gradient-to-r from-cyan-500/50 to-fuchsia-500/50">
+                        <div className="rounded-xl p-5 bg-gradient-to-r from-slate-800/70 to-slate-800/40">
+                          <div className="text-xs text-cyan-300 mb-1">מוביל 🏆</div>
+                          <div className="text-lg font-semibold">
+                            {getNomineeName(catId, winner[0])}
+                          </div>
+                          <div className="text-sm text-white/80">
+                            {winner[1]} קולות ({totalInCategory ? Math.round((winner[1] / totalInCategory) * 100) : 0}
+                            %)
+                          </div>
                         </div>
                       </div>
                     )}
 
-                    <button className="mt-4 w-full text-xs text-cyan-400 hover:text-cyan-300">
-                      לחץ לפרטים מלאים →
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Detailed modal */}
-            {selectedCategory && tally[selectedCategory] && (
-              <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4">
-                <div className="glass rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-auto">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold gradient-title">{getCategoryTitle(selectedCategory)}</h2>
-                    <button onClick={() => setSelectedCategory(null)} className="text-white/60 hover:text-white text-2xl">
-                      ✕
-                    </button>
-                  </div>
-
-                  <div className="mb-8 bg-black/30 rounded-xl p-4">
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart
-                        data={Object.entries(tally[selectedCategory])
-                          .sort((a, b) => b[1] - a[1])
-                          .map(([id, count]) => ({
-                            name: getNomineeName(selectedCategory, id),
-                            votes: count,
-                          }))}
-                      >
-                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} tick={{ fill: "#fff", fontSize: 12 }} />
-                        <YAxis tick={{ fill: "#fff" }} />
-                        <Tooltip contentStyle={{ background: "#1a1a2e", border: "1px solid #00ffcc", borderRadius: "8px" }} />
-                        <Bar dataKey="votes" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="text-white/70 border-b border-white/10">
-                        <tr>
-                          <th className="text-right py-3">מקום</th>
-                          <th className="text-right py-3">שם</th>
-                          <th className="text-right py-3">קולות</th>
-                          <th className="text-right py-3">אחוז</th>
-                          <th className="text-right py-3"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(tally[selectedCategory])
-                          .sort((a, b) => b[1] - a[1])
-                          .map(([nomineeId, count], index) => {
-                            const total = Object.values(tally[selectedCategory]).reduce((a, b) => a + b, 0);
-                            const pct = total ? Math.round((count / total) * 100) : 0;
-                            return (
-                              <tr key={nomineeId} className="border-t border-white/5 hover:bg-white/5">
-                                <td className="py-3 text-right">
-                                  <span className={index === 0 ? "text-2xl" : ""}>
-                                    {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
-                                  </span>
-                                </td>
-                                <td className="py-3 text-right font-medium">{getNomineeName(selectedCategory, nomineeId)}</td>
-                                <td className="py-3 text-right text-cyan-400 font-bold">{count}</td>
-                                <td className="py-3 text-right">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
-                                      <div className="h-full bg-gradient-to-r from-cyan-400 to-purple-500" style={{ width: `${pct}%` }} />
-                                    </div>
-                                    <span className="text-white/80">{pct}%</span>
-                                  </div>
-                                </td>
-                                <td />
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
+                    {/* link at bottom */}
+                    <div className="mt-4 text-center">
+                      <button className="text-cyan-300 hover:text-cyan-200 text-sm">
+                        → לחץ לפרטים מלאים
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </>
+              );
+            })}
+          </div>
         )}
       </div>
     </main>
