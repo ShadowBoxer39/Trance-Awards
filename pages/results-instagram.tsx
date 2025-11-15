@@ -159,19 +159,10 @@ export default function ResultsInstagram() {
     ctx.textAlign = 'center';
     ctx.fillText('2025', 540, 385);
 
-    // Disclaimer text - voting is still open
-    ctx.save();
-    ctx.direction = 'rtl';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = 'bold 32px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('תוצאות ביניים - המירוץ נמשך!', 540, 440);
-    ctx.restore();
-
-    // Top 7 list - adjusted spacing for story format
+    // Top 7 list - proper spacing
     const top7 = getTop7(categoryId);
-    const startY = 500;
-    const itemHeight = 180;
+    const startY = 470;
+    const itemHeight = 195;
 
     for (let i = 0; i < top7.length; i++) {
       const item = top7[i];
@@ -188,13 +179,13 @@ export default function ResultsInstagram() {
       } else {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
       }
-      roundRect(ctx, 50, y, 980, 160, 20);
+      roundRect(ctx, 50, y, 980, 175, 20);
       ctx.fill();
 
       // Border
       ctx.strokeStyle = i === 0 ? 'rgba(255, 215, 0, 0.6)' : 'rgba(255, 255, 255, 0.12)';
       ctx.lineWidth = i === 0 ? 3 : 1.5;
-      roundRect(ctx, 50, y, 980, 160, 20);
+      roundRect(ctx, 50, y, 980, 175, 20);
       ctx.stroke();
 
       // Medal emoji background circle for better visibility
@@ -202,28 +193,28 @@ export default function ResultsInstagram() {
         ? 'rgba(255, 215, 0, 0.25)' 
         : 'rgba(255, 255, 255, 0.15)';
       ctx.beginPath();
-      ctx.arc(120, y + 80, 48, 0, Math.PI * 2);
+      ctx.arc(120, y + 87.5, 50, 0, Math.PI * 2);
       ctx.fill();
 
       // Position number with medal/number emoji - LARGER
       const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
-      ctx.font = '80px Arial';
+      ctx.font = '85px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(medals[i], 120, y + 100);
+      ctx.fillText(medals[i], 120, y + 110);
 
-      // Artwork - bigger for story format
+      // Artwork - proper sizing
       try {
         const img = await loadImage(nomineeData.artwork);
         ctx.save();
         ctx.beginPath();
-        ctx.arc(260, y + 80, 58, 0, Math.PI * 2);
+        ctx.arc(260, y + 87.5, 60, 0, Math.PI * 2);
         ctx.clip();
         // Cover fit the image
-        const scale = Math.max(116 / img.width, 116 / img.height);
+        const scale = Math.max(120 / img.width, 120 / img.height);
         const scaledW = img.width * scale;
         const scaledH = img.height * scale;
         const offsetX = 260 - scaledW / 2;
-        const offsetY = (y + 80) - scaledH / 2;
+        const offsetY = (y + 87.5) - scaledH / 2;
         ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
         ctx.restore();
         
@@ -231,43 +222,55 @@ export default function ResultsInstagram() {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(260, y + 80, 58, 0, Math.PI * 2);
+        ctx.arc(260, y + 87.5, 60, 0, Math.PI * 2);
         ctx.stroke();
       } catch {}
 
-      // Nominee name (LTR, left-aligned) - bigger for story
+      // Nominee name (LTR, left-aligned)
       ctx.save();
       ctx.direction = 'ltr';
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 48px Arial';
+      ctx.font = 'bold 50px Arial';
       ctx.textAlign = 'left';
       const maxWidth = 650;
       const text = nomineeData.name;
-      let fontSize = 48;
+      let fontSize = 50;
       ctx.font = `bold ${fontSize}px Arial`;
       while (ctx.measureText(text).width > maxWidth && fontSize > 28) {
         fontSize -= 2;
         ctx.font = `bold ${fontSize}px Arial`;
       }
-      ctx.fillText(text, 345, y + 90);
+      ctx.fillText(text, 345, y + 100);
       ctx.restore();
-
-      // NO PERCENTAGE - removed completely
     }
 
-    // Footer with better styling + call to action
+    // DRAMATIC OVERLAY - Semi-transparent diagonal text across entire image
+    ctx.save();
+    
+    // Rotate canvas for diagonal text
+    ctx.translate(540, 960);
+    ctx.rotate(-Math.PI / 12); // ~15 degrees
+    
+    // Text shadow for depth
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 20;
+    
+    // Semi-transparent text
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.font = 'bold 140px Arial';
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.fillText('ההצבעה נמשכת', 0, -80);
+    ctx.fillText('המירוץ פתוח!', 0, 80);
+    
+    ctx.restore();
+
+    // Footer
     ctx.save();
     ctx.direction = 'rtl';
-    
-    // Main footer text
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.font = 'bold 34px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('צאו להצביע ושנו את התוצאות!', 540, 1820);
-    
-    // Brand name
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.font = '32px Arial';
+    ctx.textAlign = 'center';
     ctx.fillText('נבחרי השנה בטראנס', 540, 1870);
     ctx.restore();
 
