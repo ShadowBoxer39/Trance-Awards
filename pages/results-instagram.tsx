@@ -63,8 +63,8 @@ export default function ResultsInstagram() {
     return cat?.title || catId;
   };
 
-  // Get top 5 for a category
-  const getTop5 = (catId: string) => {
+  // Get top 7 for a category
+  const getTop7 = (catId: string) => {
     if (!tally || !tally[catId]) return [];
     
     const entries = Object.entries(tally[catId]);
@@ -72,7 +72,7 @@ export default function ResultsInstagram() {
     
     return entries
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
+      .slice(0, 7)
       .map(([nomineeId, votes], index) => ({
         nomineeId,
         votes,
@@ -81,53 +81,53 @@ export default function ResultsInstagram() {
       }));
   };
 
-  // Generate Instagram post image (1080x1080)
+  // Generate Instagram story image (1080x1920)
   async function generateInstagramImage(categoryId: string) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
     
-    // Instagram post dimensions (square)
+    // Instagram STORY dimensions (9:16 ratio)
     canvas.width = 1080;
-    canvas.height = 1080;
+    canvas.height = 1920;
 
     // Background gradient - darker and more dramatic
-    const gradient = ctx.createLinearGradient(0, 0, 0, 1080);
+    const gradient = ctx.createLinearGradient(0, 0, 0, 1920);
     gradient.addColorStop(0, '#0a0615');
     gradient.addColorStop(0.5, '#0f0a1e');
     gradient.addColorStop(1, '#050510');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1080, 1080);
+    ctx.fillRect(0, 0, 1080, 1920);
 
     // Animated glow effects - more vibrant
-    const glow1 = ctx.createRadialGradient(900, 150, 0, 900, 150, 500);
+    const glow1 = ctx.createRadialGradient(900, 200, 0, 900, 200, 500);
     glow1.addColorStop(0, 'rgba(0, 255, 200, 0.4)');
     glow1.addColorStop(0.5, 'rgba(0, 255, 200, 0.15)');
     glow1.addColorStop(1, 'rgba(0, 255, 200, 0)');
     ctx.fillStyle = glow1;
-    ctx.fillRect(0, 0, 1080, 1080);
+    ctx.fillRect(0, 0, 1080, 1920);
 
-    const glow2 = ctx.createRadialGradient(180, 930, 0, 180, 930, 450);
+    const glow2 = ctx.createRadialGradient(180, 1700, 0, 180, 1700, 450);
     glow2.addColorStop(0, 'rgba(255, 90, 165, 0.35)');
     glow2.addColorStop(0.5, 'rgba(255, 90, 165, 0.12)');
     glow2.addColorStop(1, 'rgba(255, 90, 165, 0)');
     ctx.fillStyle = glow2;
-    ctx.fillRect(0, 0, 1080, 1080);
+    ctx.fillRect(0, 0, 1080, 1920);
 
     // Logo (top) - bigger
     try {
       const logo = await loadImage('/images/logo.png');
       ctx.save();
       ctx.beginPath();
-      ctx.arc(540, 110, 60, 0, Math.PI * 2);
+      ctx.arc(540, 130, 70, 0, Math.PI * 2);
       ctx.clip();
-      ctx.drawImage(logo, 480, 50, 120, 120);
+      ctx.drawImage(logo, 470, 60, 140, 140);
       ctx.restore();
       
       // Logo glow
       ctx.shadowColor = 'rgba(0, 255, 200, 0.5)';
       ctx.shadowBlur = 30;
       ctx.beginPath();
-      ctx.arc(540, 110, 60, 0, Math.PI * 2);
+      ctx.arc(540, 130, 70, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(0, 255, 200, 0.3)';
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -136,36 +136,36 @@ export default function ResultsInstagram() {
 
     // Brand name
     ctx.fillStyle = '#00ffcc';
-    ctx.font = 'bold 36px Arial';
+    ctx.font = 'bold 40px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('יוצאים לטראק', 540, 200);
+    ctx.fillText('יוצאים לטראק', 540, 235);
 
     // Category title - bigger and bolder
     ctx.save();
     ctx.direction = 'rtl';
-    const titleGradient = ctx.createLinearGradient(0, 240, 0, 310);
+    const titleGradient = ctx.createLinearGradient(0, 280, 0, 360);
     titleGradient.addColorStop(0, '#00ffcc');
     titleGradient.addColorStop(0.5, '#00d4ff');
     titleGradient.addColorStop(1, '#ff00ff');
     ctx.fillStyle = titleGradient;
-    ctx.font = 'bold 64px Arial';
+    ctx.font = 'bold 72px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(getCategoryTitle(categoryId), 540, 275);
+    ctx.fillText(getCategoryTitle(categoryId), 540, 320);
     ctx.restore();
 
     // Year with style
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 42px Arial';
+    ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('2025', 540, 330);
+    ctx.fillText('2025', 540, 385);
 
-    // Top 5 list - more spacing
-    const top5 = getTop5(categoryId);
-    const startY = 410;
-    const itemHeight = 120;
+    // Top 7 list - adjusted spacing for story format
+    const top7 = getTop7(categoryId);
+    const startY = 480;
+    const itemHeight = 190;
 
-    for (let i = 0; i < top5.length; i++) {
-      const item = top5[i];
+    for (let i = 0; i < top7.length; i++) {
+      const item = top7[i];
       const nomineeData = getNomineeData(categoryId, item.nomineeId);
       const y = startY + (i * itemHeight);
 
@@ -179,34 +179,34 @@ export default function ResultsInstagram() {
       } else {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
       }
-      roundRect(ctx, 50, y, 980, 100, 16);
+      roundRect(ctx, 50, y, 980, 170, 20);
       ctx.fill();
 
       // Border
       ctx.strokeStyle = i === 0 ? 'rgba(255, 215, 0, 0.6)' : 'rgba(255, 255, 255, 0.12)';
       ctx.lineWidth = i === 0 ? 3 : 1.5;
-      roundRect(ctx, 50, y, 980, 100, 16);
+      roundRect(ctx, 50, y, 980, 170, 20);
       ctx.stroke();
 
-      // Position number with medal emoji
-      const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
-      ctx.font = '56px Arial';
+      // Position number with medal/number emoji
+      const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
+      ctx.font = '72px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(medals[i], 105, y + 65);
+      ctx.fillText(medals[i], 120, y + 105);
 
-      // Artwork - bigger and better positioned
+      // Artwork - bigger for story format
       try {
         const img = await loadImage(nomineeData.artwork);
         ctx.save();
         ctx.beginPath();
-        ctx.arc(215, y + 50, 42, 0, Math.PI * 2);
+        ctx.arc(260, y + 85, 60, 0, Math.PI * 2);
         ctx.clip();
         // Cover fit the image
-        const scale = Math.max(84 / img.width, 84 / img.height);
+        const scale = Math.max(120 / img.width, 120 / img.height);
         const scaledW = img.width * scale;
         const scaledH = img.height * scale;
-        const offsetX = 215 - scaledW / 2;
-        const offsetY = (y + 50) - scaledH / 2;
+        const offsetX = 260 - scaledW / 2;
+        const offsetY = (y + 85) - scaledH / 2;
         ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
         ctx.restore();
         
@@ -214,41 +214,37 @@ export default function ResultsInstagram() {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(215, y + 50, 42, 0, Math.PI * 2);
+        ctx.arc(260, y + 85, 60, 0, Math.PI * 2);
         ctx.stroke();
       } catch {}
 
-      // Nominee name (LTR, left-aligned) - better positioning
+      // Nominee name (LTR, left-aligned) - bigger for story
       ctx.save();
       ctx.direction = 'ltr';
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 34px Arial';
+      ctx.font = 'bold 48px Arial';
       ctx.textAlign = 'left';
-      const maxWidth = 600;
+      const maxWidth = 650;
       const text = nomineeData.name;
-      let fontSize = 34;
+      let fontSize = 48;
       ctx.font = `bold ${fontSize}px Arial`;
-      while (ctx.measureText(text).width > maxWidth && fontSize > 20) {
+      while (ctx.measureText(text).width > maxWidth && fontSize > 28) {
         fontSize -= 2;
         ctx.font = `bold ${fontSize}px Arial`;
       }
-      ctx.fillText(text, 280, y + 60);
+      ctx.fillText(text, 345, y + 95);
       ctx.restore();
 
-      // Percentage - bigger and more prominent
-      ctx.fillStyle = i === 0 ? '#FFD700' : '#00ffcc';
-      ctx.font = 'bold 42px Arial';
-      ctx.textAlign = 'right';
-      ctx.fillText(`${item.percent.toFixed(1)}%`, 1000, y + 65);
+      // NO PERCENTAGE - removed completely
     }
 
     // Footer with better styling
     ctx.save();
     ctx.direction = 'rtl';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '28px Arial';
+    ctx.font = '32px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('נבחרי השנה בטראנס', 540, 1040);
+    ctx.fillText('נבחרי השנה בטראנס', 540, 1870);
     ctx.restore();
 
     return canvas.toDataURL('image/png');
@@ -285,7 +281,7 @@ export default function ResultsInstagram() {
     try {
       const dataUrl = await generateInstagramImage(categoryId);
       const link = document.createElement('a');
-      link.download = `${categoryId}-top5-instagram.png`;
+      link.download = `${categoryId}-top7-story.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -346,8 +342,8 @@ export default function ResultsInstagram() {
       <header className="sticky top-0 z-20 border-b border-white/10 bg-black/60 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold gradient-title">Instagram Posts Generator</h1>
-            <p className="text-sm text-white/60">תמונות Top 5 לאינסטגרם</p>
+            <h1 className="text-2xl font-bold gradient-title">Instagram Stories Generator</h1>
+            <p className="text-sm text-white/60">תמונות Top 7 לסטורי אינסטגרם</p>
           </div>
           
           <button
@@ -363,7 +359,7 @@ export default function ResultsInstagram() {
       <section className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {CATEGORIES.map((cat) => {
-            const top5 = getTop5(cat.id);
+            const top7 = getTop7(cat.id);
 
             return (
               <div key={cat.id} className="glass rounded-2xl p-6">
@@ -373,15 +369,15 @@ export default function ResultsInstagram() {
                     {cat.title}
                   </h2>
                   <div className="text-sm text-white/60">
-                    {top5.reduce((sum, item) => sum + item.votes, 0)} הצבעות
+                    {top7.reduce((sum, item) => sum + item.votes, 0)} הצבעות
                   </div>
                 </div>
 
-                {/* Top 5 Preview */}
+                {/* Top 7 Preview */}
                 <div className="space-y-2 mb-4">
-                  {top5.map((item, index) => {
+                  {top7.map((item, index) => {
                     const nomineeData = getNomineeData(cat.id, item.nomineeId);
-                    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+                    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
                     
                     return (
                       <div
@@ -403,9 +399,6 @@ export default function ResultsInstagram() {
                           <div className="text-sm font-medium truncate" dir="ltr">
                             {nomineeData.name}
                           </div>
-                          <div className="text-xs text-white/60">
-                            {item.percent.toFixed(1)}%
-                          </div>
                         </div>
                       </div>
                     );
@@ -417,7 +410,7 @@ export default function ResultsInstagram() {
                   onClick={() => downloadImage(cat.id)}
                   className="w-full btn-primary rounded-xl px-4 py-3 text-sm font-semibold"
                 >
-                  📥 הורד תמונה (1080x1080)
+                  📥 הורד תמונה (1080x1920)
                 </button>
               </div>
             );
@@ -430,8 +423,8 @@ export default function ResultsInstagram() {
         <div className="glass rounded-2xl p-6">
           <h3 className="text-lg font-bold mb-3">📱 הוראות שימוש</h3>
           <ul className="space-y-2 text-white/80 text-sm">
-            <li>• התמונות מותאמות לפוסט אינסטגרם (1080x1080 פיקסלים)</li>
-            <li>• כל תמונה מציגה את 5 המועמדים המובילים באחוזים בלבד</li>
+            <li>• התמונות מותאמות לסטורי אינסטגרם (1080x1920 פיקסלים)</li>
+            <li>• כל תמונה מציגה את 7 המועמדים המובילים ללא אחוזים</li>
             <li>• ניתן להוריד כל קטגוריה בנפרד או את כולן ביחד</li>
             <li>• התמונות מתעדכנות בזמן אמת עם הנתונים האחרונים</li>
             <li>• מומלץ לעדכן ולהוריד מחדש לפני כל פרסום</li>
