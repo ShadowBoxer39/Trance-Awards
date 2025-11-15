@@ -1,352 +1,510 @@
-// Generate Instagram story image (1080x1920)
-async function generateInstagramImage(categoryId: string) {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d")!;
+// pages/results-instagram.tsx - PRIVATE ADMIN PAGE FOR INSTAGRAM POSTS
+import React, { useRef } from "react";
+import Image from "next/image";
+import { CATEGORIES } from "@/data/awards-data";
 
-  // Instagram STORY dimensions (9:16 ratio)
-  canvas.width = 1080;
-  canvas.height = 1920;
+type Tally = Record<string, Record<string, number>>;
 
-  // --- BACKGROUND ---
+export default function ResultsInstagram() {
+  const [key, setKey] = React.useState<string>("");
+  const [authenticated, setAuthenticated] = React.useState(false);
+  const [tally, setTally] = React.useState<Tally | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+  const canvasRefs = useRef<{ [key: string]: HTMLCanvasElement | null }>({});
 
-  // Smooth vertical gradient
-  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  bg.addColorStop(0, "#050814");
-  bg.addColorStop(0.5, "#0a1030");
-  bg.addColorStop(1, "#14071c");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  React.useEffect(() => {
+    document.documentElement.setAttribute("dir", "rtl");
+    const savedKey = localStorage.getItem("ADMIN_KEY");
+    if (savedKey) {
+      setKey(savedKey);
+      authenticateAndFetch(savedKey);
+    }
+  }, []);
 
-  // subtle radial glow in the center
-  const glowCenter = ctx.createRadialGradient(
-    canvas.width / 2,
-    420,
-    0,
-    canvas.width / 2,
-    420,
-    520
-  );
-  glowCenter.addColorStop(0, "rgba(0, 255, 204, 0.35)");
-  glowCenter.addColorStop(0.5, "rgba(0, 255, 204, 0.07)");
-  glowCenter.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = glowCenter;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // bottom glow
-  const glowBottom = ctx.createRadialGradient(
-    canvas.width / 2,
-    canvas.height,
-    0,
-    canvas.width / 2,
-    canvas.height,
-    500
-  );
-  glowBottom.addColorStop(0, "rgba(255, 0, 153, 0.35)");
-  glowBottom.addColorStop(0.5, "rgba(255, 0, 153, 0.1)");
-  glowBottom.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = glowBottom;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // --- LOGO ---
-
-  try {
-    const logo = await loadImage("/images/logo.png");
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(540, 120, 70, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(logo, 470, 50, 140, 140);
-    ctx.restore();
-
-    // logo ring
-    ctx.save();
-    ctx.shadowColor = "rgba(0, 255, 200, 0.6)";
-    ctx.shadowBlur = 24;
-    ctx.strokeStyle = "rgba(0, 255, 200, 0.8)";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(540, 120, 74, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  } catch {
-    // ignore logo load errors
+  async function authenticateAndFetch(adminKey: string) {
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/stats?key=${encodeURIComponent(adminKey)}&_t=${Date.now()}`);
+      const j = await r.json();
+      
+      if (!r.ok || !j?.ok) {
+        alert("מפתח לא תקין");
+        return;
+      }
+      
+      setTally(j.tally as Tally);
+      setAuthenticated(true);
+      localStorage.setItem("ADMIN_KEY", adminKey);
+    } catch (err) {
+      alert("שגיאה בטעינת נתונים");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  // --- HEADER TEXT ---
-
-  ctx.save();
-  ctx.direction = "rtl";
-  ctx.textAlign = "center";
-
-  // subtitle
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.font = "28px Arial";
-  ctx.fillText("נבחרי השנה בטראנס • 2025", 540, 230);
-
-  // category title
-  const titleGradient = ctx.createLinearGradient(340, 260, 740, 340);
-  titleGradient.addColorStop(0, "#00ffcc");
-  titleGradient.addColorStop(0.5, "#00aaff");
-  titleGradient.addColorStop(1, "#ff00ff");
-  ctx.fillStyle = titleGradient;
-  ctx.font = "bold 64px Arial";
-  ctx.fillText(getCategoryTitle(categoryId), 540, 310);
-
-  // "mid-results" pill
-  const pillWidth = 640;
-  const pillHeight = 72;
-  const pillX = (canvas.width - pillWidth) / 2;
-  const pillY = 350;
-  const pillGrad = ctx.createLinearGradient(pillX, pillY, pillX + pillWidth, pillY);
-  pillGrad.addColorStop(0, "rgba(0,255,204,0.25)");
-  pillGrad.addColorStop(1, "rgba(255,0,170,0.25)");
-  ctx.fillStyle = pillGrad;
-  roundRect(ctx, pillX, pillY, pillWidth, pillHeight, 36);
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(255,255,255,0.4)";
-  ctx.lineWidth = 1.5;
-  roundRect(ctx, pillX, pillY, pillWidth, pillHeight, 36);
-  ctx.stroke();
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 32px Arial";
-  ctx.fillText("תוצאות ביניים · ההצבעה בעיצומה", 540, pillY + 48);
-
-  ctx.restore();
-
-  // --- TOP 7 LIST ---
-
-  const top7 = getTop7(categoryId);
-  const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣"];
-
-  // layout: top 3 big cards, 4-7 compact
-  const bigCardX = 70;
-  const bigCardWidth = canvas.width - bigCardX * 2; // 940
-  const bigCardHeight = 150;
-  let currentY = 460;
-
-  // draw top 3
-  for (let i = 0; i < Math.min(3, top7.length); i++) {
-    const item = top7[i];
-    const nomineeData = getNomineeData(categoryId, item.nomineeId);
-
-    // card background
-    ctx.save();
-    const cardGrad = ctx.createLinearGradient(
-      bigCardX,
-      currentY,
-      bigCardX + bigCardWidth,
-      currentY
-    );
-    if (i === 0) {
-      cardGrad.addColorStop(0, "rgba(255, 216, 0, 0.2)");
-      cardGrad.addColorStop(1, "rgba(255, 147, 0, 0.15)");
-    } else {
-      cardGrad.addColorStop(0, "rgba(255,255,255,0.08)");
-      cardGrad.addColorStop(1, "rgba(255,255,255,0.03)");
-    }
-    ctx.fillStyle = cardGrad;
-    roundRect(ctx, bigCardX, currentY, bigCardWidth, bigCardHeight, 26);
-    ctx.fill();
-
-    ctx.strokeStyle =
-      i === 0 ? "rgba(255, 216, 0, 0.8)" : "rgba(255,255,255,0.25)";
-    ctx.lineWidth = i === 0 ? 3 : 1.5;
-    roundRect(ctx, bigCardX, currentY, bigCardWidth, bigCardHeight, 26);
-    ctx.stroke();
-
-    // medal
-    ctx.textAlign = "center";
-    ctx.font = "80px Arial";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(medals[i], bigCardX + 70, currentY + 100);
-
-    // artwork
-    try {
-      const img = await loadImage(nomineeData.artwork);
-      const centerX = bigCardX + 180;
-      const centerY = currentY + bigCardHeight / 2;
-      const radius = 55;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.clip();
-
-      const scale = Math.max(
-        (radius * 2) / img.width,
-        (radius * 2) / img.height
-      );
-      const w = img.width * scale;
-      const h = img.height * scale;
-      ctx.drawImage(img, centerX - w / 2, centerY - h / 2, w, h);
-
-      ctx.restore();
-
-      ctx.strokeStyle = "rgba(255,255,255,0.5)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.stroke();
-    } catch {
-      // ignore image failures
-    }
-
-    // name (LTR)
-    ctx.save();
-    ctx.direction = "ltr";
-    ctx.textAlign = "left";
-    ctx.fillStyle = "#ffffff";
-    let fontSize = 46;
-    const nameX = bigCardX + 260;
-    const nameY = currentY + 100;
-    const maxWidth = bigCardWidth - 280;
-    ctx.font = `bold ${fontSize}px Arial`;
-    while (ctx.measureText(nomineeData.name).width > maxWidth && fontSize > 26) {
-      fontSize -= 2;
-      ctx.font = `bold ${fontSize}px Arial`;
-    }
-    ctx.fillText(nomineeData.name, nameX, nameY);
-    ctx.restore();
-
-    ctx.restore();
-
-    currentY += bigCardHeight + 18;
+  function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!key) return;
+    authenticateAndFetch(key);
   }
 
-  // compact list for places 4-7
-  const smallCardX = 90;
-  const smallCardWidth = canvas.width - smallCardX * 2; // 900
-  const smallCardHeight = 108;
+  const getNomineeData = (catId: string, nomineeId: string) => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    const nominee = cat?.nominees.find(n => n.id === nomineeId);
+    return {
+      name: nominee?.name || nomineeId,
+      artwork: nominee?.artwork || "/images/default.jpg",
+    };
+  };
 
-  for (let i = 3; i < top7.length; i++) {
-    const item = top7[i];
-    const nomineeData = getNomineeData(categoryId, item.nomineeId);
+  const getCategoryTitle = (catId: string) => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    return cat?.title || catId;
+  };
 
-    ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    roundRect(ctx, smallCardX, currentY, smallCardWidth, smallCardHeight, 22);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,0.18)";
-    ctx.lineWidth = 1.2;
-    roundRect(ctx, smallCardX, currentY, smallCardWidth, smallCardHeight, 22);
-    ctx.stroke();
+  // Get top 7 for a category
+  const getTop7 = (catId: string) => {
+    if (!tally || !tally[catId]) return [];
+    
+    const entries = Object.entries(tally[catId]);
+    const total = entries.reduce((sum, [, count]) => sum + count, 0);
+    
+    return entries
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 7)
+      .map(([nomineeId, votes], index) => ({
+        nomineeId,
+        votes,
+        percent: total > 0 ? (votes / total) * 100 : 0,
+        position: index + 1,
+      }));
+  };
 
-    // medal small
-    ctx.textAlign = "center";
-    ctx.font = "50px Arial";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(medals[i], smallCardX + 55, currentY + 72);
+  // Generate Instagram story image (1080x1920) - COMPLETE REDESIGN
+  async function generateInstagramImage(categoryId: string) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    
+    // Instagram STORY dimensions (9:16 ratio)
+    canvas.width = 1080;
+    canvas.height = 1920;
 
-    // artwork small
+    // Dark solid background
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    // Gradient overlays for depth
+    const topGradient = ctx.createRadialGradient(540, 0, 0, 540, 400, 800);
+    topGradient.addColorStop(0, 'rgba(0, 255, 200, 0.15)');
+    topGradient.addColorStop(1, 'rgba(0, 255, 200, 0)');
+    ctx.fillStyle = topGradient;
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    const bottomGradient = ctx.createRadialGradient(540, 1920, 0, 540, 1500, 800);
+    bottomGradient.addColorStop(0, 'rgba(255, 90, 165, 0.15)');
+    bottomGradient.addColorStop(1, 'rgba(255, 90, 165, 0)');
+    ctx.fillStyle = bottomGradient;
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    // Header section with logo
     try {
-      const img = await loadImage(nomineeData.artwork);
-      const centerX = smallCardX + 155;
-      const centerY = currentY + smallCardHeight / 2;
-      const radius = 38;
-
+      const logo = await loadImage('/images/logo.png');
       ctx.save();
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.arc(540, 100, 55, 0, Math.PI * 2);
       ctx.clip();
-
-      const scale = Math.max(
-        (radius * 2) / img.width,
-        (radius * 2) / img.height
-      );
-      const w = img.width * scale;
-      const h = img.height * scale;
-      ctx.drawImage(img, centerX - w / 2, centerY - h / 2, w, h);
-
+      ctx.drawImage(logo, 485, 45, 110, 110);
       ctx.restore();
-
-      ctx.strokeStyle = "rgba(255,255,255,0.4)";
-      ctx.lineWidth = 1.5;
+      
+      // Logo glow ring
+      ctx.strokeStyle = '#00ffcc';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.arc(540, 100, 55, 0, Math.PI * 2);
       ctx.stroke();
     } catch {}
 
-    // name
+    // Brand name
+    ctx.fillStyle = '#00ffcc';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('יוצאים לטראק', 540, 180);
+
+    // Category title - bold and prominent
     ctx.save();
-    ctx.direction = "ltr";
-    ctx.textAlign = "left";
-    ctx.fillStyle = "#ffffff";
-    let fontSize = 34;
-    const nameX = smallCardX + 220;
-    const nameY = currentY + 70;
-    const maxWidth = smallCardWidth - 240;
-    ctx.font = `bold ${fontSize}px Arial`;
-    while (ctx.measureText(nomineeData.name).width > maxWidth && fontSize > 22) {
-      fontSize -= 2;
-      ctx.font = `bold ${fontSize}px Arial`;
-    }
-    ctx.fillText(nomineeData.name, nameX, nameY);
+    ctx.direction = 'rtl';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 68px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(getCategoryTitle(categoryId), 540, 260);
     ctx.restore();
 
+    // "2025" badge style
+    ctx.fillStyle = 'rgba(0, 255, 204, 0.15)';
+    roundRect(ctx, 460, 280, 160, 50, 25);
+    ctx.fill();
+    ctx.strokeStyle = '#00ffcc';
+    ctx.lineWidth = 2;
+    roundRect(ctx, 460, 280, 160, 50, 25);
+    ctx.stroke();
+    ctx.fillStyle = '#00ffcc';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('2025', 540, 315);
+
+    // "Interim Results" banner
+    ctx.save();
+    ctx.direction = 'rtl';
+    ctx.fillStyle = 'rgba(255, 90, 165, 0.2)';
+    roundRect(ctx, 300, 350, 480, 45, 22);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 90, 165, 0.5)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, 300, 350, 480, 45, 22);
+    ctx.stroke();
+    ctx.fillStyle = '#ff5aa5';
+    ctx.font = 'bold 26px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔥 תוצאות ביניים 🔥', 540, 380);
     ctx.restore();
-    currentY += smallCardHeight + 14;
+
+    // Top 7 list - completely new design
+    const top7 = getTop7(categoryId);
+    const startY = 450;
+    const itemHeight = 185;
+
+    for (let i = 0; i < top7.length; i++) {
+      const item = top7[i];
+      const nomineeData = getNomineeData(categoryId, item.nomineeId);
+      const y = startY + (i * itemHeight);
+
+      // Rank-based colors
+      let rankColor, rankBg, cardBg;
+      if (i === 0) {
+        rankColor = '#FFD700';
+        rankBg = 'rgba(255, 215, 0, 0.2)';
+        cardBg = 'rgba(255, 215, 0, 0.08)';
+      } else if (i === 1) {
+        rankColor = '#C0C0C0';
+        rankBg = 'rgba(192, 192, 192, 0.15)';
+        cardBg = 'rgba(192, 192, 192, 0.05)';
+      } else if (i === 2) {
+        rankColor = '#CD7F32';
+        rankBg = 'rgba(205, 127, 50, 0.15)';
+        cardBg = 'rgba(205, 127, 50, 0.05)';
+      } else {
+        rankColor = '#00ffcc';
+        rankBg = 'rgba(0, 255, 204, 0.1)';
+        cardBg = 'rgba(255, 255, 255, 0.03)';
+      }
+
+      // Card background
+      ctx.fillStyle = cardBg;
+      roundRect(ctx, 40, y, 1000, 165, 18);
+      ctx.fill();
+
+      // Card border
+      ctx.strokeStyle = i < 3 ? `${rankColor}80` : 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = i < 3 ? 2.5 : 1.5;
+      roundRect(ctx, 40, y, 1000, 165, 18);
+      ctx.stroke();
+
+      // Rank badge - circular design with number
+      ctx.fillStyle = rankBg;
+      ctx.beginPath();
+      ctx.arc(110, y + 82.5, 45, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = rankColor;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(110, y + 82.5, 45, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Rank number
+      ctx.fillStyle = rankColor;
+      ctx.font = 'bold 52px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${i + 1}`, 110, y + 100);
+
+      // Artwork - larger and better positioned
+      try {
+        const img = await loadImage(nomineeData.artwork);
+        ctx.save();
+        
+        // Glow behind artwork
+        ctx.shadowColor = rankColor;
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(230, y + 82.5, 62, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        ctx.beginPath();
+        ctx.arc(230, y + 82.5, 62, 0, Math.PI * 2);
+        ctx.clip();
+        
+        // Cover fit
+        const scale = Math.max(124 / img.width, 124 / img.height);
+        const scaledW = img.width * scale;
+        const scaledH = img.height * scale;
+        const offsetX = 230 - scaledW / 2;
+        const offsetY = (y + 82.5) - scaledH / 2;
+        ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
+        ctx.restore();
+        
+        // Artwork border
+        ctx.strokeStyle = i < 3 ? rankColor : 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(230, y + 82.5, 62, 0, Math.PI * 2);
+        ctx.stroke();
+      } catch {}
+
+      // Nominee name - bold and clear
+      ctx.save();
+      ctx.direction = 'ltr';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 46px Arial';
+      ctx.textAlign = 'left';
+      
+      const maxWidth = 680;
+      const text = nomineeData.name;
+      let fontSize = 46;
+      ctx.font = `bold ${fontSize}px Arial`;
+      while (ctx.measureText(text).width > maxWidth && fontSize > 28) {
+        fontSize -= 2;
+        ctx.font = `bold ${fontSize}px Arial`;
+      }
+      ctx.fillText(text, 315, y + 92);
+      ctx.restore();
+
+      // Rank indicator (medal for top 3)
+      if (i < 3) {
+        const medals = ['🥇', '🥈', '🥉'];
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(medals[i], 1010, y + 50);
+      }
+    }
+
+    // Bottom CTA section
+    const ctaY = 1760;
+    
+    // CTA box background
+    ctx.fillStyle = 'rgba(0, 255, 204, 0.08)';
+    roundRect(ctx, 80, ctaY, 920, 90, 20);
+    ctx.fill();
+    
+    ctx.strokeStyle = 'rgba(0, 255, 204, 0.3)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, 80, ctaY, 920, 90, 20);
+    ctx.stroke();
+
+    // CTA text
+    ctx.save();
+    ctx.direction = 'rtl';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 38px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('המירוץ עדיין פתוח!', 540, ctaY + 38);
+    
+    ctx.fillStyle = '#00ffcc';
+    ctx.font = 'bold 32px Arial';
+    ctx.fillText('הצביעו עכשיו ושנו את התוצאות 🚀', 540, ctaY + 75);
+    ctx.restore();
+
+    // Footer
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('נבחרי השנה בטראנס', 540, 1890);
+
+    return canvas.toDataURL('image/png');
   }
 
-  // --- CTA BOX (BOTTOM) ---
+  function loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
 
-  const ctaWidth = canvas.width - 120;
-  const ctaHeight = 210;
-  const ctaX = 60;
-  const ctaY = canvas.height - ctaHeight - 120;
+  function roundRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + width, y, x + width, y + height, radius);
+    ctx.arcTo(x + width, y + height, x, y + height, radius);
+    ctx.arcTo(x, y + height, x, y, radius);
+    ctx.arcTo(x, y, x + width, y, radius);
+    ctx.closePath();
+  }
 
-  const ctaGrad = ctx.createLinearGradient(ctaX, ctaY, ctaX + ctaWidth, ctaY);
-  ctaGrad.addColorStop(0, "rgba(0,255,204,0.25)");
-  ctaGrad.addColorStop(1, "rgba(255,0,170,0.35)");
+  async function downloadImage(categoryId: string) {
+    try {
+      const dataUrl = await generateInstagramImage(categoryId);
+      const link = document.createElement('a');
+      link.download = `${categoryId}-top7-story.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      alert('שגיאה ביצירת התמונה');
+      console.error(err);
+    }
+  }
 
-  ctx.save();
-  ctx.direction = "rtl";
-  ctx.fillStyle = "rgba(0,0,0,0.7)";
-  roundRect(ctx, ctaX, ctaY, ctaWidth, ctaHeight, 28);
-  ctx.fill();
+  async function downloadAllImages() {
+    for (const cat of CATEGORIES) {
+      await downloadImage(cat.id);
+      // Small delay between downloads
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
 
-  ctx.strokeStyle = "rgba(255,255,255,0.45)";
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = ctaGrad;
-  roundRect(ctx, ctaX, ctaY, ctaWidth, ctaHeight, 28);
-  ctx.stroke();
+  if (!authenticated) {
+    return (
+      <main className="min-h-screen neon-backdrop text-white flex items-center justify-center">
+        <form onSubmit={handleLogin} className="glass p-8 rounded-2xl max-w-md w-full mx-4 space-y-4">
+          <h1 className="text-2xl font-bold gradient-title mb-6">Admin Login</h1>
+          <div>
+            <label className="text-sm text-white/80 block mb-2">Admin Key</label>
+            <input
+              className="w-full rounded-xl bg-black/50 border border-white/15 px-4 py-3 text-white"
+              type="password"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              placeholder="הזן מפתח ניהול"
+            />
+          </div>
+          <button
+            className="w-full btn-primary rounded-2xl px-4 py-3 font-semibold"
+            disabled={!key || loading}
+            type="submit"
+          >
+            {loading ? "טוען..." : "כניסה"}
+          </button>
+        </form>
+      </main>
+    );
+  }
 
-  ctx.textAlign = "center";
+  if (loading) {
+    return (
+      <main className="min-h-screen neon-backdrop text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse">⏳</div>
+          <div className="text-xl text-white/70">טוען נתונים...</div>
+        </div>
+      </main>
+    );
+  }
 
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 42px Arial";
-  ctx.fillText("אלה רק תוצאות ביניים", canvas.width / 2, ctaY + 60);
+  return (
+    <main className="min-h-screen neon-backdrop text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-black/60 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold gradient-title">Instagram Stories Generator</h1>
+            <p className="text-sm text-white/60">תמונות Top 7 לסטורי אינסטגרם</p>
+          </div>
+          
+          <button
+            onClick={downloadAllImages}
+            className="btn-primary rounded-xl px-6 py-3 font-semibold"
+          >
+            📥 הורד הכל
+          </button>
+        </div>
+      </header>
 
-  ctx.font = "32px Arial";
-  ctx.fillText(
-    "ההצבעה עדיין פתוחה – כנסו לאתר והצביעו עכשיו",
-    canvas.width / 2,
-    ctaY + 110
+      {/* Categories Grid */}
+      <section className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {CATEGORIES.map((cat) => {
+            const top7 = getTop7(cat.id);
+
+            return (
+              <div key={cat.id} className="glass rounded-2xl p-6">
+                {/* Category Info */}
+                <div className="mb-4">
+                  <h2 className="text-xl font-bold gradient-title mb-2">
+                    {cat.title}
+                  </h2>
+                  <div className="text-sm text-white/60">
+                    {top7.reduce((sum, item) => sum + item.votes, 0)} הצבעות
+                  </div>
+                </div>
+
+                {/* Top 7 Preview */}
+                <div className="space-y-2 mb-4">
+                  {top7.map((item, index) => {
+                    const nomineeData = getNomineeData(cat.id, item.nomineeId);
+                    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
+                    
+                    return (
+                      <div
+                        key={item.nomineeId}
+                        className={`flex items-center gap-3 p-3 rounded-xl ${
+                          index === 0 ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-white/5'
+                        }`}
+                      >
+                        <span className="text-2xl">{medals[index]}</span>
+                        <div className="relative w-10 h-10 shrink-0">
+                          <Image
+                            src={nomineeData.artwork}
+                            alt={nomineeData.name}
+                            fill
+                            className="rounded-lg object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate" dir="ltr">
+                            {nomineeData.name}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Download Button */}
+                <button
+                  onClick={() => downloadImage(cat.id)}
+                  className="w-full btn-primary rounded-xl px-4 py-3 text-sm font-semibold"
+                >
+                  📥 הורד תמונה (1080x1920)
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Instructions */}
+      <section className="max-w-4xl mx-auto px-4 pb-12">
+        <div className="glass rounded-2xl p-6">
+          <h3 className="text-lg font-bold mb-3">📱 הוראות שימוש</h3>
+          <ul className="space-y-2 text-white/80 text-sm">
+            <li>• התמונות מותאמות לסטורי אינסטגרם (1080x1920 פיקסלים)</li>
+            <li>• כל תמונה מציגה את 7 המועמדים המובילים ללא אחוזים</li>
+            <li>• ניתן להוריד כל קטגוריה בנפרד או את כולן ביחד</li>
+            <li>• התמונות מתעדכנות בזמן אמת עם הנתונים האחרונים</li>
+            <li>• מומלץ לעדכן ולהוריד מחדש לפני כל פרסום</li>
+          </ul>
+        </div>
+      </section>
+    </main>
   );
-
-  ctx.font = "26px Arial";
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.fillText(
-    "לינק להצבעה בביו של ״יוצאים לטראק״",
-    canvas.width / 2,
-    ctaY + 152
-  );
-
-  ctx.restore();
-
-  // tiny footer
-  ctx.save();
-  ctx.direction = "rtl";
-  ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.font = "22px Arial";
-  ctx.fillText(
-    "שתפו בסטורי ותייגו אותנו",
-    canvas.width / 2,
-    canvas.height - 40
-  );
-  ctx.restore();
-
-  return canvas.toDataURL("image/png");
 }
