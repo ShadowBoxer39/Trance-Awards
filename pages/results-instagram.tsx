@@ -153,31 +153,36 @@ export default function ResultsInstagram() {
     ctx.textAlign = 'center';
     ctx.fillText('2025', 540, 315);
 
-    // MERGED CTA - Bigger banner at top with fire emojis
+    // MERGED CTA - MUCH BIGGER banner at top with fire emojis
     ctx.save();
     ctx.direction = 'rtl';
     
-    // CTA background box - bigger
-    ctx.fillStyle = 'rgba(255, 90, 165, 0.2)';
-    roundRect(ctx, 80, 360, 920, 70, 20);
+    // CTA background box - MUCH BIGGER
+    ctx.fillStyle = 'rgba(255, 90, 165, 0.25)';
+    roundRect(ctx, 60, 350, 960, 110, 25);
     ctx.fill();
     
-    ctx.strokeStyle = 'rgba(255, 90, 165, 0.5)';
-    ctx.lineWidth = 2;
-    roundRect(ctx, 80, 360, 920, 70, 20);
+    ctx.strokeStyle = 'rgba(255, 90, 165, 0.6)';
+    ctx.lineWidth = 3;
+    roundRect(ctx, 60, 350, 960, 110, 25);
     ctx.stroke();
     
-    // Merged text with fire emojis
+    // Main CTA text - BIGGER
     ctx.fillStyle = '#ff5aa5';
-    ctx.font = 'bold 36px Arial';
+    ctx.font = 'bold 42px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('🔥 תוצאות ביניים, ההצבעה עדיין פתוחה! 🔥', 540, 408);
+    ctx.fillText('🔥 תוצאות ביניים 🔥', 540, 395);
+    
+    // Second line - voting open message
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 38px Arial';
+    ctx.fillText('ההצבעה עדיין פתוחה!', 540, 440);
     ctx.restore();
 
-    // Top 7 list - adjusted start position
+    // Top 7 list - adjusted start position and smaller spacing
     const top7 = getTop7(categoryId);
-    const startY = 470;
-    const itemHeight = 185;
+    const startY = 500;
+    const itemHeight = 170;
 
     for (let i = 0; i < top7.length; i++) {
       const item = top7[i];
@@ -206,56 +211,56 @@ export default function ResultsInstagram() {
 
       // Card background
       ctx.fillStyle = cardBg;
-      roundRect(ctx, 40, y, 1000, 165, 18);
+      roundRect(ctx, 40, y, 1000, 155, 18);
       ctx.fill();
 
       // Card border
       ctx.strokeStyle = i < 3 ? `${rankColor}80` : 'rgba(255, 255, 255, 0.1)';
       ctx.lineWidth = i < 3 ? 2.5 : 1.5;
-      roundRect(ctx, 40, y, 1000, 165, 18);
+      roundRect(ctx, 40, y, 1000, 155, 18);
       ctx.stroke();
 
       // Rank badge - circular design with number
       ctx.fillStyle = rankBg;
       ctx.beginPath();
-      ctx.arc(110, y + 82.5, 45, 0, Math.PI * 2);
+      ctx.arc(105, y + 77.5, 42, 0, Math.PI * 2);
       ctx.fill();
       
       ctx.strokeStyle = rankColor;
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(110, y + 82.5, 45, 0, Math.PI * 2);
+      ctx.arc(105, y + 77.5, 42, 0, Math.PI * 2);
       ctx.stroke();
 
       // Rank number
       ctx.fillStyle = rankColor;
-      ctx.font = 'bold 52px Arial';
+      ctx.font = 'bold 48px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(`${i + 1}`, 110, y + 100);
+      ctx.fillText(`${i + 1}`, 105, y + 93);
 
-      // Artwork - larger and better positioned
+      // Artwork - slightly smaller
       try {
         const img = await loadImage(nomineeData.artwork);
         ctx.save();
         
         // Glow behind artwork
         ctx.shadowColor = rankColor;
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 15;
         ctx.beginPath();
-        ctx.arc(230, y + 82.5, 62, 0, Math.PI * 2);
+        ctx.arc(220, y + 77.5, 55, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
         
         ctx.beginPath();
-        ctx.arc(230, y + 82.5, 62, 0, Math.PI * 2);
+        ctx.arc(220, y + 77.5, 55, 0, Math.PI * 2);
         ctx.clip();
         
         // Cover fit
-        const scale = Math.max(124 / img.width, 124 / img.height);
+        const scale = Math.max(110 / img.width, 110 / img.height);
         const scaledW = img.width * scale;
         const scaledH = img.height * scale;
-        const offsetX = 230 - scaledW / 2;
-        const offsetY = (y + 82.5) - scaledH / 2;
+        const offsetX = 220 - scaledW / 2;
+        const offsetY = (y + 77.5) - scaledH / 2;
         ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
         ctx.restore();
         
@@ -263,34 +268,34 @@ export default function ResultsInstagram() {
         ctx.strokeStyle = i < 3 ? rankColor : 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(230, y + 82.5, 62, 0, Math.PI * 2);
+        ctx.arc(220, y + 77.5, 55, 0, Math.PI * 2);
         ctx.stroke();
       } catch {}
 
-      // Nominee name - bold and clear
+      // Nominee name - adjusted position
       ctx.save();
       ctx.direction = 'ltr';
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 46px Arial';
+      ctx.font = 'bold 42px Arial';
       ctx.textAlign = 'left';
       
       const maxWidth = 680;
       const text = nomineeData.name;
-      let fontSize = 46;
+      let fontSize = 42;
       ctx.font = `bold ${fontSize}px Arial`;
       while (ctx.measureText(text).width > maxWidth && fontSize > 28) {
         fontSize -= 2;
         ctx.font = `bold ${fontSize}px Arial`;
       }
-      ctx.fillText(text, 315, y + 92);
+      ctx.fillText(text, 295, y + 87);
       ctx.restore();
 
       // Rank indicator (medal for top 3)
       if (i < 3) {
         const medals = ['🥇', '🥈', '🥉'];
-        ctx.font = '40px Arial';
+        ctx.font = '38px Arial';
         ctx.textAlign = 'right';
-        ctx.fillText(medals[i], 1010, y + 50);
+        ctx.fillText(medals[i], 1010, y + 45);
       }
     }
 
