@@ -153,25 +153,30 @@ export default function ResultsInstagram() {
     ctx.textAlign = 'center';
     ctx.fillText('2025', 540, 315);
 
-    // "Interim Results" banner
+    // MERGED CTA - Bigger banner at top with fire emojis
     ctx.save();
     ctx.direction = 'rtl';
+    
+    // CTA background box - bigger
     ctx.fillStyle = 'rgba(255, 90, 165, 0.2)';
-    roundRect(ctx, 300, 350, 480, 45, 22);
+    roundRect(ctx, 80, 360, 920, 70, 20);
     ctx.fill();
+    
     ctx.strokeStyle = 'rgba(255, 90, 165, 0.5)';
     ctx.lineWidth = 2;
-    roundRect(ctx, 300, 350, 480, 45, 22);
+    roundRect(ctx, 80, 360, 920, 70, 20);
     ctx.stroke();
+    
+    // Merged text with fire emojis
     ctx.fillStyle = '#ff5aa5';
-    ctx.font = 'bold 26px Arial';
+    ctx.font = 'bold 36px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('🔥 תוצאות ביניים 🔥', 540, 380);
+    ctx.fillText('🔥 תוצאות ביניים, ההצבעה עדיין פתוחה! 🔥', 540, 408);
     ctx.restore();
 
-    // Top 7 list - completely new design
+    // Top 7 list - adjusted start position
     const top7 = getTop7(categoryId);
-    const startY = 450;
+    const startY = 470;
     const itemHeight = 185;
 
     for (let i = 0; i < top7.length; i++) {
@@ -289,37 +294,11 @@ export default function ResultsInstagram() {
       }
     }
 
-    // Bottom CTA section
-    const ctaY = 1760;
-    
-    // CTA box background
-    ctx.fillStyle = 'rgba(0, 255, 204, 0.08)';
-    roundRect(ctx, 80, ctaY, 920, 90, 20);
-    ctx.fill();
-    
-    ctx.strokeStyle = 'rgba(0, 255, 204, 0.3)';
-    ctx.lineWidth = 2;
-    roundRect(ctx, 80, ctaY, 920, 90, 20);
-    ctx.stroke();
-
-    // CTA text
-    ctx.save();
-    ctx.direction = 'rtl';
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 38px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('המירוץ עדיין פתוח!', 540, ctaY + 38);
-    
-    ctx.fillStyle = '#00ffcc';
-    ctx.font = 'bold 32px Arial';
-    ctx.fillText('הצביעו עכשיו ושנו את התוצאות 🚀', 540, ctaY + 75);
-    ctx.restore();
-
-    // Footer
+    // Footer - simple
     ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.font = '24px Arial';
+    ctx.font = '28px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('נבחרי השנה בטראנס', 540, 1890);
+    ctx.fillText('נבחרי השנה בטראנס', 540, 1870);
 
     return canvas.toDataURL('image/png');
   }
