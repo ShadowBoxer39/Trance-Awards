@@ -71,12 +71,12 @@ export default function CountdownTimer() {
             </div>
           </div>
 
-          {/* Countdown Display */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-4">
-            {/* Days */}
+          {/* Countdown Display - LEFT TO RIGHT */}
+          <div className="grid grid-cols-4 gap-2 sm:gap-4" dir="ltr">
+            {/* Days - LEFTMOST */}
             <div className="flex flex-col items-center">
               <div className="bg-white/5 rounded-xl sm:rounded-2xl p-2 sm:p-4 w-full border border-white/10">
-                <div className="text-2xl sm:text-4xl md:text-5xl font-black tabular-nums">
+                <div className="text-2xl sm:text-4xl md:text-5xl font-black tabular-nums text-center">
                   <span className="bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent">
                     {String(timeLeft.days).padStart(2, "0")}
                   </span>
@@ -88,7 +88,7 @@ export default function CountdownTimer() {
             {/* Hours */}
             <div className="flex flex-col items-center">
               <div className="bg-white/5 rounded-xl sm:rounded-2xl p-2 sm:p-4 w-full border border-white/10">
-                <div className="text-2xl sm:text-4xl md:text-5xl font-black tabular-nums">
+                <div className="text-2xl sm:text-4xl md:text-5xl font-black tabular-nums text-center">
                   <span className="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
                     {String(timeLeft.hours).padStart(2, "0")}
                   </span>
@@ -100,7 +100,7 @@ export default function CountdownTimer() {
             {/* Minutes */}
             <div className="flex flex-col items-center">
               <div className="bg-white/5 rounded-xl sm:rounded-2xl p-2 sm:p-4 w-full border border-white/10">
-                <div className="text-2xl sm:text-4xl md:text-5xl font-black tabular-nums">
+                <div className="text-2xl sm:text-4xl md:text-5xl font-black tabular-nums text-center">
                   <span className="bg-gradient-to-r from-yellow-400 to-green-400 bg-clip-text text-transparent">
                     {String(timeLeft.minutes).padStart(2, "0")}
                   </span>
@@ -109,10 +109,10 @@ export default function CountdownTimer() {
               <div className="text-xs sm:text-sm text-white/60 mt-1 sm:mt-2">דקות</div>
             </div>
 
-            {/* Seconds */}
+            {/* Seconds - RIGHTMOST */}
             <div className="flex flex-col items-center">
               <div className="bg-white/5 rounded-xl sm:rounded-2xl p-2 sm:p-4 w-full border border-white/10">
-                <div className="text-2xl sm:text-4xl md:text-5xl font-black tabular-nums">
+                <div className="text-2xl sm:text-4xl md:text-5xl font-black tabular-nums text-center">
                   <span className="bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
                     {String(timeLeft.seconds).padStart(2, "0")}
                   </span>
