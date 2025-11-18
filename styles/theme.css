@@ -1,5 +1,8 @@
 /* styles/theme.css - MATURE PROFESSIONAL DESIGN */
 
+/* Import professional font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* Dark sophisticated background */
 .trance-backdrop {
   background: 
@@ -54,14 +57,16 @@
 
 /* Better text hierarchy */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: #d1d5db;
   background: #0f0f1a;
+  font-weight: 400;
 }
 
 h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.025em;
