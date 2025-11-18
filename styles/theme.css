@@ -1,69 +1,73 @@
-/* styles/theme.css - PSYCHEDELIC TRANCE AESTHETIC */
+/* styles/theme.css - MATURE PROFESSIONAL DESIGN */
 
-/* Psychedelic Trance Background */
-.psychedelic-backdrop {
-  background:
-    radial-gradient(circle at 20% 80%, rgba(138, 43, 226, 0.15), transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.12), transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(255, 0, 255, 0.08), transparent 50%),
-    linear-gradient(180deg, #0a0014 0%, #1a0028 50%, #0a0014 100%);
-  background-attachment: fixed;
+/* Dark sophisticated background */
+.trance-backdrop {
+  background: 
+    radial-gradient(ellipse at top right, rgba(88, 28, 135, 0.15), transparent 60%),
+    radial-gradient(ellipse at bottom left, rgba(17, 24, 39, 0.8), transparent 60%),
+    #0f0f1a;
+  min-height: 100vh;
 }
 
-/* Glass card - darker, more sophisticated */
-.glass {
-  background: rgba(20, 10, 30, 0.4);
-  border: 1px solid rgba(138, 43, 226, 0.2);
-  box-shadow: 0 8px 32px rgba(138, 43, 226, 0.15);
-  backdrop-filter: blur(10px);
+/* Professional glass effect */
+.glass-card {
+  background: rgba(15, 15, 26, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* Buttons - psychedelic gradient */
+/* Simple professional button */
 .btn-primary {
-  background: linear-gradient(135deg, #8a2be2, #00ffff, #ff00ff);
-  background-size: 200% 200%;
-  animation: gradient-shift 3s ease infinite;
+  background: linear-gradient(to right, #8b5cf6, #6366f1);
   color: #ffffff;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 120ms ease, box-shadow 120ms ease;
-}
-
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(138, 43, 226, 0.5);
-}
-.btn-primary:disabled {
-  opacity: 0.5;
+  background: linear-gradient(to right, #7c3aed, #4f46e5);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
 }
 
-.btn-ghost {
-  background: rgba(20, 10, 30, 0.6);
-  color: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(138, 43, 226, 0.3);
-  backdrop-filter: blur(10px);
+.btn-secondary {
+  background: rgba(15, 15, 26, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #e5e7eb;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
 }
 
-/* Gradient headings - psychedelic colors */
-.gradient-title {
-  background: linear-gradient(135deg, #00ffff, #8a2be2, #ff00ff, #00ffff);
-  background-size: 200% 200%;
+.btn-secondary:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* Subtle gradient for headings only */
+.text-gradient {
+  background: linear-gradient(to right, #a78bfa, #8b5cf6);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: gradient-shift 6s ease infinite;
-  font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
-/* Text clamp utilities */
+/* Better text hierarchy */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #d1d5db;
+  background: #0f0f1a;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+
+/* Clean line clamp */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -76,85 +80,25 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: none;
 }
 
-/* Base tweaks */
-html, body, #__next { height: 100%; }
-html { color-scheme: dark; }
-body { 
-  background: #0a0014; 
-  color: #e0e0e0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
-  font-weight: 400;
-  line-height: 1.6;
-}
-
-/* Better typography */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-/* Psychedelic glow effect */
-.psychedelic-glow {
-  filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.4)) 
-          drop-shadow(0 0 40px rgba(0, 255, 255, 0.2));
-}
-
-/* Animations */
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.05);
-  }
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Trippy border animation */
-@keyframes border-dance {
-  0% { border-color: rgba(138, 43, 226, 0.3); }
-  33% { border-color: rgba(0, 255, 255, 0.3); }
-  66% { border-color: rgba(255, 0, 255, 0.3); }
-  100% { border-color: rgba(138, 43, 226, 0.3); }
-}
-
-.border-dance {
-  animation: border-dance 6s ease infinite;
+/* Smooth transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Better focus states */
 *:focus-visible {
-  outline: 2px solid rgba(138, 43, 226, 0.6);
+  outline: 2px solid rgba(139, 92, 246, 0.5);
   outline-offset: 2px;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
 }
 
 /* Selection color */
 ::selection {
-  background: rgba(138, 43, 226, 0.4);
+  background: rgba(139, 92, 246, 0.3);
   color: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
 }
