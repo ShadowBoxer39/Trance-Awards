@@ -10,6 +10,8 @@ const BRAND = {
 };
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
   }, []);
@@ -28,50 +30,94 @@ export default function Home() {
       </Head>
 
       <main className="min-h-screen neon-backdrop text-white">
-        {/* Navigation Bar (Sticky) */}
+        {/* Navigation Bar (Sticky) - BIGGER & MORE PROMINENT */}
         <header className="sticky top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition">
               <Image
                 src={BRAND.logo}
                 alt="יוצאים לטראק"
-                width={36}
-                height={36}
-                className="rounded-full border border-white/15"
+                width={48}
+                height={48}
+                className="rounded-full border-2 border-white/20"
                 priority
               />
-              <span className="text-base font-[700] hidden sm:inline">{BRAND.title}</span>
+              <span className="text-lg font-[900]">{BRAND.title}</span>
             </Link>
 
-            {/* Navigation Links */}
-            <nav className="flex items-center gap-4">
+            {/* Desktop Navigation Links - MUCH BIGGER */}
+            <nav className="hidden lg:flex items-center gap-3">
               <Link
                 href="/episodes"
-                className="text-white/80 hover:text-white transition text-sm font-medium"
+                className="glass rounded-xl px-6 py-3 text-lg font-bold hover:bg-white/10 transition border border-white/10"
               >
                 פרקים
               </Link>
               <Link
                 href="/young-artists"
-                className="text-white/80 hover:text-white transition text-sm font-medium"
+                className="glass rounded-xl px-6 py-3 text-lg font-bold hover:bg-white/10 transition border border-white/10"
               >
                 אמנים צעירים
               </Link>
               <Link
                 href="/about"
-                className="text-white/80 hover:text-white transition text-sm font-medium"
+                className="glass rounded-xl px-6 py-3 text-lg font-bold hover:bg-white/10 transition border border-white/10"
               >
                 אודות
               </Link>
               <Link
                 href="/vote"
-                className="btn-primary rounded-xl px-4 py-2 text-sm font-bold border-0"
+                className="btn-primary rounded-xl px-6 py-3 text-lg font-bold border-0"
               >
                 הצבעה 🗳️
               </Link>
             </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden glass rounded-xl px-4 py-3 text-lg font-bold hover:bg-white/10 transition border border-white/10"
+            >
+              {mobileMenuOpen ? "✕" : "☰"}
+            </button>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden border-t border-white/10 bg-black/60 backdrop-blur">
+              <nav className="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3">
+                <Link
+                  href="/episodes"
+                  className="glass rounded-xl px-6 py-3 text-lg font-bold hover:bg-white/10 transition border border-white/10 text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  פרקים
+                </Link>
+                <Link
+                  href="/young-artists"
+                  className="glass rounded-xl px-6 py-3 text-lg font-bold hover:bg-white/10 transition border border-white/10 text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  אמנים צעירים
+                </Link>
+                <Link
+                  href="/about"
+                  className="glass rounded-xl px-6 py-3 text-lg font-bold hover:bg-white/10 transition border border-white/10 text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  אודות
+                </Link>
+                <Link
+                  href="/vote"
+                  className="btn-primary rounded-xl px-6 py-3 text-lg font-bold border-0 text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  הצבעה 🗳️
+                </Link>
+              </nav>
+            </div>
+          )}
         </header>
 
         {/* Hero Section */}
