@@ -72,34 +72,34 @@ export default function YoungArtists() {
       </Head>
 
       <main className="min-h-screen neon-backdrop text-white">
-        {/* Navigation Bar */}
+        {/* Navigation Bar - BIGGER & MORE PROMINENT */}
         <header className="sticky top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition">
               <Image
                 src={BRAND.logo}
                 alt="יוצאים לטראק"
-                width={36}
-                height={36}
-                className="rounded-full border border-white/15"
+                width={48}
+                height={48}
+                className="rounded-full border-2 border-white/20"
               />
-              <span className="text-base font-[700] hidden sm:inline">{BRAND.title}</span>
+              <span className="text-lg font-[900] hidden sm:inline">{BRAND.title}</span>
             </Link>
 
-            <nav className="flex items-center gap-4">
-              <Link href="/" className="text-white/80 hover:text-white transition text-sm">
+            <nav className="flex items-center gap-2 sm:gap-3">
+              <Link href="/" className="glass rounded-xl px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg font-bold hover:bg-white/10 transition border border-white/10">
                 בית
               </Link>
-              <Link href="/episodes" className="text-white/80 hover:text-white transition text-sm">
+              <Link href="/episodes" className="glass rounded-xl px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg font-bold hover:bg-white/10 transition border border-white/10">
                 פרקים
               </Link>
-              <Link href="/young-artists" className="text-white transition text-sm font-bold">
+              <Link href="/young-artists" className="glass rounded-xl px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg font-bold bg-white/10 transition border border-cyan-500/50">
                 אמנים צעירים
               </Link>
-              <Link href="/about" className="text-white/80 hover:text-white transition text-sm">
+              <Link href="/about" className="glass rounded-xl px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg font-bold hover:bg-white/10 transition border border-white/10">
                 אודות
               </Link>
-              <Link href="/vote" className="btn-primary rounded-xl px-4 py-2 text-sm font-bold border-0">
+              <Link href="/vote" className="btn-primary rounded-xl px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg font-bold border-0">
                 הצבעה 🗳️
               </Link>
             </nav>
