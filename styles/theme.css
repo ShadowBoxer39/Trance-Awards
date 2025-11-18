@@ -1,50 +1,69 @@
-/* styles/theme.css */
+/* styles/theme.css - PSYCHEDELIC TRANCE AESTHETIC */
 
-/* Background used across pages */
-.neon-backdrop {
+/* Psychedelic Trance Background */
+.psychedelic-backdrop {
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(255, 90, 165, 0.14), transparent 60%),
-    radial-gradient(900px 500px at 10% -10%, rgba(123, 97, 255, 0.12), transparent 55%),
-    linear-gradient(180deg, #0a0b10 0%, #0b0b0f 60%, #0a0b10 100%);
+    radial-gradient(circle at 20% 80%, rgba(138, 43, 226, 0.15), transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.12), transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 0, 255, 0.08), transparent 50%),
+    linear-gradient(180deg, #0a0014 0%, #1a0028 50%, #0a0014 100%);
+  background-attachment: fixed;
 }
 
-/* Glass card */
+/* Glass card - darker, more sophisticated */
 .glass {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  background: rgba(20, 10, 30, 0.4);
+  border: 1px solid rgba(138, 43, 226, 0.2);
+  box-shadow: 0 8px 32px rgba(138, 43, 226, 0.15);
+  backdrop-filter: blur(10px);
 }
 
-/* Buttons */
+/* Buttons - psychedelic gradient */
 .btn-primary {
-  background: linear-gradient(90deg, #ffb86b, #ff5aa5, #7b61ff);
-  color: #0b0b0b;
-  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  background: linear-gradient(135deg, #8a2be2, #00ffff, #ff00ff);
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 28px rgba(255, 90, 165, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(138, 43, 226, 0.5);
 }
 .btn-primary:disabled {
   opacity: 0.5;
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(20, 10, 30, 0.6);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  backdrop-filter: blur(10px);
 }
 
-/* Gradient headings */
+/* Gradient headings - psychedelic colors */
 .gradient-title {
-  background: linear-gradient(90deg, #e0f2ff, #ffcfe6, #ffd9b3);
+  background: linear-gradient(135deg, #00ffff, #8a2be2, #ff00ff, #00ffff);
+  background-size: 200% 200%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 10px rgba(255, 90, 165, 0.25);
+  animation: gradient-shift 6s ease infinite;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-/* 2-line clamp (no plugin) */
+/* Text clamp utilities */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -52,7 +71,6 @@
   overflow: hidden;
 }
 
-/* Better text clamping */
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -63,73 +81,31 @@
   hyphens: none;
 }
 
-/* Prevent long nominee titles from clipping too early */
-.nominee-title{
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
-  word-break: break-word !important;
-  text-overflow: clip !important;
-}
-
-/* desktop: bump to 3 lines */
-@media (min-width: 1280px){ /* xl breakpoint */
-  .clamp-desktop-3{
-    -webkit-line-clamp: 3;
-  }
-}
-
-/* keep hyphens off */
-.no-hyphen{ hyphens: manual; }
-
 /* Base tweaks */
 html, body, #__next { height: 100%; }
 html { color-scheme: dark; }
-body { background: #090a0f; color: #ffffff; }
-
-/* === Share Preview / Story Export helpers === */
-
-/* Square thumbnails: never stretch the image */
-.thumb {
-  aspect-ratio: 1 / 1;       /* square frame */
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;          /* crop to fill */
-  border-radius: 10px;
+body { 
+  background: #0a0014; 
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
 }
 
-/* Main headings / titles inside the share preview */
-.share-title {
-  white-space: normal;
-  overflow-wrap: anywhere;    /* allow wrapping at any point if needed */
-  word-break: break-word;     /* break long english words sensibly */
-  line-height: 1.25;
+/* Better typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
-/* Direction utilities (because you mix Hebrew and English) */
-.rtl { direction: rtl; }
-.ltr { direction: ltr; text-align: left; }
-
-/* === Animations === */
-
-/* Bounce animation (for thank you page) */
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(-5%);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-  50% {
-    transform: translateY(0);
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  }
+/* Psychedelic glow effect */
+.psychedelic-glow {
+  filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.4)) 
+          drop-shadow(0 0 40px rgba(0, 255, 255, 0.2));
 }
 
-.animate-bounce {
-  animation: bounce 1s infinite;
-}
-
-/* Slow pulse animation (for play buttons) */
-/* Slow pulse animation (for play buttons) */
+/* Animations */
 @keyframes pulse-slow {
   0%, 100% {
     opacity: 1;
@@ -137,60 +113,48 @@ body { background: #090a0f; color: #ffffff; }
   }
   50% {
     opacity: 0.6;
-    transform: scale(1.1);
+    transform: scale(1.05);
   }
 }
 
 .animate-pulse-slow {
-  animation: pulse-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Subtle, slower pulse for the play button */
-@keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.04);
-  }
-}
-.animate-pulse-subtle {
-  animation: pulse-subtle 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
-/* Utility to explicitly disable animations when needed */
-.animate-none { animation: none !important; }
-
-
-/* Animated gradient background */
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient 3s ease infinite;
+/* Trippy border animation */
+@keyframes border-dance {
+  0% { border-color: rgba(138, 43, 226, 0.3); }
+  33% { border-color: rgba(0, 255, 255, 0.3); }
+  66% { border-color: rgba(255, 0, 255, 0.3); }
+  100% { border-color: rgba(138, 43, 226, 0.3); }
 }
 
-/* Ping animation (already exists in Tailwind but ensuring it's there) */
-@keyframes ping {
-  75%, 100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+.border-dance {
+  animation: border-dance 6s ease infinite;
 }
 
-.animate-ping {
-  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+/* Better focus states */
+*:focus-visible {
+  outline: 2px solid rgba(138, 43, 226, 0.6);
+  outline-offset: 2px;
 }
 
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(138, 43, 226, 0.4);
+  color: #ffffff;
+}
