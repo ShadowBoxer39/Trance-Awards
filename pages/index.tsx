@@ -1,4 +1,4 @@
-// pages/index.tsx
+// pages/index.tsx - CLEAN HOME PAGE
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,7 +20,7 @@ export default function Home() {
         <title>יוצאים לטראק - הפודקאסט הכי גדול בטראנס בישראל</title>
         <meta
           name="description"
-          content="הפודקאסט הכי גדול בטראנס בישראל - יוצאים לטראק. הצטרפו לקהילה שלנו!"
+          content="הפודקאסט הכי גדול בטראנס בישראל - יוצאים לטראק. 94+ פרקים, אמנים צעירים, והמוזיקה הטובה ביותר."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#FF5AA5" />
@@ -28,10 +28,11 @@ export default function Home() {
       </Head>
 
       <main className="min-h-screen neon-backdrop text-white">
-        {/* Header - matching vote page style */}
-        <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
+        {/* Navigation Bar (Sticky) */}
+        <header className="sticky top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition">
               <Image
                 src={BRAND.logo}
                 alt="יוצאים לטראק"
@@ -40,233 +41,240 @@ export default function Home() {
                 className="rounded-full border border-white/15"
                 priority
               />
-              <span className="text-sm opacity-80 hidden sm:inline">{BRAND.title}</span>
+              <span className="text-base font-[700] hidden sm:inline">{BRAND.title}</span>
             </Link>
-            <div className="ms-auto">
+
+            {/* Navigation Links */}
+            <nav className="flex items-center gap-4">
+              <Link
+                href="/episodes"
+                className="text-white/80 hover:text-white transition text-sm font-medium"
+              >
+                פרקים
+              </Link>
+              <Link
+                href="/young-artists"
+                className="text-white/80 hover:text-white transition text-sm font-medium"
+              >
+                אמנים צעירים
+              </Link>
+              <Link
+                href="/about"
+                className="text-white/80 hover:text-white transition text-sm font-medium"
+              >
+                אודות
+              </Link>
               <Link
                 href="/vote"
-                className="btn-primary rounded-2xl px-4 py-2 text-sm font-medium"
+                className="btn-primary rounded-xl px-4 py-2 text-sm font-bold border-0"
               >
                 הצבעה 🗳️
               </Link>
-            </div>
+            </nav>
           </div>
         </header>
 
         {/* Hero Section */}
-        <section className="max-w-6xl mx-auto px-4 pt-16 pb-12">
+        <section className="max-w-6xl mx-auto px-4 pt-12 sm:pt-20 pb-12">
           <div className="max-w-3xl">
-            {/* Logo & Brand */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-purple-500/20 blur-2xl" />
-                <Image
-                  src={BRAND.logo}
-                  alt="יוצאים לטראק"
-                  width={80}
-                  height={80}
-                  className="relative rounded-2xl border border-white/15"
-                  priority
-                />
+            {/* Logo with glow effect */}
+            <div className="mb-8 inline-block relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-purple-500/30 blur-3xl" />
+              <Image
+                src={BRAND.logo}
+                alt="יוצאים לטראק"
+                width={120}
+                height={120}
+                className="relative rounded-3xl border-2 border-white/20"
+                priority
+              />
+            </div>
+
+            {/* Title & Tagline */}
+            <h1 className="gradient-title text-5xl sm:text-6xl lg:text-7xl font-[900] leading-[1.05] mb-4">
+              יוצאים לטראק
+            </h1>
+            <p className="text-white/80 text-xl sm:text-2xl mb-8 leading-relaxed">
+              הפודקאסט הכי גדול בטראנס בישראל
+            </p>
+
+            {/* Quick Stats */}
+            <div className="flex flex-wrap gap-4 mb-10">
+              <div className="glass rounded-2xl px-6 py-4 border border-white/10">
+                <div className="text-3xl font-black gradient-title">94+</div>
+                <div className="text-white/70 text-sm">פרקים</div>
               </div>
-              <div>
-                <h1 className="gradient-title text-4xl sm:text-5xl lg:text-6xl font-[700] leading-tight">
-                  יוצאים לטראק
-                </h1>
-                <p className="text-white/70 text-lg mt-1">
-                  הפודקאסט הכי גדול בטראנס בישראל
-                </p>
+              <div className="glass rounded-2xl px-6 py-4 border border-white/10">
+                <div className="text-3xl font-black gradient-title">200+</div>
+                <div className="text-white/70 text-sm">שעות מוזיקה</div>
+              </div>
+              <div className="glass rounded-2xl px-6 py-4 border border-white/10">
+                <div className="text-3xl font-black gradient-title">10K+</div>
+                <div className="text-white/70 text-sm">מאזינים</div>
               </div>
             </div>
 
-            {/* Main Description */}
-            <div className="glass rounded-3xl p-8 mb-8">
-              <p className="text-white/90 text-lg leading-relaxed mb-6">
-                פודקאסט טראנס שבועי עם למעלה מ-94 פרקים, המביא לכם את המוזיקה הטובה ביותר, 
-                ראיונות עם האמנים המובילים, וכמובן - אמנים צעירים שמגיעים לשדר כל שבועיים.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <div className="glass rounded-xl px-4 py-2 text-sm border border-white/10">
-                  <span className="text-white/70">פרקים:</span>{" "}
-                  <span className="text-white font-bold">94+</span>
-                </div>
-                <div className="glass rounded-xl px-4 py-2 text-sm border border-white/10">
-                  <span className="text-white/70">תדירות:</span>{" "}
-                  <span className="text-white font-bold">שבועי</span>
-                </div>
-                <div className="glass rounded-xl px-4 py-2 text-sm border border-white/10">
-                  <span className="text-white/70">אמנים צעירים:</span>{" "}
-                  <span className="text-white font-bold">כל שבועיים</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div className="grid sm:grid-cols-2 gap-4 mb-8">
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-4">
               <Link
-                href="/vote"
-                className="glass rounded-2xl p-6 hover:border-cyan-400/50 transition-all group"
+                href="/episodes"
+                className="btn-primary rounded-2xl px-8 py-4 text-lg font-bold inline-flex items-center justify-center gap-2 hover:scale-105 transition-transform"
               >
-                <div className="text-3xl mb-3">🗳️</div>
-                <h3 className="text-xl font-bold mb-2 group-hover:text-cyan-400 transition">
-                  נבחרי השנה 2025
-                </h3>
-                <p className="text-white/70 text-sm">
-                  הצביעו לאמנים, טראקים ואלבומים האהובים עליכם
-                </p>
+                <span>כל הפרקים</span>
+                <span>🎵</span>
               </Link>
-
-              <div className="glass rounded-2xl p-6 opacity-60">
-                <div className="text-3xl mb-3">🎵</div>
-                <h3 className="text-xl font-bold mb-2">
-                  כל הפרקים
-                </h3>
-                <p className="text-white/70 text-sm">
-                  בקרוב - ארכיון מלא של כל הפרקים שלנו
-                </p>
-              </div>
+              <a
+                href="https://open.spotify.com/show/0LGP2n3IGqeFVv1fIZOkeZ"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass rounded-2xl px-8 py-4 text-lg font-bold hover:bg-white/10 transition inline-flex items-center justify-center gap-2"
+              >
+                <span>Spotify</span>
+                <span>🎧</span>
+              </a>
             </div>
           </div>
         </section>
 
         {/* Featured Episode Section */}
-        <section className="max-w-6xl mx-auto px-4 py-12">
-          <div className="mb-6">
-            <h2 className="text-2xl sm:text-3xl font-[700] mb-2">
-              הפרק האחרון
+        <section className="max-w-6xl mx-auto px-4 py-16">
+          <div className="mb-8">
+            <h2 className="text-3xl sm:text-4xl font-[900] mb-3 gradient-title">
+              🎬 הפרק האחרון
             </h2>
-            <p className="text-white/70">
-              צפו בפרק האחרון שלנו ביוטיוב
+            <p className="text-white/70 text-lg">
+              הפרק החדש ביותר שלנו - תהנו!
             </p>
           </div>
 
-          <div className="glass rounded-3xl overflow-hidden max-w-4xl">
-            <div className="aspect-video bg-black/60 flex items-center justify-center">
-              <div className="text-center p-8">
-                <div className="text-6xl mb-4">▶️</div>
-                <p className="text-white/70 mb-4">סרטון היוטיוב יופיע כאן</p>
+          <div className="glass rounded-3xl overflow-hidden max-w-4xl border border-white/10">
+            {/* YouTube Embed */}
+            <div className="aspect-video bg-black/60">
+              <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube.com/embed/LATEST_VIDEO_ID"
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              />
+            </div>
+
+            {/* Episode Info */}
+            <div className="p-6 sm:p-8">
+              <h3 className="text-2xl font-bold mb-3">שם הפרק האחרון</h3>
+              <p className="text-white/70 mb-6 leading-relaxed">
+                תיאור קצר של הפרק - מה היה, מי היה, איזה טראקים ואיזה אמנים. 
+                זה המקום לתת טעימה מהתוכן.
+              </p>
+
+              <div className="flex flex-wrap gap-3">
                 <a
                   href="https://www.youtube.com/@tracktripil"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-primary rounded-xl px-6 py-2 text-sm inline-block"
+                  className="glass rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-white/10 transition"
                 >
-                  לערוץ היוטיוב
+                  ▶️ צפו ביוטיוב
                 </a>
+                <a
+                  href="https://open.spotify.com/show/0LGP2n3IGqeFVv1fIZOkeZ"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="glass rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-white/10 transition"
+                >
+                  🎧 האזינו בספוטיפיי
+                </a>
+                <Link
+                  href="/episodes"
+                  className="glass rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-white/10 transition"
+                >
+                  📚 כל הפרקים
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Young Artists Section */}
-        <section className="max-w-6xl mx-auto px-4 py-12">
-          <div className="mb-6">
-            <h2 className="text-2xl sm:text-3xl font-[700] mb-2">
-              אמני החודש
-            </h2>
+        {/* Social Links */}
+        <section className="max-w-6xl mx-auto px-4 py-16">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-[900] mb-2 gradient-title">
+              הצטרפו לקהילה
+            </h3>
             <p className="text-white/70">
-              מתעדכן כל שבועיים • האמנים הצעירים המבטיחים ביותר
+              עקבו אחרינו ברשתות החברתיות
             </p>
           </div>
 
-          <div className="glass rounded-3xl p-8">
-            <div className="text-center text-white/60">
-              <div className="text-5xl mb-4">🎵</div>
-              <p>האמנים הצעירים יתווספו בקרוב</p>
-            </div>
-          </div>
-        </section>
-
-        {/* About Section */}
-        <section className="max-w-6xl mx-auto px-4 py-12">
-          <div className="glass rounded-3xl p-8 sm:p-12 max-w-4xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-[700] mb-6">
-              אודות הפודקאסט
-            </h2>
-            <div className="space-y-4 text-white/80 leading-relaxed">
-              <p>
-                יוצאים לטראק הוא הפודקאסט הכי גדול בטראנס בישראל. אנחנו מביאים לכם את המוזיקה הטובה ביותר, 
-                ראיונות עם האמנים המובילים, וכמובן - אמנים צעירים שמגיעים לשדר כל שבועיים.
-              </p>
-              <p>
-                עם יותר מ-94 פרקים ופרק חדש כל שבוע, אנחנו הבית של קהילת הטראנס בישראל. 
-                הצטרפו אלינו למסע המוזיקלי הכי מרתק בסצנה הישראלית.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Social Links */}
-        <section className="max-w-6xl mx-auto px-4 py-12">
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-[700] mb-2">הצטרפו לקהילה</h3>
-            <p className="text-white/70 text-sm">עקבו אחרינו ברשתות החברתיות</p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-4">
             <a
               href="https://www.instagram.com/track_trip.trance/"
               target="_blank"
               rel="noopener noreferrer"
-              className="glass rounded-xl px-5 py-3 hover:border-pink-500/50 transition-all group"
+              className="glass rounded-2xl px-8 py-4 hover:border-pink-500/50 transition-all group flex items-center gap-3 min-w-[160px]"
+              style={{ borderColor: 'rgba(225, 48, 108, 0.3)' }}
             >
-              <span className="text-white/80 group-hover:text-white">📸 Instagram</span>
+              <span className="text-2xl">📸</span>
+              <span className="font-medium group-hover:text-pink-400 transition">Instagram</span>
             </a>
 
             <a
               href="https://www.youtube.com/@tracktripil"
               target="_blank"
               rel="noopener noreferrer"
-              className="glass rounded-xl px-5 py-3 hover:border-red-500/50 transition-all group"
+              className="glass rounded-2xl px-8 py-4 hover:border-red-500/50 transition-all group flex items-center gap-3 min-w-[160px]"
+              style={{ borderColor: 'rgba(255, 0, 0, 0.3)' }}
             >
-              <span className="text-white/80 group-hover:text-white">▶️ YouTube</span>
+              <span className="text-2xl">▶️</span>
+              <span className="font-medium group-hover:text-red-400 transition">YouTube</span>
             </a>
 
             <a
               href="https://open.spotify.com/show/0LGP2n3IGqeFVv1fIZOkeZ"
               target="_blank"
               rel="noopener noreferrer"
-              className="glass rounded-xl px-5 py-3 hover:border-green-500/50 transition-all group"
+              className="glass rounded-2xl px-8 py-4 hover:border-green-500/50 transition-all group flex items-center gap-3 min-w-[160px]"
+              style={{ borderColor: 'rgba(29, 185, 84, 0.3)' }}
             >
-              <span className="text-white/80 group-hover:text-white">🎧 Spotify</span>
+              <span className="text-2xl">🎧</span>
+              <span className="font-medium group-hover:text-green-400 transition">Spotify</span>
             </a>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="max-w-6xl mx-auto px-4 py-12">
-          <div className="glass rounded-3xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="text-xl font-[700] mb-1">הצביעו בנבחרי השנה</h3>
-              <p className="text-white/70 text-sm">
-                בואו להיות חלק מההיסטוריה של הטראנס הישראלי
-              </p>
-            </div>
-            <Link
-              href="/vote"
-              className="btn-primary rounded-2xl px-8 py-3 text-base font-medium whitespace-nowrap"
-            >
-              מעבר להצבעה
-            </Link>
-          </div>
-        </section>
-
         {/* Footer */}
-        <footer className="border-t border-white/10 bg-black/40 mt-16">
+        <footer className="border-t border-white/10 bg-black/40 mt-8">
           <div className="max-w-6xl mx-auto px-4 py-8">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/60">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <Image
                   src={BRAND.logo}
                   alt="יוצאים לטראק"
-                  width={24}
-                  height={24}
+                  width={32}
+                  height={32}
                   className="rounded-lg"
                 />
-                <span>© 2025 יוצאים לטראק</span>
+                <div className="text-sm text-white/60">
+                  <div>© 2025 יוצאים לטראק</div>
+                  <div className="text-xs text-white/40">כל הזכויות שמורות</div>
+                </div>
               </div>
-              <div>
-                הפודקאסט הכי גדול בטראנס בישראל 🇮🇱
+              <div className="flex gap-4 text-sm text-white/60">
+                <Link href="/episodes" className="hover:text-white transition">
+                  פרקים
+                </Link>
+                <Link href="/young-artists" className="hover:text-white transition">
+                  אמנים צעירים
+                </Link>
+                <Link href="/about" className="hover:text-white transition">
+                  אודות
+                </Link>
+                <Link href="/vote" className="hover:text-white transition">
+                  הצבעה
+                </Link>
               </div>
             </div>
           </div>
