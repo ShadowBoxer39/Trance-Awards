@@ -205,7 +205,8 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="order-2 md:order-none flex gap-8 md:gap-12">
+              {/* Stats */}
+              <div className="flex gap-8 md:gap-12">
                 <div>
                   <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
                     50+
@@ -225,30 +226,55 @@ export default function Home() {
                   <div className="text-sm text-gray-500">וייבים טובים</div>
                 </div>
               </div>
+
+              {/* Studio card - mobile only */}
+              <div className="md:hidden mt-10">
+                <div className="glass-card rounded-2xl p-6 max-w-sm mx-auto flex flex-col items-center text-center">
+                  <div className="mb-4">
+                    <div className="w-28 h-28 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg">
+                      <Image
+                        src="/images/musikroom.png"
+                        alt="Music Room Studio"
+                        width={110}
+                        height={110}
+                        className="object-contain"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-gray-300 text-sm leading-relaxed mb-4">
+                    התכנית מוקלטת באולפני המיוזיק רום – אולפן פודקאסטים ייחודי
+                    ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
+                  </p>
+                  <a
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-purple-300 hover:text-purple-200 underline-offset-2 hover:underline transition"
+                  >
+                    לאתר המיוזיק רום
+                  </a>
+                </div>
+              </div>
             </div>
 
-            {/* Right side – studio partner card */}
-            <div className="order-3 md:order-none mt-10 md:mt-0">
-              <div className="glass-card rounded-2xl p-6 md:p-8 max-w-sm mx-auto flex flex-col items-center text-center">
-                {/* Logo */}
-               <div className="mb-4">
-  <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg">
-    <Image
-      src="/images/musikroom.png"
-      alt="Music Room Studio"
-      width={110}
-      height={110}
-      className="object-contain"
-    />
-  </div>
-</div>
-                {/* Text */}
+            {/* Right side – studio partner card (desktop only) */}
+            <div className="hidden md:block mt-10 md:mt-0">
+              <div className="glass-card rounded-2xl p-8 max-w-sm mx-auto flex flex-col items-center text-center">
+                <div className="mb-4">
+                  <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg">
+                    <Image
+                      src="/images/musikroom.png"
+                      alt="Music Room Studio"
+                      width={130}
+                      height={130}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
                 <p className="text-gray-300 text-sm leading-relaxed mb-4">
                   התכנית מוקלטת באולפני המיוזיק רום – אולפן פודקאסטים ייחודי
                   ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
                 </p>
-
-                {/* Placeholder for website link */}
                 <a
                   href="#"
                   target="_blank"
