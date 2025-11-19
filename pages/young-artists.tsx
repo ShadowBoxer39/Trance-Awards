@@ -348,6 +348,75 @@ export default function YoungArtists() {
 
         {/* Featured Episode - 4 Young Artists */}
         <section className="max-w-5xl mx-auto px-6 py-16">
+          <h2 className="text-2xl font-semibold mb-6">אמנים שהוצגו בעבר</h2>
+          
+          <div className="grid md:grid-cols-2 gap-6 mb-16">
+            {/* Previous Artist 1 */}
+            <div className="glass-card rounded-xl overflow-hidden border border-purple-500/20 hover:border-purple-500/40 transition">
+              <div className="aspect-video bg-gradient-to-br from-purple-600/20 to-cyan-600/20 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-5xl">🎧</span>
+                </div>
+              </div>
+              <div className="p-5">
+                <h3 className="text-xl font-semibold mb-1">שם האמן 1</h3>
+                <p className="text-purple-400 text-sm mb-3">Progressive Psytrance</p>
+                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                  תיאור קצר על האמן והסגנון שלו. אמן צעיר מוכשר מהסצנה הישראלית.
+                </p>
+                <div className="flex gap-2">
+                  <a
+                    href="#"
+                    className="btn-secondary px-4 py-2 rounded-lg text-xs font-medium flex-1 text-center"
+                  >
+                    SoundCloud
+                  </a>
+                  <a
+                    href="#"
+                    className="btn-secondary px-4 py-2 rounded-lg text-xs font-medium flex-1 text-center"
+                  >
+                    Instagram
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Previous Artist 2 */}
+            <div className="glass-card rounded-xl overflow-hidden border border-purple-500/20 hover:border-purple-500/40 transition">
+              <div className="aspect-video bg-gradient-to-br from-cyan-600/20 to-magenta-600/20 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-5xl">🎵</span>
+                </div>
+              </div>
+              <div className="p-5">
+                <h3 className="text-xl font-semibold mb-1">שם האמן 2</h3>
+                <p className="text-purple-400 text-sm mb-3">Full On</p>
+                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                  תיאור קצר על האמן והסגנון שלו. אמן צעיר מוכשר מהסצנה הישראלית.
+                </p>
+                <div className="flex gap-2">
+                  <a
+                    href="#"
+                    className="btn-secondary px-4 py-2 rounded-lg text-xs font-medium flex-1 text-center"
+                  >
+                    SoundCloud
+                  </a>
+                  <a
+                    href="#"
+                    className="btn-secondary px-4 py-2 rounded-lg text-xs font-medium flex-1 text-center"
+                  >
+                    Instagram
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Special Episode - 4 Young Artists */}
+        <section className="max-w-5xl mx-auto px-6 py-16">
+          <h2 className="text-2xl font-semibold mb-6">פרק מיוחד - 4 אמנים צעירים</h2>
+          
           <div className="glass-card rounded-xl overflow-hidden border-2 border-purple-500/30">
             <div className="p-6 md:p-8 bg-gradient-to-r from-purple-900/30 to-transparent">
               <div className="flex items-center gap-3 mb-4">
