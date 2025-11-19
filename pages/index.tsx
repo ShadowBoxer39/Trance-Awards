@@ -84,10 +84,7 @@ export default function Home() {
 
               {/* Desktop Menu */}
               <div className="hidden md:flex items-center gap-6">
-                <Link
-                  href="/"
-                  className="text-white text-sm font-medium"
-                >
+                <Link href="/" className="text-white text-sm font-medium">
                   בית
                 </Link>
                 <Link
@@ -171,6 +168,7 @@ export default function Home() {
         {/* HERO */}
         <header className="max-w-7xl mx-auto px-6 pt-16 pb-10">
           <div className="grid md:grid-cols-2 gap-10 items-center">
+            {/* Left side – title & CTA */}
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-purple-400 mb-3">
                 פודקאסט הטראנס של ישראל
@@ -229,15 +227,35 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="hidden md:block">
-              <div className="glass-card rounded-2xl p-4 bg-gradient-to-br from-purple-600/40 via-pink-500/20 to-transparent">
-                <Image
-                  src="/images/musikroom.png"
-                  alt="Recording Studio"
-                  width={800}
-                  height={450}
-                  className="rounded-xl object-cover"
-                />
+            {/* Right side – studio partner card */}
+            <div className="mt-10 md:mt-0">
+              <div className="glass-card rounded-2xl p-6 md:p-8 max-w-sm mx-auto flex flex-col items-center text-center">
+                {/* Logo */}
+                <div className="mb-4">
+                  <Image
+                    src="/images/musikroom.png"
+                    alt="Music Room Studio"
+                    width={190}
+                    height={190}
+                    className="object-contain opacity-95 drop-shadow-[0_0_18px_rgba(120,0,255,0.35)]"
+                  />
+                </div>
+
+                {/* Text */}
+                <p className="text-gray-300 text-sm leading-relaxed mb-4">
+                  התכנית מוקלטת באולפני המיוזיק רום – אולפן פודקאסטים ייחודי
+                  ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
+                </p>
+
+                {/* Placeholder for website link */}
+                <a
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-purple-300 hover:text-purple-200 underline-offset-2 hover:underline transition"
+                >
+                  לאתר המיוזיק רום
+                </a>
               </div>
             </div>
           </div>
@@ -355,10 +373,7 @@ export default function Home() {
           {episodesLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="glass-card rounded-lg overflow-hidden"
-                >
+                <div key={i} className="glass-card rounded-lg overflow-hidden">
                   <div className="aspect-video bg-gray-900 animate-pulse" />
                   <div className="p-3">
                     <div className="h-4 bg-gray-800 rounded w-1/2" />
@@ -421,7 +436,9 @@ export default function Home() {
         {/* Platforms */}
         <section className="max-w-7xl mx-auto px-6 py-16">
           <div className="glass-card rounded-xl p-8 text-center">
-            <h2 className="text-2xl font-semibold mb-4">האזינו בכל הפלטפורמות</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              האזינו בכל הפלטפורמות
+            </h2>
             <p className="text-gray-400 mb-8">
               כל הפרקים זמינים גם ב־YouTube, Spotify ועוד.
             </p>
