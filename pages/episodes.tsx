@@ -1,4 +1,4 @@
-// pages/episodes.tsx - SMART EPISODES PAGE WITH AUTO-UPDATE
+// pages/episodes.tsx - AUTO-UPDATE FROM YOUTUBE API
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,25 +14,22 @@ interface Episode {
   channelTitle: string;
 }
 
-// Fallback data in case API fails
-import fallbackData from "../data/episodes.json";
-
 export default function Episodes() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [episodes, setEpisodes] = React.useState<Episode[]>(fallbackData);
-  const [filteredEpisodes, setFilteredEpisodes] = React.useState<Episode[]>(fallbackData);
+  const [episodes, setEpisodes] = React.useState<Episode[]>([]);
+  const [filteredEpisodes, setFilteredEpisodes] = React.useState<Episode[]>([]);
   const [displayCount, setDisplayCount] = React.useState(12);
   const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
     
-    // Try to fetch fresh episodes from API
+    // Fetch episodes from API
     fetch('/api/episodes')
       .then(res => {
-        if (!res.ok) throw new Error('API failed');
+        if (!res.ok) throw new Error('Failed to fetch episodes');
         return res.json();
       })
       .then(data => {
@@ -41,9 +38,8 @@ export default function Episodes() {
         setLoading(false);
       })
       .catch(err => {
-        console.error('Failed to fetch episodes from API, using fallback data:', err);
-        // Already has fallback data loaded
-        setError(true);
+        console.error('Failed to fetch episodes:', err);
+        setError(err.message);
         setLoading(false);
       });
   }, []);
@@ -87,6 +83,33 @@ export default function Episodes() {
           <div className="text-center">
             <div className="text-6xl mb-4 animate-pulse">🎵</div>
             <p className="text-xl text-gray-400">טוען פרקים...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Head>
+          <title>פרקים - יוצאים לטראק</title>
+          <meta name="description" content="כל הפרקים של יוצאים לטראק" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/images/logo.png" />
+        </Head>
+
+        <div className="trance-backdrop min-h-screen text-gray-100 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-6">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-semibold mb-3">שגיאה בטעינת הפרקים</h2>
+            <p className="text-gray-400 mb-6">לא הצלחנו לטעון את הפרקים. נסה לרענן את הדף.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn-primary px-6 py-3 rounded-lg font-medium"
+            >
+              רענן דף
+            </button>
           </div>
         </div>
       </>
@@ -174,12 +197,6 @@ export default function Episodes() {
             <p className="text-xl md:text-2xl text-gray-400 mb-8">
               {episodes.length} פרקים של מוזיקת טראנס מהארץ ומהעולם
             </p>
-
-            {error && (
-              <div className="max-w-2xl mx-auto mb-6 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm text-yellow-200">
-                ⚠️ מציג פרקים משמורים. ייתכנו פרקים חדשים שלא מוצגים.
-              </div>
-            )}
 
             {/* Search Bar */}
             <div className="max-w-2xl mx-auto">
