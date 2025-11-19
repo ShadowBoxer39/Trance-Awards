@@ -232,7 +232,7 @@ export default function Home() {
             <div className="hidden md:block">
               <div className="glass-card rounded-2xl p-4 bg-gradient-to-br from-purple-600/40 via-pink-500/20 to-transparent">
                 <Image
-                  src="/images/studio-shot.jpg"
+                  src="/images/musikroom.png"
                   alt="Recording Studio"
                   width={800}
                   height={450}
