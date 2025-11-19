@@ -1,4 +1,4 @@
-// pages/episodes.tsx - SMART EPISODES PAGE WITH SEARCH
+// pages/episodes.tsx - SMART EPISODES PAGE WITH AUTO-UPDATE
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,27 +14,36 @@ interface Episode {
   channelTitle: string;
 }
 
+// Fallback data in case API fails
+import fallbackData from "../data/episodes.json";
+
 export default function Episodes() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [episodes, setEpisodes] = React.useState<Episode[]>([]);
-  const [filteredEpisodes, setFilteredEpisodes] = React.useState<Episode[]>([]);
+  const [episodes, setEpisodes] = React.useState<Episode[]>(fallbackData);
+  const [filteredEpisodes, setFilteredEpisodes] = React.useState<Episode[]>(fallbackData);
   const [displayCount, setDisplayCount] = React.useState(12);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(false);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
     
-    // Load episodes data
-    fetch('/data/episodes.json')
-      .then(res => res.json())
+    // Try to fetch fresh episodes from API
+    fetch('/api/episodes')
+      .then(res => {
+        if (!res.ok) throw new Error('API failed');
+        return res.json();
+      })
       .then(data => {
         setEpisodes(data);
         setFilteredEpisodes(data);
         setLoading(false);
       })
       .catch(err => {
-        console.error('Failed to load episodes:', err);
+        console.error('Failed to fetch episodes from API, using fallback data:', err);
+        // Already has fallback data loaded
+        setError(true);
         setLoading(false);
       });
   }, []);
@@ -54,7 +63,7 @@ export default function Episodes() {
     });
 
     setFilteredEpisodes(filtered);
-    setDisplayCount(12); // Reset display count when searching
+    setDisplayCount(12);
   }, [searchQuery, episodes]);
 
   const displayedEpisodes = filteredEpisodes.slice(0, displayCount);
@@ -165,6 +174,12 @@ export default function Episodes() {
             <p className="text-xl md:text-2xl text-gray-400 mb-8">
               {episodes.length} פרקים של מוזיקת טראנס מהארץ ומהעולם
             </p>
+
+            {error && (
+              <div className="max-w-2xl mx-auto mb-6 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm text-yellow-200">
+                ⚠️ מציג פרקים משמורים. ייתכנו פרקים חדשים שלא מוצגים.
+              </div>
+            )}
 
             {/* Search Bar */}
             <div className="max-w-2xl mx-auto">
