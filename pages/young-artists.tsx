@@ -139,11 +139,11 @@ export default function YoungArtists() {
         </nav>
 
         {/* Hero */}
-        <section className="max-w-5xl mx-auto px-6 pt-20 pb-12">
-          <div className="text-center">
-            <div className="text-5xl mb-4">🌟</div>
-            <h1 className="text-4xl md:text-5xl font-semibold mb-4">אמנים צעירים</h1>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+        <section className="max-w-7xl mx-auto px-6 pt-20 pb-12">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="text-6xl mb-6">🌟</div>
+            <h1 className="text-5xl md:text-6xl font-semibold mb-5">אמנים צעירים</h1>
+            <p className="text-xl md:text-2xl text-gray-400">
               במה לאמנים צעירים בסצנת הטראנס הישראלית
             </p>
           </div>
@@ -307,7 +307,7 @@ export default function YoungArtists() {
         </section>
 
         {/* How It Works */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
+        <section className="max-w-7xl mx-auto px-6 py-16">
           <div className="text-center mb-12">
             <span className="text-4xl mb-4 block">🎯</span>
             <h2 className="text-3xl font-semibold mb-4">איך זה עובד?</h2>
@@ -347,7 +347,7 @@ export default function YoungArtists() {
         </section>
 
         {/* Featured Episode - 4 Young Artists */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
+        <section className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-2xl font-semibold mb-6">אמנים שהוצגו בעבר</h2>
           
           <div className="grid md:grid-cols-2 gap-6 mb-16">
@@ -414,7 +414,7 @@ export default function YoungArtists() {
         </section>
 
         {/* Special Episode - 4 Young Artists */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
+        <section className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-2xl font-semibold mb-6">פרק מיוחד - 4 אמנים צעירים</h2>
           
           <div className="glass-card rounded-xl overflow-hidden border-2 border-purple-500/30">
@@ -466,7 +466,7 @@ export default function YoungArtists() {
 
         {/* Footer */}
         <footer className="border-t border-gray-800 mt-16">
-          <div className="max-w-5xl mx-auto px-6 py-8">
+          <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
               <div>© 2025 יוצאים לטראק</div>
               <div className="flex gap-6">
