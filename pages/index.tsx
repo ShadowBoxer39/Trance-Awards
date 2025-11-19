@@ -410,7 +410,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Social Links */}
+    {/* Social Links */}
         <div>
           <h4 className="text-sm font-semibold mb-3 text-gray-400">עקבו אחריו</h4>
           <div className="flex flex-wrap gap-3">
