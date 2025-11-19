@@ -9,6 +9,8 @@ interface Signup {
   id: string;
   fullName: string;
   stageName: string;
+  age: string;
+  phone: string;
   experienceYears: string;
   inspirations: string;
   trackLink: string;
@@ -77,6 +79,48 @@ export default function Admin() {
       hour: '2-digit',
       minute: '2-digit',
     }).format(date);
+  };
+
+  const downloadCSV = () => {
+    if (signups.length === 0) {
+      alert("אין הרשמות להורדה");
+      return;
+    }
+
+    // CSV Headers
+    const headers = ["תאריך", "שם מלא", "שם במה", "גיל", "טלפון", "ניסיון", "השראות", "לינק לטראק"];
+    
+    // CSV Rows
+    const rows = signups.map(s => [
+      formatDate(s.submittedAt),
+      s.fullName,
+      s.stageName,
+      s.age || "לא צוין",
+      s.phone || "לא צוין",
+      s.experienceYears,
+      s.inspirations.replace(/"/g, '""'), // Escape quotes
+      s.trackLink
+    ]);
+
+    // Build CSV content
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    // Add BOM for Hebrew support in Excel
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    
+    // Download
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `young-artists-signups-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   async function fetchStats(e?: React.FormEvent) {
@@ -435,14 +479,22 @@ export default function Admin() {
 
                 <div className="glass rounded-xl overflow-hidden">
                   <div className="p-6 border-b border-white/10">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
                       <h2 className="text-2xl font-semibold">הרשמות אמנים</h2>
-                      <button
-                        onClick={loadSignups}
-                        className="btn-primary rounded-xl px-4 py-2 text-sm"
-                      >
-                        🔄 רענן
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={downloadCSV}
+                          className="rounded-xl px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 text-sm border border-green-500/30 transition font-medium"
+                        >
+                          📥 הורד CSV
+                        </button>
+                        <button
+                          onClick={loadSignups}
+                          className="btn-primary rounded-xl px-4 py-2 text-sm"
+                        >
+                          🔄 רענן
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -459,6 +511,8 @@ export default function Admin() {
                             <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">תאריך</th>
                             <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">שם מלא</th>
                             <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">שם במה</th>
+                            <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">גיל</th>
+                            <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">טלפון</th>
                             <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">ניסיון</th>
                             <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">פעולות</th>
                           </tr>
@@ -476,6 +530,8 @@ export default function Admin() {
                               </td>
                               <td className="px-6 py-4 text-sm font-medium">{signup.fullName}</td>
                               <td className="px-6 py-4 text-sm text-cyan-400">{signup.stageName}</td>
+                              <td className="px-6 py-4 text-sm text-white/60">{signup.age || "-"}</td>
+                              <td className="px-6 py-4 text-sm text-white/60">{signup.phone || "-"}</td>
                               <td className="px-6 py-4 text-sm text-white/60">{signup.experienceYears}</td>
                               <td className="px-6 py-4 text-sm">
                                 <div className="flex gap-2">
@@ -528,6 +584,17 @@ export default function Admin() {
                         <div>
                           <div className="text-sm text-white/60 mb-1">שם במה</div>
                           <div className="text-lg text-cyan-400 font-semibold">{selectedSignup.stageName}</div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm text-white/60 mb-1">גיל</div>
+                            <div className="text-lg">{selectedSignup.age || "לא צוין"}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-white/60 mb-1">טלפון</div>
+                            <div className="text-lg">{selectedSignup.phone || "לא צוין"}</div>
+                          </div>
                         </div>
 
                         <div>
