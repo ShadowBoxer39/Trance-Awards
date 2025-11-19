@@ -82,44 +82,42 @@ export default function Home() {
         <span className="text-xl font-semibold hidden sm:block">יוצאים לטראק</span>
       </Link>
 
-      {/* Desktop Menu */}
-      <div className="hidden md:flex items-center gap-8">
-        <Link href="/" className="text-white text-base font-medium hover:text-purple-400 transition">
-          בית
-        </Link>
-        <Link
-          href="/episodes"
-          className="text-gray-300 hover:text-white text-base font-medium transition"
-        >
-          פרקים
-        </Link>
-        <Link
-          href="/young-artists"
-          className="text-gray-300 hover:text-white text-base font-medium transition"
-        >
-          אמנים צעירים
-        </Link>
-        <Link
-          href="/about"
-          className="text-gray-300 hover:text-white text-base font-medium transition"
-        >
-          אודות
-        </Link>
-        <Link
-          href="/vote"
-          className="btn-primary px-6 py-3 rounded-lg text-base font-medium"
-        >
-          הצבעה
-        </Link>
-<Link
-  href="/advertisers"
-  className="text-gray-300 hover:text-white text-base font-medium transition"
->
-  למפרסמים
-</Link>
-        
-      </div>
-
+    {/* Desktop Menu */}
+<div className="hidden md:flex items-center gap-8">
+  <Link href="/" className="text-gray-300 hover:text-white text-base font-medium transition">
+    בית
+  </Link>
+  <Link
+    href="/episodes"
+    className="text-gray-300 hover:text-white text-base font-medium transition"
+  >
+    פרקים
+  </Link>
+  <Link
+    href="/young-artists"
+    className="text-gray-300 hover:text-white text-base font-medium transition"
+  >
+    אמנים צעירים
+  </Link>
+  <Link
+    href="/about"
+    className="text-gray-300 hover:text-white text-base font-medium transition"
+  >
+    אודות
+  </Link>
+  <Link
+    href="/advertisers"
+    className="text-white text-base font-medium hover:text-purple-400 transition"
+  >
+    למפרסמים
+  </Link>
+  <Link
+    href="/vote"
+    className="btn-primary px-6 py-3 rounded-lg text-base font-medium"
+  >
+    הצבעה
+  </Link>
+</div>
       {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -135,55 +133,53 @@ export default function Home() {
       </button>
     </div>
 
-    {/* Mobile Menu */}
-    {mobileMenuOpen && (
-      <div className="md:hidden pb-4 space-y-1">
-        <Link
-          href="/"
-          className="block text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          בית
-        </Link>
-        <Link
-          href="/episodes"
-          className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          פרקים
-        </Link>
-        <Link
-          href="/young-artists"
-          className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          אמנים צעירים
-        </Link>
-        <Link
-          href="/about"
-          className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          אודות
-        </Link>
-        <Link
-          href="/vote"
-          className="block btn-primary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          הצבעה
-        </Link>
-     <Link
-  href="/advertisers"
-  className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-  onClick={() => setMobileMenuOpen(false)}
->
-  למפרסמים
-</Link>
-      
-      
-      </div>
-    )}
+  {/* Mobile Menu */}
+{mobileMenuOpen && (
+  <div className="md:hidden pb-4 space-y-1">
+    <Link
+      href="/"
+      className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      בית
+    </Link>
+    <Link
+      href="/episodes"
+      className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      פרקים
+    </Link>
+    <Link
+      href="/young-artists"
+      className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      אמנים צעירים
+    </Link>
+    <Link
+      href="/about"
+      className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      אודות
+    </Link>
+    <Link
+      href="/advertisers"
+      className="block text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      למפרסמים
+    </Link>
+    <Link
+      href="/vote"
+      className="block btn-primary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      הצבעה
+    </Link>
+  </div>
+)}
   </div>
 </nav>
 
