@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-const CHANNEL_ID = "UCxM8hl6T5cVHc8x8RqYqH5w"; // Your channel ID or playlist ID
+const CHANNEL_ID = "UCkxngqv_ts0zMCk-pwlc0ig"; // Your channel ID or playlist ID
 
 interface Episode {
   id: number;
