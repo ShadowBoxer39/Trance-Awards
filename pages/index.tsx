@@ -205,7 +205,7 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="flex gap-8 md:gap-12">
+              <div className="order-2 md:order-none flex gap-8 md:gap-12">
                 <div>
                   <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
                     50+
@@ -228,7 +228,7 @@ export default function Home() {
             </div>
 
             {/* Right side – studio partner card */}
-            <div className="mt-10 md:mt-0">
+            <div className="order-3 md:order-none mt-10 md:mt-0">
               <div className="glass-card rounded-2xl p-6 md:p-8 max-w-sm mx-auto flex flex-col items-center text-center">
                 {/* Logo */}
                <div className="mb-4">
