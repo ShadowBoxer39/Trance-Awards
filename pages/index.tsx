@@ -159,25 +159,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* About Us - Short */}
-        <section className="max-w-5xl mx-auto px-6 pb-16">
-          <div className="glass-card rounded-xl p-8 md:p-10">
-            <h2 className="text-2xl font-semibold mb-4">אודותינו</h2>
-            <p className="text-gray-300 leading-relaxed text-lg">
-              יוצאים לטראק הוא הפודקאסט המוביל בסצנת הטראנס הישראלית. 
-              כל שבוע אנחנו מביאים לכם את המוזיקה הטובה ביותר מהארץ ומהעולם, 
-              ראיונות עם האמנים המובילים, ובמה לכישרונות צעירים. 
-              הצטרפו אלינו למסע המוזיקלי.
-            </p>
-            <Link 
-              href="/about" 
-              className="inline-block mt-4 text-purple-400 hover:text-purple-300 transition text-sm font-medium"
-            >
-              קראו עוד ←
-            </Link>
-          </div>
-        </section>
-
         {/* Latest Episode */}
         <section className="max-w-5xl mx-auto px-6 py-16">
           <h2 className="text-3xl font-semibold mb-6">הפרק האחרון</h2>
@@ -242,8 +223,8 @@ export default function Home() {
 
               {/* Artist Info */}
               <div>
-                <h3 className="text-2xl font-semibold mb-2">שם האמן</h3>
-                <p className="text-purple-400 text-sm mb-4">Progressive Psytrance</p>
+                <h3 className="text-2xl font-semibold mb-2">Crane</h3>
+                <p className="text-purple-400 text-sm mb-4">שגיא שם משפחה</p>
                 <p className="text-gray-300 leading-relaxed mb-6">
                   אמן צעיר מהסצנה הישראלית שמופיע השבוע בפודקאסט. 
                   כל שבועיים אנחנו נותנים במה לכישרונות חדשים להציג את המוזיקה שלהם.
@@ -376,6 +357,25 @@ export default function Home() {
               className="btn-primary px-6 py-3 rounded-lg font-medium inline-block"
             >
               כל הפרקים
+            </Link>
+          </div>
+        </section>
+
+        {/* About Us - Short */}
+        <section className="max-w-5xl mx-auto px-6 py-16">
+          <div className="glass-card rounded-xl p-8 md:p-10">
+            <h2 className="text-2xl font-semibold mb-4">אודותינו</h2>
+            <p className="text-gray-300 leading-relaxed text-lg">
+              יוצאים לטראק הוא הפודקאסט המוביל בסצנת הטראנס הישראלית. 
+              כל שבוע אנחנו מביאים לכם את המוזיקה הטובה ביותר מהארץ ומהעולם, 
+              ראיונות עם האמנים המובילים, ובמה לכישרונות צעירים. 
+              הצטרפו אלינו למסע המוזיקלי.
+            </p>
+            <Link 
+              href="/about" 
+              className="inline-block mt-4 text-purple-400 hover:text-purple-300 transition text-sm font-medium"
+            >
+              קראו עוד ←
             </Link>
           </div>
         </section>
