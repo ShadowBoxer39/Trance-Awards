@@ -103,76 +103,58 @@ export default function Home() {
 
         {/* Hero */}
         <section className="max-w-7xl mx-auto px-6 pt-20 pb-16">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Side - Content */}
-            <div>
-              {/* Logo with animation */}
-              <div className="mb-8 animate-float inline-block">
-                <Image
-                  src="/images/logo.png"
-                  alt="יוצאים לטראק"
-                  width={90}
-                  height={90}
-                  className="rounded-xl"
-                />
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Logo with animation */}
+            <div className="mb-8 animate-float inline-block">
+              <Image
+                src="/images/logo.png"
+                alt="יוצאים לטראק"
+                width={110}
+                height={110}
+                className="rounded-xl"
+              />
+            </div>
+
+            {/* Title with fade-in */}
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold mb-4 tracking-tight animate-fade-in">
+              יוצאים לטראק
+            </h1>
+            
+            {/* Subtitle with delayed fade-in */}
+            <p className="text-xl md:text-2xl text-gray-400 mb-10 font-normal animate-fade-in-delay">
+              הפודקאסט הכי גדול בטראנס בישראל
+            </p>
+
+            {/* Stats with stagger animation */}
+            <div className="flex justify-center gap-8 md:gap-12 mb-10 animate-fade-in-delay-2">
+              <div>
+                <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">94+</div>
+                <div className="text-sm text-gray-500">פרקים</div>
               </div>
-
-              {/* Title with fade-in */}
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold mb-4 tracking-tight animate-fade-in">
-                יוצאים לטראק
-              </h1>
-              
-              {/* Subtitle with delayed fade-in */}
-              <p className="text-xl md:text-2xl text-gray-400 mb-10 font-normal animate-fade-in-delay">
-                הפודקאסט הכי גדול בטראנס בישראל
-              </p>
-
-              {/* Stats with stagger animation */}
-              <div className="flex gap-6 mb-10 animate-fade-in-delay-2">
-                <div>
-                  <div className="text-3xl md:text-4xl font-semibold text-gradient mb-1">94+</div>
-                  <div className="text-sm text-gray-500">פרקים</div>
-                </div>
-                <div>
-                  <div className="text-3xl md:text-4xl font-semibold text-gradient mb-1">200+</div>
-                  <div className="text-sm text-gray-500">שעות</div>
-                </div>
-                <div>
-                  <div className="text-3xl md:text-4xl font-semibold text-gradient mb-1">10K+</div>
-                  <div className="text-sm text-gray-500">מאזינים</div>
-                </div>
+              <div>
+                <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">200+</div>
+                <div className="text-sm text-gray-500">שעות</div>
               </div>
-
-              {/* CTAs */}
-              <div className="flex gap-4 animate-fade-in-delay-3">
-                <Link 
-                  href="/episodes" 
-                  className="btn-primary px-6 py-3 rounded-lg font-medium"
-                >
-                  כל הפרקים
-                </Link>
-                <Link
-                  href="/young-artists"
-                  className="btn-secondary px-6 py-3 rounded-lg font-medium"
-                >
-                  אמנים צעירים
-                </Link>
+              <div>
+                <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">10K+</div>
+                <div className="text-sm text-gray-500">מאזינים</div>
               </div>
             </div>
 
-            {/* Right Side - Large Logo Visual */}
-            <div className="hidden lg:flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-lg">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-cyan-500/20 to-magenta-500/20 blur-3xl animate-pulse-slow rounded-full" />
-                <Image
-                  src="/images/logo.png"
-                  alt="יוצאים לטראק"
-                  width={500}
-                  height={500}
-                  className="relative rounded-3xl"
-                  priority
-                />
-              </div>
+            {/* CTAs */}
+            <div className="flex flex-wrap justify-center gap-4 animate-fade-in-delay-3">
+              <Link 
+                href="/episodes" 
+                className="btn-primary px-8 py-4 rounded-lg font-medium text-lg"
+              >
+                כל הפרקים
+              </Link>
+              <Link
+                href="/young-artists"
+                className="btn-secondary px-8 py-4 rounded-lg font-medium text-lg"
+              >
+                אמנים צעירים
+              </Link>
             </div>
           </div>
         </section>
