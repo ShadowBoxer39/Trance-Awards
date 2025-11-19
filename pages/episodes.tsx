@@ -195,7 +195,7 @@ export default function Episodes() {
             <div className="text-6xl mb-6">🎵</div>
             <h1 className="text-5xl md:text-6xl font-semibold mb-5">כל הפרקים</h1>
             <p className="text-xl md:text-2xl text-gray-400 mb-8">
-              {episodes.length} פרקים של מוזיקת טראנס מהארץ ומהעולם
+              {episodes.length} פרקים זמינים לצפייה
             </p>
 
             {/* Search Bar */}
