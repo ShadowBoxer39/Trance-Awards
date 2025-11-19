@@ -3,7 +3,6 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import episodesData from "@/data/episodes.json";
 
 interface Episode {
   id: number;
@@ -18,22 +17,37 @@ interface Episode {
 export default function Episodes() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [filteredEpisodes, setFilteredEpisodes] = React.useState<Episode[]>(episodesData);
+  const [episodes, setEpisodes] = React.useState<Episode[]>([]);
+  const [filteredEpisodes, setFilteredEpisodes] = React.useState<Episode[]>([]);
   const [displayCount, setDisplayCount] = React.useState(12);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
+    
+    // Load episodes data
+    fetch('/data/episodes.json')
+      .then(res => res.json())
+      .then(data => {
+        setEpisodes(data);
+        setFilteredEpisodes(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load episodes:', err);
+        setLoading(false);
+      });
   }, []);
 
   // Search functionality
   React.useEffect(() => {
     if (!searchQuery.trim()) {
-      setFilteredEpisodes(episodesData);
+      setFilteredEpisodes(episodes);
       return;
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = episodesData.filter((episode: Episode) => {
+    const filtered = episodes.filter((episode: Episode) => {
       const titleMatch = episode.title.toLowerCase().includes(query);
       const descriptionMatch = episode.description.toLowerCase().includes(query);
       return titleMatch || descriptionMatch;
@@ -41,7 +55,7 @@ export default function Episodes() {
 
     setFilteredEpisodes(filtered);
     setDisplayCount(12); // Reset display count when searching
-  }, [searchQuery]);
+  }, [searchQuery, episodes]);
 
   const displayedEpisodes = filteredEpisodes.slice(0, displayCount);
   const hasMore = displayCount < filteredEpisodes.length;
@@ -49,6 +63,26 @@ export default function Episodes() {
   const loadMore = () => {
     setDisplayCount(prev => Math.min(prev + 12, filteredEpisodes.length));
   };
+
+  if (loading) {
+    return (
+      <>
+        <Head>
+          <title>פרקים - יוצאים לטראק</title>
+          <meta name="description" content="כל הפרקים של יוצאים לטראק" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/images/logo.png" />
+        </Head>
+
+        <div className="trance-backdrop min-h-screen text-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4 animate-pulse">🎵</div>
+            <p className="text-xl text-gray-400">טוען פרקים...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -129,7 +163,7 @@ export default function Episodes() {
             <div className="text-6xl mb-6">🎵</div>
             <h1 className="text-5xl md:text-6xl font-semibold mb-5">כל הפרקים</h1>
             <p className="text-xl md:text-2xl text-gray-400 mb-8">
-              {episodesData.length} פרקים של מוזיקת טראנס מהארץ ומהעולם
+              {episodes.length} פרקים של מוזיקת טראנס מהארץ ומהעולם
             </p>
 
             {/* Search Bar */}
