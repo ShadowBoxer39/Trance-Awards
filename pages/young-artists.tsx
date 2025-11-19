@@ -9,6 +9,8 @@ export default function YoungArtists() {
   const [formData, setFormData] = React.useState({
     fullName: "",
     stageName: "",
+    age: "",
+    phone: "",
     experienceYears: "",
     inspirations: "",
     trackLink: "",
@@ -47,6 +49,8 @@ export default function YoungArtists() {
       setFormData({
         fullName: "",
         stageName: "",
+        age: "",
+        phone: "",
         experienceYears: "",
         inspirations: "",
         trackLink: "",
@@ -191,6 +195,42 @@ export default function YoungArtists() {
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-900/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/60 transition"
                     placeholder="הכנס את שם הבמה שלך"
+                  />
+                </div>
+
+                {/* Age */}
+                <div>
+                  <label htmlFor="age" className="block text-sm font-medium mb-2 text-gray-300">
+                    גיל *
+                  </label>
+                  <input
+                    type="number"
+                    id="age"
+                    name="age"
+                    required
+                    min="16"
+                    max="99"
+                    value={formData.age}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-900/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/60 transition"
+                    placeholder="הכנס את גילך"
+                  />
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium mb-2 text-gray-300">
+                    מספר טלפון *
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    required
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-900/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/60 transition"
+                    placeholder="05X-XXXXXXX"
                   />
                 </div>
 
