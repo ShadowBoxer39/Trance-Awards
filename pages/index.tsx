@@ -242,8 +242,6 @@ export default function Home() {
     />
   </div>
 </div>
-ותחליף את הבלוק הלוגו הקיים בכרטיס של המיוזיק רום בזה.
-
                 {/* Text */}
                 <p className="text-gray-300 text-sm leading-relaxed mb-4">
                   התכנית מוקלטת באולפני המיוזיק רום – אולפן פודקאסטים ייחודי
