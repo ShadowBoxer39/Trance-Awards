@@ -111,6 +111,13 @@ export default function Home() {
         >
           הצבעה
         </Link>
+<Link
+  href="/advertisers"
+  className="text-gray-300 hover:text-white text-base font-medium transition"
+>
+  למפרסמים
+</Link>
+        
       </div>
 
       {/* Mobile Menu Button */}
@@ -166,6 +173,15 @@ export default function Home() {
         >
           הצבעה
         </Link>
+     <Link
+  href="/advertisers"
+  className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+  onClick={() => setMobileMenuOpen(false)}
+>
+  למפרסמים
+</Link>
+      
+      
       </div>
     )}
   </div>
