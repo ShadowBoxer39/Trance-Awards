@@ -224,76 +224,47 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Previous Episodes - Small Grid */}
-        <section className="max-w-5xl mx-auto px-6 pb-16">
-          <h3 className="text-xl font-semibold mb-4">פרקים קודמים</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Episode 94 */}
-            <a 
-              href="https://www.youtube.com/watch?v=jdbM-wZdLXc" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass-card rounded-lg overflow-hidden hover:scale-105 transition-transform"
-            >
-              <div className="aspect-video bg-gray-800 relative">
+        {/* Featured Young Artist */}
+        <section className="max-w-5xl mx-auto px-6 py-16">
+          <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-purple-500/30">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-3xl">🌟</span>
+              <h2 className="text-2xl md:text-3xl font-semibold text-gradient">האמן הצעיר המוצג</h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              {/* Artist Image */}
+              <div className="relative aspect-square bg-gradient-to-br from-purple-600/20 to-cyan-600/20 rounded-xl overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-white/80" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                  </svg>
+                  <span className="text-6xl">🎧</span>
                 </div>
               </div>
-              <div className="p-3">
-                <p className="text-sm font-medium line-clamp-2">פרק 94</p>
-              </div>
-            </a>
 
-            {/* Episode 93 */}
-            <a 
-              href="https://www.youtube.com/watch?v=BqqrWFFPpuw&t" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass-card rounded-lg overflow-hidden hover:scale-105 transition-transform"
-            >
-              <div className="aspect-video bg-gray-800 relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-white/80" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                  </svg>
+              {/* Artist Info */}
+              <div>
+                <h3 className="text-2xl font-semibold mb-2">שם האמן</h3>
+                <p className="text-purple-400 text-sm mb-4">Progressive Psytrance</p>
+                <p className="text-gray-300 leading-relaxed mb-6">
+                  אמן צעיר מהסצנה הישראלית שמופיע השבוע בפודקאסט. 
+                  כל שבועיים אנחנו נותנים במה לכישרונות חדשים להציג את המוזיקה שלהם.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <a
+                    href="#"
+                    className="btn-secondary px-5 py-2.5 rounded-lg text-sm font-medium text-center"
+                  >
+                    האזינו לטראקים
+                  </a>
+                  <Link
+                    href="/young-artists"
+                    className="btn-primary px-5 py-2.5 rounded-lg text-sm font-medium text-center"
+                  >
+                    כל האמנים הצעירים
+                  </Link>
                 </div>
               </div>
-              <div className="p-3">
-                <p className="text-sm font-medium line-clamp-2">פרק 93</p>
-              </div>
-            </a>
-
-            {/* Episode 92 */}
-            <a 
-              href="https://www.youtube.com/watch?v=8Q77xKujYRY" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass-card rounded-lg overflow-hidden hover:scale-105 transition-transform"
-            >
-              <div className="aspect-video bg-gray-800 relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-white/80" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                  </svg>
-                </div>
-              </div>
-              <div className="p-3">
-                <p className="text-sm font-medium line-clamp-2">פרק 92</p>
-              </div>
-            </a>
-          </div>
-
-          <div className="text-center mt-6">
-            <Link 
-              href="/episodes" 
-              className="btn-secondary px-6 py-2.5 rounded-lg text-sm font-medium inline-block"
-            >
-              כל הפרקים
-            </Link>
+            </div>
           </div>
         </section>
 
@@ -333,6 +304,79 @@ export default function Home() {
                 הצטרפו לקבוצה
               </a>
             </div>
+          </div>
+        </section>
+
+        {/* Previous Episodes - Small Grid */}
+        <section className="max-w-5xl mx-auto px-6 pb-16">
+          <h3 className="text-xl font-semibold mb-4">פרקים קודמים</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Episode 94 */}
+            <a 
+              href="https://www.youtube.com/watch?v=VIDEO_ID_94" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass-card rounded-lg overflow-hidden hover:scale-105 transition-transform"
+            >
+              <div className="aspect-video bg-gray-800 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg className="w-12 h-12 text-white/80" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+              </div>
+              <div className="p-3">
+                <p className="text-sm font-medium line-clamp-2">פרק 94</p>
+              </div>
+            </a>
+
+            {/* Episode 93 */}
+            <a 
+              href="https://www.youtube.com/watch?v=VIDEO_ID_93" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass-card rounded-lg overflow-hidden hover:scale-105 transition-transform"
+            >
+              <div className="aspect-video bg-gray-800 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg className="w-12 h-12 text-white/80" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+              </div>
+              <div className="p-3">
+                <p className="text-sm font-medium line-clamp-2">פרק 93</p>
+              </div>
+            </a>
+
+            {/* Episode 92 */}
+            <a 
+              href="https://www.youtube.com/watch?v=VIDEO_ID_92" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass-card rounded-lg overflow-hidden hover:scale-105 transition-transform"
+            >
+              <div className="aspect-video bg-gray-800 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg className="w-12 h-12 text-white/80" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+              </div>
+              <div className="p-3">
+                <p className="text-sm font-medium line-clamp-2">פרק 92</p>
+              </div>
+            </a>
+          </div>
+
+          <div className="text-center mt-6">
+            <Link 
+              href="/episodes" 
+              className="btn-primary px-6 py-3 rounded-lg font-medium inline-block"
+            >
+              כל הפרקים
+            </Link>
           </div>
         </section>
 
