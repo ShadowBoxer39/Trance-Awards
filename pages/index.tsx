@@ -15,7 +15,7 @@ export default function Home() {
     <>
       <Head>
         <title>יוצאים לטראק</title>
-        <meta name="description" content="פודקאסט טראנס ישראלי" />
+        <meta name="description" content="תכנית הטראנס הגדולה בישראלי" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/images/logo.png" />
       </Head>
@@ -122,13 +122,13 @@ export default function Home() {
             
             {/* Subtitle with delayed fade-in */}
             <p className="text-xl md:text-2xl text-gray-400 mb-10 font-normal animate-fade-in-delay">
-              הפודקאסט הכי גדול בטראנס בישראל
+              תכנית הטראנס הגדולה בישראל
             </p>
 
             {/* Stats with stagger animation */}
             <div className="flex justify-center gap-8 md:gap-12 mb-10 animate-fade-in-delay-2">
               <div>
-                <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">94+</div>
+                <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">50+</div>
                 <div className="text-sm text-gray-500">פרקים</div>
               </div>
               <div>
@@ -136,7 +136,7 @@ export default function Home() {
                 <div className="text-sm text-gray-500">שעות</div>
               </div>
               <div>
-                <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">10K+</div>
+                <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">15K+</div>
                 <div className="text-sm text-gray-500">מאזינים</div>
               </div>
             </div>
