@@ -63,107 +63,113 @@ export default function Home() {
       </Head>
 
       <div className="trance-backdrop min-h-screen text-gray-100">
-        {/* Navigation */}
-        <nav className="border-b border-gray-800 bg-black/40 backdrop-blur-md sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              {/* Logo & Brand */}
-              <Link
-                href="/"
-                className="flex items-center gap-3 hover:opacity-90 transition"
-              >
-                <Image
-                  src="/images/logo.png"
-                  alt="Logo"
-                  width={40}
-                  height={40}
-                  className="rounded-lg"
-                />
-                <span className="text-lg font-semibold">יוצאים לטראק</span>
-              </Link>
+       {/* Navigation */}
+<nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <div className="flex items-center justify-between h-20">
+      {/* Logo & Brand */}
+      <Link
+        href="/"
+        className="flex items-center gap-3 hover:opacity-90 transition"
+      >
+        <Image
+          src="/images/logo.png"
+          alt="Logo"
+          width={50}
+          height={50}
+          className="rounded-lg"
+        />
+        <span className="text-xl font-semibold hidden sm:block">יוצאים לטראק</span>
+      </Link>
 
-              {/* Desktop Menu */}
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/" className="text-white text-sm font-medium">
-                  בית
-                </Link>
-                <Link
-                  href="/episodes"
-                  className="text-gray-300 hover:text-white transition text-sm font-medium"
-                >
-                  פרקים
-                </Link>
-                <Link
-                  href="/young-artists"
-                  className="text-gray-300 hover:text-white transition text-sm font-medium"
-                >
-                  אמנים צעירים
-                </Link>
-                <Link
-                  href="/about"
-                  className="text-gray-300 hover:text-white transition text-sm font-medium"
-                >
-                  אודות
-                </Link>
-                <Link
-                  href="/vote"
-                  className="btn-primary px-5 py-2 rounded-lg text-sm font-medium"
-                >
-                  הצבעה
-                </Link>
-              </div>
+      {/* Desktop Menu */}
+      <div className="hidden md:flex items-center gap-8">
+        <Link href="/" className="text-white text-base font-medium hover:text-purple-400 transition">
+          בית
+        </Link>
+        <Link
+          href="/episodes"
+          className="text-gray-300 hover:text-white text-base font-medium transition"
+        >
+          פרקים
+        </Link>
+        <Link
+          href="/young-artists"
+          className="text-gray-300 hover:text-white text-base font-medium transition"
+        >
+          אמנים צעירים
+        </Link>
+        <Link
+          href="/about"
+          className="text-gray-300 hover:text-white text-base font-medium transition"
+        >
+          אודות
+        </Link>
+        <Link
+          href="/vote"
+          className="btn-primary px-6 py-3 rounded-lg text-base font-medium"
+        >
+          הצבעה
+        </Link>
+      </div>
 
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden text-gray-300 hover:text-white"
-              >
-                {mobileMenuOpen ? "✕" : "☰"}
-              </button>
-            </div>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="md:hidden text-gray-300 hover:text-white p-2"
+      >
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {mobileMenuOpen ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          )}
+        </svg>
+      </button>
+    </div>
 
-            {/* Mobile Menu */}
-            {mobileMenuOpen && (
-              <div className="md:hidden mt-4 pt-4 border-t border-gray-800 space-y-3">
-                <Link
-                  href="/"
-                  className="block text-white text-sm font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  בית
-                </Link>
-                <Link
-                  href="/episodes"
-                  className="block text-gray-300 hover:text-white transition text-sm font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  פרקים
-                </Link>
-                <Link
-                  href="/young-artists"
-                  className="block text-gray-300 hover:text-white transition text-sm font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  אמנים צעירים
-                </Link>
-                <Link
-                  href="/about"
-                  className="block text-gray-300 hover:text-white transition text-sm font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  אודות
-                </Link>
-                <Link
-                  href="/vote"
-                  className="block btn-primary px-5 py-2 rounded-lg text-sm font-medium text-center"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  הצבעה
-                </Link>
-              </div>
-            )}
-          </div>
-        </nav>
+    {/* Mobile Menu */}
+    {mobileMenuOpen && (
+      <div className="md:hidden pb-4 space-y-1">
+        <Link
+          href="/"
+          className="block text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          בית
+        </Link>
+        <Link
+          href="/episodes"
+          className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          פרקים
+        </Link>
+        <Link
+          href="/young-artists"
+          className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          אמנים צעירים
+        </Link>
+        <Link
+          href="/about"
+          className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          אודות
+        </Link>
+        <Link
+          href="/vote"
+          className="block btn-primary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          הצבעה
+        </Link>
+      </div>
+    )}
+  </div>
+</nav>
 
         {/* HERO */}
         <header className="max-w-7xl mx-auto px-6 pt-16 pb-10">
