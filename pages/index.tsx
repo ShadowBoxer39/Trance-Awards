@@ -231,15 +231,18 @@ export default function Home() {
             <div className="mt-10 md:mt-0">
               <div className="glass-card rounded-2xl p-6 md:p-8 max-w-sm mx-auto flex flex-col items-center text-center">
                 {/* Logo */}
-                <div className="mb-4">
-                  <Image
-                    src="/images/musikroom.png"
-                    alt="Music Room Studio"
-                    width={190}
-                    height={190}
-                    className="object-contain opacity-95 drop-shadow-[0_0_18px_rgba(120,0,255,0.35)]"
-                  />
-                </div>
+               <div className="mb-4">
+  <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg">
+    <Image
+      src="/images/musikroom.png"
+      alt="Music Room Studio"
+      width={110}
+      height={110}
+      className="object-contain"
+    />
+  </div>
+</div>
+ותחליף את הבלוק הלוגו הקיים בכרטיס של המיוזיק רום בזה.
 
                 {/* Text */}
                 <p className="text-gray-300 text-sm leading-relaxed mb-4">
