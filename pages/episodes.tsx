@@ -1,15 +1,54 @@
-// pages/episodes.tsx - EPISODES PAGE
+// pages/episodes.tsx - SMART EPISODES PAGE WITH SEARCH
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
+import episodesData from "@/data/episodes.json";
+
+interface Episode {
+  id: number;
+  videoId: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  publishedAt: string;
+  channelTitle: string;
+}
 
 export default function Episodes() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [filteredEpisodes, setFilteredEpisodes] = React.useState<Episode[]>(episodesData);
+  const [displayCount, setDisplayCount] = React.useState(12);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
   }, []);
+
+  // Search functionality
+  React.useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredEpisodes(episodesData);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = episodesData.filter((episode: Episode) => {
+      const titleMatch = episode.title.toLowerCase().includes(query);
+      const descriptionMatch = episode.description.toLowerCase().includes(query);
+      return titleMatch || descriptionMatch;
+    });
+
+    setFilteredEpisodes(filtered);
+    setDisplayCount(12); // Reset display count when searching
+  }, [searchQuery]);
+
+  const displayedEpisodes = filteredEpisodes.slice(0, displayCount);
+  const hasMore = displayCount < filteredEpisodes.length;
+
+  const loadMore = () => {
+    setDisplayCount(prev => Math.min(prev + 12, filteredEpisodes.length));
+  };
 
   return (
     <>
@@ -89,94 +128,121 @@ export default function Episodes() {
           <div className="max-w-4xl mx-auto text-center">
             <div className="text-6xl mb-6">🎵</div>
             <h1 className="text-5xl md:text-6xl font-semibold mb-5">כל הפרקים</h1>
-            <p className="text-xl md:text-2xl text-gray-400">
-              94+ פרקים של מוזיקת טראנס מהארץ ומהעולם
+            <p className="text-xl md:text-2xl text-gray-400 mb-8">
+              {episodesData.length} פרקים של מוזיקת טראנס מהארץ ומהעולם
             </p>
-          </div>
-        </section>
 
-        {/* Latest Episode */}
-        <section className="max-w-7xl mx-auto px-6 py-8">
-          <h2 className="text-2xl font-semibold mb-6">הפרק האחרון</h2>
-          
-          <div className="glass-card rounded-xl overflow-hidden max-w-5xl">
-            <div className="aspect-video bg-gray-900">
-              <iframe
-                width="100%"
-                height="100%"
-                src="https://www.youtube.com/embed/rMb4a5A5wVw"
-                title="YouTube"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-semibold mb-2">פרק 95 - יוצאים לטראק</h3>
-              <p className="text-gray-400 text-sm mb-4">
-                הפרק החדש ביותר של הפודקאסט
-              </p>
-              <div className="flex gap-3">
-                <a
-                  href="https://www.youtube.com/watch?v=rMb4a5A5wVw"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
-                >
-                  YouTube
-                </a>
-                <a
-                  href="https://open.spotify.com/show/0LGP2n3IGqeFVv1fIZOkeZ"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
-                >
-                  Spotify
-                </a>
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="חפש פרק לפי שם, תיאור, אמן..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-6 py-4 bg-gray-900/50 border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/60 transition text-lg"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
+              {searchQuery && (
+                <p className="text-sm text-gray-400 mt-3">
+                  נמצאו {filteredEpisodes.length} תוצאות עבור "{searchQuery}"
+                </p>
+              )}
             </div>
           </div>
         </section>
 
-        {/* All Episodes Grid */}
-        <section className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-semibold mb-6">פרקים קודמים</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Episode Cards - Placeholder */}
-            {[94, 93, 92, 91, 90, 89, 88, 87, 86].map((episodeNum) => (
-              <div key={episodeNum} className="glass-card rounded-xl overflow-hidden hover:scale-105 transition-transform">
-                <div className="aspect-video bg-gray-800 relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg className="w-16 h-16 text-white/80" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                    </svg>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">פרק {episodeNum}</h3>
-                  <p className="text-gray-400 text-sm line-clamp-2 mb-3">
-                    תיאור הפרק - מוזיקה טובה, אמנים מעולים, ווייבים.
-                  </p>
+        {/* Episodes Grid */}
+        <section className="max-w-7xl mx-auto px-6 py-8">
+          {filteredEpisodes.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">🔍</div>
+              <h2 className="text-2xl font-semibold mb-2">לא נמצאו תוצאות</h2>
+              <p className="text-gray-400 mb-6">נסה לחפש משהו אחר</p>
+              <button
+                onClick={() => setSearchQuery("")}
+                className="btn-secondary px-6 py-3 rounded-lg font-medium"
+              >
+                נקה חיפוש
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {displayedEpisodes.map((episode: Episode) => (
                   <a
-                    href={`https://www.youtube.com/watch?v=VIDEO_ID_${episodeNum}`}
+                    key={episode.id}
+                    href={`https://www.youtube.com/watch?v=${episode.videoId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-secondary px-4 py-2 rounded-lg text-xs font-medium inline-block"
+                    className="glass-card rounded-xl overflow-hidden hover:scale-105 transition-transform group"
                   >
-                    צפה עכשיו
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
+                    {/* Thumbnail */}
+                    <div className="aspect-video bg-gray-800 relative overflow-hidden">
+                      <img
+                        src={episode.thumbnail}
+                        alt={episode.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                      {/* Episode Number Badge */}
+                      <div className="absolute top-3 right-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        #{episode.id}
+                      </div>
+                    </div>
 
-          {/* Load More */}
-          <div className="text-center mt-12">
-            <button className="btn-primary px-8 py-3 rounded-lg font-medium">
-              טען עוד פרקים
-            </button>
-          </div>
+                    {/* Info */}
+                    <div className="p-4">
+                      <h3 className="text-base font-semibold mb-2 line-clamp-2 group-hover:text-purple-400 transition">
+                        {episode.title}
+                      </h3>
+                      <p className="text-gray-400 text-xs line-clamp-2 mb-3">
+                        {episode.description}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{new Date(episode.publishedAt).toLocaleDateString('he-IL')}</span>
+                        <span className="flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                          צפה
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="text-center mt-12">
+                  <button
+                    onClick={loadMore}
+                    className="btn-primary px-8 py-4 rounded-lg font-medium text-lg"
+                  >
+                    טען עוד פרקים ({displayCount} מתוך {filteredEpisodes.length})
+                  </button>
+                </div>
+              )}
+
+              {/* Showing count */}
+              <div className="text-center mt-8 text-sm text-gray-500">
+                מציג {displayedEpisodes.length} מתוך {filteredEpisodes.length} פרקים
+              </div>
+            </>
+          )}
         </section>
 
         {/* Platforms */}
