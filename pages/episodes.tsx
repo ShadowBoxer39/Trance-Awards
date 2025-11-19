@@ -154,7 +154,7 @@ export default function Episodes() {
                 <Link href="/about" className="text-gray-300 hover:text-white transition text-sm font-medium">
                   אודות
                 </Link>
-                <Link href="/vote" className="btn-primary px-5 py-2 rounded-lg text-sm font-medium">
+                <Link href="/vote" className="btn-primary px-6 py-3 rounded-lg text-base font-medium">
                   הצבעה
                 </Link>
               </div>
@@ -181,7 +181,7 @@ export default function Episodes() {
                 <Link href="/about" className="block text-gray-300 hover:text-white transition text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
                   אודות
                 </Link>
-                <Link href="/vote" className="block btn-primary px-5 py-2 rounded-lg text-sm font-medium text-center" onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/vote" className="block btn-primary px-6 py-3 rounded-lg text-base font-medium text-center" onClick={() => setMobileMenuOpen(false)}>
                   הצבעה
                 </Link>
               </div>
