@@ -102,65 +102,83 @@ export default function Home() {
         </nav>
 
         {/* Hero */}
-        <section className="max-w-5xl mx-auto px-6 pt-20 pb-16">
-          <div className="max-w-2xl">
-            {/* Logo with animation */}
-            <div className="mb-8 animate-float">
-              <Image
-                src="/images/logo.png"
-                alt="יוצאים לטראק"
-                width={90}
-                height={90}
-                className="rounded-xl"
-              />
+        <section className="max-w-7xl mx-auto px-6 pt-20 pb-16">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Content */}
+            <div>
+              {/* Logo with animation */}
+              <div className="mb-8 animate-float inline-block">
+                <Image
+                  src="/images/logo.png"
+                  alt="יוצאים לטראק"
+                  width={90}
+                  height={90}
+                  className="rounded-xl"
+                />
+              </div>
+
+              {/* Title with fade-in */}
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold mb-4 tracking-tight animate-fade-in">
+                יוצאים לטראק
+              </h1>
+              
+              {/* Subtitle with delayed fade-in */}
+              <p className="text-xl md:text-2xl text-gray-400 mb-10 font-normal animate-fade-in-delay">
+                הפודקאסט הכי גדול בטראנס בישראל
+              </p>
+
+              {/* Stats with stagger animation */}
+              <div className="flex gap-6 mb-10 animate-fade-in-delay-2">
+                <div>
+                  <div className="text-3xl md:text-4xl font-semibold text-gradient mb-1">94+</div>
+                  <div className="text-sm text-gray-500">פרקים</div>
+                </div>
+                <div>
+                  <div className="text-3xl md:text-4xl font-semibold text-gradient mb-1">200+</div>
+                  <div className="text-sm text-gray-500">שעות</div>
+                </div>
+                <div>
+                  <div className="text-3xl md:text-4xl font-semibold text-gradient mb-1">10K+</div>
+                  <div className="text-sm text-gray-500">מאזינים</div>
+                </div>
+              </div>
+
+              {/* CTAs */}
+              <div className="flex gap-4 animate-fade-in-delay-3">
+                <Link 
+                  href="/episodes" 
+                  className="btn-primary px-6 py-3 rounded-lg font-medium"
+                >
+                  כל הפרקים
+                </Link>
+                <Link
+                  href="/young-artists"
+                  className="btn-secondary px-6 py-3 rounded-lg font-medium"
+                >
+                  אמנים צעירים
+                </Link>
+              </div>
             </div>
 
-            {/* Title with fade-in */}
-            <h1 className="text-5xl md:text-6xl font-semibold mb-4 tracking-tight animate-fade-in">
-              יוצאים לטראק
-            </h1>
-            
-            {/* Subtitle with delayed fade-in */}
-            <p className="text-xl text-gray-400 mb-10 font-normal animate-fade-in-delay">
-              הפודקאסט הכי גדול בטראנס בישראל
-            </p>
-
-            {/* Stats with stagger animation */}
-            <div className="flex gap-6 mb-10 animate-fade-in-delay-2">
-              <div>
-                <div className="text-3xl font-semibold text-gradient mb-1">94+</div>
-                <div className="text-sm text-gray-500">פרקים</div>
+            {/* Right Side - Large Logo Visual */}
+            <div className="hidden lg:flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-lg">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-cyan-500/20 to-magenta-500/20 blur-3xl animate-pulse-slow rounded-full" />
+                <Image
+                  src="/images/logo.png"
+                  alt="יוצאים לטראק"
+                  width={500}
+                  height={500}
+                  className="relative rounded-3xl"
+                  priority
+                />
               </div>
-              <div>
-                <div className="text-3xl font-semibold text-gradient mb-1">200+</div>
-                <div className="text-sm text-gray-500">שעות</div>
-              </div>
-              <div>
-                <div className="text-3xl font-semibold text-gradient mb-1">10K+</div>
-                <div className="text-sm text-gray-500">מאזינים</div>
-              </div>
-            </div>
-
-            {/* CTAs */}
-            <div className="flex gap-4 animate-fade-in-delay-3">
-              <Link 
-                href="/episodes" 
-                className="btn-primary px-6 py-3 rounded-lg font-medium"
-              >
-                כל הפרקים
-              </Link>
-              <Link
-                href="/young-artists"
-                className="btn-secondary px-6 py-3 rounded-lg font-medium"
-              >
-                אמנים צעירים
-              </Link>
             </div>
           </div>
         </section>
 
         {/* Latest Episode */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
+        <section className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-3xl font-semibold mb-6">הפרק האחרון</h2>
           
           <div className="glass-card rounded-xl overflow-hidden">
@@ -206,7 +224,7 @@ export default function Home() {
         </section>
 
         {/* Featured Young Artist */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
+        <section className="max-w-7xl mx-auto px-6 py-16">
           <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-purple-500/30">
             <div className="flex items-center gap-3 mb-6">
               <span className="text-3xl">🌟</span>
@@ -223,8 +241,8 @@ export default function Home() {
 
               {/* Artist Info */}
               <div>
-                <h3 className="text-2xl font-semibold mb-2">Crane</h3>
-                <p className="text-purple-400 text-sm mb-4">שגיא שם משפחה</p>
+                <h3 className="text-2xl font-semibold mb-2">שם האמן</h3>
+                <p className="text-purple-400 text-sm mb-4">Progressive Psytrance</p>
                 <p className="text-gray-300 leading-relaxed mb-6">
                   אמן צעיר מהסצנה הישראלית שמופיע השבוע בפודקאסט. 
                   כל שבועיים אנחנו נותנים במה לכישרונות חדשים להציג את המוזיקה שלהם.
@@ -250,7 +268,7 @@ export default function Home() {
         </section>
 
         {/* Community Track of the Week */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
+        <section className="max-w-7xl mx-auto px-6 py-16">
           <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-purple-500/30">
             <div className="flex items-center gap-3 mb-4">
               <svg className="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
@@ -289,7 +307,7 @@ export default function Home() {
         </section>
 
         {/* Previous Episodes - Small Grid */}
-        <section className="max-w-5xl mx-auto px-6 pb-16">
+        <section className="max-w-7xl mx-auto px-6 pb-16">
           <h3 className="text-xl font-semibold mb-4">פרקים קודמים</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -362,7 +380,7 @@ export default function Home() {
         </section>
 
         {/* About Us - Short */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
+        <section className="max-w-7xl mx-auto px-6 py-16">
           <div className="glass-card rounded-xl p-8 md:p-10">
             <h2 className="text-2xl font-semibold mb-4">אודותינו</h2>
             <p className="text-gray-300 leading-relaxed text-lg">
@@ -381,7 +399,7 @@ export default function Home() {
         </section>
 
         {/* Social */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
+        <section className="max-w-7xl mx-auto px-6 py-16">
           <h3 className="text-2xl font-semibold mb-6 text-center">עקבו אחרינו</h3>
           
           <div className="flex justify-center gap-4 flex-wrap">
@@ -434,7 +452,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="border-t border-gray-800 mt-16">
-          <div className="max-w-5xl mx-auto px-6 py-8">
+          <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
               <div>© 2025 יוצאים לטראק</div>
               <div className="flex gap-6">
