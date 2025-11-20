@@ -73,7 +73,7 @@ export default function YoungArtists() {
       name: "רון שפרוט",
       stageName: "Shaprut",
       description: "אחד האמנים הכי מיוחדים ומגוונים שתשמעו, לא הולך בתלם.",
-      image: "/images/artists/shaprut.png", // Replace with actual image path
+      image: "/public/images/shaprut.png", // Replace with actual image path
       soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A1684460661&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
       spotifyUrl: "https://open.spotify.com/artist/4cpLog6uK5HawBNvdc1W5d?si=HKqy7XX0TkWVNnQIQ_QEBw",
       instagramUrl: "https://www.instagram.com/shaprut_music/"
@@ -82,7 +82,7 @@ export default function YoungArtists() {
       name: "אריאל נרדיה",
       stageName: "Nardia",
       description: "תעצמו עיניים וצאו לטיול עם נרדיה, חוויה חוץ גופית.",
-      image: "/images/artists/nardia.jpg", // Replace with actual image path
+      image: "/public/images/nardia.jpg", // Replace with actual image path
       soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1980883968&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
       spotifyUrl: "https://open.spotify.com/artist/6DEnaflHWCeJUUkbcp1KbO?si=cc360f7341484e34",
       instagramUrl: "https://www.instagram.com/nardia_m_/"
