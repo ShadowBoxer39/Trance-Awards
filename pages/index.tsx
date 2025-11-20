@@ -3,6 +3,8 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
+import SEO from "@/components/SEO";
+
 
 interface Episode {
   id: number;
@@ -52,6 +54,11 @@ export default function Home() {
 
   return (
     <>
+      <SEO
+      title="בית"
+      description="יוצאים לטראק -תכנית הטראנס הגדולה בישראל. נותנים כבוד לאגדות, מקדמים את הצעירים."
+      url="https://yourdomain.com"
+    />
       <Head>
         <title>יוצאים לטראק - תכנית הטראנס של ישראל</title>
         <meta
