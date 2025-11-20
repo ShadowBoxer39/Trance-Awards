@@ -684,7 +684,7 @@ export default function Admin() {
 
                         <div className="flex gap-3 pt-4">
                           
-                            href={selectedSignup.trackLink}
+                         <a   href={selectedSignup.trackLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn-primary px-6 py-3 rounded-xl font-medium flex-1 text-center"
