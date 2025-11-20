@@ -1,7 +1,8 @@
-// pages/admin.tsx - MERGED VERSION: VOTES + YOUNG ARTISTS
+// pages/admin.tsx - MERGED VERSION: VOTES + YOUNG ARTISTS + ANALYTICS
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
+import { getVisits, type VisitorData } from "@/lib/analytics";
 
 type Tally = Record<string, Record<string, number>>;
 
@@ -30,7 +31,12 @@ export default function Admin() {
   // Young Artists State
   const [signups, setSignups] = React.useState<Signup[]>([]);
   const [selectedSignup, setSelectedSignup] = React.useState<Signup | null>(null);
-  const [activeTab, setActiveTab] = React.useState<"votes" | "signups">("votes");
+  
+  // Analytics State
+  const [visits, setVisits] = React.useState<VisitorData[]>([]);
+  
+  // Tab State
+  const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics">("votes");
 
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
@@ -47,6 +53,7 @@ export default function Admin() {
   React.useEffect(() => {
     if (tally) {
       loadSignups();
+      loadVisits();
     }
   }, [tally]);
 
@@ -59,6 +66,57 @@ export default function Admin() {
       );
       setSignups(parsed);
     }
+  };
+
+  const loadVisits = () => {
+    const data = getVisits();
+    data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    setVisits(data);
+  };
+
+  const getAnalytics = () => {
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const oneWeek = 7 * oneDay;
+    const oneMonth = 30 * oneDay;
+
+    const today = visits.filter(v => now - new Date(v.timestamp).getTime() < oneDay);
+    const week = visits.filter(v => now - new Date(v.timestamp).getTime() < oneWeek);
+    const month = visits.filter(v => now - new Date(v.timestamp).getTime() < oneMonth);
+
+    const visitsWithDuration = visits.filter(v => v.duration);
+    const avgDuration = visitsWithDuration.length > 0
+      ? visitsWithDuration.reduce((acc, v) => acc + (v.duration || 0), 0) / visitsWithDuration.length
+      : 0;
+
+    const pageViews = visits.reduce((acc, v) => {
+      acc[v.page] = (acc[v.page] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const referrers = visits.reduce((acc, v) => {
+      if (v.referrer) {
+        try {
+          const domain = new URL(v.referrer).hostname || 'direct';
+          acc[domain] = (acc[domain] || 0) + 1;
+        } catch {
+          acc['direct'] = (acc['direct'] || 0) + 1;
+        }
+      } else {
+        acc['direct'] = (acc['direct'] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      total: visits.length,
+      today: today.length,
+      week: week.length,
+      month: month.length,
+      avgDuration: Math.round(avgDuration) || 0,
+      pageViews: Object.entries(pageViews).sort((a, b) => b[1] - a[1]),
+      referrers: Object.entries(referrers).sort((a, b) => b[1] - a[1]),
+    };
   };
 
   const deleteSignup = (id: string) => {
@@ -87,10 +145,7 @@ export default function Admin() {
       return;
     }
 
-    // CSV Headers
     const headers = ["תאריך", "שם מלא", "שם במה", "גיל", "טלפון", "ניסיון", "השראות", "לינק לטראק"];
-    
-    // CSV Rows
     const rows = signups.map(s => [
       formatDate(s.submittedAt),
       s.fullName,
@@ -98,21 +153,17 @@ export default function Admin() {
       s.age || "לא צוין",
       s.phone || "לא צוין",
       s.experienceYears,
-      s.inspirations.replace(/"/g, '""'), // Escape quotes
+      s.inspirations.replace(/"/g, '""'),
       s.trackLink
     ]);
 
-    // Build CSV content
     const csvContent = [
       headers.join(","),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
     ].join("\n");
 
-    // Add BOM for Hebrew support in Excel
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-    
-    // Download
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
@@ -265,6 +316,16 @@ export default function Admin() {
                 }`}
               >
                 🌟 הרשמות אמנים ({signups.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("analytics")}
+                className={`flex-1 rounded-xl px-6 py-3 font-semibold transition ${
+                  activeTab === "analytics"
+                    ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                📊 סטטיסטיקות ({visits.length})
               </button>
             </div>
 
@@ -611,7 +672,7 @@ export default function Admin() {
 
                         <div>
                           <div className="text-sm text-white/60 mb-1">לינק לטראק</div>
-                          <a
+                          
                             href={selectedSignup.trackLink}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -622,7 +683,7 @@ export default function Admin() {
                         </div>
 
                         <div className="flex gap-3 pt-4">
-                          <a
+                          
                             href={selectedSignup.trackLink}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -643,6 +704,170 @@ export default function Admin() {
                 )}
               </>
             )}
+
+            {/* ANALYTICS TAB */}
+            {activeTab === "analytics" && (() => {
+              const stats = getAnalytics();
+              
+              return (
+                <>
+                  {/* Overview Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="glass rounded-xl p-6">
+                      <div className="text-3xl font-semibold text-gradient mb-2">{stats.total}</div>
+                      <div className="text-white/60 text-sm">סה״כ ביקורים</div>
+                    </div>
+                    <div className="glass rounded-xl p-6">
+                      <div className="text-3xl font-semibold text-gradient mb-2">{stats.today}</div>
+                      <div className="text-white/60 text-sm">היום</div>
+                    </div>
+                    <div className="glass rounded-xl p-6">
+                      <div className="text-3xl font-semibold text-gradient mb-2">{stats.week}</div>
+                      <div className="text-white/60 text-sm">שבוע אחרון</div>
+                    </div>
+                    <div className="glass rounded-xl p-6">
+                      <div className="text-3xl font-semibold text-gradient mb-2">{stats.month}</div>
+                      <div className="text-white/60 text-sm">חודש אחרון</div>
+                    </div>
+                  </div>
+
+                  {/* Average Duration */}
+                  <div className="glass rounded-xl p-6">
+                    <h3 className="text-xl font-semibold mb-2">זמן שהייה ממוצע</h3>
+                    <div className="text-4xl font-bold text-gradient">
+                      {Math.floor(stats.avgDuration / 60)}:{(stats.avgDuration % 60).toString().padStart(2, '0')}
+                    </div>
+                    <div className="text-white/60 text-sm">דקות:שניות</div>
+                  </div>
+
+                  {/* Top Pages */}
+                  <div className="glass rounded-xl overflow-hidden">
+                    <div className="p-6 border-b border-white/10">
+                      <h3 className="text-xl font-semibold">דפים פופולריים</h3>
+                    </div>
+                    <div className="p-6">
+                      {stats.pageViews.length === 0 ? (
+                        <div className="text-center text-white/50 py-8">אין נתונים עדיין</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {stats.pageViews.slice(0, 10).map(([page, count]) => (
+                            <div key={page} className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium text-cyan-400">{page}</div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden max-w-xs">
+                                    <div
+                                      className="h-full bg-gradient-to-r from-cyan-400 to-purple-500"
+                                      style={{ width: `${(count / stats.total) * 100}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right mr-4">
+                                <div className="text-xl font-bold">{count}</div>
+                                <div className="text-xs text-white/60">
+                                  {Math.round((count / stats.total) * 100)}%
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Referrers */}
+                  <div className="glass rounded-xl overflow-hidden">
+                    <div className="p-6 border-b border-white/10">
+                      <h3 className="text-xl font-semibold">מקורות תנועה</h3>
+                    </div>
+                    <div className="p-6">
+                      {stats.referrers.length === 0 ? (
+                        <div className="text-center text-white/50 py-8">אין נתונים עדיין</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {stats.referrers.slice(0, 10).map(([referrer, count]) => (
+                            <div key={referrer} className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium">{referrer === 'direct' ? 'כניסה ישירה' : referrer}</div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden max-w-xs">
+                                    <div
+                                      className="h-full bg-gradient-to-r from-purple-400 to-pink-500"
+                                      style={{ width: `${(count / stats.total) * 100}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right mr-4">
+                                <div className="text-xl font-bold">{count}</div>
+                                <div className="text-xs text-white/60">
+                                  {Math.round((count / stats.total) * 100)}%
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Recent Visits Table */}
+                  <div className="glass rounded-xl overflow-hidden">
+                    <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                      <h3 className="text-xl font-semibold">ביקורים אחרונים</h3>
+                      <button
+                        onClick={loadVisits}
+                        className="btn-primary rounded-xl px-4 py-2 text-sm"
+                      >
+                        🔄 רענן
+                      </button>
+                    </div>
+                    {visits.length === 0 ? (
+                      <div className="p-12 text-center text-white/50">
+                        <div className="text-4xl mb-4">📊</div>
+                        <p>אין ביקורים עדיין</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-black/30 border-b border-white/10">
+                            <tr>
+                              <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">תאריך</th>
+                              <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">דף</th>
+                              <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">משך</th>
+                              <th className="text-right px-6 py-4 text-sm font-semibold text-white/60">מקור</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {visits.slice(0, 50).map((visit) => (
+                              <tr key={visit.id} className="border-b border-white/5 hover:bg-white/5">
+                                <td className="px-6 py-4 text-sm text-white/60">
+                                  {new Date(visit.timestamp).toLocaleString('he-IL')}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-cyan-400">{visit.page}</td>
+                                <td className="px-6 py-4 text-sm">
+                                  {visit.duration ? `${Math.floor(visit.duration / 60)}:${(visit.duration % 60).toString().padStart(2, '0')}` : '-'}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-white/60">
+                                  {visit.referrer ? (() => {
+                                    try {
+                                      return new URL(visit.referrer).hostname;
+                                    } catch {
+                                      return 'ישיר';
+                                    }
+                                  })() : 'ישיר'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </>
         )}
       </div>
