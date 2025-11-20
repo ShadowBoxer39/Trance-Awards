@@ -226,13 +226,13 @@ export default function Home() {
                   <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
                     200+
                   </div>
-                  <div className="text-sm text-gray-500">שעות</div>
+                  <div className="text-sm text-gray-500">שעות של תוכן</div>
                 </div>
                 <div>
                   <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
-                    אינסוף
+                    40+
                   </div>
-                  <div className="text-sm text-gray-500">וייבים טובים</div>
+                  <div className="text-sm text-gray-500">אמנים בתחילת דרכם</div>
                 </div>
               </div>
             </div>
@@ -561,7 +561,7 @@ export default function Home() {
 
             <div className="flex flex-wrap justify-center gap-4">
               <a
-                href="https://open.spotify.com/show/0LGP2n3IGqeFVv1fIZOkeZ"
+                href="https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ?si=47fdcc7c684e45f9"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary px-6 py-3 rounded-lg font-medium flex items-center gap-2"
@@ -602,7 +602,7 @@ export default function Home() {
               {/* Social Links */}
               <div className="flex flex-wrap justify-center gap-4">
                 <a
-                  href="https://www.instagram.com/tracktrip.il/"
+                  href="https://www.instagram.com/track_trip.trance//"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-purple-400 transition"
@@ -613,7 +613,7 @@ export default function Home() {
                   </svg>
                 </a>
                 <a
-                  href="https://www.facebook.com/tracktrip.il"
+                  href="https://www.facebook.com/tracktripil"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-purple-400 transition"
@@ -635,7 +635,7 @@ export default function Home() {
                   </svg>
                 </a>
                 <a
-                  href="https://open.spotify.com/show/0LGP2n3IGqeFVv1fIZOkeZ"
+                  href="https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ?si=47fdcc7c684e45f9"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-purple-400 transition"
@@ -646,7 +646,7 @@ export default function Home() {
                   </svg>
                 </a>
                 <a
-                  href="https://wa.me/972509218090"
+                  href="https://chat.whatsapp.com/LSZaHTgYXPn4HRvrsCnmTc"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-purple-400 transition"
