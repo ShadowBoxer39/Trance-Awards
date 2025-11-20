@@ -113,7 +113,7 @@ export default function YoungArtists() {
       </p>
 
       <a
-        href="https://wa.me/972509218090?text=היי! אני רוצה להצטרף לקהילת האמנים הצעירים"
+        href="https://chat.whatsapp.com/LSZaHTgYXPn4HRvrsCnmTc"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-3 bg-green-600 hover:bg-green-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg"
