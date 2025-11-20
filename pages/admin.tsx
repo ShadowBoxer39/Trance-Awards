@@ -670,17 +670,17 @@ export default function Admin() {
                           </div>
                         </div>
 
-                        <div>
-                          <div className="text-sm text-white/60 mb-1">לינק לטראק</div>
-                          
-                            href={selectedSignup.trackLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-cyan-400 hover:text-cyan-300 transition break-all"
-                          >
-                            {selectedSignup.trackLink}
-                          </a>
-                        </div>
+                   <div>
+  <div className="text-sm text-white/60 mb-1">לינק לטראק</div>
+  
+    href={selectedSignup.trackLink}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-cyan-400 hover:text-cyan-300 transition break-all"
+  >
+    {selectedSignup.trackLink}
+  </a>
+</div>
 
                         <div className="flex gap-3 pt-4">
                           
