@@ -36,9 +36,9 @@ export default function About() {
                 className="rounded-2xl mx-auto"
               />
             </div>
-            <h1 className="text-5xl md:text-6xl font-semibold mb-5">אודות הפודקאסט</h1>
+            <h1 className="text-5xl md:text-6xl font-semibold mb-5">אודות התכנית</h1>
             <p className="text-xl md:text-2xl text-gray-400">
-              הסיפור שלנו, החזון שלנו, והמסע המוזיקלי
+              הסיפור שלנו, המשימה שלנו, והקהילה שלנו
             </p>
           </div>
         </section>
@@ -50,17 +50,17 @@ export default function About() {
               <h2 className="text-3xl font-semibold mb-6">הסיפור שלנו</h2>
               <div className="space-y-4 text-gray-300 leading-relaxed text-lg">
                 <p>
-                  יוצאים לטראק הוא הפודקאסט המוביל בסצנת הטראנס הישראלית. 
-                  התחלנו את המסע שלנו מתוך אהבה אמיתית למוזיקת טראנס ורצון לתת במה 
-                  לאמנים הישראליים והבינלאומיים.
+                  יוצאים לטראק היא תכנית הטראנס הגדולה בישראל. התחלנו את המסע שלנו מתוך רצון לתת
+                 כבוד לאמנים שסללו את הדרך לקהילה שלנו, לספר את הסיפור שלא סופר.
                 </p>
                 <p>
-                  כל שבוע אנחנו מביאים לכם את המוזיקה הטובה ביותר מהארץ ומהעולם, 
-                  ראיונות עם האמנים המובילים בסצנה, ובמה לכישרונות צעירים שמחפשים 
-                  את ההזדמנות הגדולה שלהם.
+                כל פרק אנחנו מביאים לכם את המוזיקה הכי טובה כרגע בישראל,
+                ראיונות עם האמנים שסללו את הדרך ועם אלה שמפוצצים רחבות.
+                בסוף כל פרק יקבל אמן בתחילת דרכו את הבמה להשמיע את המוזיקה שלו.
+          
                 </p>
                 <p>
-                  עם יותר מ-94 פרקים, 200+ שעות של מוזיקה, ו-10,000+ מאזינים קבועים, 
+                  עם יותר מ-50 פרקים, 200+ שעות של תוכן, ו-10,000+ מאזינים קבועים, 
                   הפכנו להיות חלק בלתי נפרד מהסצנה הישראלית.
                 </p>
               </div>
@@ -72,9 +72,9 @@ export default function About() {
               <div className="grid md:grid-cols-3 gap-8">
                 <div>
                   <div className="text-4xl mb-4">🎵</div>
-                  <h3 className="text-xl font-semibold mb-3">מוזיקה איכותית</h3>
+                  <h3 className="text-xl font-semibold mb-3">לחלוק כבוד</h3>
                   <p className="text-gray-400 text-sm">
-                    להביא את המוזיקה הטובה ביותר מסצנת הטראנס העולמית והישראלית
+                 לספר את הסיפור של האמנים שיצרו את הקהילה הזו והיו החלוצים
                   </p>
                 </div>
                 <div>
@@ -99,7 +99,7 @@ export default function About() {
               <h2 className="text-3xl font-semibold mb-8 text-center">המספרים</h2>
               <div className="grid md:grid-cols-4 gap-8 text-center">
                 <div>
-                  <div className="text-5xl font-semibold text-gradient mb-2">94+</div>
+                  <div className="text-5xl font-semibold text-gradient mb-2">50+</div>
                   <div className="text-gray-400">פרקים</div>
                 </div>
                 <div>
@@ -111,8 +111,8 @@ export default function About() {
                   <div className="text-gray-400">מאזינים</div>
                 </div>
                 <div>
-                  <div className="text-5xl font-semibold text-gradient mb-2">50+</div>
-                  <div className="text-gray-400">אמנים אורחים</div>
+                  <div className="text-5xl font-semibold text-gradient mb-2">500+</div>
+                  <div className="text-gray-400">משוגעים בקבוצת וואצאפ</div>
                 </div>
               </div>
             </div>
@@ -157,7 +157,7 @@ export default function About() {
                   YouTube
                 </a>
                 <a
-                  href="https://open.spotify.com/show/0LGP2n3IGqeFVv1fIZOkeZ"
+                  href="https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ?si=9a6a559eab9545d6"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-secondary px-6 py-3 rounded-lg font-medium flex items-center gap-2"
