@@ -109,7 +109,7 @@ export default function YoungArtists() {
       <h3 className="text-xl font-semibold mb-2 text-white">דרישה חובה להשתתפות</h3>
       <p className="text-gray-200 leading-relaxed mb-4">
         על מנת להגיש מועמדות, <strong className="text-purple-300">חובה להיות חבר בקהילת הוואטסאפ שלנו</strong>. 
-        זה המקום שבו אנחנו מתקשרים עם האמנים, מעדכנים על הזדמנויות חדשות ושומרים על קשר עם הקהילה.
+        זה המקום שבו אנחנו מתקשרים עם האמנים, ובו תוכלו לקבל פידבק מהקהל.
       </p>
 
       <a
@@ -202,7 +202,7 @@ export default function YoungArtists() {
                 {/* Experience Years */}
                 <div>
                   <label htmlFor="experienceYears" className="block text-sm font-medium mb-2 text-gray-300">
-                    ממתי אתה עושה מוזיקה? *
+                   כמה זמן אתה עושה מוזיקה? *
                   </label>
                   <input
                     type="text"
@@ -296,7 +296,7 @@ export default function YoungArtists() {
               <div className="text-4xl mb-4">🎧</div>
               <h3 className="text-xl font-semibold mb-3">2. נבדוק את החומר</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                נקשיב לטראק שלך ונחזור אליך עם משוב או הזמנה לתוכנית
+               נקשיב לטראק שלך כמה פעמים ונגיע להחלטה
               </p>
             </div>
 
@@ -305,7 +305,7 @@ export default function YoungArtists() {
               <div className="text-4xl mb-4">🎤</div>
               <h3 className="text-xl font-semibold mb-3">3. הופעה בפודקאסט</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                אם נבחר, תופיע בפודקאסט ותקבל חשיפה לאלפי מאזינים
+                אם תבחר, תופיע בפודקאסט ותקבל חשיפה לאלפי מאזינים
               </p>
             </div>
           </div>
