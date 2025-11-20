@@ -189,13 +189,13 @@ export default function Home() {
             {/* Left side – title & CTA */}
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-purple-400 mb-3">
-                פודקאסט הטראנס של ישראל
+                תכנית הטראנס של ישראל
               </p>
               <h1 className="text-4xl md:text-6xl font-semibold mb-4 tracking-tight">
                 יוצאים לטראק
               </h1>
               <p className="text-xl md:text-2xl text-gray-400 mb-8">
-                מוזיקת טראנס, סיפורים מאחורי הקלעים והקהילה כולה – באולפן אחד.
+                עושים כבוד לאגדות, נותנים במה לצעירים ועוזרים לקהילת הטראנס בישראל
               </p>
 
               <div className="flex flex-wrap gap-4 mb-10">
