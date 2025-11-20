@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 import Navigation from "../components/Navigation";
+import SEO from "@/components/SEO";
 
 export default function YoungArtists() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -68,6 +69,11 @@ export default function YoungArtists() {
 
   return (
     <>
+      <SEO
+  title="אמנים צעירים"
+  description="במה לאמנים צעירים בסצנת הטראנס הישראלית. הצטרפו והציגו את המוזיקה שלכם!"
+  url="https://yourdomain.com/young-artists"
+/>
       <Head>
         <title>אמנים צעירים - יוצאים לטראק</title>
         <meta name="description" content="במה לאמנים צעירים בטראנס" />
