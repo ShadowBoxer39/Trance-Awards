@@ -413,12 +413,12 @@ export default function Home() {
                   <div className="rounded-lg overflow-hidden">
 <iframe
   width="100%"
-  height="300"
+  height="166"
   scrolling="no"
   style={{ border: 'none' }}
   allow="autoplay"
-  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/kanok_music/kanok-light-beam"
-></iframe>                  
+  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/kanok_music/kanok-light-beam&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"
+></iframe>         
                   </div>
                 </div>
 
