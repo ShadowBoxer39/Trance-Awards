@@ -125,12 +125,6 @@ export default function YoungArtists() {
       </a>
     </div>
   </div>
-  <div className="bg-black/30 rounded-lg p-4 mt-4">
-    <p className="text-sm text-gray-300 leading-relaxed">
-      💡 <strong>טיפ:</strong> לחץ על הכפתור, שלח לנו הודעה בוואטסאפ, ותתווסף מיד לקבוצה. 
-      רק אחרי שאתה בקבוצה תוכל למלא את הטופס למטה.
-    </p>
-  </div>
 </div>
 
 {!formSubmitted ? (
