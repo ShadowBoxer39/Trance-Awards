@@ -111,7 +111,8 @@ export default function YoungArtists() {
         על מנת להגיש מועמדות, <strong className="text-purple-300">חובה להיות חבר בקהילת הוואטסאפ שלנו</strong>. 
         זה המקום שבו אנחנו מתקשרים עם האמנים, מעדכנים על הזדמנויות חדשות ושומרים על קשר עם הקהילה.
       </p>
-      
+
+      <a
         href="https://wa.me/972509218090?text=היי! אני רוצה להצטרף לקהילת האמנים הצעירים"
         target="_blank"
         rel="noopener noreferrer"
