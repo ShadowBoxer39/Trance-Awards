@@ -258,7 +258,7 @@ export default function Episodes() {
             
             <div className="flex flex-wrap justify-center gap-4">
               <a
-                href="https://open.spotify.com/show/0LGP2n3IGqeFVv1fIZOkeZ"
+                href="https://open.spotify.com/show/0LGP2n3IGqeFVVlflZOkeZ?si=70e288aabc6d42cd"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary px-6 py-3 rounded-lg font-medium flex items-center gap-2"
