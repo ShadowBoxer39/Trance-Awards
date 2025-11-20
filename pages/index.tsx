@@ -376,15 +376,9 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <span className="text-3xl">🌟</span>
                 <h2 className="text-2xl md:text-3xl font-semibold text-gradient">
-                  האמן הצעיר המוצג
+               האמן שאתם צריכים להכיר
                 </h2>
               </div>
-              <Link
-                href="/young-artists"
-                className="text-sm text-purple-300 hover:text-purple-200 underline-offset-2 hover:underline transition"
-              >
-                כל האמנים הצעירים ←
-              </Link>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8 items-start">
@@ -392,7 +386,7 @@ export default function Home() {
               <div className="w-full">
                 <div className="aspect-square rounded-xl overflow-hidden bg-gray-900">
                   <img
-                    src="/images/featured-artist.jpg"
+                    src="/images/kanok.png"
                     alt="Featured Artist"
                     className="w-full h-full object-cover"
                   />
@@ -404,7 +398,7 @@ export default function Home() {
                 {/* Artist Name & Bio */}
                 <div>
                   <h3 className="text-2xl font-semibold mb-2">
-                    שם האמן (Stage Name)
+                    טל רנדליך (Kanok)
                   </h3>
                   <p className="text-gray-400 leading-relaxed">
                     כאן יבוא ביוגרפיה קצרה על האמן - הסיפור שלו, איך הוא התחיל ביצירה, 
@@ -423,7 +417,7 @@ export default function Home() {
                       scrolling="no"
                       frameBorder="no"
                       allow="autoplay"
-                      src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/TRACK_ID_HERE&color=%23a855f7&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false"
+                      src="https://soundcloud.com/kanok_music/kanok-light-beam"
                     ></iframe>
                   </div>
                 </div>
@@ -433,7 +427,7 @@ export default function Home() {
                   <h4 className="text-sm font-semibold mb-3 text-gray-400">עקבו אחריו</h4>
                   <div className="flex flex-wrap gap-3">
                     <a
-                      href="#"
+                      href="https://www.instagram.com/kanok_music/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
@@ -444,7 +438,7 @@ export default function Home() {
                       Instagram
                     </a>
                     <a
-                      href="#"
+                      href="https://soundcloud.com/kanok_music"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
@@ -455,7 +449,7 @@ export default function Home() {
                       SoundCloud
                     </a>
                     <a
-                      href="#"
+                      href="https://open.spotify.com/artist/3gayXKIE0S2wgeaSigcwIC?si=MOMSUPgpS6mjB8T2Qu8dww"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
