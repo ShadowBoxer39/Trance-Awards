@@ -53,10 +53,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>יוצאים לטראק - פודקאסט טראנס</title>
+        <title>יוצאים לטראק - תכנית הטראנס של ישראל</title>
         <meta
           name="description"
-          content="יוצאים לטראק - הפודקאסט של קהילת הטראנס בישראל. פרקים, סטים, אמנים צעירים ועוד."
+          content="יוצאים לטראק -תכנית הטראנס הגדולה בישראל. נותנים כבוד לאגדות, מקדמים את הצעירים."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/images/logo.png" />
