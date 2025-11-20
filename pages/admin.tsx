@@ -673,7 +673,7 @@ export default function Admin() {
                    <div>
   <div className="text-sm text-white/60 mb-1">לינק לטראק</div>
   
-    href={selectedSignup.trackLink}
+   <a href={selectedSignup.trackLink}
     target="_blank"
     rel="noopener noreferrer"
     className="text-cyan-400 hover:text-cyan-300 transition break-all"
