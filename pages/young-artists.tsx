@@ -70,22 +70,22 @@ export default function YoungArtists() {
   // Previous artists data
   const previousArtists = [
     {
-      name: "שם מלא של האמן 1",
-      stageName: "שם האמן 1",
-      description: "תיאור קצר על האמן והסגנון שלו. אמן צעיר מוכשר מהסצנה הישראלית.",
-      image: "/images/artists/artist1.jpg", // Replace with actual image path
-      soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/YOUR_TRACK_ID&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true",
-      spotifyUrl: "https://open.spotify.com/artist/YOUR_ARTIST_ID",
-      instagramUrl: "https://instagram.com/artist1"
+      name: "רון שפרוט",
+      stageName: "Shaprut",
+      description: "אחד האמנים הכי מיוחדים ומגוונים שתשמעו, לא הולך בתלם.",
+      image: "/images/artists/shaprut.png", // Replace with actual image path
+      soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A1684460661&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
+      spotifyUrl: "https://open.spotify.com/artist/4cpLog6uK5HawBNvdc1W5d?si=HKqy7XX0TkWVNnQIQ_QEBw",
+      instagramUrl: "https://www.instagram.com/shaprut_music/"
     },
     {
-      name: "שם מלא של האמן 2",
-      stageName: "שם האמן 2",
-      description: "תיאור קצר על האמן והסגנון שלו. אמן צעיר מוכשר מהסצנה הישראלית.",
-      image: "/images/artists/artist2.jpg", // Replace with actual image path
-      soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/YOUR_TRACK_ID&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true",
-      spotifyUrl: "https://open.spotify.com/artist/YOUR_ARTIST_ID",
-      instagramUrl: "https://instagram.com/artist2"
+      name: "אריאל נרדיה",
+      stageName: "Nardia",
+      description: "תעצמו עיניים וצאו לטיול עם נרדיה, חוויה חוץ גופית.",
+      image: "/images/artists/nardia.jpg", // Replace with actual image path
+      soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1980883968&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
+      spotifyUrl: "https://open.spotify.com/artist/6DEnaflHWCeJUUkbcp1KbO?si=cc360f7341484e34",
+      instagramUrl: "https://www.instagram.com/nardia_m_/"
     }
   ];
 
@@ -340,7 +340,7 @@ export default function YoungArtists() {
 
         {/* Featured Artists - REDESIGNED */}
         <section className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-semibold mb-8 text-center">אמנים שהוצגו בעבר</h2>
+          <h2 className="text-3xl font-semibold mb-8 text-center">אמנים שהופיעו אצלנו בעבר ואתם חייבים להכיר</h2>
           
           <div className="space-y-8">
             {previousArtists.map((artist, index) => (
@@ -417,16 +417,16 @@ export default function YoungArtists() {
 
         {/* Special Episode - 4 Young Artists */}
         <section className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-semibold mb-6">פרק מיוחד - 4 אמנים צעירים</h2>
+          <h2 className="text-2xl font-semibold mb-6">פרק מיוחד - הדור הבא של הטראנס</h2>
           
           <div className="glass-card rounded-xl overflow-hidden border-2 border-purple-500/30">
             <div className="p-6 md:p-8 bg-gradient-to-r from-purple-900/30 to-transparent">
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-3xl">🎵</span>
-                <h2 className="text-2xl md:text-3xl font-semibold text-gradient">פרק מיוחד - 4 אמנים צעירים</h2>
+                <h2 className="text-2xl md:text-3xl font-semibold text-gradient">פרק מיוחד</h2>
               </div>
               <p className="text-gray-300 mb-6">
-                בפרק מיוחד זה אירחנו 4 אמנים צעירים מהסצנה הישראלית שקיבלו הזדמנות להציג את המוזיקה שלהם
+                בפרק מיוחד זה אירחנו 4 אמנים בתחילת דרכם מהסצנה הישראלית שקיבלו הזדמנות להציג את המוזיקה שלהם
               </p>
             </div>
 
