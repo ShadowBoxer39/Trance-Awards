@@ -1,11 +1,11 @@
-// pages/index.tsx - PROFESSIONAL MATURE DESIGN (Fixed SSR)
+// pages/index.tsx - PROFESSIONAL MATURE DESIGN (Enhanced with Look & Stats)
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import SEO from "@/components/SEO";
 import Navigation from "../components/Navigation";
-import { default as episodeApiHandler } from "./api/episodes"; // <-- IMPORTED API HANDLER
+import { default as episodeApiHandler } from "./api/episodes";
 
 interface Episode {
   id: number;
@@ -16,6 +16,49 @@ interface Episode {
   publishedAt: string;
   channelTitle: string;
 }
+
+// --- NEW: Inline Component for Counting Stats (Better Act/Stats) ---
+// רכיב קטן שמטפל באנימציית ספירה-למעלה (Count-up)
+function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: string, label: string }) {
+  const [count, setCount] = useState(0);
+  const duration = 1500;
+  const step = target / (duration / 30); // 30ms interval
+
+  useEffect(() => {
+    let startTime: number;
+    let animationFrame: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = timestamp - startTime;
+      const newValue = Math.min(target, 0 + step * (progress / 30));
+      
+      setCount(Math.floor(newValue));
+
+      if (progress < duration) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        setCount(target);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    
+    return () => cancelAnimationFrame(animationFrame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target]);
+
+  return (
+    <div>
+      <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
+        {count.toLocaleString('en-US')}{suffix}
+      </div>
+      <div className="text-sm text-gray-500">{label}</div>
+    </div>
+  );
+}
+// --- END CountUpStat ---
+
 
 export default function Home({ episodes, episodesError }: { episodes: Episode[], episodesError: string | null }) {
   
@@ -33,7 +76,7 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
           .reverse()
       : [];
       
-  const episodesLoading = false;
+  const episodesLoading = false; 
 
   return (
     <>
@@ -55,11 +98,11 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
       <div className="trance-backdrop min-h-screen text-gray-100">
        <Navigation currentPage="home" />
 
-        {/* HERO */}
-        <header className="max-w-7xl mx-auto px-6 pt-16 pb-10">
+        {/* HERO - Dynamic BG applied here */}
+        <header className="hero-backdrop max-w-7xl mx-auto px-6 pt-16 pb-10">
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            {/* Left side – title & CTA */}
-            <div>
+            {/* Left side – title & CTA (Parallax/Grip effect applied here) */}
+            <div className="relative transform md:translate-y-0.5 z-10"> {/* z-10 ensures content stays above the pseudo-element glow */}
               <p className="text-sm uppercase tracking-[0.25em] text-purple-400 mb-3">
                 תכנית הטראנס של ישראל
               </p>
@@ -73,7 +116,7 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
               <div className="flex flex-wrap gap-4 mb-10">
                 <Link
                   href="/episodes"
-                  className="btn-primary px-6 py-3 rounded-lg font-medium"
+                  className="btn-primary px-6 py-3 rounded-lg font-medium btn-pulse" {/* <-- Pulsating button */}
                 >
                   האזינו לפרקים
                 </Link>
@@ -86,31 +129,16 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
                 </Link>
               </div>
 
-              {/* Stats */}
+              {/* Stats - Using the new counting component */}
               <div className="flex gap-8 md:gap-12">
-                <div>
-                  <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
-                    50+
-                  </div>
-                  <div className="text-sm text-gray-500">פרקים</div>
-                </div>
-                <div>
-                  <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
-                    200+
-                  </div>
-                  <div className="text-sm text-gray-500">שעות של תוכן</div>
-                </div>
-                <div>
-                  <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
-                    40+
-                  </div>
-                  <div className="text-sm text-gray-500">אמנים בתחילת דרכם</div>
-                </div>
+                <CountUpStat target={50} suffix="+" label="פרקים" />
+                <CountUpStat target={200} suffix="+" label="שעות של תוכן" />
+                <CountUpStat target={40} suffix="+" label="אמנים בתחילת דרכם" />
               </div>
             </div>
 
             {/* Right side – studio partner card (desktop only) */}
-            <div className="hidden md:block mt-10 md:mt-0">
+            <div className="hidden md:block mt-10 md:mt-0 z-10">
               <div className="glass-card rounded-2xl p-8 max-w-sm mx-auto flex flex-col items-center text-center">
                 <div className="mb-4">
                   <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg">
@@ -547,17 +575,17 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
   );
 }
 
-// 3. Implemented SSR for Episodes
+// Fixed and simplified SSR to directly use the imported API logic
 export async function getServerSideProps() {
   
-  // NOTE: We need to mock the NextApiRequest/Response objects minimaly 
-  // to pass them to the imported API handler.
+  // NOTE: Mock minimal objects needed for the API handler
   const mockReq = {} as any;
   let responseData: any;
   
   const mockRes = {
     status: (code: number) => mockRes,
     json: (data: any) => {
+      // Capture the successful JSON response data
       if (typeof data !== 'object' || !data.error) {
         responseData = data;
       }
@@ -567,12 +595,17 @@ export async function getServerSideProps() {
   } as any;
   
   try {
-    // 1. Call the actual API handler logic (pages/api/episodes.ts)
+    // Call the actual API handler function to get the data
     await episodeApiHandler(mockReq, mockRes);
     
-    // 2. Extract the data if successful
-    const episodes = responseData || [];
+    // Check if data was successfully captured
+    const episodes = responseData && Array.isArray(responseData) ? responseData : [];
     
+    // Check for explicit error from the handler's logic
+    if (responseData && responseData.error) {
+        throw new Error(responseData.error);
+    }
+
     return {
       props: {
         episodes,
@@ -584,7 +617,6 @@ export async function getServerSideProps() {
     return {
       props: {
         episodes: [],
-        // Provide the generic error message the client component expects
         episodesError: "שגיאה בטעינת הפרקים. נסה לרענן את הדף.",
       },
     };
