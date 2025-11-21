@@ -1,10 +1,11 @@
-// pages/index.tsx - PROFESSIONAL MATURE DESIGN (Revised)
+// pages/index.tsx - PROFESSIONAL MATURE DESIGN (Fixed SSR)
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 import SEO from "@/components/SEO";
-import Navigation from "../components/Navigation"; // <-- ADDED
+import Navigation from "../components/Navigation";
+import { default as episodeApiHandler } from "./api/episodes"; // <-- IMPORTED API HANDLER
 
 interface Episode {
   id: number;
@@ -16,7 +17,6 @@ interface Episode {
   channelTitle: string;
 }
 
-// 1. Component updated to accept server-side props
 export default function Home({ episodes, episodesError }: { episodes: Episode[], episodesError: string | null }) {
   
   React.useEffect(() => {
@@ -33,7 +33,7 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
           .reverse()
       : [];
       
-  const episodesLoading = false; // Loading logic removed due to SSR
+  const episodesLoading = false;
 
   return (
     <>
@@ -53,7 +53,6 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
       </Head>
 
       <div className="trance-backdrop min-h-screen text-gray-100">
-       {/* 2. Used Navigation component instead of hardcoded logic */}
        <Navigation currentPage="home" />
 
         {/* HERO */}
@@ -121,7 +120,7 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
                       width={130}
                       height={130}
                       className="object-contain"
-                      priority // <-- ADDED PRIORITY
+                      priority
                     />
                   </div>
                 </div>
@@ -157,7 +156,7 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
             </div>
           ) : episodesError ? (
             <div className="glass-card rounded-xl p-6 text-center text-gray-300">
-              <p className="mb-4">לא הצלחנו לטעון את הפרק האחרון.</p>
+              <p className="mb-4">לא הצלחנו לטעון את הפרק האחרון. {episodesError}</p>
               <button
                 onClick={() => window.location.reload()}
                 className="btn-primary px-6 py-3 rounded-lg font-medium"
@@ -364,7 +363,15 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
               ))}
             </div>
           ) : episodesError ? (
-            <p className="text-gray-400">לא הצלחנו לטעון פרקים קודמים. {episodesError}</p>
+            <div className="glass-card rounded-xl p-6 text-center text-gray-300">
+              <p className="mb-4">לא הצלחנו לטעון פרקים קודמים. {episodesError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="btn-primary px-6 py-3 rounded-lg font-medium"
+              >
+                רענן דף
+              </button>
+            </div>
           ) : previousEpisodes.length === 0 ? (
             <p className="text-gray-400">אין עדיין פרקים קודמים.</p>
           ) : (
@@ -542,20 +549,29 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
 
 // 3. Implemented SSR for Episodes
 export async function getServerSideProps() {
+  
+  // NOTE: We need to mock the NextApiRequest/Response objects minimaly 
+  // to pass them to the imported API handler.
+  const mockReq = {} as any;
+  let responseData: any;
+  
+  const mockRes = {
+    status: (code: number) => mockRes,
+    json: (data: any) => {
+      if (typeof data !== 'object' || !data.error) {
+        responseData = data;
+      }
+      return mockRes;
+    },
+    setHeader: () => mockRes,
+  } as any;
+  
   try {
-    // The hostname for internal API calls might vary in deployment environments (Vercel, etc.).
-    // We use a general approach to construct the API URL.
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    // 1. Call the actual API handler logic (pages/api/episodes.ts)
+    await episodeApiHandler(mockReq, mockRes);
     
-    // Fetch episodes via the API route internally (pages/api/episodes.ts)
-    const apiResponse = await fetch(`${baseUrl}/api/episodes`);
-    
-    if (!apiResponse.ok) {
-      const errorText = await apiResponse.text();
-      throw new Error(`Failed to fetch episodes data: ${apiResponse.status} - ${errorText}`);
-    }
-    
-    const episodes = await apiResponse.json();
+    // 2. Extract the data if successful
+    const episodes = responseData || [];
     
     return {
       props: {
@@ -568,6 +584,7 @@ export async function getServerSideProps() {
     return {
       props: {
         episodes: [],
+        // Provide the generic error message the client component expects
         episodesError: "שגיאה בטעינת הפרקים. נסה לרענן את הדף.",
       },
     };
