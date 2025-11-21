@@ -1,11 +1,10 @@
-// pages/admin.tsx - FINAL COMPLETE VERSION
+// pages/admin.tsx - FINAL COMPLETE VERSION (MODAL RESTORED)
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
 
 type Tally = Record<string, Record<string, number>>;
 
-// Data structure for Young Artists
 interface Signup {
   id: string;
   full_name: string;
@@ -18,7 +17,6 @@ interface Signup {
   submitted_at: string;
 }
 
-// Data structure for Site Analytics
 interface ServerVisitData {
   id: string;
   timestamp: string;
@@ -162,7 +160,7 @@ export default function Admin() {
         try {
           domain = new URL(v.referrer).hostname.replace(/^www\./, '') || 'direct';
         } catch {
-          domain = v.referrer.split('/')[0] || 'direct';
+          domain = v.referrer?.split('/')[0] || 'direct';
         }
       }
       acc[domain] = (acc[domain] || 0) + 1;
@@ -482,16 +480,101 @@ export default function Admin() {
                   })}
                 </div>
 
-                {/* NOTE: Modal JSX is omitted here for file size, but belongs here */}
+                {/* --- RESTORED MODAL CONTENT --- */}
                 {selectedCategory && tally[selectedCategory] && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4">
-                        {/* ... Modal Content JSX for chart and table ... */}
-                        <div className="glass rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-auto text-center text-red-500">
-                            (Modal content omitted for file size, restore modal JSX here if needed.)
-                            <button onClick={() => setSelectedCategory(null)} className="mt-4 btn-primary p-2 rounded-lg">סגור</button>
-                        </div>
+                  <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4">
+                    <div className="glass rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-auto">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold gradient-title">
+                          {getCategoryTitle(selectedCategory)}
+                        </h2>
+                        <button
+                          onClick={() => setSelectedCategory(null)}
+                          className="text-white/60 hover:text-white text-2xl"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div className="mb-8 bg-black/30 rounded-xl p-4">
+                        <ResponsiveContainer width="100%" height={400}>
+                          <BarChart
+                            data={Object.entries(tally[selectedCategory])
+                              .sort((a, b) => b[1] - a[1])
+                              .map(([id, count]) => ({
+                                name: getNomineeName(selectedCategory, id),
+                                votes: count,
+                              }))}
+                          >
+                            <XAxis 
+                              dataKey="name" 
+                              angle={-45} 
+                              textAnchor="end" 
+                              height={100} 
+                              tick={{ fill: "#fff", fontSize: 12 }} 
+                            />
+                            <YAxis tick={{ fill: "#fff" }} />
+                            <Tooltip
+                              contentStyle={{ 
+                                background: "#1a1a2e", 
+                                border: "1px solid #00ffcc", 
+                                borderRadius: "8px" 
+                              }}
+                            />
+                            <Bar dataKey="votes" fill="#00ffcc" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="text-white/70 border-b border-white/10">
+                            <tr>
+                              <th className="text-right py-3">מקום</th>
+                              <th className="text-right py-3">שם</th>
+                              <th className="text-right py-3">קולות</th>
+                              <th className="text-right py-3">אחוז</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(tally[selectedCategory])
+                              .sort((a, b) => b[1] - a[1])
+                              .map(([nomineeId, count], index) => {
+                                const total = Object.values(tally[selectedCategory]).reduce((a, b) => a + b, 0);
+                                const pct = Math.round((count / total) * 100);
+                                
+                                return (
+                                  <tr key={nomineeId} className="border-t border-white/5 hover:bg-white/5">
+                                    <td className="py-3 text-right">
+                                      {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
+                                    </td>
+                                    <td className="py-3 text-right font-medium">
+                                      {getNomineeName(selectedCategory, nomineeId)}
+                                    </td>
+                                    <td className="py-3 text-right text-cyan-400 font-bold">
+                                      {count}
+                                    </td>
+                                    <td className="py-3 text-right">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
+                                          <div
+                                            className="h-full bg-gradient-to-r from-cyan-400 to-purple-500"
+                                            style={{ width: `${pct}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-white/80">{pct}%</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
+                  </div>
                 )}
+                {/* --- END RESTORED MODAL CONTENT --- */}
               </>
             )}
 
@@ -503,7 +586,6 @@ export default function Admin() {
                     <div className="text-3xl font-semibold text-gradient mb-2">{signups.length}</div>
                     <div className="text-white/60 text-sm">סך הכל הרשמות</div>
                   </div>
-                  {/* Placeholder area for potential charts/stats */}
                   <div className="glass rounded-xl p-6 col-span-2">
                     <div className="text-sm text-white/60 text-center">
                       (Weekly/Daily stats currently unavailable from server)
