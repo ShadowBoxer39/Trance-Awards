@@ -813,44 +813,64 @@ export default function Admin() {
                         <div className="text-white/60 text-sm">שעות:דקות:שניות</div>
                       </div>
 
+                    // pages/admin.tsx - UPDATED CHARTS JSX
+
+// ... (existing content up to line 700)
+
                       {/* Charts Grid */}
                       <div className="grid md:grid-cols-2 gap-4">
-                        {/* Top Pages Chart */}
+                        {/* Top Pages Chart (VERTICAL LAYOUT RESTORED) */}
                         <div className="glass rounded-xl p-6">
                           <h3 className="text-xl font-semibold mb-3">דפים פופולריים (Top 5)</h3>
                           <ResponsiveContainer width="100%" height={300}>
                             <BarChart 
                               data={pageViewData} 
-                              layout="vertical"
+                              layout="horizontal" // Default is horizontal, but this ensures settings are correct
                               margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                              <XAxis type="number" stroke="#ffffff80" />
-                              <YAxis dataKey="name" type="category" stroke="#ffffff80" />
+                              <XAxis 
+                                dataKey="name" 
+                                type="category"
+                                angle={-45} 
+                                textAnchor="end"
+                                height={60}
+                                stroke="#ffffff80" 
+                              />
+                              <YAxis type="number" stroke="#ffffff80" />
                               <Tooltip content={<CustomTooltip />} />
                               <Bar dataKey="visits" fill="#4ade80" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
                         
-                        {/* Referrers Chart */}
+                        {/* Referrers Chart (VERTICAL LAYOUT RESTORED) */}
                         <div className="glass rounded-xl p-6">
                           <h3 className="text-xl font-semibold mb-3">מקורות תנועה (Top 5)</h3>
                           <ResponsiveContainer width="100%" height={300}>
                             <BarChart 
                               data={referrerData} 
-                              layout="vertical"
+                              layout="horizontal" // Default is horizontal
                               margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                              <XAxis type="number" stroke="#ffffff80" />
-                              <YAxis dataKey="name" type="category" stroke="#ffffff80" />
+                              <XAxis 
+                                dataKey="name" 
+                                type="category"
+                                angle={-45} 
+                                textAnchor="end"
+                                height={60}
+                                stroke="#ffffff80" 
+                              />
+                              <YAxis type="number" stroke="#ffffff80" />
                               <Tooltip content={<CustomTooltip />} />
                               <Bar dataKey="visits" fill="#f472b6" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
+                      
+                      {/* ... (rest of the analytics tab content) ... */}
                       
                       {/* Recent Visits Table */}
                       <div className="glass rounded-xl overflow-hidden">
