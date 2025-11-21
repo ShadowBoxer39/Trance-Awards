@@ -5,9 +5,10 @@ import Image from "next/image";
 import React from "react";
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
+import { usePlayer } from "../components/PlayerProvider"; // <-- ADDED
 
 export default function YoungArtists() {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const player = usePlayer(); // <-- ADDED
   const [formData, setFormData] = React.useState({
     fullName: "",
     stageName: "",
@@ -88,6 +89,22 @@ export default function YoungArtists() {
       instagramUrl: "https://www.instagram.com/nardia_m_/"
     }
   ];
+
+  // Helper to extract clean Soundcloud URL from the embed src format
+  const getCleanSoundcloudUrl = (embedSrc: string) => {
+    const urlMatch = embedSrc.match(/url=(.*?)&/);
+    if (urlMatch && urlMatch[1]) {
+      // Decode the URL if it was double-encoded
+      try {
+        const decoded = decodeURIComponent(urlMatch[1]);
+        return decoded;
+      } catch (e) {
+        return urlMatch[1];
+      }
+    }
+    return embedSrc; // Fallback
+  };
+
 
   return (
     <>
@@ -348,9 +365,10 @@ export default function YoungArtists() {
                 key={index}
                 className="glass-card rounded-xl overflow-hidden border border-purple-500/20 hover:border-purple-500/40 transition"
               >
-                <div className="grid md:grid-cols-[300px,1fr] gap-6 p-6">
-                  {/* Artist Image */}
-                  <div className="relative aspect-[4/3] md:aspect-auto md:h-full bg-gradient-to-br from-purple-600/20 to-cyan-600/20 rounded-lg overflow-hidden">
+                {/* Fixed grid: stack on mobile, side-by-side on tablet/desktop */}
+                <div className="grid md:grid-cols-[250px,1fr] gap-6 p-6">
+                  {/* Artist Image - Fixed aspect ratio for better mobile layout */}
+                  <div className="relative aspect-square md:aspect-auto md:h-full bg-gradient-to-br from-purple-600/20 to-cyan-600/20 rounded-lg overflow-hidden">
                     <Image
                       src={artist.image}
                       alt={artist.stageName}
@@ -370,18 +388,27 @@ export default function YoungArtists() {
                       {artist.description}
                     </p>
 
-                    {/* SoundCloud Embed */}
+                    {/* Soundcloud Play Button - USES GLOBAL PLAYER (FIXED) */}
                     <div className="mb-4 flex-grow">
-                      <iframe
-                        width="100%"
-                        height="166"
-                        scrolling="no"
-                        frameBorder="no"
-                        allow="autoplay"
-                        src={artist.soundcloudEmbed}
-                        className="rounded-lg"
-                      />
+                      <button
+                        onClick={() => player.playUrl(getCleanSoundcloudUrl(artist.soundcloudEmbed))}
+                        className="w-full btn-secondary px-5 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition hover:bg-purple-500/20 border-purple-400/50"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                        </svg>
+                        האזן לטראק בנגן
+                      </button>
+                      <a
+                        href={getCleanSoundcloudUrl(artist.soundcloudEmbed)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-gray-500 hover:text-purple-400 mt-2 block text-center"
+                      >
+                        או פתח ב-SoundCloud
+                      </a>
                     </div>
+
 
                     {/* Social Links */}
                     <div className="flex gap-3 mt-auto">
