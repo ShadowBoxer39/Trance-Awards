@@ -5,10 +5,10 @@ import Image from "next/image";
 import React from "react";
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
-import { usePlayer } from "../components/PlayerProvider"; // <-- ADDED
+import { usePlayer } from "../components/PlayerProvider";
 
 export default function YoungArtists() {
-  const player = usePlayer(); // <-- ADDED
+  const player = usePlayer();
   const [formData, setFormData] = React.useState({
     fullName: "",
     stageName: "",
@@ -24,42 +24,57 @@ export default function YoungArtists() {
     document.documentElement.setAttribute("dir", "rtl");
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // --- UPDATED SUBMISSION LOGIC: Sends data to API ---
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create submission object with timestamp
-    const submission = {
-      ...formData,
-      submittedAt: new Date().toISOString(),
-      id: Date.now().toString(),
+    // Data object to send to the new API endpoint
+    const submissionData = {
+      fullName: formData.fullName,
+      stageName: formData.stageName,
+      age: formData.age,
+      phone: formData.phone,
+      experienceYears: formData.experienceYears,
+      inspirations: formData.inspirations,
+      trackLink: formData.trackLink,
     };
     
-    // Get existing submissions from localStorage
-    const existingSubmissions = JSON.parse(localStorage.getItem('youngArtistSignups') || '[]');
-    
-    // Add new submission
-    existingSubmissions.push(submission);
-    
-    // Save back to localStorage
-    localStorage.setItem('youngArtistSignups', JSON.stringify(existingSubmissions));
-    
-    console.log("Form submitted:", submission);
-    setFormSubmitted(true);
-    
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setFormSubmitted(false);
-      setFormData({
-        fullName: "",
-        stageName: "",
-        age: "",
-        phone: "",
-        experienceYears: "",
-        inspirations: "",
-        trackLink: "",
+    try {
+      // Step 1: Send data to the new server endpoint
+      const response = await fetch("/api/submit-artist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submissionData),
       });
-    }, 3000);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Submission failed with status: ${response.status}`);
+      }
+
+      console.log("Form submitted successfully to server.");
+      setFormSubmitted(true);
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setFormSubmitted(false);
+        setFormData({
+          fullName: "",
+          stageName: "",
+          age: "",
+          phone: "",
+          experienceYears: "",
+          inspirations: "",
+          trackLink: "",
+        });
+      }, 3000);
+      
+    } catch (error: any) {
+      console.error("Error submitting form:", error.message);
+      alert(`Submission Error: Please ensure all required fields are valid and try again. (${error.message})`);
+    }
   };
+  // --- END UPDATED SUBMISSION LOGIC ---
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -68,33 +83,10 @@ export default function YoungArtists() {
     });
   };
 
-  // Previous artists data
-  const previousArtists = [
-    {
-      name: "רון שפרוט",
-      stageName: "Shaprut",
-      description: "אחד האמנים הכי מיוחדים ומגוונים שתשמעו, לא הולך בתלם.",
-      image: "/images/shaprut.png", // Replace with actual image path
-      soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A1684460661&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
-      spotifyUrl: "https://open.spotify.com/artist/4cpLog6uK5HawBNvdc1W5d?si=HKqy7XX0TkWVNnQIQ_QEBw",
-      instagramUrl: "https://www.instagram.com/shaprut_music/"
-    },
-    {
-      name: "אריאל נרדיה",
-      stageName: "Nardia",
-      description: "תעצמו עיניים וצאו לטיול עם נרדיה, חוויה חוץ גופית.",
-      image: "/images/nardia.jpg", // Replace with actual image path
-      soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1980883968&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
-      spotifyUrl: "https://open.spotify.com/artist/6DEnaflHWCeJUUkbcp1KbO?si=cc360f7341484e34",
-      instagramUrl: "https://www.instagram.com/nardia_m_/"
-    }
-  ];
-
   // Helper to extract clean Soundcloud URL from the embed src format
   const getCleanSoundcloudUrl = (embedSrc: string) => {
     const urlMatch = embedSrc.match(/url=(.*?)&/);
     if (urlMatch && urlMatch[1]) {
-      // Decode the URL if it was double-encoded
       try {
         const decoded = decodeURIComponent(urlMatch[1]);
         return decoded;
@@ -104,7 +96,28 @@ export default function YoungArtists() {
     }
     return embedSrc; // Fallback
   };
-
+  
+  // Previous artists data
+  const previousArtists = [
+    {
+      name: "רון שפרוט",
+      stageName: "Shaprut",
+      description: "אחד האמנים הכי מיוחדים ומגוונים שתשמעו, לא הולך בתלם.",
+      image: "/images/shaprut.png",
+      soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A1684460661&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
+      spotifyUrl: "https://open.spotify.com/artist/4cpLog6uK5HawBNvdc1W5d?si=HKqy7XX0TkWVNnQIQ_QEBw",
+      instagramUrl: "https://www.instagram.com/shaprut_music/"
+    },
+    {
+      name: "אריאל נרדיה",
+      stageName: "Nardia",
+      description: "תעצמו עיניים וצאו לטיול עם נרדיה, חוויה חוץ גופית.",
+      image: "/images/nardia.jpg",
+      soundcloudEmbed: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1980883968&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true",
+      spotifyUrl: "https://open.spotify.com/artist/6DEnaflHWCeJUUkbcp1KbO?si=cc360f7341484e34",
+      instagramUrl: "https://www.instagram.com/nardia_m_/"
+    }
+  ];
 
   return (
     <>
