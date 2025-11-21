@@ -67,7 +67,7 @@ export default function YoungArtists() {
           inspirations: "",
           trackLink: "",
         });
-      }, 3000);
+      }, 10000);
       
     } catch (error: any) {
       console.error("Error submitting form:", error.message);
