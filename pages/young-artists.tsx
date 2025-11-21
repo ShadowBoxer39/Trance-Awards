@@ -162,7 +162,7 @@ export default function YoungArtists() {
             {/* WhatsApp Community Requirement */}
             <div className="bg-gradient-to-r from-purple-900/40 to-cyan-900/40 border-2 border-purple-500/50 rounded-xl p-6 mb-8">
               <div className="flex items-start gap-4 mb-4">
-                <div className="text-4xl">⚠️</div>
+          
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-white">דרישה חובה להשתתפות</h3>
                   <p className="text-gray-200 leading-relaxed mb-4">
