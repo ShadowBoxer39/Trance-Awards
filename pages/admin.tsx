@@ -1,4 +1,4 @@
-// pages/admin.tsx - MERGED VERSION: VOTES + YOUNG ARTISTS + ANALYTICS (FIXED ANALYTICS)
+// pages/admin.tsx - MERGED VERSION: VOTES + YOUNG ARTISTS + ANALYTICS (FIXED ANALYTICS TYPING)
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
@@ -28,6 +28,7 @@ interface ServerVisitData {
   exit_time: number | null;
   duration: number | null; // In seconds
   client_ip: string | null;
+  country_code: string | null; // <-- FIX: ADDED MISSING PROPERTY
   is_israel: boolean | null;
 }
 
@@ -375,9 +376,9 @@ export default function Admin() {
 
             {/* VOTES TAB */}
             {activeTab === "votes" && (
-              <>
-                {/* ... (Votes UI omitted for brevity) ... */}
-              </>
+              <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
+                  {/* ... (Votes UI omitted for brevity) ... */}
+              </div>
             )}
 
             {/* SIGNUPS TAB */}
