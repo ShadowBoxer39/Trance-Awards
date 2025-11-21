@@ -1,10 +1,10 @@
-// pages/index.tsx - PROFESSIONAL MATURE DESIGN
+// pages/index.tsx - PROFESSIONAL MATURE DESIGN (Revised)
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 import SEO from "@/components/SEO";
-
+import Navigation from "../components/Navigation"; // <-- ADDED
 
 interface Episode {
   id: number;
@@ -16,30 +16,11 @@ interface Episode {
   channelTitle: string;
 }
 
-export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [episodes, setEpisodes] = React.useState<Episode[]>([]);
-  const [episodesLoading, setEpisodesLoading] = React.useState(true);
-  const [episodesError, setEpisodesError] = React.useState<string | null>(null);
-
+// 1. Component updated to accept server-side props
+export default function Home({ episodes, episodesError }: { episodes: Episode[], episodesError: string | null }) {
+  
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
-
-    const fetchEpisodes = async () => {
-      try {
-        const res = await fetch("/api/episodes");
-        if (!res.ok) throw new Error("Failed to fetch episodes");
-        const data: Episode[] = await res.json();
-        setEpisodes(data);
-        setEpisodesLoading(false);
-      } catch (err: any) {
-        console.error("Failed to fetch episodes:", err);
-        setEpisodesError(err.message || "שגיאה בטעינת הפרקים");
-        setEpisodesLoading(false);
-      }
-    };
-
-    fetchEpisodes();
   }, []);
 
   const latestEpisode =
@@ -51,6 +32,8 @@ export default function Home() {
           .slice(Math.max(episodes.length - 4, 0), episodes.length - 1)
           .reverse()
       : [];
+      
+  const episodesLoading = false; // Loading logic removed due to SSR
 
   return (
     <>
@@ -70,125 +53,8 @@ export default function Home() {
       </Head>
 
       <div className="trance-backdrop min-h-screen text-gray-100">
-       {/* Navigation */}
-<nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6">
-    <div className="flex items-center justify-between h-20">
-      {/* Logo & Brand */}
-      <Link
-        href="/"
-        className="flex items-center gap-3 hover:opacity-90 transition"
-      >
-        <Image
-          src="/images/logo.png"
-          alt="Logo"
-          width={50}
-          height={50}
-          className="rounded-lg"
-        />
-        <span className="text-xl font-semibold hidden sm:block">יוצאים לטראק</span>
-      </Link>
-
-    {/* Desktop Menu */}
-<div className="hidden md:flex items-center gap-8">
-  <Link href="/" className="text-gray-300 hover:text-white text-base font-medium transition">
-    בית
-  </Link>
-  <Link
-    href="/episodes"
-    className="text-gray-300 hover:text-white text-base font-medium transition"
-  >
-    פרקים
-  </Link>
-  <Link
-    href="/young-artists"
-    className="text-gray-300 hover:text-white text-base font-medium transition"
-  >
-    אמנים צעירים
-  </Link>
-  <Link
-    href="/about"
-    className="text-gray-300 hover:text-white text-base font-medium transition"
-  >
-    אודות
-  </Link>
-  <Link
-    href="/advertisers"
-    className="text-white text-base font-medium hover:text-purple-400 transition"
-  >
-    למפרסמים
-  </Link>
-  <Link
-    href="/vote"
-    className="btn-primary px-6 py-3 rounded-lg text-base font-medium"
-  >
-    הצבעה
-  </Link>
-</div>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="md:hidden text-gray-300 hover:text-white p-2"
-      >
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {mobileMenuOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
-      </button>
-    </div>
-
-  {/* Mobile Menu */}
-{mobileMenuOpen && (
-  <div className="md:hidden pb-4 space-y-1">
-    <Link
-      href="/"
-      className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-      onClick={() => setMobileMenuOpen(false)}
-    >
-      בית
-    </Link>
-    <Link
-      href="/episodes"
-      className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-      onClick={() => setMobileMenuOpen(false)}
-    >
-      פרקים
-    </Link>
-    <Link
-      href="/young-artists"
-      className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-      onClick={() => setMobileMenuOpen(false)}
-    >
-      אמנים צעירים
-    </Link>
-    <Link
-      href="/about"
-      className="block text-gray-300 hover:text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-      onClick={() => setMobileMenuOpen(false)}
-    >
-      אודות
-    </Link>
-    <Link
-      href="/advertisers"
-      className="block text-white text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition"
-      onClick={() => setMobileMenuOpen(false)}
-    >
-      למפרסמים
-    </Link>
-    <Link
-      href="/vote"
-      className="block btn-primary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
-      onClick={() => setMobileMenuOpen(false)}
-    >
-      הצבעה
-    </Link>
-  </div>
-)}
-  </div>
-</nav>
+       {/* 2. Used Navigation component instead of hardcoded logic */}
+       <Navigation currentPage="home" />
 
         {/* HERO */}
         <header className="max-w-7xl mx-auto px-6 pt-16 pb-10">
@@ -255,6 +121,7 @@ export default function Home() {
                       width={130}
                       height={130}
                       className="object-contain"
+                      priority // <-- ADDED PRIORITY
                     />
                   </div>
                 </div>
@@ -497,7 +364,7 @@ export default function Home() {
               ))}
             </div>
           ) : episodesError ? (
-            <p className="text-gray-400">לא הצלחנו לטעון פרקים קודמים.</p>
+            <p className="text-gray-400">לא הצלחנו לטעון פרקים קודמים. {episodesError}</p>
           ) : previousEpisodes.length === 0 ? (
             <p className="text-gray-400">אין עדיין פרקים קודמים.</p>
           ) : (
@@ -565,7 +432,7 @@ export default function Home() {
   rel="noopener noreferrer"
   className="btn-secondary px-6 py-3 rounded-lg font-medium flex items-center gap-2"
 >
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 0 24 24">
     <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
   </svg>
   Spotify
@@ -671,4 +538,38 @@ export default function Home() {
       </div>
     </>
   );
+}
+
+// 3. Implemented SSR for Episodes
+export async function getServerSideProps() {
+  try {
+    // The hostname for internal API calls might vary in deployment environments (Vercel, etc.).
+    // We use a general approach to construct the API URL.
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    
+    // Fetch episodes via the API route internally (pages/api/episodes.ts)
+    const apiResponse = await fetch(`${baseUrl}/api/episodes`);
+    
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text();
+      throw new Error(`Failed to fetch episodes data: ${apiResponse.status} - ${errorText}`);
+    }
+    
+    const episodes = await apiResponse.json();
+    
+    return {
+      props: {
+        episodes,
+        episodesError: null,
+      },
+    };
+  } catch (err: any) {
+    console.error("SSR episode fetch failed:", err.message);
+    return {
+      props: {
+        episodes: [],
+        episodesError: "שגיאה בטעינת הפרקים. נסה לרענן את הדף.",
+      },
+    };
+  }
 }
