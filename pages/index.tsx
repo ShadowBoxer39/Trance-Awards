@@ -102,7 +102,7 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
         <header className="hero-backdrop max-w-7xl mx-auto px-6 pt-16 pb-10">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             {/* Left side – title & CTA (Parallax/Grip effect applied here) */}
-            <div className="relative transform md:translate-y-0.5 z-10"> {/* z-10 ensures content stays above the pseudo-element glow */}
+            <div className="relative transform md:translate-y-0.5 z-10">
               <p className="text-sm uppercase tracking-[0.25em] text-purple-400 mb-3">
                 תכנית הטראנס של ישראל
               </p>
@@ -116,7 +116,7 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
               <div className="flex flex-wrap gap-4 mb-10">
                 <Link
                   href="/episodes"
-                  className="btn-primary px-6 py-3 rounded-lg font-medium btn-pulse" {/* <-- Pulsating button */}
+                  className="btn-primary px-6 py-3 rounded-lg font-medium btn-pulse" // <-- FIX: Removed internal comment
                 >
                   האזינו לפרקים
                 </Link>
