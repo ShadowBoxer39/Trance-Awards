@@ -43,7 +43,7 @@ function formatDuration(seconds: number | null): string {
     .join(':');
 }
 
-// Custom Tooltip component for Recharts (to ensure dark mode styling)
+// Custom Tooltip component for Recharts
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const value = payload[0].value;
@@ -496,13 +496,7 @@ export default function Admin() {
                               tick={{ fill: "#fff", fontSize: 12 }} 
                             />
                             <YAxis tick={{ fill: "#fff" }} />
-                            <Tooltip
-                              contentStyle={{ 
-                                background: "#1a1a2e", 
-                                border: "1px solid #00ffcc", 
-                                borderRadius: "8px" 
-                              }}
-                            />
+                            <Tooltip content={<CustomTooltip />} />
                             <Bar dataKey="votes" fill="#00ffcc" />
                           </BarChart>
                         </ResponsiveContainer>
@@ -752,15 +746,17 @@ export default function Admin() {
             {activeTab === "analytics" && (() => {
               const stats = getAnalytics();
               
+              // Prepare data for horizontal charts
               const pageViewData = stats.pageViews.slice(0, 5).map(([name, count]) => ({
                 name: name === '/' ? 'Home' : name.replace('/', ''),
                 visits: count
-              }));
+              })).reverse(); // Reverse for clean stacking on horizontal chart
               
               const referrerData = stats.referrers.slice(0, 5).map(([name, count]) => ({
-                name: name === 'direct' ? 'ישיר' : name,
+                name: name === 'direct' ? 'כניסה ישירה' : name,
                 visits: count
-              }));
+              })).reverse(); // Reverse for clean stacking on horizontal chart
+
 
               return (
                 <>
@@ -813,64 +809,58 @@ export default function Admin() {
                         <div className="text-white/60 text-sm">שעות:דקות:שניות</div>
                       </div>
 
-                    // pages/admin.tsx - UPDATED CHARTS JSX
-
-// ... (existing content up to line 700)
-
                       {/* Charts Grid */}
                       <div className="grid md:grid-cols-2 gap-4">
-                        {/* Top Pages Chart (VERTICAL LAYOUT RESTORED) */}
+                        {/* Top Pages Chart (HORIZONTAL LAYOUT for readability) */}
                         <div className="glass rounded-xl p-6">
                           <h3 className="text-xl font-semibold mb-3">דפים פופולריים (Top 5)</h3>
                           <ResponsiveContainer width="100%" height={300}>
                             <BarChart 
                               data={pageViewData} 
-                              layout="horizontal" // Default is horizontal, but this ensures settings are correct
-                              margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
+                              layout="vertical" // Use vertical layout for horizontal bars
+                              margin={{ top: 10, right: 10, left: 20, bottom: 10 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                              <XAxis 
+                              {/* X-Axis for Numerical Count */}
+                              <XAxis type="number" stroke="#ffffff80" /> 
+                              {/* Y-Axis for Category Names (Horizontal Bars) */}
+                              <YAxis 
                                 dataKey="name" 
-                                type="category"
-                                angle={-45} 
-                                textAnchor="end"
-                                height={60}
-                                stroke="#ffffff80" 
+                                type="category" 
+                                stroke="#ffffff80"
+                                width={120} // Give margin for long names
                               />
-                              <YAxis type="number" stroke="#ffffff80" />
                               <Tooltip content={<CustomTooltip />} />
                               <Bar dataKey="visits" fill="#4ade80" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
                         
-                        {/* Referrers Chart (VERTICAL LAYOUT RESTORED) */}
+                        {/* Referrers Chart (HORIZONTAL LAYOUT for readability) */}
                         <div className="glass rounded-xl p-6">
                           <h3 className="text-xl font-semibold mb-3">מקורות תנועה (Top 5)</h3>
                           <ResponsiveContainer width="100%" height={300}>
                             <BarChart 
                               data={referrerData} 
-                              layout="horizontal" // Default is horizontal
-                              margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
+                              layout="vertical" // Use vertical layout for horizontal bars
+                              margin={{ top: 10, right: 10, left: 20, bottom: 10 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                              <XAxis 
+                              {/* X-Axis for Numerical Count */}
+                              <XAxis type="number" stroke="#ffffff80" />
+                              {/* Y-Axis for Category Names (Horizontal Bars) */}
+                              <YAxis 
                                 dataKey="name" 
-                                type="category"
-                                angle={-45} 
-                                textAnchor="end"
-                                height={60}
+                                type="category" 
                                 stroke="#ffffff80" 
+                                width={120} // Give margin for long names
                               />
-                              <YAxis type="number" stroke="#ffffff80" />
                               <Tooltip content={<CustomTooltip />} />
                               <Bar dataKey="visits" fill="#f472b6" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
-                      
-                      {/* ... (rest of the analytics tab content) ... */}
                       
                       {/* Recent Visits Table */}
                       <div className="glass rounded-xl overflow-hidden">
