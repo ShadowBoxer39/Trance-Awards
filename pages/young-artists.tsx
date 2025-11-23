@@ -156,7 +156,7 @@ export default function YoungArtists() {
             </div>
 
             <p className="text-gray-300 mb-6 leading-relaxed">
-              את/ה אמן צעיר/ה בקהילה הטראנס הישראלית? רוצה במה להציג את המוזיקה שלך?
+              את/ה אמן/נית צעיר/ה בקהילת הטראנס הישראלית? רוצה במה להציג את המוזיקה שלך?
             </p>
 
             {/* WhatsApp Community Requirement */}
