@@ -156,7 +156,7 @@ export default function YoungArtists() {
             </div>
 
             <p className="text-gray-300 mb-6 leading-relaxed">
-              אתה אמן צעיר בסצנת הטראנס הישראלית? רוצה במה להציג את המוזיקה שלך?
+              את/ה אמן צעיר/ה בקהילה הטראנס הישראלית? רוצה במה להציג את המוזיקה שלך?
             </p>
 
             {/* WhatsApp Community Requirement */}
@@ -260,7 +260,7 @@ export default function YoungArtists() {
                 {/* Experience Years */}
                 <div>
                   <label htmlFor="experienceYears" className="block text-sm font-medium mb-2 text-gray-300">
-                    כמה זמן אתה עושה מוזיקה? *
+                    כמה זמן את/ה עושה מוזיקה? *
                   </label>
                   <input
                     type="text"
@@ -293,7 +293,7 @@ export default function YoungArtists() {
                 {/* Track Link */}
                 <div>
                   <label htmlFor="trackLink" className="block text-sm font-medium mb-2 text-gray-300">
-                    לינק לטראק שאתה רוצה שנשמע *
+                    לינק לטראק שאת/ה רוצה שנשמע *
                   </label>
                   <input
                     type="url"
@@ -322,7 +322,7 @@ export default function YoungArtists() {
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">✅</div>
                 <h3 className="text-2xl font-semibold mb-2 text-gradient">הבקשה נשלחה בהצלחה!</h3>
-                <p className="text-gray-400">נחזור אליך בהקדם</p>
+                <p className="text-gray-400">מבטיחים לשמוע את המוזיקה שלך!</p>
               </div>
             )}
           </div>
@@ -344,7 +344,7 @@ export default function YoungArtists() {
               <div className="text-4xl mb-4">📝</div>
               <h3 className="text-xl font-semibold mb-3">1. מלא טופס</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                מלא את הטופס למעלה עם הפרטים שלך והטראק שאתה רוצה להציג
+                מלא/י את הטופס למעלה עם הפרטים שלך והטראק שאת/ה רוצה להציג
               </p>
             </div>
 
@@ -362,7 +362,7 @@ export default function YoungArtists() {
               <div className="text-4xl mb-4">🎤</div>
               <h3 className="text-xl font-semibold mb-3">3. הופעה בפודקאסט</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                אם תבחר, תופיע בפודקאסט ותקבל חשיפה לאלפי מאזינים
+                אם תבחר/י, תופיע/י בפודקאסט ותקבל/י חשיפה לאלפי מאזינים
               </p>
             </div>
           </div>
