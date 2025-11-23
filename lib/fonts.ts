@@ -1,5 +1,4 @@
-// lib/fonts.ts - UPDATED
-
+// lib/fonts.ts - UPDATED for Heebo
 import localFont from "next/font/local";
 import { Heebo } from "next/font/google"; // <-- NEW: Import Heebo from Google Fonts
 
@@ -9,14 +8,13 @@ export const milkyway = localFont({
   variable: "--font-milkyway",
 });
 
-// REMOVED: export const gan = localFont(...)
-
-// NEW: Define Heebo as the primary font
-export const heebo = Heebo({ 
+// NEW: Define Heebo as the primary font (using the desired name)
+export const primaryFont = Heebo({ 
     subsets: ['hebrew'], 
-    weight: ['300', '400', '500', '700', '900'], // Import all common weights
-    variable: '--font-primary', // Use a generic variable name
+    weight: ['300', '400', '500', '700', '900'], // Import necessary weights
+    variable: '--font-primary', 
     display: 'swap',
 });
 
-// NOTE: You will need to change references from `gan` to `heebo` in step 2.
+// To ensure full compatibility and avoid export issues, ensure the export name matches the import name.
+// The name "primaryFont" is correct here.
