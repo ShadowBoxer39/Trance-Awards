@@ -4,7 +4,7 @@ import "../styles/theme.css";
 import type { AppProps } from "next/app";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/router";
-import { milkyway, primaryFont } from "../lib/fonts"; // <-- CHANGED 'gan' to 'primaryFont'
+import { milkyway, primaryFont } from "../lib/fonts"; // <-- FIX: Changed 'gan' to 'primaryFont'
 import PlayerProvider from "../components/PlayerProvider";
 import { trackPageVisit, trackPageExit } from "../lib/analytics";
 
@@ -41,7 +41,7 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router]);
 
   return (
-    <main className={`${milkyway.variable} ${primaryFont.variable} ${primaryFont.className}`}> {/* <-- CHANGED 'gan' to 'primaryFont' variable and class */}
+    <main className={`${milkyway.variable} ${primaryFont.variable} ${primaryFont.className}`}> {/* <-- FIX: Applied primaryFont variable and class */}
       <PlayerProvider>
         <Component {...pageProps} />
       </PlayerProvider>
