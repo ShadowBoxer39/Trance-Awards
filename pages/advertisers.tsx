@@ -2,10 +2,8 @@
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
-import React from "react"; // Removed: { useState }
+import React from "react";
 import Navigation from "../components/Navigation";
-
-// NOTE: The ContactForm component and its logic were removed as per your request.
 
 export default function Advertisers() {
   React.useEffect(() => {
@@ -40,7 +38,7 @@ export default function Advertisers() {
           </div>
         </header>
         
-        {/* ENHANCEMENT 5: Moved Stats Section down for better flow */}
+        {/* ENHANCEMENT 5: Moved Stats Section down for better flow - NOW WITH 4 STATS */}
         <section className="max-w-7xl mx-auto px-6 pb-16">
             <div className="flex flex-wrap justify-center gap-4 text-lg">
                 <div className="glass-card px-6 py-3 rounded-lg">
@@ -51,6 +49,10 @@ export default function Advertisers() {
                 </div>
                 <div className="glass-card px-6 py-3 rounded-lg">
                     <span className="text-purple-400 font-semibold">אלפי</span> מאזינים נאמנים
+                </div>
+                 {/* NEW STAT: WhatsApp Community */}
+                <div className="glass-card px-6 py-3 rounded-lg">
+                    <span className="text-purple-400 font-semibold">500+</span> בווצאפ
                 </div>
             </div>
         </section>
@@ -186,7 +188,7 @@ export default function Advertisers() {
           <h2 className="text-3xl font-bold mb-8 text-center">השותפים שלנו</h2>
           <div className="glass-card rounded-xl p-12 max-w-2xl mx-auto text-center">
             <div className="mb-8">
-              <div className="w-40 h-40 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg border-2 border-purple-500/30"> {/* RESTORED: Solid white BG for contrast */}
+              <div className="w-40 h-40 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg border-2 border-purple-500/30"> {/* FIX: Restored white BG for contrast */}
                 <Image
                   src="/images/musikroom.png"
                   alt="Music Room Studio"
@@ -228,7 +230,7 @@ export default function Advertisers() {
                     </a>
                      {/* WhatsApp Button */}
                     <a 
-                      href="https://wa.me/972546613375" 
+                      href="https://wa.me/972509218090" 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full btn-secondary px-8 py-3 rounded-lg font-medium text-lg flex items-center justify-center gap-3"
@@ -242,7 +244,7 @@ export default function Advertisers() {
 
                 <div className="text-center pt-4 border-t border-gray-700">
                     <h3 className="text-lg font-semibold text-white/90 mb-2">מספר טלפון ישיר</h3>
-                    <p className="text-xl text-purple-400">054-661-3375</p>
+                    <p className="text-xl text-purple-400">050-921-8090</p>
                 </div>
             </div>
           </div>
