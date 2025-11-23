@@ -186,7 +186,7 @@ export default function Advertisers() {
           <h2 className="text-3xl font-bold mb-8 text-center">השותפים שלנו</h2>
           <div className="glass-card rounded-xl p-12 max-w-2xl mx-auto text-center">
             <div className="mb-8">
-              <div className="w-40 h-40 rounded-full bg-white/10 flex items-center justify-center mx-auto shadow-lg border-2 border-purple-500/30">
+              <div className="w-40 h-40 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg border-2 border-purple-500/30"> {/* RESTORED: Solid white BG for contrast */}
                 <Image
                   src="/images/musikroom.png"
                   alt="Music Room Studio"
