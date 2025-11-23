@@ -16,7 +16,7 @@ export default function Advertisers() {
         <title>למפרסמים - יוצאים לטראק</title>
         <meta
           name="description"
-          content="הצטרפו לפודקאסט הטראנס המוביל בישראל. הזדמנויות פרסום וחסויות למותגים המעוניינים להגיע לקהילת הטראנס."
+          content="הצטרפו לתכנית הטראנס המובילה בישראל. הזדמנויות פרסום וחסויות למותגים המעוניינים להגיע לקהילת הטראנס."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/images/logo.png" />
@@ -33,7 +33,7 @@ export default function Advertisers() {
               הצטרפו למסע שלנו
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 mb-8">
-              פודקאסט הטראנס המוביל בישראל מחפש שותפים עסקיים
+              תכנית הטראנס המובילה בישראל מחפשת שותפים לדרך
             </p>
           </div>
         </header>
@@ -52,7 +52,7 @@ export default function Advertisers() {
                 </div>
                  {/* NEW STAT: WhatsApp Community */}
                 <div className="glass-card px-6 py-3 rounded-lg">
-                    <span className="text-purple-400 font-semibold">500+</span> בווצאפ
+                    <span className="text-purple-400 font-semibold">500+</span> מאזינים בקהילת הווצאפ
                 </div>
             </div>
         </section>
@@ -80,7 +80,7 @@ export default function Advertisers() {
 
             <div className="glass-card p-8 rounded-xl border border-purple-500/30">
               <div className="text-4xl mb-4">🤝</div>
-              <h3 className="text-xl font-semibold mb-3">שיתוף פעולה אותנטי</h3>
+              <h3 className="text-xl font-semibold mb-3">שיתוף פעולה אמיתי</h3>
               <p className="text-gray-400">
                 אנחנו מאמינים בשיתופי פעולה אמיתיים שמתאימים למותג שלכם ולקהל שלנו
               </p>
@@ -124,12 +124,9 @@ export default function Advertisers() {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-purple-400 mt-1">✓</span>
-                  <span>נוכחות באירועי הפודקאסט</span>
+                  <span>פינות מיוחדוות בפרקים</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>תוכן ממותג מיוחד</span>
-                </li>
+        
                 <li className="flex items-start gap-3">
                   <span className="text-purple-400 mt-1">✓</span>
                   <span>קמפיינים משולבים ברשתות החברתיות</span>
@@ -137,49 +134,8 @@ export default function Advertisers() {
               </ul>
             </div>
 
-            <div className="glass-card p-8 rounded-xl">
-              <h3 className="text-2xl font-semibold mb-4 text-purple-400">פרסום דיגיטלי</h3>
-              <ul className="space-y-3 text-gray-300">
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>באנרים באתר הפודקאסט</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>סטוריז ופוסטים ממומנים</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>קמפיין במייל למנויים</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>קישור באפליקציות הפודקאסט</span>
-                </li>
-              </ul>
-            </div>
 
-            <div className="glass-card p-8 rounded-xl">
-              <h3 className="text-2xl font-semibold mb-4 text-purple-400">אירועים ופעילויות</h3>
-              <ul className="space-y-3 text-gray-300">
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>חסות לאירועי השקה והקלטות</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>דוכן במיטאפים של הקהילה</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>שיתופי פעולה עם אמנים צעירים</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-purple-400 mt-1">✓</span>
-                  <span>פעילויות ייחודיות למותג שלכם</span>
-                </li>
-              </ul>
-            </div>
+           
           </div>
         </section>
 
