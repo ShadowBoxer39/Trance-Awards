@@ -377,6 +377,45 @@ export default function Home({ episodes, episodesError }: { episodes: Episode[],
           </div>
         </section>
 
+
+        {/* *** NEW SECTION: Track of the Week CTA - INSERT THIS BLOCK HERE *** */}
+        <section className="max-w-7xl mx-auto px-6 pb-16">
+          <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-green-500/30">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <span className="text-3xl">💬</span>
+                <h2 className="text-2xl md:text-3xl font-semibold text-white">
+                  הטרק השבועי של הקהילה
+                </h2>
+              </div>
+              <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
+                הגיע הזמן לשמוע מה בוחרת קהילת הטראנס הגדולה בישראל! בכל שבוע, טרק חדש וסיפור אישי מאחוריו.
+              </p>
+
+              <div className="flex flex-wrap justify-center gap-4">
+                <Link
+                  href="/track-of-the-week"
+                  className="btn-primary px-6 py-3 rounded-lg font-medium inline-flex items-center gap-2"
+                >
+                  🎧 האזינו לטרק הנוכחי
+                </Link>
+                <Link
+                  href="/submit-track"
+                  className="btn-secondary px-6 py-3 rounded-lg font-medium inline-block"
+                >
+                  הגישו טרק משלכם
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+        {/* *** END NEW SECTION *** */}
+
+        {/* Studio card - mobile only */}
+        <section className="md:hidden max-w-7xl mx-auto px-6 pb-16">
+          {/* ... (Studio card content) ... */}
+        </section>
+
         {/* Previous Episodes - Small Grid */}
         <section className="max-w-7xl mx-auto px-6 pb-16">
           <h3 className="text-xl font-semibold mb-4">פרקים קודמים</h3>
