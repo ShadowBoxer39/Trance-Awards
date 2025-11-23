@@ -1,36 +1,37 @@
 // pages/api/track-submissions.ts
-import type { NextApiRequest, NextApiResponse } from "next";
-import supabase from "../../lib/supabaseServer";
+
+import { NextApiRequest, NextApiResponse } from 'next';
+import supabase from '../../lib/supabaseServer';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
+  if (req.method !== 'GET') {
+    return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  // 1. Security Check: Admin Key
-  const key = (req.query.key as string) || "";
-  const ADMIN_KEY = process.env.ADMIN_KEY;
+  const { key } = req.query;
 
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
+  // Validate admin key
+  if (!key || key !== process.env.ADMIN_KEY) {
+    return res.status(403).json({ ok: false, error: 'Unauthorized' });
   }
 
   try {
-    // 2. Fetch all submissions, ordering by unapproved first, then by date (newest first)
     const { data, error } = await supabase
-      .from("track_of_the_week_submissions")
-      .select("*") 
-      .order('is_approved', { ascending: true }) // Not approved tracks appear first
-      .order('created_at', { ascending: false }); // Newest tracks appear at the top of the unapproved list
+      .from('track_of_the_week_submissions')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      return res.status(500).json({ ok: false, error: error.message });
+    }
 
     return res.status(200).json({
       ok: true,
       submissions: data || [],
     });
-  } catch (e) {
-    console.error("track-submissions fetch error:", e);
-    return res.status(500).json({ ok: false, error: "server_db_error" });
+  } catch (err: any) {
+    console.error('Server error:', err);
+    return res.status(500).json({ ok: false, error: err.message });
   }
 }
