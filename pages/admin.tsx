@@ -2,6 +2,14 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
+// pages/admin.tsx - ADD THIS HELPER FUNCTION
+
+// Helper function to extract YouTube video ID from various URLs
+const getYouTubeVideoId = (url: string): string | null => {
+  const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+};
 
 type Tally = Record<string, Record<string, number>>;
 
