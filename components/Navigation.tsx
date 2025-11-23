@@ -3,8 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 
+// *** MODIFICATION 1: Add new page keys ***
 interface NavigationProps {
-  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote";
+  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track"; 
 }
 
 export default function Navigation({ currentPage }: NavigationProps) {
@@ -42,6 +43,17 @@ export default function Navigation({ currentPage }: NavigationProps) {
               }`}
             >
               בית
+            </Link>
+            {/* *** MODIFICATION 2: Add Track of the Week Link *** */}
+            <Link
+              href="/track-of-the-week"
+              className={`text-base font-medium transition ${
+                isActive("track-of-the-week")
+                  ? "text-white hover:text-purple-400"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              הטרק השבועי
             </Link>
             <Link
               href="/episodes"
@@ -83,6 +95,13 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               למפרסמים
             </Link>
+            {/* *** MODIFICATION 3: Add Submit Track Link (optional, can be a button) *** */}
+             <Link
+              href="/submit-track"
+              className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
+            >
+              הגישו טרק
+            </Link>
             <Link
               href="/vote"
               className="btn-primary px-6 py-3 rounded-lg text-base font-medium"
@@ -117,6 +136,16 @@ export default function Navigation({ currentPage }: NavigationProps) {
               onClick={() => setMobileMenuOpen(false)}
             >
               בית
+            </Link>
+            {/* *** MODIFICATION 4: Add Mobile Track of the Week Link *** */}
+            <Link
+              href="/track-of-the-week"
+              className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
+                isActive("track-of-the-week") ? "text-white" : "text-gray-300 hover:text-white"
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              הטרק השבועי
             </Link>
             <Link
               href="/episodes"
@@ -153,6 +182,14 @@ export default function Navigation({ currentPage }: NavigationProps) {
               onClick={() => setMobileMenuOpen(false)}
             >
               למפרסמים
+            </Link>
+            {/* *** MODIFICATION 5: Add Mobile Submit Track Link *** */}
+            <Link
+              href="/submit-track"
+              className="block btn-secondary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              הגישו טרק
             </Link>
             <Link
               href="/vote"
