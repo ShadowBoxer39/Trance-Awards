@@ -489,7 +489,7 @@ export default function Admin() {
               </button>
             </div>
 
-          // pages/admin.tsx: VOTE RESULTS SECTION REWRITE V2 (Focus on List)
+          
 
 {activeTab === "votes" && (
   <>
