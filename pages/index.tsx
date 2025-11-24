@@ -148,28 +148,34 @@ export default function Home({
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-wrap gap-4 justify-center mb-16">
-                <Link 
-                  href="/episodes" 
-                  className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300 hover:scale-105"
-                >
-                 <span className="relative z-10 flex items-center gap-2 w-full justify-center"> 
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      {/* ... SVG content ... */}
-                    </svg>
-                    האזינו לפרקים
-                  </span>
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 blur opacity-50 group-hover:opacity-75 transition-opacity" />
-                </Link>
-                
-                <Link 
-                  href="/young-artists" 
-                  className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2"
-                >
-                  <span className="text-2xl">🌟</span>
-                  אמנים צעירים
-                </Link>
-              </div>
+             // pages/index.tsx (FIXED CTA BUTTONS for proper alignment and look)
+// CTA Buttons
+<div className="flex flex-wrap gap-4 justify-center mb-16">
+  {/* Primary Button: Listen to Episodes */}
+  <Link 
+    href="/episodes" 
+    // Increased padding (px-10 py-4) and added justify-center for consistent alignment
+    className="group relative px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300 hover:scale-105 flex items-center justify-center min-w-[200px]"
+  >
+    <span className="relative z-10 flex items-center gap-2">
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+      </svg>
+      האזינו לפרקים
+    </span>
+    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 blur opacity-50 group-hover:opacity-75 transition-opacity" />
+  </Link>
+  
+  {/* Secondary Button: Young Artists */}
+  <Link 
+    href="/young-artists" 
+    // Increased padding (px-10 py-4) to match primary button
+    className="px-10 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2 justify-center min-w-[200px]"
+  >
+    <span className="text-2xl">🌟</span>
+    אמנים צעירים
+  </Link>
+</div>
 
               {/* Stats - Redesigned */}
               <div className="grid grid-cols-3 gap-6 max-w-3xl mx-auto">
