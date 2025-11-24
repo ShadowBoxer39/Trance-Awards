@@ -2,7 +2,7 @@
 // This version works with your current database structure
 // No migration needed!
 
-import Head from "next/head";
+import Head from "next/head"; 
 import Link from "next/link";
 import { useEffect } from "react";
 import Navigation from "../components/Navigation";
