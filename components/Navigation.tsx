@@ -100,13 +100,13 @@ export default function Navigation({ currentPage }: NavigationProps) {
               href="/submit-track"
               className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
             >
-              הגישו טראק
+             עזרו לנו לבחור את טראק השבוע
             </Link>
             <Link
               href="/vote"
               className="btn-primary px-6 py-3 rounded-lg text-base font-medium"
             >
-              הצבעה
+              נבחרי השנה 2025
             </Link>
           </div>
 
@@ -189,14 +189,14 @@ export default function Navigation({ currentPage }: NavigationProps) {
               className="block btn-secondary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              הגישו טראק
+             עזרו לנו לבחור את טראק השובע
             </Link>
             <Link
               href="/vote"
               className="block btn-primary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              הצבעה
+              נבחרי השנה 2025
             </Link>
           </div>
         )}
