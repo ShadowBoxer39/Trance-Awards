@@ -153,9 +153,9 @@ export default function Home({
                   href="/episodes" 
                   className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300 hover:scale-105"
                 >
-                  <span className="relative z-10 flex items-center gap-2">
+                 <span className="relative z-10 flex items-center gap-2 w-full justify-center"> 
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                      {/* ... SVG content ... */}
                     </svg>
                     האזינו לפרקים
                   </span>
