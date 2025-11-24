@@ -2,7 +2,7 @@
 // With comprehensive error handling and logging
 
 import Head from "next/head";
-import Link from "next/link";
+import Link from "next/link"; 
 import { useEffect } from "react";
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
