@@ -1,36 +1,70 @@
-// pages/api/artist-signups.ts
-import type { NextApiRequest, NextApiResponse } from "next";
-import supabase from "../../lib/supabaseServer"; // Reusing the server client
+// pages/api/artist-signups.ts - UPDATED VERSION
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const ADMIN_KEY = process.env.ADMIN_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
 
-  // Security check: Require ADMIN_KEY
-  const key = (req.query.key as string) || "";
-  const ADMIN_KEY = process.env.ADMIN_KEY;
-
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
+  // Verify admin key
+  const key = req.method === 'GET' ? req.query.key : req.body?.key;
+  
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 
   try {
-    // Fetch all columns from the 'young_artists' table
-    // Ordering by submission time (newest first)
-    const { data, error } = await supabase
-      .from("young_artists")
-      .select("*, id, submitted_at") // Select all, and ensure id/submitted_at are included
-      .order("submitted_at", { ascending: false });
+    // GET - Fetch all signups
+    if (req.method === 'GET') {
+      const { data, error } = await supabase
+        .from('artist_signups')
+        .select('*')
+        .order('submitted_at', { ascending: false });
 
-    if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({ ok: false, error: error.message });
+      }
 
-    return res.status(200).json({
-      ok: true,
-      signups: data || [],
-    });
-  } catch (e) {
-    console.error("artist-signups server error:", e);
-    return res.status(500).json({ ok: false, error: "server_error" });
+      return res.status(200).json({ ok: true, signups: data || [] });
+    }
+
+    // DELETE - Delete a specific signup
+    if (req.method === 'DELETE' || (req.method === 'POST' && req.body?.action === 'delete')) {
+      const signupId = req.body?.signupId;
+
+      if (!signupId) {
+        return res.status(400).json({ ok: false, error: 'Missing signupId' });
+      }
+
+      const { error } = await supabase
+        .from('artist_signups')
+        .delete()
+        .eq('id', signupId);
+
+      if (error) {
+        console.error('Supabase delete error:', error);
+        return res.status(500).json({ ok: false, error: error.message });
+      }
+
+      return res.status(200).json({ ok: true, message: 'Signup deleted successfully' });
+    }
+
+    return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  } catch (error: any) {
+    console.error('API error:', error);
+    return res.status(500).json({ ok: false, error: error?.message || 'Unknown error' });
   }
 }
