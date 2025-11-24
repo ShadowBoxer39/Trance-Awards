@@ -273,6 +273,39 @@ export default function Admin() {
     }
   };
 
+  const resetAnalytics = async () => {
+    if (!confirm("⚠️ האם אתה בטוח שברצונך למחוק את כל נתוני הסטטיסטיקה? פעולה זו לא ניתנת לביטול!")) return;
+    if (!confirm("אישור סופי: כל נתוני הביקורים יימחקו לצמיתות. להמשיך?")) return;
+    
+    setAnalyticsLoading(true);
+    try {
+      const response = await fetch('/api/reset-analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+      });
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("תשובה לא תקינה מהשרת");
+      }
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'שגיאה באיפוס נתונים');
+      }
+      
+      alert("✅ נתוני הסטטיסטיקה אופסו בהצלחה!");
+      setVisits([]);
+    } catch (error: any) {
+      console.error('Reset analytics error:', error);
+      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
   const getAnalytics = () => {
     const pageVisits: Record<string, number> = {};
     const dailyVisits: Record<string, number> = {};
@@ -803,9 +836,18 @@ export default function Admin() {
                 <>
                   <div className="glass rounded-2xl p-4 flex justify-between items-center">
                     <h2 className="text-2xl font-semibold">סטטיסטיקות אתר</h2>
-                    <button onClick={fetchAnalytics} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={analyticsLoading}>
-                      {analyticsLoading ? "טוען..." : `🔄 רענן`}
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={resetAnalytics} 
+                        className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-xl px-4 py-2 text-sm transition font-semibold" 
+                        disabled={analyticsLoading || visits.length === 0}
+                      >
+                        🗑️ אפס נתונים
+                      </button>
+                      <button onClick={fetchAnalytics} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={analyticsLoading}>
+                        {analyticsLoading ? "טוען..." : `🔄 רענן`}
+                      </button>
+                    </div>
                   </div>
                   
                   {analyticsLoading ? (
