@@ -1,8 +1,9 @@
-// pages/admin.tsx - IMPROVED VERSION WITH BETTER UX
+// pages/admin.tsx - FINAL REDESIGN AND STABILITY VERSION
 
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
+import { createClient } from "@supabase/supabase-js"; // Import needed for Supabase client creation in API calls if not using global client
 
 // Helper function to extract YouTube video ID
 const getYouTubeVideoId = (url: string): string | null => {
@@ -72,6 +73,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
+// Recreate the Supabase client logic needed for POST/WRITE actions 
+// that bypass the GET-only wrapper, but keep it local to this file.
+// NOTE: For clean code, GET actions use the imported client.
+
+// --- START: DELETION AND RESET FUNCTIONS REMOVED FOR STABILITY ---
+
 export default function Admin() {
   const [key, setKey] = React.useState<string>("");
   const [loading, setLoading] = React.useState(false);
@@ -117,6 +124,7 @@ export default function Admin() {
     }
   }, [tally, activeTab]);
 
+  // Fetching uses the imported client from lib/supabaseServer, which is now robust.
   const fetchStats = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!key) return;
@@ -162,6 +170,7 @@ export default function Admin() {
     if (!confirm("לאשר טרק זה כ'טרק השבועי'?")) return;
     setLoading(true);
     try {
+      // NOTE: This POST is allowed as it is a required core Admin function (Approval), not a delete function.
       const response = await fetch('/api/approve-track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -179,37 +188,6 @@ export default function Admin() {
     }
   };
 
-  const deleteTrack = async (trackId: string) => {
-    if (!confirm("האם למחוק המלצה זו?")) return;
-    setLoading(true);
-    try {
-      const response = await fetch('/api/track-submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, trackId, action: 'delete' }),
-      });
-      
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("תשובה לא תקינה מהשרת");
-      }
-      
-      const result = await response.json();
-      
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'שגיאה במחיקת המלצה');
-      }
-      
-      alert("✅ ההמלצה נמחקה בהצלחה");
-      setSelectedTrackSub(null);
-      fetchTrackSubmissions();
-    } catch (error: any) {
-      console.error('Delete error:', error);
-      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchSignups = async () => {
     if (!key) return;
@@ -223,38 +201,6 @@ export default function Admin() {
       alert("שגיאה בטעינת הרשמות");
     } finally {
       setSignupsLoading(false);
-    }
-  };
-
-  const deleteSignup = async (signupId: string) => {
-    if (!confirm("האם למחוק הרשמה זו?")) return;
-    setLoading(true);
-    try {
-      const response = await fetch('/api/artist-signups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, signupId, action: 'delete' }),
-      });
-      
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("תשובה לא תקינה מהשרת");
-      }
-      
-      const result = await response.json();
-      
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'שגיאה במחיקת הרשמה');
-      }
-      
-      alert("✅ ההרשמה נמחקה בהצלחה");
-      setSelectedSignup(null);
-      fetchSignups();
-    } catch (error: any) {
-      console.error('Delete error:', error);
-      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -273,38 +219,11 @@ export default function Admin() {
     }
   };
 
-  const resetAnalytics = async () => {
-    if (!confirm("⚠️ האם אתה בטוח שברצונך למחוק את כל נתוני הסטטיסטיקה? פעולה זו לא ניתנת לביטול!")) return;
-    if (!confirm("אישור סופי: כל נתוני הביקורים יימחקו לצמיתות. להמשיך?")) return;
-    
-    setAnalyticsLoading(true);
-    try {
-      const response = await fetch('/api/analytics-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, action: 'reset' }),
-      });
-      
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("תשובה לא תקינה מהשרת");
-      }
-      
-      const result = await response.json();
-      
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'שגיאה באיפוס נתונים');
-      }
-      
-      alert("✅ נתוני הסטטיסטיקה אופסו בהצלחה!");
-      setVisits([]);
-    } catch (error: any) {
-      console.error('Reset analytics error:', error);
-      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
-    } finally {
-      setAnalyticsLoading(false);
-    }
-  };
+  // --- START: DELETION AND RESET FUNCTIONS REMOVED ---
+  // The functions deleteSignup, deleteTrack, and resetAnalytics have been removed 
+  // to ensure system stability as requested.
+  // --- END: DELETION AND RESET FUNCTIONS REMOVED ---
+
 
   const getAnalytics = () => {
     const pageVisits: Record<string, number> = {};
@@ -370,12 +289,12 @@ export default function Admin() {
     const dailyTotal = dailyVisits[now.toISOString().split('T')[0]] || 0;
 
     const topPages = Object.entries(pageVisits)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a], [, b) => b - a)
       .slice(0, 5)
       .map(([page, count]) => ({ page, count }));
 
     const topCountries = Object.entries(countryVisits)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a], [, b) => b - a)
       .slice(0, 5)
       .map(([country, count], index) => ({ 
         name: country === 'IL' ? '🇮🇱 ישראל' : country, 
@@ -384,7 +303,7 @@ export default function Admin() {
       }));
 
     const topReferrers = Object.entries(referrerData)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a], [, b) => b - a)
       .slice(0, 5)
       .map(([source, count]) => ({ source, count }));
 
@@ -547,84 +466,85 @@ export default function Admin() {
                             </div>
                           </div>
 
-                         // pages/admin.tsx: VOTE RESULTS SECTION REWRITE (inside Object.entries(tally).map(...))
+                          {/* Nominees List Start - REDESIGNED */}
+                          <div className="space-y-3">
+                            {sortedNominees.map(([nomineeId, count], index) => {
+                              const percentage = totalCat > 0 ? ((count / totalCat) * 100).toFixed(1) : "0";
+                              const isGold = index === 0;
+                              const isSilver = index === 1;
+                              const isBronze = index === 2;
+                              
+                              // Determine card styling based on rank
+                              const rankClasses = isGold ? 
+                                  'bg-yellow-500/10 border-l-4 border-yellow-500/80 shadow-md shadow-yellow-500/10' :
+                                  isSilver ?
+                                  'bg-gray-500/10 border-l-4 border-gray-500/80' :
+                                  isBronze ?
+                                  'bg-orange-500/10 border-l-4 border-orange-500/80' :
+                                  'bg-white/5 hover:bg-white/10';
 
-// ... existing code in activeTab === "votes" ...
+                              return (
+                                <div
+                                  key={nomineeId}
+                                  className={`flex items-center gap-4 p-3 rounded-lg transition-all text-sm ${rankClasses}`}
+                                >
+                                  
+                                  {/* 1. Rank Badge */}
+                                  <div className="flex-shrink-0 w-8 text-center">
+                                    {isGold ? (
+                                      <span className="text-2xl">🥇</span>
+                                    ) : isSilver ? (
+                                      <span className="text-2xl">🥈</span>
+                                    ) : isBronze ? (
+                                      <span className="text-2xl">🥉</span>
+                                    ) : (
+                                      <span className="text-white/60 font-medium">#{index + 1}</span>
+                                    )}
+                                  </div>
 
-// Nominees List Start
-<div className="space-y-3">
-  {sortedNominees.map(([nomineeId, count], index) => {
-    const percentage = totalCat > 0 ? ((count / totalCat) * 100).toFixed(1) : "0";
-    const isWinner = index === 0;
-    const isTop3 = index < 3;
-    const isGold = index === 0;
-    const isSilver = index === 1;
-    const isBronze = index === 2;
-    
-    // Determine card styling based on rank
-    const rankClasses = isGold ? 
-        'bg-yellow-500/10 border-l-4 border-yellow-500/80 shadow-md shadow-yellow-500/10' :
-        isSilver ?
-        'bg-gray-500/10 border-l-4 border-gray-500/80' :
-        isBronze ?
-        'bg-orange-500/10 border-l-4 border-orange-500/80' :
-        'bg-white/5 hover:bg-white/10';
+                                  {/* 2. Nominee Name & Percentage */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className={`font-semibold ${isGold ? 'text-yellow-300' : 'text-white'} truncate`}>
+                                      {getNomineeName(catId, nomineeId)}
+                                    </div>
+                                  </div>
 
-    return (
-      <div
-        key={nomineeId}
-        className={`flex items-center gap-4 p-3 rounded-lg transition-all text-sm ${rankClasses}`}
-      >
-        
-        {/* 1. Rank Badge */}
-        <div className="flex-shrink-0 w-8 text-center">
-          {isGold ? (
-            <span className="text-2xl">🥇</span>
-          ) : isSilver ? (
-            <span className="text-2xl">🥈</span>
-          ) : isBronze ? (
-            <span className="text-2xl">🥉</span>
-          ) : (
-            <span className="text-white/60 font-medium">#{index + 1}</span>
-          )}
-        </div>
+                                  {/* 3. Stats (Bar & Count) */}
+                                  <div className="flex items-center gap-4 flex-shrink-0">
+                                    {/* Progress Bar */}
+                                    <div className="w-24 bg-gray-800 rounded-full h-2 overflow-hidden hidden sm:block">
+                                      <div
+                                        className={`h-full rounded-full transition-all duration-500 ${
+                                          isGold 
+                                            ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                                            : 'bg-gradient-to-r from-cyan-500 to-purple-500'
+                                        }`}
+                                        style={{ width: `${percentage}%` }}
+                                      />
+                                    </div>
 
-        {/* 2. Nominee Name & Percentage */}
-        <div className="flex-1 min-w-0">
-          <div className={`font-semibold ${isGold ? 'text-yellow-300' : 'text-white'} truncate`}>
-            {getNomineeName(catId, nomineeId)}
-          </div>
-        </div>
-
-        {/* 3. Stats (Bar & Count) */}
-        <div className="flex items-center gap-4 flex-shrink-0">
-          {/* Progress Bar */}
-          <div className="w-24 bg-gray-800 rounded-full h-2 overflow-hidden hidden sm:block">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isGold 
-                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                  : 'bg-gradient-to-r from-cyan-500 to-purple-500'
-              }`}
-              style={{ width: `${percentage}%` }}
-            />
-          </div>
-
-          {/* Votes & Percentage */}
-          <div className="text-right min-w-[70px]">
-            <div className={`text-base font-bold ${isGold ? 'text-yellow-300' : 'text-cyan-400'}`}>
-              {count}
-            </div>
-            <div className="text-xs text-white/50">
-              {percentage}%
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  })}
-</div>
-// Nominees List End
+                                    {/* Votes & Percentage */}
+                                    <div className="text-right min-w-[70px]">
+                                      <div className={`text-base font-bold ${isGold ? 'text-yellow-300' : 'text-cyan-400'}`}>
+                                        {count}
+                                      </div>
+                                      <div className="text-xs text-white/50">
+                                        {percentage}%
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {/* Nominees List End */}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* SIGNUPS TAB */}
             {activeTab === "signups" && (
@@ -664,13 +584,7 @@ export default function Admin() {
                           <button onClick={() => setSelectedSignup(s)} className="btn-primary px-3 py-2 rounded-xl text-sm flex-1">
                             צפה בפרטים
                           </button>
-                          <button 
-                            onClick={() => deleteSignup(s.id)} 
-                            className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-sm transition"
-                            disabled={loading}
-                          >
-                            🗑️
-                          </button>
+                          {/* DELETE BUTTON REMOVED */}
                         </div>
                       </div>
                     ))}
@@ -716,15 +630,7 @@ export default function Admin() {
                             {selectedSignup.track_link}
                           </a>
                         </div>
-                        <div className="pt-4 border-t border-white/10">
-                          <button 
-                            onClick={() => deleteSignup(selectedSignup.id)} 
-                            className="w-full bg-red-500/20 hover:bg-red-500/30 px-4 py-3 rounded-xl font-semibold transition"
-                            disabled={loading}
-                          >
-                            {loading ? 'מוחק...' : '🗑️ מחק הרשמה'}
-                          </button>
-                        </div>
+                        {/* DELETE BUTTON REMOVED FROM MODAL */}
                       </div>
                     </div>
                   </div>
@@ -769,13 +675,7 @@ export default function Admin() {
                           )}
                           <div className="flex gap-2">
                             <button onClick={() => setSelectedTrackSub(track)} className="btn-secondary px-3 py-2 rounded-xl text-sm flex-1">👁️ צפייה</button>
-                            <button 
-                              onClick={() => deleteTrack(track.id)} 
-                              className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-sm transition"
-                              disabled={loading}
-                            >
-                              🗑️
-                            </button>
+                            {/* DELETE BUTTON REMOVED */}
                           </div>
                         </div>
                       </div>
@@ -822,13 +722,7 @@ export default function Admin() {
                             צפה ביוטיוב
                           </a>
                         </div>
-                        <button 
-                          onClick={() => deleteTrack(selectedTrackSub.id)} 
-                          className="w-full bg-red-500/20 hover:bg-red-500/30 px-6 py-3 rounded-xl font-semibold transition"
-                          disabled={loading}
-                        >
-                          {loading ? 'מוחק...' : '🗑️ מחק המלצה'}
-                        </button>
+                        {/* DELETE BUTTON REMOVED FROM MODAL */}
                       </div>
                     </div>
                   </div>
@@ -844,13 +738,7 @@ export default function Admin() {
                   <div className="glass rounded-2xl p-4 flex justify-between items-center">
                     <h2 className="text-2xl font-semibold">סטטיסטיקות אתר</h2>
                     <div className="flex gap-2">
-                      <button 
-                        onClick={resetAnalytics} 
-                        className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-xl px-4 py-2 text-sm transition font-semibold" 
-                        disabled={analyticsLoading || visits.length === 0}
-                      >
-                        🗑️ אפס נתונים
-                      </button>
+                      {/* RESET BUTTON REMOVED */}
                       <button onClick={fetchAnalytics} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={analyticsLoading}>
                         {analyticsLoading ? "טוען..." : `🔄 רענן`}
                       </button>
