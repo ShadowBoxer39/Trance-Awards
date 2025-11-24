@@ -262,7 +262,7 @@ export default function Home({
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold mb-3">הטרק המוצג</h4>
+                  <h4 className="text-lg font-semibold mb-3">הטראק המוצג</h4>
                   <div className="rounded-lg overflow-hidden">
                     <iframe width="100%" height="166" scrolling="no" style={{ border: 'none' }} allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/kanok_music/kanok-light-beam&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"></iframe>         
                   </div>
@@ -302,7 +302,7 @@ export default function Home({
             <div className="flex items-center justify-center gap-3 mb-6">
               <span className="text-3xl">💬</span>
               <h2 className="text-2xl md:text-3xl font-semibold text-white">
-                הטרק השבועי של הקהילה
+                הטראק השבועי של הקהילה
               </h2>
             </div>
 
@@ -361,7 +361,7 @@ export default function Home({
 
                   {/* Description */}
                   <div className="bg-black/30 rounded-lg p-4">
-                    <p className="text-sm text-gray-400 mb-2">למה הטרק הזה?</p>
+                    <p className="text-sm text-gray-400 mb-2">למה הטראק הזה?</p>
                     <p className="text-gray-300 leading-relaxed">
                       {trackOfWeek.description}
                     </p>
@@ -380,20 +380,20 @@ export default function Home({
               // No track approved yet
               <div className="text-center py-8">
                 <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
-                  הגיע הזמן לשמוע מה בוחרת קהילת הטראנס הגדולה בישראל! בכל שבוע, טרק חדש וסיפור אישי מאחוריו.
+                  הגיע הזמן לשמוע מה בוחרת קהילת הטראנס הגדולה בישראל! בכל שבוע, טראק חדש וסיפור אישי מאחוריו.
                 </p>
                 <div className="flex flex-wrap justify-center gap-4">
                   <Link
                     href="/track-of-the-week"
                     className="btn-primary px-6 py-3 rounded-lg font-medium inline-flex items-center gap-2"
                   >
-                    🎧 צפה בטרק השבועי
+                    🎧 צפה בטראק השבועי
                   </Link>
                   <Link
                     href="/submit-track"
                     className="btn-secondary px-6 py-3 rounded-lg font-medium inline-block"
                   >
-                    הגישו טרק משלכם
+                    הגישו טראק משלכם
                   </Link>
                 </div>
               </div>
