@@ -1,4 +1,4 @@
-// pages/api/dev-clear.ts
+// pages/api/dev-clear.ts (Current version - UNCHANGED)
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
@@ -50,7 +50,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (mode === "me") {
       const ip = getClientIp(req);
-      const hash = ipHash(ip);
+      const pepper = process.env.VOTE_PEPPER || "dev-pepper"; // Using pepper for consistency
+      const hash = crypto.createHash("sha256").update(ip + "|" + pepper).digest("hex");
+
       q = q.eq("ip_hash", hash);
     } else {
       // PostgREST requires *some* filter for DELETE; this matches all rows.
