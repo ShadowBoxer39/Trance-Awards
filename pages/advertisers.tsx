@@ -186,7 +186,7 @@ export default function Advertisers() {
                     </a>
                      {/* WhatsApp Button */}
                     <a 
-                      href="https://wa.me/972509218090" 
+                      href="https://wa.me/972546613375" 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full btn-secondary px-8 py-3 rounded-lg font-medium text-lg flex items-center justify-center gap-3"
@@ -200,7 +200,7 @@ export default function Advertisers() {
 
                 <div className="text-center pt-4 border-t border-gray-700">
                     <h3 className="text-lg font-semibold text-white/90 mb-2">מספר טלפון ישיר</h3>
-                    <p className="text-xl text-purple-400">050-921-8090</p>
+                    <p className="text-xl text-purple-400">054-661-3375</p>
                 </div>
             </div>
           </div>
