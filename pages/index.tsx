@@ -148,8 +148,8 @@ export default function Home({
               </p>
 
               {/* CTA Buttons */}
-             // pages/index.tsx (FIXED CTA BUTTONS for proper alignment and look)
-// CTA Buttons
+           
+
 <div className="flex flex-wrap gap-4 justify-center mb-16">
   {/* Primary Button: Listen to Episodes */}
   <Link 
