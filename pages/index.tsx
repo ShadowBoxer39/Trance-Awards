@@ -177,27 +177,30 @@ export default function Home({
   </Link>
 </div>
 
-              {/* Stats - Redesigned */}
+            {/* Stats - Redesigned */}
               <div className="grid grid-cols-3 gap-6 max-w-3xl mx-auto">
-                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
-                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
+                <div className="glass-card rounded-2xl p-4 sm:p-6 hover:scale-105 transition-transform"> {/* ADJUSTED PADDING */}
+                  {/* ADJUSTED FONT SIZING: text-4xl on mobile, text-5xl on md, etc. */}
+                  <div className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-br from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
                     <CountUpStat target={50} suffix="+" label="" />
                   </div>
-                  <p className="text-sm md:text-base text-gray-400 font-medium">פרקים</p>
+                  <p className="text-xs sm:text-sm text-gray-400 font-medium">פרקים</p> {/* ADJUSTED FONT SIZING */}
                 </div>
                 
-                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
-                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-2">
+                {/* Apply the same p-4 sm:p-6 and text-4xl sm:text-5xl changes to the other two items */}
+                
+                <div className="glass-card rounded-2xl p-4 sm:p-6 hover:scale-105 transition-transform">
+                  <div className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-br from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-1">
                     <CountUpStat target={200} suffix="+" label="" />
                   </div>
-                  <p className="text-sm md:text-base text-gray-400 font-medium">שעות תוכן</p>
+                  <p className="text-xs sm:text-sm text-gray-400 font-medium">שעות תוכן</p>
                 </div>
                 
-                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
-                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-pink-400 to-purple-400 bg-clip-text text-transparent mb-2">
+                <div className="glass-card rounded-2xl p-4 sm:p-6 hover:scale-105 transition-transform">
+                  <div className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-br from-pink-400 to-purple-400 bg-clip-text text-transparent mb-1">
                     <CountUpStat target={40} suffix="+" label="" />
                   </div>
-                  <p className="text-sm md:text-base text-gray-400 font-medium">אמנים צעירים</p>
+                  <p className="text-xs sm:text-sm text-gray-400 font-medium">אמנים צעירים</p>
                 </div>
               </div>
 
