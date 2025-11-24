@@ -166,15 +166,15 @@ const SubmitTrackPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <SEO title="הגישו טרק" description="הגישו המלצה לטרק השבועי של קהילת יוצאים לטראק" />
+      <SEO title="הגישו טראק" description="הגישו המלצה לטראק השבועי של קהילת יוצאים לטראק" />
       <Navigation currentPage="submit-track" />
       <main className="container mx-auto p-6">
         <h1 className="text-4xl font-bold text-center text-purple-400 mb-8">
-          🎧 הגישו המלצה לטרק השבועי
+          🎧 הגישו המלצה לטראק השבועי
         </h1>
         <div className="max-w-xl mx-auto glass-card p-8 rounded-lg shadow-2xl">
           <p className="mb-6 text-center text-lg text-gray-300">
-            בחרו טרק מיוטיוב שאתם חייבים שכל הקהילה תשמע, וכתבו כמה מילים אישיות על המשמעות שלו בשבילכם.
+            בחרו טראק מיוטיוב שאתם חייבים שכל הקהילה תשמע, וכתבו כמה מילים אישיות על המשמעות שלו בשבילכם.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -219,7 +219,7 @@ const SubmitTrackPage: React.FC = () => {
             {/* Track Title - NOW REQUIRED */}
             <div>
               <label htmlFor="track_title" className="block text-sm font-medium text-gray-300 mb-2">
-                שם הטרק *
+                שם הטראק, תכתבו יפה זה יופיע באתר!*
               </label>
               <input
                 type="text"
@@ -228,7 +228,7 @@ const SubmitTrackPage: React.FC = () => {
                 value={formData.track_title}
                 onChange={handleChange}
                 required
-                placeholder="שם האמן - שם הטרק"
+                placeholder="שם האמן - שם הטראק"
                 className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-purple-500 focus:ring-purple-500 p-3"
               />
             </div>
@@ -236,7 +236,7 @@ const SubmitTrackPage: React.FC = () => {
             {/* YouTube URL */}
             <div>
               <label htmlFor="youtube_url" className="block text-sm font-medium text-gray-300 mb-2">
-                קישור לטרק ביוטיוב *
+                קישור לטראק ביוטיוב *
               </label>
               <input
                 type="url"
@@ -254,7 +254,7 @@ const SubmitTrackPage: React.FC = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label htmlFor="description" className="block text-sm font-medium text-gray-300">
-                  למה בחרתם בטרק הזה? * (50-500 תווים)
+                  למה בחרתם בטראק הזה? תספרו מה הוא בשבילכם * (50-500 תווים)
                 </label>
                 <span
                   className={`text-xs ${
@@ -283,7 +283,7 @@ const SubmitTrackPage: React.FC = () => {
                 required
                 minLength={50}
                 maxLength={500}
-                placeholder="כתבו כמה מילים אישיות על מה שהטרק הזה גורם לכם להרגיש, איפה שמעתם אותו, למה הוא מיוחד..."
+                placeholder="כתבו כמה מילים אישיות על מה שהטראק הזה גורם לכם להרגיש, איפה שמעתם אותו, למה הוא מיוחד..."
                 className={`mt-1 block w-full rounded-md bg-gray-700 text-white shadow-sm p-3 ${
                   descriptionLength > 0 && !isDescriptionValid
                     ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-500'
@@ -306,7 +306,7 @@ const SubmitTrackPage: React.FC = () => {
                 ? 'מעלה תמונה...'
                 : submissionStatus === 'loading'
                 ? 'שולח...'
-                : 'שלחו את הטרק שלי'}
+                : 'שלחו את הטראק שלי'}
             </button>
           </form>
 
@@ -317,7 +317,7 @@ const SubmitTrackPage: React.FC = () => {
                 ✅ תודה רבה!
               </p>
               <p className="text-center text-gray-300">
-                הטרק נשלח לבדיקה ויאושר בקרוב על ידי צוות יוצאים לטראק
+                הטראק נשלח לבדיקה ויאושר בקרוב על ידי צוות יוצאים לטראק
               </p>
               <button
                 onClick={() => {
@@ -326,7 +326,7 @@ const SubmitTrackPage: React.FC = () => {
                 }}
                 className="mt-4 w-full btn-secondary py-2 px-4 rounded-md"
               >
-                שלחו טרק נוסף
+                שלחו טראק נוסף
               </button>
             </div>
           )}
