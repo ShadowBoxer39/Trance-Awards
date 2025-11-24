@@ -7,4 +7,4 @@ Disallow: /admin
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://tracktrip.co.il/sitemap.xml
