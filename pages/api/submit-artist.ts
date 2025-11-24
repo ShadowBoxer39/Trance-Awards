@@ -1,84 +1,63 @@
+// pages/api/submit-artist.ts (FIXED: Public POST endpoint for Young Artists)
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Set headers first
-  res.setHeader('Content-Type', 'application/json');
-  
-  try {
-    // Get admin key
-    const key = req.method === 'GET' ? req.query.key : req.body?.key;
-    const ADMIN_KEY = process.env.ADMIN_KEY;
-    
-    // Verify key exists
-    if (!ADMIN_KEY) {
-      return res.status(500).json({ ok: false, error: 'ADMIN_KEY not configured' });
-    }
-    
-    if (!key || key !== ADMIN_KEY) {
-      return res.status(401).json({ ok: false, error: 'Unauthorized' });
-    }
-
-    // Get Supabase credentials
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    // Verify credentials exist
-    if (!supabaseUrl || !supabaseKey) {
-      return res.status(500).json({ 
-        ok: false, 
-        error: 'Supabase not configured',
-        details: {
-          hasUrl: !!supabaseUrl,
-          hasKey: !!supabaseKey
-        }
-      });
-    }
-
-    // Create Supabase client
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Handle GET request
-    if (req.method === 'GET') {
-      const { data, error } = await supabase
-        .from('track_submissions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        return res.status(500).json({ ok: false, error: error.message });
-      }
-      
-      return res.status(200).json({ ok: true, submissions: data || [] });
-    }
-
-    // Handle DELETE request
-    if (req.method === 'POST' && req.body?.action === 'delete') {
-      const { trackId } = req.body;
-      
-      if (!trackId) {
-        return res.status(400).json({ ok: false, error: 'Missing trackId' });
-      }
-
-      const { error } = await supabase
-        .from('track_submissions')
-        .delete()
-        .eq('id', trackId);
-
-      if (error) {
-        return res.status(500).json({ ok: false, error: error.message });
-      }
-      
-      return res.status(200).json({ ok: true, message: 'Deleted successfully' });
-    }
-
+  // Only allow POST method from the form
+  if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  }
+  
+  // No ADMIN_KEY check here, as this is a PUBLIC submission endpoint.
+
+  const { fullName, stageName, age, phone, experienceYears, inspirations, trackLink } = req.body;
+
+  // Basic validation
+  if (!fullName || !stageName || !age || !phone || !experienceYears || !trackLink) {
+    return res.status(400).json({ ok: false, error: 'Missing required fields' });
+  }
+
+  try {
+    // Get Supabase credentials (Service Key is required for server-side insert)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Supabase credentials missing for submit-artist.");
+      return res.status(500).json({ ok: false, error: 'Server configuration error' });
+    }
+
+    // Create a new Supabase client instance
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Insert data into the young_artists table
+    const { error } = await supabase
+      .from('young_artists') 
+      .insert([
+        {
+          full_name: fullName,
+          stage_name: stageName,
+          age: age,
+          phone: phone,
+          experience_years: experienceYears,
+          inspirations: inspirations,
+          track_link: trackLink,
+          submitted_at: new Date().toISOString(),
+        },
+      ]);
+
+    if (error) {
+      console.error('Supabase insert error in submit-artist:', error);
+      return res.status(500).json({ ok: false, error: error.message || 'Database insert failed' });
+    }
+
+    return res.status(200).json({ ok: true, message: 'Artist submission successful' });
+
   } catch (error: any) {
+    console.error('submit-artist server error:', error);
     return res.status(500).json({ 
       ok: false, 
-      error: error?.message || 'Unknown error',
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      error: error.message || 'Unknown server error'
     });
   }
 }
