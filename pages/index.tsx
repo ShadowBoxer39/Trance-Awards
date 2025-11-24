@@ -112,53 +112,113 @@ export default function Home({
       <div className="trance-backdrop min-h-screen text-gray-100">
         <Navigation currentPage="home" />
 
-        {/* HERO */}
-        <header className="hero-backdrop max-w-7xl mx-auto px-6 pt-16 pb-10">
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="relative transform md:translate-y-0.5 z-10">
-              <p className="text-sm uppercase tracking-[0.25em] text-purple-400 mb-3">
-                תכנית הטראנס של ישראל
-              </p>
-              <h1 className="text-4xl md:text-6xl font-semibold mb-4 tracking-tight">
-                יוצאים לטראק
+        {/* HERO - REDESIGNED */}
+        <header className="relative overflow-hidden">
+          {/* Animated Background Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-cyan-900/20 to-pink-900/20 animate-gradient" />
+          
+          {/* Floating Orbs */}
+          <div className="absolute top-20 right-20 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-20 left-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-float-delayed" />
+          
+          <div className="max-w-7xl mx-auto px-6 pt-20 pb-16 relative z-10">
+            <div className="text-center max-w-5xl mx-auto">
+              {/* Eyebrow */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 mb-6 backdrop-blur-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                </span>
+                <span className="text-sm font-medium text-purple-300 tracking-wide">תכנית הטראנס מספר 1 בישראל</span>
+              </div>
+
+              {/* Main Title with Gradient */}
+              <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight">
+                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient-x">
+                  יוצאים לטראק
+                </span>
               </h1>
-              <p className="text-xl md:text-2xl text-gray-400 mb-8">
-                עושים כבוד לאגדות, נותנים במה לצעירים ועוזרים לקהילת הטראנס בישראל
+
+              {/* Subtitle */}
+              <p className="text-xl md:text-3xl text-gray-300 mb-4 font-light leading-relaxed max-w-3xl mx-auto">
+                עושים כבוד לאגדות, נותנים במה לצעירים
+              </p>
+              <p className="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
+                ועוזרים לקהילת הטראנס בישראל לצמוח
               </p>
 
-              <div className="flex flex-wrap gap-4 mb-10">
-                <Link href="/episodes" className="btn-primary px-6 py-3 rounded-lg font-medium btn-pulse">
-                  האזינו לפרקים
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap gap-4 justify-center mb-16">
+                <Link 
+                  href="/episodes" 
+                  className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300 hover:scale-105"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                    </svg>
+                    האזינו לפרקים
+                  </span>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 blur opacity-50 group-hover:opacity-75 transition-opacity" />
                 </Link>
-                <Link href="/young-artists" className="btn-secondary px-6 py-3 rounded-lg font-medium flex items-center gap-2">
-                  <span className="text-xl">🌟</span>
+                
+                <Link 
+                  href="/young-artists" 
+                  className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                >
+                  <span className="text-2xl">🌟</span>
                   אמנים צעירים
                 </Link>
               </div>
 
-              <div className="flex gap-8 md:gap-12">
-                <CountUpStat target={50} suffix="+" label="פרקים" />
-                <CountUpStat target={200} suffix="+" label="שעות של תוכן" />
-                <CountUpStat target={40} suffix="+" label="אמנים בתחילת דרכם" />
+              {/* Stats - Redesigned */}
+              <div className="grid grid-cols-3 gap-6 max-w-3xl mx-auto">
+                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
+                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
+                    <CountUpStat target={50} suffix="+" label="" />
+                  </div>
+                  <p className="text-sm md:text-base text-gray-400 font-medium">פרקים</p>
+                </div>
+                
+                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
+                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-2">
+                    <CountUpStat target={200} suffix="+" label="" />
+                  </div>
+                  <p className="text-sm md:text-base text-gray-400 font-medium">שעות תוכן</p>
+                </div>
+                
+                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
+                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-pink-400 to-purple-400 bg-clip-text text-transparent mb-2">
+                    <CountUpStat target={40} suffix="+" label="" />
+                  </div>
+                  <p className="text-sm md:text-base text-gray-400 font-medium">אמנים צעירים</p>
+                </div>
               </div>
-            </div>
 
-            {/* Right side – studio partner card (desktop only) */}
-            <div className="hidden md:block mt-10 md:mt-0 z-10">
-              <div className="glass-card rounded-2xl p-8 max-w-sm mx-auto flex flex-col items-center text-center">
-                <div className="mb-4">
-                  <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg">
-                    <Image src="/images/musikroom.png" alt="Music Room Studio" width={130} height={130} className="object-contain" priority />
+              {/* Music Room Card - Centered */}
+              <div className="mt-16 max-w-md mx-auto glass-card rounded-2xl p-6 border border-white/10 hover:border-purple-500/50 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Image src="/images/musikroom.png" alt="Music Room Studio" width={60} height={60} className="object-contain" priority />
+                  </div>
+                  <div className="text-right flex-1">
+                    <p className="text-sm text-gray-300 leading-relaxed">
+                      מוקלט באולפני <span className="font-bold text-purple-400">המיוזיק רום</span>
+                    </p>
+                    <a href="#" target="_blank" rel="noopener noreferrer" className="text-xs text-purple-300 hover:text-purple-200 underline-offset-2 hover:underline transition">
+                      לאתר המיוזיק רום →
+                    </a>
                   </div>
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                  התכנית מוקלטת באולפני המיוזיק רום – אולפן פודקאסטים ייחודי ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
-                </p>
-                <a href="#" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-purple-300 hover:text-purple-200 underline-offset-2 hover:underline transition">
-                  לאתר המיוזיק רום
-                </a>
               </div>
             </div>
+          </div>
+
+          {/* Bottom Wave */}
+          <div className="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1440 120" className="w-full h-20 fill-current text-gray-900/50">
+              <path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7C1248,53,1344,43,1392,37.3L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z" />
+            </svg>
           </div>
         </header>
 
@@ -262,7 +322,7 @@ export default function Home({
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold mb-3">הטראק המוצג</h4>
+                  <h4 className="text-lg font-semibold mb-3">הטרק המוצג</h4>
                   <div className="rounded-lg overflow-hidden">
                     <iframe width="100%" height="166" scrolling="no" style={{ border: 'none' }} allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/kanok_music/kanok-light-beam&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"></iframe>         
                   </div>
@@ -302,7 +362,7 @@ export default function Home({
             <div className="flex items-center justify-center gap-3 mb-6">
               <span className="text-3xl">💬</span>
               <h2 className="text-2xl md:text-3xl font-semibold text-white">
-                הטראק השבועי של הקהילה
+                הטרק השבועי של הקהילה
               </h2>
             </div>
 
@@ -361,7 +421,7 @@ export default function Home({
 
                   {/* Description */}
                   <div className="bg-black/30 rounded-lg p-4">
-                    <p className="text-sm text-gray-400 mb-2">למה הטראק הזה?</p>
+                    <p className="text-sm text-gray-400 mb-2">למה הטרק הזה?</p>
                     <p className="text-gray-300 leading-relaxed">
                       {trackOfWeek.description}
                     </p>
@@ -380,20 +440,20 @@ export default function Home({
               // No track approved yet
               <div className="text-center py-8">
                 <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
-                  הגיע הזמן לשמוע מה בוחרת קהילת הטראנס הגדולה בישראל! בכל שבוע, טראק חדש וסיפור אישי מאחוריו.
+                  הגיע הזמן לשמוע מה בוחרת קהילת הטראנס הגדולה בישראל! בכל שבוע, טרק חדש וסיפור אישי מאחוריו.
                 </p>
                 <div className="flex flex-wrap justify-center gap-4">
                   <Link
                     href="/track-of-the-week"
                     className="btn-primary px-6 py-3 rounded-lg font-medium inline-flex items-center gap-2"
                   >
-                    🎧 צפה בטראק השבועי
+                    🎧 צפה בטרק השבועי
                   </Link>
                   <Link
                     href="/submit-track"
                     className="btn-secondary px-6 py-3 rounded-lg font-medium inline-block"
                   >
-                    הגישו טראק משלכם
+                    הגישו טרק משלכם
                   </Link>
                 </div>
               </div>
