@@ -349,41 +349,73 @@ export default function Admin() {
             {/* VOTES TAB */}
             {activeTab === "votes" && (
               <>
-                <div className="glass rounded-2xl p-4">
+                <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
                   <h2 className="text-2xl font-semibold">תוצאות הצבעה</h2>
+                  <div className="text-sm text-white/60">
+                    סה״כ {totalVotes} הצבעות • {Object.keys(tally).length} קטגוריות
+                  </div>
                 </div>
-                <div className="grid gap-4">
+
+                <div className="space-y-8">
                   {Object.entries(tally).map(([catId, nominees]) => {
                     const totalCat = Object.values(nominees).reduce((s, c) => s + c, 0);
+                    const sortedNominees = Object.entries(nominees).sort(([, a], [, b]) => b - a);
+                    
                     return (
-                      <div key={catId} className="glass rounded-2xl p-6">
-                        <div
-                          className="flex items-center justify-between cursor-pointer"
-                          onClick={() => setSelectedCategory(selectedCategory === catId ? null : catId)}
-                        >
-                          <h3 className="text-xl font-semibold text-cyan-400">{getCategoryTitle(catId)}</h3>
+                      <div key={catId} className="space-y-4">
+                        {/* Category Header */}
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-2xl font-bold text-cyan-400">{getCategoryTitle(catId)}</h3>
                           <div className="text-sm">
-                            <span className="text-white/60">סה״כ: </span>
-                            <span className="font-bold text-white">{totalCat}</span>
+                            <span className="text-white/60">{totalCat} הצבעות</span>
                           </div>
                         </div>
-                        {selectedCategory === catId && (
-                          <div className="mt-4 space-y-2">
-                            {Object.entries(nominees)
-                              .sort(([, a], [, b]) => b - a)
-                              .map(([nomineeId, count]) => (
-                                <div key={nomineeId} className="flex items-center justify-between bg-black/30 rounded-lg p-3">
-                                  <span className="text-white/80">{getNomineeName(catId, nomineeId)}</span>
-                                  <div className="flex items-center gap-4">
-                                    <div className="text-sm text-white/60">
-                                      {totalCat > 0 ? `${((count / totalCat) * 100).toFixed(1)}%` : "0%"}
-                                    </div>
-                                    <span className="font-bold text-cyan-400">{count}</span>
+
+                        {/* Nominees Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {sortedNominees.map(([nomineeId, count], index) => {
+                            const percentage = totalCat > 0 ? ((count / totalCat) * 100).toFixed(1) : "0";
+                            const isWinner = index === 0;
+                            
+                            return (
+                              <div
+                                key={nomineeId}
+                                className={`glass rounded-2xl p-6 transition-all hover:scale-105 ${
+                                  isWinner ? 'border-2 border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-transparent' : ''
+                                }`}
+                              >
+                                {isWinner && (
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-2xl">🏆</span>
+                                    <span className="text-sm font-semibold text-yellow-400">מוביל</span>
+                                  </div>
+                                )}
+                                
+                                <div className="text-center space-y-3">
+                                  <h4 className="text-lg font-bold text-white leading-tight">
+                                    {getNomineeName(catId, nomineeId)}
+                                  </h4>
+                                  
+                                  <div className="text-3xl font-bold text-cyan-400">
+                                    {count} קולות
+                                  </div>
+                                  
+                                  <div className="text-sm text-white/60">
+                                    ({percentage}%)
+                                  </div>
+
+                                  {/* Progress Bar */}
+                                  <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                    <div
+                                      className="bg-gradient-to-r from-cyan-500 to-purple-500 h-full rounded-full transition-all duration-500"
+                                      style={{ width: `${percentage}%` }}
+                                    />
                                   </div>
                                 </div>
-                              ))}
-                          </div>
-                        )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })}
