@@ -3,7 +3,7 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
-import { createClient } from "@supabase/supabase-js"; // Import needed for Supabase client creation in API calls if not using global client
+import { createClient } from "@supabase/supabase-js"; 
 
 // Helper function to extract YouTube video ID
 const getYouTubeVideoId = (url: string): string | null => {
@@ -72,12 +72,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
-
-// Recreate the Supabase client logic needed for POST/WRITE actions 
-// that bypass the GET-only wrapper, but keep it local to this file.
-// NOTE: For clean code, GET actions use the imported client.
-
-// --- START: DELETION AND RESET FUNCTIONS REMOVED FOR STABILITY ---
 
 export default function Admin() {
   const [key, setKey] = React.useState<string>("");
@@ -219,11 +213,6 @@ export default function Admin() {
     }
   };
 
-  // --- START: DELETION AND RESET FUNCTIONS REMOVED ---
-  // The functions deleteSignup, deleteTrack, and resetAnalytics have been removed 
-  // to ensure system stability as requested.
-  // --- END: DELETION AND RESET FUNCTIONS REMOVED ---
-
 
   const getAnalytics = () => {
     const pageVisits: Record<string, number> = {};
@@ -288,13 +277,15 @@ export default function Admin() {
     const monthlyTotal = Object.values(monthlyVisits).reduce((a, b) => a + b, 0);
     const dailyTotal = dailyVisits[now.toISOString().split('T')[0]] || 0;
 
+    // FIX 1: Corrected sorting syntax
     const topPages = Object.entries(pageVisits)
-      .sort(([, a], [, b) => b - a)
+      .sort(([, a], [, b]) => b - a) 
       .slice(0, 5)
       .map(([page, count]) => ({ page, count }));
 
+    // FIX 2: Corrected sorting syntax
     const topCountries = Object.entries(countryVisits)
-      .sort(([, a], [, b) => b - a)
+      .sort(([, a], [, b]) => b - a) 
       .slice(0, 5)
       .map(([country, count], index) => ({ 
         name: country === 'IL' ? '🇮🇱 ישראל' : country, 
@@ -302,8 +293,9 @@ export default function Admin() {
         color: COLORS[index % COLORS.length]
       }));
 
+    // FIX 3: Corrected sorting syntax
     const topReferrers = Object.entries(referrerData)
-      .sort(([, a], [, b) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([source, count]) => ({ source, count }));
 
@@ -584,7 +576,6 @@ export default function Admin() {
                           <button onClick={() => setSelectedSignup(s)} className="btn-primary px-3 py-2 rounded-xl text-sm flex-1">
                             צפה בפרטים
                           </button>
-                          {/* DELETE BUTTON REMOVED */}
                         </div>
                       </div>
                     ))}
@@ -630,7 +621,6 @@ export default function Admin() {
                             {selectedSignup.track_link}
                           </a>
                         </div>
-                        {/* DELETE BUTTON REMOVED FROM MODAL */}
                       </div>
                     </div>
                   </div>
@@ -675,7 +665,6 @@ export default function Admin() {
                           )}
                           <div className="flex gap-2">
                             <button onClick={() => setSelectedTrackSub(track)} className="btn-secondary px-3 py-2 rounded-xl text-sm flex-1">👁️ צפייה</button>
-                            {/* DELETE BUTTON REMOVED */}
                           </div>
                         </div>
                       </div>
@@ -722,7 +711,6 @@ export default function Admin() {
                             צפה ביוטיוב
                           </a>
                         </div>
-                        {/* DELETE BUTTON REMOVED FROM MODAL */}
                       </div>
                     </div>
                   </div>
@@ -738,7 +726,6 @@ export default function Admin() {
                   <div className="glass rounded-2xl p-4 flex justify-between items-center">
                     <h2 className="text-2xl font-semibold">סטטיסטיקות אתר</h2>
                     <div className="flex gap-2">
-                      {/* RESET BUTTON REMOVED */}
                       <button onClick={fetchAnalytics} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={analyticsLoading}>
                         {analyticsLoading ? "טוען..." : `🔄 רענן`}
                       </button>
