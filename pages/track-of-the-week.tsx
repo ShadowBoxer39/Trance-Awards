@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { GetServerSideProps } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import supabase from '../lib/supabaseServer';
 import Navigation from '../components/Navigation';
@@ -29,7 +28,7 @@ const getYouTubeVideoId = (url: string): string | null => {
   return match ? match[1] : null;
 };
 
-const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
+export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
   }, []);
@@ -40,7 +39,7 @@ const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
         <Navigation currentPage="track-of-the-week" />
         <main className="container mx-auto p-6 text-center pt-20">
           <h1 className="text-4xl font-bold text-red-500 mb-4">שגיאת טעינה</h1>
-          <p className="text-gray-400">לא ניתן היה לטעון את הטראק השבועי. {error}</p>
+          <p className="text-gray-400">לא ניתן היה לטעון את הטרק השבועי. {error}</p>
         </main>
       </div>
     );
@@ -51,14 +50,14 @@ const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
   return (
     <div className="min-h-screen trance-backdrop text-gray-100">
       <SEO 
-        title="הטראק השבועי"
-        description={track ? `הטראק השבועי של הקהילה: ${track.track_title} - נבחר על ידי ${track.name}` : "הטראק השבועי שנבחר על ידי קהילת הוואטסאפ שלנו."}
+        title="הטרק השבועי"
+        description={track ? `הטרק השבועי של הקהילה: ${track.track_title} - נבחר על ידי ${track.name}` : "הטרק השבועי שנבחר על ידי קהילת הוואטסאפ שלנו."}
       />
       <Navigation currentPage="track-of-the-week" />
 
       <main className="max-w-7xl mx-auto px-6 pt-16 pb-16">
         <h1 className="text-4xl md:text-5xl font-semibold text-center text-gradient mb-12">
-          🔥 הטראק השבועי של הקהילה
+          🔥 הטרק השבועי של הקהילה
         </h1>
 
         <div className="max-w-5xl mx-auto">
@@ -87,27 +86,31 @@ const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
               <div className="grid md:grid-cols-[200px,1fr] gap-8 items-start mb-8 bg-black/20 rounded-xl p-6">
                 {/* Profile Photo - LARGER */}
                 <div className="flex flex-col items-center text-center mx-auto md:mx-0">
-                  <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-green-500/50 mb-4 bg-gray-700">
+                  <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-green-500/50 mb-4 bg-gray-700 relative">
                     {track.photo_url ? (
-                      <img
-                        src={track.photo_url}
-                        alt={`Photo of ${track.name}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // If image fails to load, show emoji instead
-                          e.currentTarget.style.display = 'none';
-                          if (e.currentTarget.nextElementSibling) {
-                            (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <div 
-                      className="w-full h-full flex items-center justify-center text-6xl text-gray-500"
-                      style={{ display: track.photo_url ? 'none' : 'flex' }}
-                    >
-                      👤
-                    </div>
+                      <>
+                        <img
+                          src={track.photo_url}
+                          alt={`Photo of ${track.name}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                        <div 
+                          className="absolute inset-0 w-full h-full flex items-center justify-center text-6xl text-gray-500"
+                          style={{ display: 'none' }}
+                        >
+                          👤
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-6xl text-gray-500">
+                        👤
+                      </div>
+                    )}
                   </div>
                   <p className="text-xl font-semibold text-green-400">
                     {track.name}
@@ -123,7 +126,7 @@ const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
                 {/* Description - NICER */}
                 <div className="flex flex-col justify-center">
                   <h3 className="text-2xl font-semibold mb-4 text-white border-b border-gray-700 pb-3">
-                    למה דווקא הטראק הזה?
+                    למה דווקא הטרק הזה?
                   </h3>
                   <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-line">
                     {track.description}
@@ -148,7 +151,7 @@ const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
                   href="/submit-track"
                   className="btn-secondary px-8 py-4 rounded-lg text-lg font-medium"
                 >
-                  הגישו טראק משלכם
+                  הגישו טרק משלכם
                 </Link>
               </div>
             </div>
@@ -156,7 +159,7 @@ const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
             <div className="glass-card rounded-2xl p-12 text-center">
               <div className="text-6xl mb-6">🎵</div>
               <p className="text-2xl font-semibold text-gray-400 mb-4">
-                אין עדיין טראק שבועי מאושר
+                אין עדיין טרק שבועי מאושר
               </p>
               <p className="text-lg text-gray-500 mb-8">
                 אתם מוזמנים להגיש המלצה משלכם!
@@ -165,7 +168,7 @@ const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
                 href="/submit-track"
                 className="btn-primary px-8 py-4 rounded-lg font-medium text-lg inline-block"
               >
-                הגישו טראק עכשיו
+                הגישו טרק עכשיו
               </Link>
             </div>
           )}
@@ -173,7 +176,7 @@ const TrackOfTheWeekPage: React.FC<TrackPageProps> = ({ track, error }) {
       </main>
     </div>
   );
-};
+}
 
 export const getServerSideProps: GetServerSideProps<TrackPageProps> = async () => {
   try {
@@ -213,5 +216,3 @@ export const getServerSideProps: GetServerSideProps<TrackPageProps> = async () =
     };
   }
 };
-
-export default TrackOfTheWeekPage;
