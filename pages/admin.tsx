@@ -1,4 +1,4 @@
-// pages/admin.tsx - FINAL REDESIGN AND STABILITY VERSION
+// pages/admin.tsx - FINAL REDESIGN AND STABILITY VERSION with DELETE functionality restored
 
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
@@ -118,7 +118,8 @@ export default function Admin() {
     }
   }, [tally, activeTab]);
 
-  // Fetching uses the imported client from lib/supabaseServer, which is now robust.
+  // --- START: Admin Fetch & Approve Logic ---
+
   const fetchStats = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!key) return;
@@ -164,7 +165,6 @@ export default function Admin() {
     if (!confirm("לאשר טרק זה כ'טרק השבועי'?")) return;
     setLoading(true);
     try {
-      // NOTE: This POST is allowed as it is a required core Admin function (Approval), not a delete function.
       const response = await fetch('/api/approve-track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -181,7 +181,6 @@ export default function Admin() {
       setLoading(false);
     }
   };
-
 
   const fetchSignups = async () => {
     if (!key) return;
@@ -212,6 +211,74 @@ export default function Admin() {
       setAnalyticsLoading(false);
     }
   };
+
+  // --- START: RESTORED DELETE LOGIC ---
+
+  const deleteTrack = async (trackId: string) => {
+    if (!confirm("האם למחוק המלצה זו?")) return;
+    setLoading(true);
+    try {
+      const response = await fetch('/api/track-submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, trackId, action: 'delete' }),
+      });
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("תשובה לא תקינה מהשרת");
+      }
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'שגיאה במחיקת המלצה');
+      }
+      
+      alert("✅ ההמלצה נמחקה בהצלחה");
+      setSelectedTrackSub(null);
+      fetchTrackSubmissions();
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteSignup = async (signupId: string) => {
+    if (!confirm("האם למחוק הרשמה זו?")) return;
+    setLoading(true);
+    try {
+      const response = await fetch('/api/artist-signups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, signupId, action: 'delete' }),
+      });
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("תשובה לא תקינה מהשרת");
+      }
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'שגיאה במחיקת הרשמה');
+      }
+      
+      alert("✅ ההרשמה נמחקה בהצלחה");
+      setSelectedSignup(null);
+      fetchSignups();
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- END: RESTORED DELETE LOGIC ---
 
 
   const getAnalytics = () => {
@@ -277,13 +344,11 @@ export default function Admin() {
     const monthlyTotal = Object.values(monthlyVisits).reduce((a, b) => a + b, 0);
     const dailyTotal = dailyVisits[now.toISOString().split('T')[0]] || 0;
 
-    // FIX 1: Corrected sorting syntax
     const topPages = Object.entries(pageVisits)
       .sort(([, a], [, b]) => b - a) 
       .slice(0, 5)
       .map(([page, count]) => ({ page, count }));
 
-    // FIX 2: Corrected sorting syntax
     const topCountries = Object.entries(countryVisits)
       .sort(([, a], [, b]) => b - a) 
       .slice(0, 5)
@@ -293,7 +358,6 @@ export default function Admin() {
         color: COLORS[index % COLORS.length]
       }));
 
-    // FIX 3: Corrected sorting syntax
     const topReferrers = Object.entries(referrerData)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
@@ -576,6 +640,13 @@ export default function Admin() {
                           <button onClick={() => setSelectedSignup(s)} className="btn-primary px-3 py-2 rounded-xl text-sm flex-1">
                             צפה בפרטים
                           </button>
+                          <button 
+                            onClick={() => deleteSignup(s.id)} 
+                            className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-sm transition"
+                            disabled={loading}
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -621,6 +692,15 @@ export default function Admin() {
                             {selectedSignup.track_link}
                           </a>
                         </div>
+                        <div className="pt-4 border-t border-white/10">
+                          <button 
+                            onClick={() => deleteSignup(selectedSignup.id)} 
+                            className="w-full bg-red-500/20 hover:bg-red-500/30 px-4 py-3 rounded-xl font-semibold transition"
+                            disabled={loading}
+                          >
+                            {loading ? 'מוחק...' : '🗑️ מחק הרשמה'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -665,6 +745,13 @@ export default function Admin() {
                           )}
                           <div className="flex gap-2">
                             <button onClick={() => setSelectedTrackSub(track)} className="btn-secondary px-3 py-2 rounded-xl text-sm flex-1">👁️ צפייה</button>
+                            <button 
+                              onClick={() => deleteTrack(track.id)} 
+                              className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-sm transition"
+                              disabled={loading}
+                            >
+                              🗑️
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -711,6 +798,13 @@ export default function Admin() {
                             צפה ביוטיוב
                           </a>
                         </div>
+                        <button 
+                          onClick={() => deleteTrack(selectedTrackSub.id)} 
+                          className="w-full bg-red-500/20 hover:bg-red-500/30 px-6 py-3 rounded-xl font-semibold transition"
+                          disabled={loading}
+                        >
+                          {loading ? 'מוחק...' : '🗑️ מחק המלצה'}
+                        </button>
                       </div>
                     </div>
                   </div>
