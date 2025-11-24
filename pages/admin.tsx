@@ -489,118 +489,116 @@ export default function Admin() {
               </button>
             </div>
 
-            {/* VOTES TAB */}
-            {activeTab === "votes" && (
-              <>
-                <div className="glass rounded-2xl p-6">
-                  <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-                    <h2 className="text-2xl font-semibold">תוצאות הצבעה</h2>
-                    <div className="flex gap-4 text-sm">
-                      <div className="glass px-4 py-2 rounded-lg">
-                        <span className="text-white/60">סה״כ הצבעות: </span>
-                        <span className="font-bold text-cyan-400">{totalVotes}</span>
+          // pages/admin.tsx: VOTE RESULTS SECTION REWRITE V2 (Focus on List)
+
+{activeTab === "votes" && (
+  <>
+    {/* Overall Stats Bar */}
+    <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center mb-6">
+      <h2 className="text-2xl font-semibold">תוצאות הצבעה מפורטות</h2>
+      <div className="flex gap-4 text-sm">
+        <div className="glass px-4 py-2 rounded-lg">
+          <span className="text-white/60">סה״כ הצבעות: </span>
+          <span className="font-bold text-cyan-400">{totalVotes}</span>
+        </div>
+        <div className="glass px-4 py-2 rounded-lg">
+          <span className="text-white/60">קטגוריות: </span>
+          <span className="font-bold text-purple-400">{Object.keys(tally).length}</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Detailed Category Lists (The main scrolling content) */}
+    <div className="space-y-8">
+      {Object.entries(tally).map(([catId, nominees]) => {
+        const totalCat = Object.values(nominees).reduce((s, c) => s + c, 0);
+        // Sort nominees by vote count, descending
+        const sortedNominees = Object.entries(nominees).sort(([, a], [, b]) => b - a);
+        
+        return (
+          <div key={catId} className="glass rounded-2xl p-6">
+            
+            {/* Category Header (Prominent) */}
+            <div className="border-b border-white/10 pb-3 mb-4">
+              <h3 className="text-2xl font-bold text-cyan-400">{getCategoryTitle(catId)}</h3>
+              <p className="text-sm text-white/60 mt-1">סה״כ הצבעות בקטגוריה: <span className="font-medium text-white">{totalCat}</span></p>
+            </div>
+
+            {/* Nominees List Start - REDESIGNED */}
+            <div className="space-y-2">
+              {sortedNominees.map(([nomineeId, count], index) => {
+                const percentage = totalCat > 0 ? ((count / totalCat) * 100).toFixed(1) : "0";
+                const isGold = index === 0;
+                const isSilver = index === 1;
+                const isBronze = index === 2;
+                
+                // Determine item styling based on rank
+                const rankClasses = isGold ? 
+                    'bg-yellow-500/10' :
+                    isSilver ?
+                    'bg-gray-500/10' :
+                    isBronze ?
+                    'bg-orange-500/10' :
+                    'hover:bg-white/5';
+
+                return (
+                  <div
+                    key={nomineeId}
+                    className={`grid grid-cols-[50px,1fr,100px] items-center gap-4 p-3 rounded-lg transition-all text-sm ${rankClasses}`}
+                  >
+                    
+                    {/* Column 1: Rank Badge */}
+                    <div className="flex-shrink-0 text-center">
+                      {isGold ? (
+                        <span className="text-2xl">🥇</span>
+                      ) : isSilver ? (
+                        <span className="text-2xl">🥈</span>
+                      ) : isBronze ? (
+                        <span className="text-2xl">🥉</span>
+                      ) : (
+                        <span className="text-white/60 font-medium">#{index + 1}</span>
+                      )}
+                    </div>
+
+                    {/* Column 2: Name and Bar */}
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-semibold ${isGold ? 'text-yellow-300' : 'text-white'} truncate mb-1`}>
+                        {getNomineeName(catId, nomineeId)}
                       </div>
-                      <div className="glass px-4 py-2 rounded-lg">
-                        <span className="text-white/60">קטגוריות: </span>
-                        <span className="font-bold text-purple-400">{Object.keys(tally).length}</span>
+                      
+                      {/* Progress Bar (More visible now) */}
+                      <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isGold 
+                              ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                              : 'bg-gradient-to-r from-cyan-500 to-purple-500'
+                          }`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Column 3: Votes & Percentage */}
+                    <div className="text-right flex-shrink-0 w-20">
+                      <div className={`text-base font-bold ${isGold ? 'text-yellow-300' : 'text-cyan-400'}`}>
+                        {count}
+                      </div>
+                      <div className="text-xs text-white/50">
+                        {percentage}%
                       </div>
                     </div>
                   </div>
-
-                  <div className="space-y-6">
-                    {Object.entries(tally).map(([catId, nominees]) => {
-                      const totalCat = Object.values(nominees).reduce((s, c) => s + c, 0);
-                      const sortedNominees = Object.entries(nominees).sort(([, a], [, b]) => b - a);
-                      
-                      return (
-                        <div key={catId} className="glass rounded-xl p-6 space-y-4">
-                          {/* Category Header */}
-                          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                            <h3 className="text-xl font-bold text-cyan-400">{getCategoryTitle(catId)}</h3>
-                            <div className="text-sm bg-purple-500/20 px-3 py-1 rounded-lg">
-                              <span className="text-white/80">{totalCat} הצבעות</span>
-                            </div>
-                          </div>
-
-                          {/* Nominees List Start - REDESIGNED */}
-                          <div className="space-y-3">
-                            {sortedNominees.map(([nomineeId, count], index) => {
-                              const percentage = totalCat > 0 ? ((count / totalCat) * 100).toFixed(1) : "0";
-                              const isGold = index === 0;
-                              const isSilver = index === 1;
-                              const isBronze = index === 2;
-                              
-                              // Determine card styling based on rank
-                              const rankClasses = isGold ? 
-                                  'bg-yellow-500/10 border-l-4 border-yellow-500/80 shadow-md shadow-yellow-500/10' :
-                                  isSilver ?
-                                  'bg-gray-500/10 border-l-4 border-gray-500/80' :
-                                  isBronze ?
-                                  'bg-orange-500/10 border-l-4 border-orange-500/80' :
-                                  'bg-white/5 hover:bg-white/10';
-
-                              return (
-                                <div
-                                  key={nomineeId}
-                                  className={`flex items-center gap-4 p-3 rounded-lg transition-all text-sm ${rankClasses}`}
-                                >
-                                  
-                                  {/* 1. Rank Badge */}
-                                  <div className="flex-shrink-0 w-8 text-center">
-                                    {isGold ? (
-                                      <span className="text-2xl">🥇</span>
-                                    ) : isSilver ? (
-                                      <span className="text-2xl">🥈</span>
-                                    ) : isBronze ? (
-                                      <span className="text-2xl">🥉</span>
-                                    ) : (
-                                      <span className="text-white/60 font-medium">#{index + 1}</span>
-                                    )}
-                                  </div>
-
-                                  {/* 2. Nominee Name & Percentage */}
-                                  <div className="flex-1 min-w-0">
-                                    <div className={`font-semibold ${isGold ? 'text-yellow-300' : 'text-white'} truncate`}>
-                                      {getNomineeName(catId, nomineeId)}
-                                    </div>
-                                  </div>
-
-                                  {/* 3. Stats (Bar & Count) */}
-                                  <div className="flex items-center gap-4 flex-shrink-0">
-                                    {/* Progress Bar */}
-                                    <div className="w-24 bg-gray-800 rounded-full h-2 overflow-hidden hidden sm:block">
-                                      <div
-                                        className={`h-full rounded-full transition-all duration-500 ${
-                                          isGold 
-                                            ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                                            : 'bg-gradient-to-r from-cyan-500 to-purple-500'
-                                        }`}
-                                        style={{ width: `${percentage}%` }}
-                                      />
-                                    </div>
-
-                                    {/* Votes & Percentage */}
-                                    <div className="text-right min-w-[70px]">
-                                      <div className={`text-base font-bold ${isGold ? 'text-yellow-300' : 'text-cyan-400'}`}>
-                                        {count}
-                                      </div>
-                                      <div className="text-xs text-white/50">
-                                        {percentage}%
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          {/* Nominees List End */}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
+                );
+              })}
+            </div>
+            {/* Nominees List End */}
+          </div>
+        );
+      })}
+    </div>
+  </>
+)}
 
             {/* SIGNUPS TAB */}
             {activeTab === "signups" && (
