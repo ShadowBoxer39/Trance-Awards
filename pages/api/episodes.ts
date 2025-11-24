@@ -1,7 +1,7 @@
 // pages/api/episodes.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY; 
 
 // 👇 Your FULL EPISODES playlist ID (from the URL you sent)
 const PLAYLIST_ID = "PLKCB7UQ2dSpoIw7g9Mys-jw4yK7fOfU3d";
