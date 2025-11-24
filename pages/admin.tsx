@@ -183,10 +183,10 @@ export default function Admin() {
     if (!confirm("האם למחוק המלצה זו?")) return;
     setLoading(true);
     try {
-      const response = await fetch('/api/delete-track', {
+      const response = await fetch('/api/track-submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, trackId }),
+        body: JSON.stringify({ key, trackId, action: 'delete' }),
       });
       
       const contentType = response.headers.get("content-type");
@@ -230,10 +230,10 @@ export default function Admin() {
     if (!confirm("האם למחוק הרשמה זו?")) return;
     setLoading(true);
     try {
-      const response = await fetch('/api/delete-signup', {
+      const response = await fetch('/api/artist-signups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, signupId }),
+        body: JSON.stringify({ key, signupId, action: 'delete' }),
       });
       
       const contentType = response.headers.get("content-type");
@@ -279,10 +279,10 @@ export default function Admin() {
     
     setAnalyticsLoading(true);
     try {
-      const response = await fetch('/api/reset-analytics', {
+      const response = await fetch('/api/analytics-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key }),
+        body: JSON.stringify({ key, action: 'reset' }),
       });
       
       const contentType = response.headers.get("content-type");
