@@ -53,7 +53,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                   : "text-gray-300 hover:text-white"
               }`}
             >
-              הטרק השבועי
+              הטראק השבועי
             </Link>
             <Link
               href="/episodes"
@@ -100,7 +100,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
               href="/submit-track"
               className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
             >
-              הגישו טרק
+              הגישו טראק
             </Link>
             <Link
               href="/vote"
@@ -145,7 +145,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              הטרק השבועי
+              הטראק השבועי
             </Link>
             <Link
               href="/episodes"
@@ -189,7 +189,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
               className="block btn-secondary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              הגישו טרק
+              הגישו טראק
             </Link>
             <Link
               href="/vote"
