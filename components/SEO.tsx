@@ -1,7 +1,7 @@
 import Head from 'next/head';
 
 interface SEOProps {
-  title: string;
+  title: string; 
   description: string;
   url?: string;
   image?: string;
