@@ -11,8 +11,8 @@ interface SEOProps {
 export default function SEO({ title, description, url, image, type = "website" }: SEOProps) {
   const siteName = "יוצאים לטראק";
   const fullTitle = `${title} | ${siteName}`;
-  const defaultImage = "https://yourdomain.com/images/logo.png";
-  const defaultUrl = "https://yourdomain.com";
+  const defaultImage = "https://tracktrip.co.il/images/logo.png";
+  const defaultUrl = "https://tracktrip.co.il";
 
   return (
     <Head>
