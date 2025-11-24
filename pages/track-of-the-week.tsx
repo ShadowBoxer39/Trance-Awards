@@ -2,7 +2,7 @@
 // This version works with your current database structure
 // No migration needed!
 
-import Head from "next/head"; 
+import Head from "next/head";
 import Link from "next/link";
 import { useEffect } from "react";
 import Navigation from "../components/Navigation";
@@ -296,7 +296,7 @@ export async function getServerSideProps() {
       .from("track_of_the_week_submissions")
       .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
       .eq("is_approved", true)
-      .order("created_at", { ascending: false })
+      .order("approved_at", { ascending: false })
       .limit(1)
       .single();
 
@@ -309,7 +309,7 @@ export async function getServerSideProps() {
       .from("track_of_the_week_submissions")
       .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
       .eq("is_approved", true)
-      .order("created_at", { ascending: false })
+      .order("approved_at", { ascending: false })
       .range(1, 12);
 
     if (pastError) {
