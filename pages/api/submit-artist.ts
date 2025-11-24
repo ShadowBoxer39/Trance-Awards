@@ -1,54 +1,84 @@
-// pages/api/submit-artist.ts - NEW API ROUTE
-import type { NextApiRequest, NextApiResponse } from "next";
-import supabase from "../../lib/supabaseServer"; // Reuse Supabase client
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
-  }
-
-  // Ensure you collect all fields sent by the client (pages/young-artists.tsx)
-  const { 
-    fullName, 
-    stageName, 
-    age, 
-    phone, 
-    experienceYears, 
-    inspirations, 
-    trackLink 
-  } = req.body;
-
-  // Basic validation (you should add more)
-  if (!fullName || !stageName || !phone || !trackLink) {
-    return res.status(400).json({ ok: false, error: "missing_required_fields" });
-  }
-
+  // Set headers first
+  res.setHeader('Content-Type', 'application/json');
+  
   try {
-    const { data, error } = await supabase
-      .from("young_artists") // <-- ASSUMES YOU HAVE A TABLE NAMED 'young_artists'
-      .insert([
-        {
-          full_name: fullName,
-          stage_name: stageName,
-          age: age || null, // Allow age to be optional/null if not provided
-          phone: phone,
-          experience_years: experienceYears,
-          inspirations: inspirations,
-          track_link: trackLink,
-          submitted_at: new Date().toISOString(),
-        },
-      ])
-      .select();
-
-    if (error) {
-      console.error("Supabase insert error:", error);
-      return res.status(500).json({ ok: false, error: "db_error" });
+    // Get admin key
+    const key = req.method === 'GET' ? req.query.key : req.body?.key;
+    const ADMIN_KEY = process.env.ADMIN_KEY;
+    
+    // Verify key exists
+    if (!ADMIN_KEY) {
+      return res.status(500).json({ ok: false, error: 'ADMIN_KEY not configured' });
+    }
+    
+    if (!key || key !== ADMIN_KEY) {
+      return res.status(401).json({ ok: false, error: 'Unauthorized' });
     }
 
-    // Success! Send a response back to the client
-    return res.status(200).json({ ok: true, id: data?.[0]?.id });
-  } catch (e) {
-    console.error("submit-artist server error:", e);
-    return res.status(500).json({ ok: false, error: "server_error" });
+    // Get Supabase credentials
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    // Verify credentials exist
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({ 
+        ok: false, 
+        error: 'Supabase not configured',
+        details: {
+          hasUrl: !!supabaseUrl,
+          hasKey: !!supabaseKey
+        }
+      });
+    }
+
+    // Create Supabase client
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Handle GET request
+    if (req.method === 'GET') {
+      const { data, error } = await supabase
+        .from('track_submissions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        return res.status(500).json({ ok: false, error: error.message });
+      }
+      
+      return res.status(200).json({ ok: true, submissions: data || [] });
+    }
+
+    // Handle DELETE request
+    if (req.method === 'POST' && req.body?.action === 'delete') {
+      const { trackId } = req.body;
+      
+      if (!trackId) {
+        return res.status(400).json({ ok: false, error: 'Missing trackId' });
+      }
+
+      const { error } = await supabase
+        .from('track_submissions')
+        .delete()
+        .eq('id', trackId);
+
+      if (error) {
+        return res.status(500).json({ ok: false, error: error.message });
+      }
+      
+      return res.status(200).json({ ok: true, message: 'Deleted successfully' });
+    }
+
+    return res.status(405).json({ ok: false, error: 'Method not allowed' });
+    
+  } catch (error: any) {
+    return res.status(500).json({ 
+      ok: false, 
+      error: error?.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
   }
 }
