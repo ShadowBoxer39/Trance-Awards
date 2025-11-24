@@ -1,26 +1,14 @@
-// pages/api/dev-clear.ts
+// pages/api/dev-clear.ts (CLEAN VERSION)
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-);
-
-const ADMIN_KEY =
-  process.env.ADMIN_KEY || process.env.AdminKey || process.env.Admin_Key;
+const ADMIN_KEY = process.env.ADMIN_KEY;
 
 function getClientIp(req: NextApiRequest) {
   const xf = (req.headers["x-forwarded-for"] || "") as string;
-  if (xf) return xf.split(",")[0].trim();
-  // fallback (Node)
-  // @ts-ignore
-  return (req.socket?.remoteAddress as string) || "0.0.0.0";
-}
-
-function ipHash(ip: string) {
-  return crypto.createHash("sha256").update(ip).digest("hex").slice(0, 32);
+  const real = (req.headers["x-real-ip"] as string) || "";
+  return xf.split(",")[0]?.trim() || real || (req.socket?.remoteAddress || "") || "0.0.0.0";
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -45,15 +33,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error("SUPABASE_CONFIG_ERROR: Missing credentials.");
+    }
+    
+    // Create client locally for this action
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // build the delete query and attach a filter
     let q = supabase.from("votes").delete({ count: "exact" });
 
     if (mode === "me") {
       const ip = getClientIp(req);
-      const hash = ipHash(ip);
+      const pepper = process.env.VOTE_PEPPER || "dev-pepper";
+      const hash = crypto.createHash("sha256").update(ip + "|" + pepper).digest("hex");
+
       q = q.eq("ip_hash", hash);
     } else {
-      // PostgREST requires *some* filter for DELETE; this matches all rows.
+      // Deletes all votes
       q = q.not("id", "is", null);
     }
 
