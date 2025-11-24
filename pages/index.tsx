@@ -327,18 +327,25 @@ export default function Home({
                     {/* Profile Photo */}
                     <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-green-500/50 bg-gray-700 flex-shrink-0">
                       {trackOfWeek.photo_url ? (
-                        <Image
+                        <img
                           src={trackOfWeek.photo_url}
                           alt={trackOfWeek.name}
-                          width={80}
-                          height={80}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // If image fails to load, show emoji instead
+                            e.currentTarget.style.display = 'none';
+                            if (e.currentTarget.nextElementSibling) {
+                              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                            }
+                          }}
                         />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl text-gray-500">
-                          👤
-                        </div>
-                      )}
+                      ) : null}
+                      <div 
+                        className="w-full h-full flex items-center justify-center text-3xl text-gray-500"
+                        style={{ display: trackOfWeek.photo_url ? 'none' : 'flex' }}
+                      >
+                        👤
+                      </div>
                     </div>
 
                     {/* Name & Title */}
