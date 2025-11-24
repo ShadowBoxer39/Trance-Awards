@@ -1,20 +1,12 @@
-// pages/track-of-the-week.tsx - FIXED BUILD VERSION
+// pages/track-of-the-week.tsx - WORKS WITH EXISTING DATABASE
+// This version works with your current database structure
+// No migration needed!
+
 import Head from "next/head";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
-
-// Safe Supabase client creation - handles missing env vars during build
-let supabase: any = null;
-
-if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  const { createClient } = require("@supabase/supabase-js");
-  supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
-}
 
 interface TrackOfWeek {
   id: number;
@@ -26,23 +18,6 @@ interface TrackOfWeek {
   created_at: string;
   approved_at?: string;
   is_approved: boolean;
-  view_count?: number;
-  submission_count?: number;
-}
-
-interface Reaction {
-  id: number;
-  track_id: number;
-  reaction_type: string;
-  count: number;
-}
-
-interface Comment {
-  id: number;
-  track_id: number;
-  user_name: string;
-  comment_text: string;
-  created_at: string;
 }
 
 // Helper to extract YouTube video ID
@@ -59,115 +34,9 @@ export default function TrackOfTheWeekPage({
   currentTrack: TrackOfWeek | null;
   pastTracks: TrackOfWeek[];
 }) {
-  const [reactions, setReactions] = useState<{ [key: string]: number }>({
-    fire: 0,
-    heart: 0,
-    music: 0,
-  });
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState({ name: "", text: "" });
-  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
-
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
-    if (currentTrack && supabase) {
-      loadReactions();
-      loadComments();
-    }
-  }, [currentTrack]);
-
-  const loadReactions = async () => {
-    if (!currentTrack || !supabase) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("track_reactions")
-        .select("*")
-        .eq("track_id", currentTrack.id);
-
-      if (data) {
-        const reactionCounts: { [key: string]: number } = {
-          fire: 0,
-          heart: 0,
-          music: 0,
-        };
-        data.forEach((r: Reaction) => {
-          reactionCounts[r.reaction_type] = r.count;
-        });
-        setReactions(reactionCounts);
-      }
-    } catch (error) {
-      console.error("Error loading reactions:", error);
-    }
-  };
-
-  const loadComments = async () => {
-    if (!currentTrack || !supabase) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("track_comments")
-        .select("*")
-        .eq("track_id", currentTrack.id)
-        .order("created_at", { ascending: false });
-
-      if (data) {
-        setComments(data);
-      }
-    } catch (error) {
-      console.error("Error loading comments:", error);
-    }
-  };
-
-  const handleReaction = async (type: string) => {
-    if (!currentTrack || selectedReaction === type || !supabase) return;
-
-    setSelectedReaction(type);
-    const newCount = reactions[type] + 1;
-    setReactions({ ...reactions, [type]: newCount });
-
-    try {
-      // Update in database
-      await supabase
-        .from("track_reactions")
-        .upsert({
-          track_id: currentTrack.id,
-          reaction_type: type,
-          count: newCount,
-        });
-
-      // Store in localStorage to prevent multiple reactions
-      localStorage.setItem(`reacted_${currentTrack.id}`, type);
-    } catch (error) {
-      console.error("Error saving reaction:", error);
-    }
-  };
-
-  const submitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentTrack || !newComment.name.trim() || !newComment.text.trim() || !supabase) return;
-
-    try {
-      const { data, error } = await supabase.from("track_comments").insert({
-        track_id: currentTrack.id,
-        user_name: newComment.name,
-        comment_text: newComment.text,
-      });
-
-      if (!error) {
-        setNewComment({ name: "", text: "" });
-        loadComments();
-      }
-    } catch (error) {
-      console.error("Error submitting comment:", error);
-    }
-  };
-
-  const reactionEmojis = {
-    fire: "🔥",
-    heart: "❤️",
-    music: "🎵",
-  };
+  }, []);
 
   if (!currentTrack) {
     return (
@@ -227,8 +96,8 @@ export default function TrackOfTheWeekPage({
         {/* Main Content */}
         <section className="max-w-6xl mx-auto px-6 py-8 md:py-12">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Column - Video & Stats */}
-            <div className="lg:col-span-2 space-y-6">
+            {/* Left Column - Video */}
+            <div className="lg:col-span-2">
               {/* YouTube Player */}
               <div className="glass-card rounded-2xl overflow-hidden">
                 <div className="aspect-video bg-gray-900">
@@ -243,93 +112,9 @@ export default function TrackOfTheWeekPage({
                   />
                 </div>
               </div>
-
-              {/* Reactions Bar */}
-              <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-lg font-semibold mb-4">מה אתם חושבים על הטראק?</h3>
-                <div className="flex gap-4 justify-center md:justify-start">
-                  {Object.entries(reactionEmojis).map(([type, emoji]) => (
-                    <button
-                      key={type}
-                      onClick={() => handleReaction(type)}
-                      disabled={selectedReaction !== null}
-                      className={`flex flex-col items-center gap-2 px-6 py-4 rounded-xl transition-all ${
-                        selectedReaction === type
-                          ? "bg-purple-500/30 scale-110"
-                          : "bg-white/5 hover:bg-white/10 hover:scale-105"
-                      } ${selectedReaction && selectedReaction !== type ? "opacity-50" : ""}`}
-                    >
-                      <span className="text-3xl">{emoji}</span>
-                      <span className="text-2xl font-bold text-white">{reactions[type]}</span>
-                    </button>
-                  ))}
-                </div>
-                {selectedReaction && (
-                  <p className="text-center text-sm text-gray-400 mt-4">תודה על התגובה שלך! 💜</p>
-                )}
-              </div>
-
-              {/* Comments Section */}
-              <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                  <span>💬</span>
-                  תגובות ({comments.length})
-                </h3>
-
-                {/* Comment Form */}
-                <form onSubmit={submitComment} className="mb-8">
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      placeholder="השם שלך"
-                      value={newComment.name}
-                      onChange={(e) => setNewComment({ ...newComment, name: e.target.value })}
-                      className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition"
-                      required
-                    />
-                    <textarea
-                      placeholder="מה דעתך על הטראק הזה?"
-                      value={newComment.text}
-                      onChange={(e) => setNewComment({ ...newComment, text: e.target.value })}
-                      className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition resize-none"
-                      rows={3}
-                      required
-                    />
-                    <button type="submit" className="btn-primary px-6 py-3 rounded-lg font-medium">
-                      שליחת תגובה
-                    </button>
-                  </div>
-                </form>
-
-                {/* Comments List */}
-                <div className="space-y-4">
-                  {comments.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">היו הראשונים להגיב! 🎵</p>
-                  ) : (
-                    comments.map((comment) => (
-                      <div key={comment.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                            <span className="text-lg">👤</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-semibold text-white">{comment.user_name}</span>
-                              <span className="text-xs text-gray-500">
-                                {new Date(comment.created_at).toLocaleDateString("he-IL")}
-                              </span>
-                            </div>
-                            <p className="text-gray-300 leading-relaxed">{comment.comment_text}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
             </div>
 
-            {/* Right Column - Submitter Info & Stats */}
+            {/* Right Column - Submitter Info */}
             <div className="space-y-6">
               {/* Submitter Card */}
               <div className="glass-card rounded-2xl p-6 border-2 border-purple-500/30">
@@ -354,30 +139,11 @@ export default function TrackOfTheWeekPage({
                     )}
                   </div>
                   <h3 className="text-xl font-bold text-white">{currentTrack.name}</h3>
-                  {currentTrack.submission_count && currentTrack.submission_count > 1 && (
-                    <span className="text-xs text-purple-400 mt-1">
-                      הגשה מספר {currentTrack.submission_count} 🌟
-                    </span>
-                  )}
                 </div>
 
                 <div className="bg-black/30 rounded-lg p-4 mb-6">
                   <h4 className="text-sm font-semibold text-gray-400 mb-2">למה הטראק הזה?</h4>
                   <p className="text-gray-300 leading-relaxed text-sm">{currentTrack.description}</p>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="bg-purple-500/10 rounded-lg p-3 text-center border border-purple-500/20">
-                    <div className="text-2xl font-bold text-purple-400">
-                      {currentTrack.view_count || 0}
-                    </div>
-                    <div className="text-xs text-gray-400">צפיות</div>
-                  </div>
-                  <div className="bg-cyan-500/10 rounded-lg p-3 text-center border border-cyan-500/20">
-                    <div className="text-2xl font-bold text-cyan-400">{comments.length}</div>
-                    <div className="text-xs text-gray-400">תגובות</div>
-                  </div>
                 </div>
 
                 {/* Share Buttons */}
@@ -432,7 +198,7 @@ export default function TrackOfTheWeekPage({
               <p className="text-gray-400">גלו עוד טראקים מדהימים שהקהילה בחרה</p>
             </div>
 
-            {/* Carousel/Grid */}
+            {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {pastTracks.slice(0, 8).map((track) => (
                 <div
@@ -505,11 +271,11 @@ export default function TrackOfTheWeekPage({
   );
 }
 
-// Server-side props with error handling
+// Server-side props - WORKS WITH EXISTING DATABASE
 export async function getServerSideProps() {
   // Check if Supabase env vars are available
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn("Supabase env vars not configured - returning empty data");
+    console.warn("⚠️ Supabase env vars not configured");
     return {
       props: {
         currentTrack: null,
@@ -525,22 +291,30 @@ export async function getServerSideProps() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
-    // Get current approved track
+    // Get current approved track - using only existing columns
     const { data: currentTrack, error: currentError } = await supabase
       .from("track_of_the_week_submissions")
-      .select("*")
+      .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
       .eq("is_approved", true)
-      .order("approved_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1)
       .single();
 
-    // Get past tracks (last 12)
+    if (currentError) {
+      console.error("Current track error:", currentError);
+    }
+
+    // Get past tracks - using only existing columns
     const { data: pastTracks, error: pastError } = await supabase
       .from("track_of_the_week_submissions")
-      .select("*")
+      .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
       .eq("is_approved", true)
-      .order("approved_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .range(1, 12);
+
+    if (pastError) {
+      console.error("Past tracks error:", pastError);
+    }
 
     return {
       props: {
@@ -548,8 +322,8 @@ export async function getServerSideProps() {
         pastTracks: pastTracks || [],
       },
     };
-  } catch (error) {
-    console.error("Error fetching track data:", error);
+  } catch (error: any) {
+    console.error("❌ Error fetching track data:", error);
     return {
       props: {
         currentTrack: null,
