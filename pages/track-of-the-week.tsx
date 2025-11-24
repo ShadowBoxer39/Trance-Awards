@@ -1,8 +1,7 @@
-// pages/track-of-the-week.tsx - WORKS WITH EXISTING DATABASE
-// This version works with your current database structure
-// No migration needed!
+// pages/track-of-the-week.tsx - BULLETPROOF VERSION
+// With comprehensive error handling and logging
 
-import Head from "next/head"; 
+import Head from "next/head";
 import Link from "next/link";
 import { useEffect } from "react";
 import Navigation from "../components/Navigation";
@@ -30,13 +29,20 @@ function getYouTubeId(url: string): string | null {
 export default function TrackOfTheWeekPage({
   currentTrack,
   pastTracks,
+  debugInfo,
 }: {
   currentTrack: TrackOfWeek | null;
   pastTracks: TrackOfWeek[];
+  debugInfo?: any;
 }) {
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
-  }, []);
+    
+    // Client-side debug logging
+    if (debugInfo) {
+      console.log("🔍 Track Debug Info:", debugInfo);
+    }
+  }, [debugInfo]);
 
   if (!currentTrack) {
     return (
@@ -44,14 +50,27 @@ export default function TrackOfTheWeekPage({
         <SEO
           title="הטראק השבועי של הקהילה"
           description="מידי שבוע, טראק חדש נבחר על ידי הקהילה שלנו"
-          url="https://yourdomain.com/track-of-the-week"
+          url="https://tracktrip.co.il/track-of-the-week"
         />
         <div className="trance-backdrop min-h-screen">
           <Navigation currentPage="track-of-the-week" />
           <div className="max-w-4xl mx-auto px-6 py-20 text-center">
             <h1 className="text-4xl font-bold mb-6">הטראק השבועי של הקהילה</h1>
             <p className="text-gray-400 mb-8">אין טראק פעיל כרגע. בקרו שוב בקרוב!</p>
-            <Link href="/" className="btn-primary px-6 py-3 rounded-lg inline-block">
+            
+            {/* Debug info for troubleshooting */}
+            {debugInfo && process.env.NODE_ENV === 'development' && (
+              <details className="mt-8 text-left bg-gray-900 p-4 rounded max-w-2xl mx-auto">
+                <summary className="cursor-pointer text-yellow-400 font-semibold mb-2">
+                  🔍 Debug Info (dev only)
+                </summary>
+                <pre className="text-xs text-gray-300 overflow-auto">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+              </details>
+            )}
+            
+            <Link href="/" className="btn-primary px-6 py-3 rounded-lg inline-block mt-8">
               חזרה לדף הבית
             </Link>
           </div>
@@ -65,7 +84,7 @@ export default function TrackOfTheWeekPage({
       <SEO
         title={`${currentTrack.track_title} - הטראק השבועי`}
         description={`מידי שבוע - טראק חדש נבחר: ${currentTrack.track_title}`}
-        url="https://yourdomain.com/track-of-the-week"
+        url="https://tracktrip.co.il/track-of-the-week"
       />
       <Head>
         <title>{currentTrack.track_title} - הטראק השבועי של הקהילה</title>
@@ -74,12 +93,11 @@ export default function TrackOfTheWeekPage({
       <div className="trance-backdrop min-h-screen text-gray-100">
         <Navigation currentPage="track-of-the-week" />
 
-        {/* Hero Section with Gradient Background */}
+        {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-purple-900/30 via-cyan-900/30 to-pink-900/30">
           <div className="absolute inset-0 bg-[url('/images/grid.svg')] opacity-10" />
           <div className="max-w-6xl mx-auto px-6 py-12 md:py-16 relative z-10">
             <div className="text-center mb-8">
-              {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 mb-4">
                 <span className="text-2xl">💧</span>
                 <span className="text-sm font-medium text-purple-300">הטראק השבועי של הקהילה</span>
@@ -96,9 +114,7 @@ export default function TrackOfTheWeekPage({
         {/* Main Content */}
         <section className="max-w-6xl mx-auto px-6 py-8 md:py-12">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Column - Video */}
             <div className="lg:col-span-2">
-              {/* YouTube Player */}
               <div className="glass-card rounded-2xl overflow-hidden">
                 <div className="aspect-video bg-gray-900">
                   <iframe
@@ -114,9 +130,7 @@ export default function TrackOfTheWeekPage({
               </div>
             </div>
 
-            {/* Right Column - Submitter Info */}
             <div className="space-y-6">
-              {/* Submitter Card */}
               <div className="glass-card rounded-2xl p-6 border-2 border-purple-500/30">
                 <div className="text-center mb-4">
                   <span className="text-sm font-semibold text-purple-400 uppercase tracking-wide">
@@ -146,7 +160,6 @@ export default function TrackOfTheWeekPage({
                   <p className="text-gray-300 leading-relaxed text-sm">{currentTrack.description}</p>
                 </div>
 
-                {/* Share Buttons */}
                 <div className="space-y-2">
                   <button
                     onClick={() => {
@@ -177,7 +190,6 @@ export default function TrackOfTheWeekPage({
                 </div>
               </div>
 
-              {/* Submit Your Track CTA */}
               <div className="glass-card rounded-2xl p-6 text-center bg-gradient-to-br from-purple-500/10 to-cyan-500/10 border-2 border-purple-500/20">
                 <span className="text-4xl mb-3 block">🎧</span>
                 <h3 className="text-lg font-bold mb-2">יש לכם טראק מושלם?</h3>
@@ -190,7 +202,6 @@ export default function TrackOfTheWeekPage({
           </div>
         </section>
 
-        {/* Previous Tracks Archive */}
         {pastTracks.length > 0 && (
           <section className="max-w-6xl mx-auto px-6 py-12">
             <div className="mb-8 text-center">
@@ -198,14 +209,12 @@ export default function TrackOfTheWeekPage({
               <p className="text-gray-400">גלו עוד טראקים מדהימים שהקהילה בחרה</p>
             </div>
 
-            {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {pastTracks.slice(0, 8).map((track) => (
                 <div
                   key={track.id}
                   className="glass-card rounded-xl overflow-hidden hover:scale-105 transition-transform group cursor-pointer"
                 >
-                  {/* Thumbnail */}
                   <div className="aspect-video bg-gray-900 relative">
                     <img
                       src={`https://img.youtube.com/vi/${getYouTubeId(track.youtube_url)}/maxresdefault.jpg`}
@@ -224,7 +233,6 @@ export default function TrackOfTheWeekPage({
                     </div>
                   </div>
 
-                  {/* Info */}
                   <div className="p-4">
                     <h3 className="font-semibold text-white line-clamp-2 mb-2">{track.track_title}</h3>
                     <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -255,7 +263,6 @@ export default function TrackOfTheWeekPage({
           </section>
         )}
 
-        {/* Footer */}
         <footer className="border-t border-gray-800 mt-16">
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="text-center">
@@ -271,18 +278,26 @@ export default function TrackOfTheWeekPage({
   );
 }
 
-// Server-side props - WORKS WITH EXISTING DATABASE
 export async function getServerSideProps() {
-  // Check if Supabase env vars are available
+  const debugInfo: any = {
+    timestamp: new Date().toISOString(),
+    hasEnvVars: false,
+    attempts: [],
+  };
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.warn("⚠️ Supabase env vars not configured");
+    debugInfo.error = "Missing Supabase environment variables";
     return {
       props: {
         currentTrack: null,
         pastTracks: [],
+        debugInfo,
       },
     };
   }
+
+  debugInfo.hasEnvVars = true;
 
   try {
     const { createClient } = require("@supabase/supabase-js");
@@ -291,7 +306,8 @@ export async function getServerSideProps() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
-    // Get current approved track - using only existing columns
+    // Attempt 1: Try with approved_at sorting
+    console.log("🔍 Attempt 1: Querying with approved_at sort...");
     const { data: currentTrack, error: currentError } = await supabase
       .from("track_of_the_week_submissions")
       .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
@@ -300,34 +316,69 @@ export async function getServerSideProps() {
       .limit(1)
       .single();
 
-    if (currentError) {
-      console.error("Current track error:", currentError);
+    debugInfo.attempts.push({
+      method: "approved_at sort",
+      success: !!currentTrack,
+      error: currentError?.message || null,
+      track: currentTrack ? { id: currentTrack.id, title: currentTrack.track_title } : null,
+    });
+
+    console.log("Current track result:", currentTrack);
+    console.log("Current track error:", currentError);
+
+    // Fallback: If that didn't work, try with created_at
+    let finalTrack = currentTrack;
+    if (!currentTrack && currentError) {
+      console.log("🔍 Attempt 2: Fallback to created_at sort...");
+      const { data: fallbackTrack, error: fallbackError } = await supabase
+        .from("track_of_the_week_submissions")
+        .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
+        .eq("is_approved", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      debugInfo.attempts.push({
+        method: "created_at sort (fallback)",
+        success: !!fallbackTrack,
+        error: fallbackError?.message || null,
+        track: fallbackTrack ? { id: fallbackTrack.id, title: fallbackTrack.track_title } : null,
+      });
+
+      console.log("Fallback track result:", fallbackTrack);
+      finalTrack = fallbackTrack;
     }
 
-    // Get past tracks - using only existing columns
+    // Get past tracks
     const { data: pastTracks, error: pastError } = await supabase
       .from("track_of_the_week_submissions")
       .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
       .eq("is_approved", true)
-      .order("approved_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .range(1, 12);
 
-    if (pastError) {
-      console.error("Past tracks error:", pastError);
-    }
+    debugInfo.pastTracksCount = pastTracks?.length || 0;
+
+    console.log("=== FINAL RESULT ===");
+    console.log("Current track:", finalTrack);
+    console.log("Past tracks count:", pastTracks?.length || 0);
+    console.log("===================");
 
     return {
       props: {
-        currentTrack: currentTrack || null,
+        currentTrack: finalTrack || null,
         pastTracks: pastTracks || [],
+        debugInfo,
       },
     };
   } catch (error: any) {
-    console.error("❌ Error fetching track data:", error);
+    console.error("❌ Fatal error fetching track data:", error);
+    debugInfo.fatalError = error.message;
     return {
       props: {
         currentTrack: null,
         pastTracks: [],
+        debugInfo,
       },
     };
   }
