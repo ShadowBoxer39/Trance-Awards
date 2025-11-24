@@ -195,19 +195,40 @@ export default function Home({
                 </div>
               </div>
 
-              {/* Music Room Card - Centered */}
-              <div className="mt-16 max-w-md mx-auto glass-card rounded-2xl p-6 border border-white/10 hover:border-purple-500/50 transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <Image src="/images/musikroom.png" alt="Music Room Studio" width={60} height={60} className="object-contain" priority />
-                  </div>
-                  <div className="text-right flex-1">
-                    <p className="text-sm text-gray-300 leading-relaxed">
-                      מוקלט באולפני <span className="font-bold text-purple-400">המיוזיק רום</span>
-                    </p>
-                    <a href="#" target="_blank" rel="noopener noreferrer" className="text-xs text-purple-300 hover:text-purple-200 underline-offset-2 hover:underline transition">
-                      לאתר המיוזיק רום →
-                    </a>
+              {/* Music Room Partner Card - PROMINENT */}
+              <div className="mt-16 max-w-2xl mx-auto">
+                <div className="glass-card rounded-2xl p-8 border-2 border-purple-500/40 hover:border-purple-500/70 transition-all shadow-xl shadow-purple-500/20">
+                  <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-right">
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-2xl ring-4 ring-purple-500/30">
+                      <Image 
+                        src="/images/musikroom.png" 
+                        alt="Music Room Studio" 
+                        width={140} 
+                        height={140} 
+                        className="object-contain" 
+                        priority 
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-white mb-3 flex items-center justify-center md:justify-start gap-2">
+                        <span className="text-3xl">🎙️</span>
+                        שותפים בהפקה
+                      </h3>
+                      <p className="text-gray-300 text-base leading-relaxed mb-4">
+                        התכנית מוקלטת באולפני <span className="font-bold text-purple-400">המיוזיק רום</span> – אולפן פודקאסטים ייחודי ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
+                      </p>
+                      <a 
+                        href="https://www.facebook.com/p/MusikRoom-61568565972669/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-purple-300 hover:text-purple-200 underline-offset-4 hover:underline transition"
+                      >
+                        לאתר המיוזיק רום
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
