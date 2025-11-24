@@ -1,4 +1,3 @@
-// pages/api/artist-signups.ts - UPDATED VERSION
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
@@ -9,16 +8,6 @@ const ADMIN_KEY = process.env.ADMIN_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Handle CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  // Verify admin key
   const key = req.method === 'GET' ? req.query.key : req.body?.key;
   
   if (!key || key !== ADMIN_KEY) {
@@ -26,25 +15,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // GET - Fetch all signups
     if (req.method === 'GET') {
       const { data, error } = await supabase
         .from('artist_signups')
         .select('*')
         .order('submitted_at', { ascending: false });
 
-      if (error) {
-        console.error('Supabase error:', error);
-        return res.status(500).json({ ok: false, error: error.message });
-      }
-
+      if (error) throw error;
       return res.status(200).json({ ok: true, signups: data || [] });
     }
 
-    // DELETE - Delete a specific signup
-    if (req.method === 'DELETE' || (req.method === 'POST' && req.body?.action === 'delete')) {
-      const signupId = req.body?.signupId;
-
+    if (req.method === 'POST' && req.body?.action === 'delete') {
+      const { signupId } = req.body;
       if (!signupId) {
         return res.status(400).json({ ok: false, error: 'Missing signupId' });
       }
@@ -54,17 +36,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .delete()
         .eq('id', signupId);
 
-      if (error) {
-        console.error('Supabase delete error:', error);
-        return res.status(500).json({ ok: false, error: error.message });
-      }
-
-      return res.status(200).json({ ok: true, message: 'Signup deleted successfully' });
+      if (error) throw error;
+      return res.status(200).json({ ok: true, message: 'Deleted' });
     }
 
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   } catch (error: any) {
     console.error('API error:', error);
-    return res.status(500).json({ ok: false, error: error?.message || 'Unknown error' });
+    return res.status(500).json({ ok: false, error: error?.message || 'Error' });
   }
 }
