@@ -1,15 +1,20 @@
-// pages/track-of-the-week.tsx - ENHANCED VERSION
+// pages/track-of-the-week.tsx - FIXED BUILD VERSION
 import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
-import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Safe Supabase client creation - handles missing env vars during build
+let supabase: any = null;
+
+if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  const { createClient } = require("@supabase/supabase-js");
+  supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
 
 interface TrackOfWeek {
   id: number;
@@ -65,80 +70,96 @@ export default function TrackOfTheWeekPage({
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
-    if (currentTrack) {
+    if (currentTrack && supabase) {
       loadReactions();
       loadComments();
     }
   }, [currentTrack]);
 
   const loadReactions = async () => {
-    if (!currentTrack) return;
+    if (!currentTrack || !supabase) return;
     
-    const { data, error } = await supabase
-      .from("track_reactions")
-      .select("*")
-      .eq("track_id", currentTrack.id);
+    try {
+      const { data, error } = await supabase
+        .from("track_reactions")
+        .select("*")
+        .eq("track_id", currentTrack.id);
 
-    if (data) {
-      const reactionCounts: { [key: string]: number } = {
-        fire: 0,
-        heart: 0,
-        music: 0,
-      };
-      data.forEach((r: Reaction) => {
-        reactionCounts[r.reaction_type] = r.count;
-      });
-      setReactions(reactionCounts);
+      if (data) {
+        const reactionCounts: { [key: string]: number } = {
+          fire: 0,
+          heart: 0,
+          music: 0,
+        };
+        data.forEach((r: Reaction) => {
+          reactionCounts[r.reaction_type] = r.count;
+        });
+        setReactions(reactionCounts);
+      }
+    } catch (error) {
+      console.error("Error loading reactions:", error);
     }
   };
 
   const loadComments = async () => {
-    if (!currentTrack) return;
+    if (!currentTrack || !supabase) return;
     
-    const { data, error } = await supabase
-      .from("track_comments")
-      .select("*")
-      .eq("track_id", currentTrack.id)
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("track_comments")
+        .select("*")
+        .eq("track_id", currentTrack.id)
+        .order("created_at", { ascending: false });
 
-    if (data) {
-      setComments(data);
+      if (data) {
+        setComments(data);
+      }
+    } catch (error) {
+      console.error("Error loading comments:", error);
     }
   };
 
   const handleReaction = async (type: string) => {
-    if (!currentTrack || selectedReaction === type) return;
+    if (!currentTrack || selectedReaction === type || !supabase) return;
 
     setSelectedReaction(type);
     const newCount = reactions[type] + 1;
     setReactions({ ...reactions, [type]: newCount });
 
-    // Update in database
-    const { data, error } = await supabase
-      .from("track_reactions")
-      .upsert({
-        track_id: currentTrack.id,
-        reaction_type: type,
-        count: newCount,
-      });
+    try {
+      // Update in database
+      await supabase
+        .from("track_reactions")
+        .upsert({
+          track_id: currentTrack.id,
+          reaction_type: type,
+          count: newCount,
+        });
 
-    // Store in localStorage to prevent multiple reactions
-    localStorage.setItem(`reacted_${currentTrack.id}`, type);
+      // Store in localStorage to prevent multiple reactions
+      localStorage.setItem(`reacted_${currentTrack.id}`, type);
+    } catch (error) {
+      console.error("Error saving reaction:", error);
+    }
   };
 
   const submitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTrack || !newComment.name.trim() || !newComment.text.trim()) return;
+    if (!currentTrack || !newComment.name.trim() || !newComment.text.trim() || !supabase) return;
 
-    const { data, error } = await supabase.from("track_comments").insert({
-      track_id: currentTrack.id,
-      user_name: newComment.name,
-      comment_text: newComment.text,
-    });
+    try {
+      const { data, error } = await supabase.from("track_comments").insert({
+        track_id: currentTrack.id,
+        user_name: newComment.name,
+        comment_text: newComment.text,
+      });
 
-    if (!error) {
-      setNewComment({ name: "", text: "" });
-      loadComments();
+      if (!error) {
+        setNewComment({ name: "", text: "" });
+        loadComments();
+      }
+    } catch (error) {
+      console.error("Error submitting comment:", error);
     }
   };
 
@@ -484,12 +505,24 @@ export default function TrackOfTheWeekPage({
   );
 }
 
-// Server-side props
+// Server-side props with error handling
 export async function getServerSideProps() {
+  // Check if Supabase env vars are available
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn("Supabase env vars not configured - returning empty data");
+    return {
+      props: {
+        currentTrack: null,
+        pastTracks: [],
+      },
+    };
+  }
+
   try {
+    const { createClient } = require("@supabase/supabase-js");
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
     // Get current approved track
