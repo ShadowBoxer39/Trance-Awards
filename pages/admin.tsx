@@ -188,13 +188,24 @@ export default function Admin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, trackId }),
       });
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("תשובה לא תקינה מהשרת");
+      }
+      
       const result = await response.json();
-      if (!response.ok || !result.ok) throw new Error(result.error);
-      alert("✅ ההמלצה נמחקה");
+      
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'שגיאה במחיקת המלצה');
+      }
+      
+      alert("✅ ההמלצה נמחקה בהצלחה");
       setSelectedTrackSub(null);
       fetchTrackSubmissions();
     } catch (error: any) {
-      alert(`שגיאה: ${error.message}`);
+      console.error('Delete error:', error);
+      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
     } finally {
       setLoading(false);
     }
@@ -224,13 +235,24 @@ export default function Admin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, signupId }),
       });
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("תשובה לא תקינה מהשרת");
+      }
+      
       const result = await response.json();
-      if (!response.ok || !result.ok) throw new Error(result.error);
-      alert("✅ ההרשמה נמחקה");
+      
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'שגיאה במחיקת הרשמה');
+      }
+      
+      alert("✅ ההרשמה נמחקה בהצלחה");
       setSelectedSignup(null);
       fetchSignups();
     } catch (error: any) {
-      alert(`שגיאה: ${error.message}`);
+      console.error('Delete error:', error);
+      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
     } finally {
       setLoading(false);
     }
