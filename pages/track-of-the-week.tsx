@@ -72,27 +72,28 @@ export default function TrackOfTheWeekPage({
     );
 
     // CRITICAL: Handle OAuth callback first
-    const handleOAuthCallback = async () => {
-      // Check if this is an OAuth callback (has code/access_token in URL)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const queryParams = new URLSearchParams(window.location.search);
-      
-      if (hashParams.get('access_token') || queryParams.get('code')) {
-        console.log('🔐 Handling OAuth callback...');
-        
-        // Let Supabase process the callback
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('OAuth callback error:', error);
-        } else {
-          console.log('✅ OAuth callback successful:', data);
-        }
-        
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    };
+   const handleOAuthCallback = async () => {
+  const url = window.location.href;
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const queryParams = new URLSearchParams(window.location.search);
+
+  // Only try to exchange if we actually have an OAuth response
+  if (hashParams.get('access_token') || queryParams.get('code')) {
+    console.log('🔐 Handling OAuth callback...');
+
+    // IMPORTANT: exchange the code for a session
+    const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+
+    if (error) {
+      console.error('OAuth callback error:', error);
+    } else {
+      console.log('✅ OAuth callback successful:', data);
+    }
+
+    // Clean up URL (remove the code/access_token query params)
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+};
 
     // Check for authenticated user
     const checkUser = async () => {
