@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { CATEGORIES } from "@/data/awards-data";
 import { createClient } from "@supabase/supabase-js"; 
 
-// Helper function to extract YouTube video ID
+// Helper function to extract YouTube video ID 
 const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   const match = url.match(regex);
