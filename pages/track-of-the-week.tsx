@@ -69,7 +69,7 @@ export default function TrackOfTheWeekPage({
         .catch(err => console.error('Failed to load reactions:', err));
 
       // Fetch comments from API
-      fetch(`/api/track-comment?trackId=${currentTrack.id}`)
+      fetch(`/api/track-comment-public?trackId=${currentTrack.id}`)
         .then(res => res.json())
         .then(data => {
           if (data.comments) {
