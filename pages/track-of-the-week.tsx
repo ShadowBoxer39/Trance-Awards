@@ -1,4 +1,4 @@
-// pages/track-of-the-week.tsx - WITH GOOGLE AUTH
+// pages/track-of-the-week.tsx - WITH GOOGLE AUTH (FIXED)
 import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -64,32 +64,21 @@ export default function TrackOfTheWeekPage({
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
-
-const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log('USER:', user); // ADD THIS LINE
-    setUser(user);
-    if (user) {
-      const userInfo = getGoogleUserInfo(user);
-      console.log('USER INFO:', userInfo); // ADD THIS LINE
-      if (userInfo) {
-        setUserName(userInfo.name);
-        setUserPhoto(userInfo.photoUrl);
-      }
-    }
-  };
     
-    // Initialize Supabase client and check auth
+    // Initialize Supabase client FIRST
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    // Check for authenticated user
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('USER:', user);
       setUser(user);
       if (user) {
         const userInfo = getGoogleUserInfo(user);
+        console.log('USER INFO:', userInfo);
         if (userInfo) {
           setUserName(userInfo.name);
           setUserPhoto(userInfo.photoUrl);
@@ -386,7 +375,7 @@ const checkUser = async () => {
                   <div className="mb-8 text-center bg-purple-500/10 rounded-xl p-6 border border-purple-500/30">
                     <p className="text-white mb-4 font-medium">התחברו כדי להוסיף תגובה</p>
                     <div className="flex justify-center">
-                      <GoogleLoginButton redirectTo = 'https://tracktrip.co.il/track-of-the-week' />
+                      <GoogleLoginButton />
                     </div>
                   </div>
                 ) : (
@@ -473,9 +462,8 @@ const checkUser = async () => {
               </div>
             </div>
 
-            {/* Right Column - Enhanced Submitter Spotlight */}
+            {/* Right Column - Submitter Spotlight */}
             <div className="space-y-6">
-              {/* ENHANCED Submitter Card - HERO STYLE */}
               <div className="glass-card rounded-3xl p-8 border-4 border-purple-500/50 bg-gradient-to-br from-purple-500/20 via-transparent to-cyan-500/20 shadow-2xl shadow-purple-500/30">
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 mb-4">
@@ -487,7 +475,6 @@ const checkUser = async () => {
                 </div>
 
                 <div className="flex flex-col items-center mb-8">
-                  {/* HUGE Profile Image */}
                   <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-purple-500 bg-gray-700 mb-6 ring-8 ring-purple-500/30 shadow-2xl shadow-purple-500/50 transform hover:scale-105 transition-transform">
                     {currentTrack.photo_url ? (
                       <img
@@ -502,18 +489,15 @@ const checkUser = async () => {
                     )}
                   </div>
                   
-                  {/* LARGE Name */}
                   <h3 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
                     {currentTrack.name}
                   </h3>
                   
-                  {/* Subtitle */}
                   <p className="text-purple-300 text-sm font-medium">
                     בחר את הטראק הזה בשבילכם
                   </p>
                 </div>
 
-                {/* Enhanced Description Box */}
                 <div className="bg-black/40 rounded-2xl p-6 mb-8 border-2 border-purple-500/30 backdrop-blur-sm">
                   <h4 className="text-base font-bold text-purple-300 mb-3 flex items-center gap-2">
                     <span>💭</span>
@@ -524,7 +508,6 @@ const checkUser = async () => {
                   </p>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="space-y-3">
                   <button
                     onClick={() => {
@@ -567,7 +550,7 @@ const checkUser = async () => {
           </div>
         </section>
 
-        {/* Previous Tracks Archive */}
+        {/* Previous Tracks Archive - keeping rest of the code as is */}
         {pastTracks.length > 0 && (
           <section className="max-w-6xl mx-auto px-6 py-12">
             <div className="mb-8 text-center">
