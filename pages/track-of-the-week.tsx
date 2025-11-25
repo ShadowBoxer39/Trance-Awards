@@ -1,9 +1,13 @@
-// pages/track-of-the-week.tsx - ENHANCED VERSION WITH ENV FIX
+// pages/track-of-the-week.tsx - WITH GOOGLE AUTH (FIXED - OAuth Callback Handling)
 import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { createClient } from '@supabase/supabase-js';
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
+import GoogleLoginButton from "../components/GoogleLoginButton";
+import { getGoogleUserInfo } from "../lib/googleAuthHelpers";
+import type { User } from '@supabase/supabase-js';
 
 interface TrackOfWeek {
   id: number;
@@ -26,6 +30,7 @@ interface TrackOfWeek {
     name: string;
     text: string;
     timestamp: string;
+    user_photo_url?: string;
   }>;
 }
 
@@ -50,12 +55,85 @@ export default function TrackOfTheWeekPage({
     not_feeling_it: 0,
   });
   const [comments, setComments] = useState<any[]>([]);
-  const [newComment, setNewComment] = useState({ name: "", text: "" });
+  const [newComment, setNewComment] = useState({ text: "" });
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [userName, setUserName] = useState('');
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
+    
+    // Initialize Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // CRITICAL: Handle OAuth callback first
+   const handleOAuthCallback = async () => {
+  const url = window.location.href;
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const queryParams = new URLSearchParams(window.location.search);
+
+  // Only try to exchange if we actually have an OAuth response
+  if (hashParams.get('access_token') || queryParams.get('code')) {
+    console.log('🔐 Handling OAuth callback...');
+
+    // IMPORTANT: exchange the code for a session
+    const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+
+    if (error) {
+      console.error('OAuth callback error:', error);
+    } else {
+      console.log('✅ OAuth callback successful:', data);
+    }
+
+    // Clean up URL (remove the code/access_token query params)
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+};
+
+    // Check for authenticated user
+    const checkUser = async () => {
+      // First, handle any OAuth callback
+      await handleOAuthCallback();
+      
+      // Then get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
+      
+      console.log('USER:', user);
+      setUser(user);
+      
+      if (user) {
+        const userInfo = getGoogleUserInfo(user);
+        console.log('USER INFO:', userInfo);
+        if (userInfo) {
+          setUserName(userInfo.name);
+          setUserPhoto(userInfo.photoUrl);
+        }
+      }
+    };
+
+    checkUser();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔄 Auth state changed:', _event, session?.user?.email);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const userInfo = getGoogleUserInfo(session.user);
+        if (userInfo) {
+          setUserName(userInfo.name);
+          setUserPhoto(userInfo.photoUrl);
+        }
+      } else {
+        setUserName('');
+        setUserPhoto(null);
+      }
+    });
     
     if (currentTrack) {
       // Fetch reactions from API
@@ -84,6 +162,10 @@ export default function TrackOfTheWeekPage({
         setSelectedReaction(userReaction);
       }
     }
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [currentTrack]);
 
   const handleReaction = async (reactionType: keyof typeof reactions) => {
@@ -126,15 +208,23 @@ export default function TrackOfTheWeekPage({
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentTrack || !newComment.name.trim() || !newComment.text.trim() || isSubmitting) return;
+    
+    if (!user) {
+      alert('יש להתחבר כדי להוסיף תגובה');
+      return;
+    }
+    
+    if (!currentTrack || !newComment.text.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
 
     const comment = {
       id: Date.now().toString(),
-      name: newComment.name.trim(),
+      name: userName,
       text: newComment.text.trim(),
       timestamp: new Date().toISOString(),
+      user_id: user.id,
+      user_photo_url: userPhoto,
     };
 
     try {
@@ -142,8 +232,11 @@ export default function TrackOfTheWeekPage({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          trackId: currentTrack.id,
-          comment,
+          track_id: currentTrack.id,
+          name: userName,
+          text: newComment.text.trim(),
+          user_id: user.id,
+          user_photo_url: userPhoto,
         }),
       });
 
@@ -153,13 +246,24 @@ export default function TrackOfTheWeekPage({
 
       const data = await response.json();
       setComments([data.comment, ...comments]);
-      setNewComment({ name: "", text: "" });
+      setNewComment({ text: "" });
     } catch (error) {
       console.error("Error saving comment:", error);
       alert("שגיאה בשמירת התגובה");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleLogout = async () => {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserName('');
+    setUserPhoto(null);
   };
 
   const handleDeleteComment = async (commentId: string) => {
@@ -301,33 +405,55 @@ export default function TrackOfTheWeekPage({
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="text-lg font-bold mb-4">תגובות ({comments.length})</h3>
                 
-                {/* Comment Form */}
-                <form onSubmit={handleCommentSubmit} className="mb-6">
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      placeholder="השם שלך"
-                      value={newComment.name}
-                      onChange={(e) => setNewComment({ ...newComment, name: e.target.value })}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
-                      maxLength={50}
-                    />
-                    <textarea
-                      placeholder="מה דעתך על הטראק?"
-                      value={newComment.text}
-                      onChange={(e) => setNewComment({ ...newComment, text: e.target.value })}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
-                      maxLength={500}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newComment.name.trim() || !newComment.text.trim() || isSubmitting}
-                      className="btn-primary px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? "שולח..." : "שלח תגובה"}
-                    </button>
+                {/* Authentication Section */}
+                {!user ? (
+                  <div className="mb-8 text-center bg-purple-500/10 rounded-xl p-6 border border-purple-500/30">
+                    <p className="text-white mb-4 font-medium">התחברו כדי להוסיף תגובה</p>
+                    <div className="flex justify-center">
+                      <GoogleLoginButton />
+                    </div>
                   </div>
-                </form>
+                ) : (
+                  <div className="mb-6">
+                    {/* User Info & Logout */}
+                    <div className="flex items-center justify-between mb-4 bg-purple-500/10 rounded-lg p-3 border border-purple-500/30">
+                      <div className="flex items-center gap-3">
+                        {userPhoto && (
+                          <img 
+                            src={userPhoto} 
+                            alt={userName}
+                            className="w-10 h-10 rounded-full border-2 border-purple-500"
+                          />
+                        )}
+                        <span className="text-white font-medium">{userName}</span>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="text-purple-300 hover:text-purple-100 text-sm transition px-3 py-1 rounded bg-purple-500/20 hover:bg-purple-500/30"
+                      >
+                        התנתק
+                      </button>
+                    </div>
+
+                    {/* Comment Form */}
+                    <form onSubmit={handleCommentSubmit} className="space-y-3">
+                      <textarea
+                        placeholder="מה דעתך על הטראק?"
+                        value={newComment.text}
+                        onChange={(e) => setNewComment({ text: e.target.value })}
+                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
+                        maxLength={500}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newComment.text.trim() || isSubmitting}
+                        className="btn-primary px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSubmitting ? "שולח..." : "שלח תגובה"}
+                      </button>
+                    </form>
+                  </div>
+                )}
 
                 {/* Comments List */}
                 <div className="space-y-4">
@@ -336,23 +462,34 @@ export default function TrackOfTheWeekPage({
                   ) : (
                     comments.map((comment) => (
                       <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4 relative group">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="font-semibold text-purple-400">{comment.name}</div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-xs text-gray-500">
-                              {new Date(comment.timestamp).toLocaleDateString("he-IL")}
+                        <div className="flex items-start gap-3">
+                          {comment.user_photo_url && (
+                            <img 
+                              src={comment.user_photo_url} 
+                              alt={comment.name}
+                              className="w-10 h-10 rounded-full border-2 border-purple-500 flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="font-semibold text-purple-400">{comment.name}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-xs text-gray-500">
+                                  {new Date(comment.timestamp).toLocaleDateString("he-IL")}
+                                </div>
+                                {/* Delete button - only visible on hover */}
+                                <button
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
+                                  title="מחק תגובה (דרוש מפתח אדמין)"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
                             </div>
-                            {/* Delete button - only visible on hover */}
-                            <button
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
-                              title="מחק תגובה (דרוש מפתח אדמין)"
-                            >
-                              🗑️ מחק
-                            </button>
+                            <p className="text-gray-300">{comment.text}</p>
                           </div>
                         </div>
-                        <p className="text-gray-300">{comment.text}</p>
                       </div>
                     ))
                   )}
@@ -360,9 +497,8 @@ export default function TrackOfTheWeekPage({
               </div>
             </div>
 
-            {/* Right Column - Enhanced Submitter Spotlight */}
+            {/* Right Column - Submitter Spotlight */}
             <div className="space-y-6">
-              {/* ENHANCED Submitter Card - HERO STYLE */}
               <div className="glass-card rounded-3xl p-8 border-4 border-purple-500/50 bg-gradient-to-br from-purple-500/20 via-transparent to-cyan-500/20 shadow-2xl shadow-purple-500/30">
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 mb-4">
@@ -374,7 +510,6 @@ export default function TrackOfTheWeekPage({
                 </div>
 
                 <div className="flex flex-col items-center mb-8">
-                  {/* HUGE Profile Image */}
                   <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-purple-500 bg-gray-700 mb-6 ring-8 ring-purple-500/30 shadow-2xl shadow-purple-500/50 transform hover:scale-105 transition-transform">
                     {currentTrack.photo_url ? (
                       <img
@@ -389,18 +524,15 @@ export default function TrackOfTheWeekPage({
                     )}
                   </div>
                   
-                  {/* LARGE Name */}
                   <h3 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
                     {currentTrack.name}
                   </h3>
                   
-                  {/* Subtitle */}
                   <p className="text-purple-300 text-sm font-medium">
                     בחר את הטראק הזה בשבילכם
                   </p>
                 </div>
 
-                {/* Enhanced Description Box */}
                 <div className="bg-black/40 rounded-2xl p-6 mb-8 border-2 border-purple-500/30 backdrop-blur-sm">
                   <h4 className="text-base font-bold text-purple-300 mb-3 flex items-center gap-2">
                     <span>💭</span>
@@ -411,7 +543,6 @@ export default function TrackOfTheWeekPage({
                   </p>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="space-y-3">
                   <button
                     onClick={() => {
@@ -531,7 +662,7 @@ export default function TrackOfTheWeekPage({
   );
 }
 
-// Server-side props with ENV VAR CHECK
+// Server-side props
 export async function getServerSideProps() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.warn("⚠️ Supabase env vars not configured");
