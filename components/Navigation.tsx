@@ -8,17 +8,21 @@ interface NavigationProps {
 }
 
 // ----------------------------------------------------
+// NEW: Define Community Links outside of components
+// ----------------------------------------------------
+const communityLinks = [
+  { href: "/featured-artist", label: "האמן שאתם חייבים להכיר", page: "featured-artist" },
+  { href: "/young-artists", label: "אמנים צעירים", page: "young-artists" },
+  { href: "/about", label: "אודות", page: "about" },
+  { href: "/advertisers", label: "למפרסמים", page: "advertisers" },
+];
+
+// ----------------------------------------------------
 // NEW: Community Dropdown Component
 // ----------------------------------------------------
 const CommunityDropdown = ({ currentPage, isActive }: { currentPage?: NavigationProps['currentPage'], isActive: (page: string) => boolean }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const communityLinks = [
-    { href: "/featured-artist", label: "האמן שאתם חייבים להכיר", page: "featured-artist" },
-    { href: "/young-artists", label: "אמנים צעירים", page: "young-artists" },
-    { href: "/about", label: "אודות", page: "about" },
-    { href: "/advertisers", label: "למפרסמים", page: "advertisers" },
-  ];
   
   // Determine if the current active page is within this group
   const isCommunityActive = communityLinks.some(link => isActive(link.page));
