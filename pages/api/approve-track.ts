@@ -1,50 +1,53 @@
 // pages/api/approve-track.ts
-
-import { NextApiRequest, NextApiResponse } from 'next'; 
-import supabase from '../../lib/supabaseServer';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ ok: false, error: "Method not allowed" });
   }
 
   const { key, trackId } = req.body;
 
-  // Validate admin key
+  // Verify admin key
   if (!key || key !== process.env.ADMIN_KEY) {
-    return res.status(403).json({ ok: false, error: 'Unauthorized' });
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
   }
 
-  if (!trackId) {
-    return res.status(400).json({ ok: false, error: 'trackId is required' });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return res.status(500).json({ ok: false, error: "Supabase not configured" });
   }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // First, set all tracks to NOT approved
-    const { error: updateAllError } = await supabase
-      .from('track_of_the_week_submissions')
-      .update({ is_approved: false })
-      .neq('id', 0); // Update all rows
+    // IMPORTANT: Set both is_approved AND approved_at
+    // approved_at is used for sorting to determine which track is "current"
+    const { data, error } = await supabase
+      .from("track_of_the_week_submissions")
+      .update({ 
+        is_approved: true,
+        approved_at: new Date().toISOString() // Set timestamp NOW
+      })
+      .eq("id", trackId)
+      .select()
+      .single();
 
-    if (updateAllError) {
-      console.error('Error updating all tracks:', updateAllError);
-      return res.status(500).json({ ok: false, error: updateAllError.message });
+    if (error) {
+      console.error("Error approving track:", error);
+      return res.status(500).json({ ok: false, error: error.message });
     }
 
-    // Then, approve the selected track
-    const { error: approveError } = await supabase
-      .from('track_of_the_week_submissions')
-      .update({ is_approved: true })
-      .eq('id', trackId);
-
-    if (approveError) {
-      console.error('Error approving track:', approveError);
-      return res.status(500).json({ ok: false, error: approveError.message });
-    }
-
-    return res.status(200).json({ ok: true, message: 'Track approved successfully' });
-  } catch (err: any) {
-    console.error('Server error:', err);
-    return res.status(500).json({ ok: false, error: err.message });
+    return res.status(200).json({ 
+      ok: true, 
+      message: "Track approved successfully",
+      track: data 
+    });
+  } catch (error: any) {
+    console.error("Error in approve-track API:", error);
+    return res.status(500).json({ ok: false, error: error.message });
   }
 }

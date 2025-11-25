@@ -1,4 +1,4 @@
-// pages/index.tsx - FIXED WITH TRACK OF THE WEEK DATA FETCHING
+// pages/index.tsx - FIXED WITH MOBILE CORRECTIONS
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -177,27 +177,29 @@ export default function Home({
   </Link>
 </div>
 
-              {/* Stats - Redesigned */}
-              <div className="grid grid-cols-3 gap-6 max-w-3xl mx-auto">
-                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
-                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
+            {/* Stats - MOBILE FIXED: Added smaller padding and responsive text sizing */}
+              <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto">
+                {/* FIXED: Reduced padding on mobile (p-3 sm:p-4 md:p-6), smaller text on mobile */}
+                <div className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 hover:scale-105 transition-transform">
+                  {/* FIXED: Smaller text on mobile - text-3xl sm:text-4xl md:text-5xl */}
+                  <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1 break-words">
                     <CountUpStat target={50} suffix="+" label="" />
                   </div>
-                  <p className="text-sm md:text-base text-gray-400 font-medium">פרקים</p>
+                  <p className="text-xs sm:text-sm text-gray-400 font-medium">פרקים</p>
                 </div>
                 
-                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
-                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-2">
+                <div className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 hover:scale-105 transition-transform">
+                  <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-1 break-words">
                     <CountUpStat target={200} suffix="+" label="" />
                   </div>
-                  <p className="text-sm md:text-base text-gray-400 font-medium">שעות תוכן</p>
+                  <p className="text-xs sm:text-sm text-gray-400 font-medium">שעות תוכן</p>
                 </div>
                 
-                <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-transform">
-                  <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-pink-400 to-purple-400 bg-clip-text text-transparent mb-2">
+                <div className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 hover:scale-105 transition-transform">
+                  <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-pink-400 to-purple-400 bg-clip-text text-transparent mb-1 break-words">
                     <CountUpStat target={40} suffix="+" label="" />
                   </div>
-                  <p className="text-sm md:text-base text-gray-400 font-medium">אמנים צעירים</p>
+                  <p className="text-xs sm:text-sm text-gray-400 font-medium">אמנים צעירים</p>
                 </div>
               </div>
 
@@ -224,7 +226,7 @@ export default function Home({
                         התכנית מוקלטת באולפני <span className="font-bold text-purple-400">המיוזיק רום</span> – אולפן פודקאסטים ייחודי ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
                       </p>
                       <a 
-                        href="https://www.facebook.com/p/MusikRoom-61568565972669/" 
+                        href="https://www.instagram.com/musikroom.love/" 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="inline-flex items-center gap-2 text-sm font-semibold text-purple-300 hover:text-purple-200 underline-offset-4 hover:underline transition"
@@ -302,22 +304,8 @@ export default function Home({
           )}
         </section>
 
-        {/* Studio card - mobile only */}
-        <section className="md:hidden max-w-7xl mx-auto px-6 pb-16">
-          <div className="glass-card rounded-2xl p-6 max-w-sm mx-auto flex flex-col items-center text-center">
-            <div className="mb-4">
-              <div className="w-28 h-28 rounded-full bg-white flex items-center justify-center mx-auto shadow-lg">
-                <Image src="/images/musikroom.png" alt="Music Room Studio" width={110} height={110} className="object-contain" />
-              </div>
-            </div>
-            <p className="text-gray-300 text-sm leading-relaxed mb-4">
-              התכנית מוקלטת באולפני המיוזיק רום – אולפן פודקאסטים ייחודי ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
-            </p>
-            <a href="#" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-purple-300 hover:text-purple-200 underline-offset-2 hover:underline transition">
-              לאתר המיוזיק רום
-            </a>
-          </div>
-        </section>
+        {/* REMOVED: Duplicate mobile-only MusikRoom section (lines 308-323) */}
+        {/* This section was causing the duplicate appearance on mobile */}
 
         {/* Featured Young Artist */}
         <section className="max-w-7xl mx-auto px-6 py-16">
