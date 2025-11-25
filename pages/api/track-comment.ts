@@ -1,4 +1,4 @@
-// pages/api/track-comment.ts - FIXED to match track_of_the_week_comments table
+// pages/api/track-comment.ts - SIMPLE VERSION matching new table structure
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
@@ -41,21 +41,21 @@ export default async function handler(
         });
       }
 
-      // Create comment object - MATCHING track_of_the_week_comments table structure
+      // Create comment object - SIMPLE column names
       const commentData = {
         track_id: parseInt(track_id),
-        user_name: name.trim(),        // Column is "user_name" not "name"
-        comment_text: text.trim(),      // Column is "comment_text" not "text"
+        name: name.trim(),
+        text: text.trim(),
         user_id: user_id || null,
         user_photo_url: user_photo_url || null,
-        // created_at will be auto-set by database default
+        timestamp: new Date().toISOString(),
       };
 
-      console.log('💾 Inserting comment into track_of_the_week_comments:', commentData);
+      console.log('💾 Inserting comment:', commentData);
 
       // Insert into track_of_the_week_comments table
       const { data, error } = await supabase
-        .from('track_of_the_week_comments')  // Use correct table name
+        .from('track_of_the_week_comments')
         .insert([commentData])
         .select()
         .single();
@@ -65,25 +65,16 @@ export default async function handler(
         return res.status(500).json({ 
           error: 'Failed to save comment to database',
           details: error.message,
-          code: error.code
+          code: error.code,
+          hint: error.hint
         });
       }
 
       console.log('✅ Comment saved successfully:', data.id);
 
-      // Transform back to frontend format (name/text instead of user_name/comment_text)
-      const responseData = {
-        id: data.id,
-        name: data.user_name,
-        text: data.comment_text,
-        timestamp: data.created_at,
-        user_id: data.user_id,
-        user_photo_url: data.user_photo_url,
-      };
-
       return res.status(200).json({ 
         success: true, 
-        comment: responseData 
+        comment: data 
       });
 
     } catch (error: any) {
