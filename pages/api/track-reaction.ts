@@ -1,14 +1,14 @@
-// pages/api/track-comment.ts - WITH SUPABASE
+// pages/api/track-reaction.ts - WITH SUPABASE
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient( 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // GET - Fetch comments for a track
+  // GET - Fetch current reactions
   if (req.method === "GET") {
     try {
       const { trackId } = req.query;
@@ -20,109 +20,75 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const trackIdNum = parseInt(trackId as string);
 
       const { data, error } = await supabase
-        .from("track_of_the_week_comments")
-        .select("id, name, text, created_at")
+        .from("track_of_the_week_reactions")
+        .select("fire, mind_blown, cool, not_feeling_it")
         .eq("track_id", trackIdNum)
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (error) {
-        console.error("Supabase error fetching comments:", error);
-        return res.status(500).json({ error: "Failed to fetch comments" });
-      }
-
-      const comments = data.map((comment) => ({
-        id: comment.id,
-        name: comment.name,
-        text: comment.text,
-        timestamp: comment.created_at,
-      }));
-
-      return res.status(200).json({
-        success: true,
-        comments: comments,
-      });
-    } catch (error) {
-      console.error("Error in track-comment GET:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  }
-
-  // POST - Add a new comment
-  if (req.method === "POST") {
-    try {
-      const { trackId, comment } = req.body;
-
-      if (!trackId || !comment || !comment.name || !comment.text) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      // Validate comment length
-      if (comment.name.length > 50 || comment.text.length > 500) {
-        return res.status(400).json({ error: "Comment too long" });
-      }
-
-      // Insert comment into database
-      const { data, error } = await supabase
-        .from("track_of_the_week_comments")
-        .insert({
-          track_id: trackId,
-          name: comment.name.trim(),
-          text: comment.text.trim(),
-        })
-        .select()
         .single();
 
       if (error) {
-        console.error("Supabase error inserting comment:", error);
-        return res.status(500).json({ error: "Failed to save comment" });
+        // If no reactions yet, return zeros
+        if (error.code === "PGRST116") {
+          return res.status(200).json({
+            success: true,
+            reactions: {
+              fire: 0,
+              mind_blown: 0,
+              cool: 0,
+              not_feeling_it: 0,
+            },
+          });
+        }
+        console.error("Supabase error fetching reactions:", error);
+        return res.status(500).json({ error: "Failed to fetch reactions" });
       }
 
       return res.status(200).json({
         success: true,
-        comment: {
-          id: data.id,
-          name: data.name,
-          text: data.text,
-          timestamp: data.created_at,
+        reactions: {
+          fire: data.fire || 0,
+          mind_blown: data.mind_blown || 0,
+          cool: data.cool || 0,
+          not_feeling_it: data.not_feeling_it || 0,
         },
       });
     } catch (error) {
-      console.error("Error in track-comment POST:", error);
+      console.error("Error in track-reaction GET:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   }
 
-  // DELETE - Remove a comment (requires admin key)
-  if (req.method === "DELETE") {
+  // POST - Add a reaction
+  if (req.method === "POST") {
     try {
-      const { commentId, adminKey } = req.body;
+      const { trackId, reactionType } = req.body;
 
-      // Verify admin key
-      if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
-        return res.status(403).json({ error: "Unauthorized" });
+      if (!trackId || !reactionType) {
+        return res.status(400).json({ error: "Missing trackId or reactionType" });
       }
 
-      if (!commentId) {
-        return res.status(400).json({ error: "Missing commentId" });
+      // Valid reaction types
+      const validReactions = ["fire", "mind_blown", "cool", "not_feeling_it"];
+      if (!validReactions.includes(reactionType)) {
+        return res.status(400).json({ error: "Invalid reaction type" });
       }
 
-      const { error } = await supabase
-        .from("track_of_the_week_comments")
-        .delete()
-        .eq("id", commentId);
+      // Use the increment function
+      const { data, error } = await supabase.rpc("increment_track_reaction", {
+        p_track_id: trackId,
+        p_reaction_type: reactionType,
+      });
 
       if (error) {
-        console.error("Supabase error deleting comment:", error);
-        return res.status(500).json({ error: "Failed to delete comment" });
+        console.error("Supabase error incrementing reaction:", error);
+        return res.status(500).json({ error: "Failed to save reaction" });
       }
 
       return res.status(200).json({
         success: true,
-        message: "Comment deleted",
+        reactions: data,
       });
     } catch (error) {
-      console.error("Error in track-comment DELETE:", error);
+      console.error("Error in track-reaction POST:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   }
