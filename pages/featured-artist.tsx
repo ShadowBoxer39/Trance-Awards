@@ -65,20 +65,24 @@ export default function FeaturedArtistPage({
 
     // CRITICAL: Handle OAuth callback first
     const handleOAuthCallback = async () => {
+      const url = window.location.href;
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const queryParams = new URLSearchParams(window.location.search);
-      
+
+      // Only try to exchange if we actually have an OAuth response
       if (hashParams.get('access_token') || queryParams.get('code')) {
         console.log('🔐 Handling OAuth callback...');
-        
-        const { data, error } = await supabase.auth.getSession();
-        
+
+        // IMPORTANT: exchange the code for a session
+        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+
         if (error) {
           console.error('OAuth callback error:', error);
         } else {
           console.log('✅ OAuth callback successful:', data);
         }
-        
+
+        // Clean up URL (remove the code/access_token query params)
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     };
