@@ -158,7 +158,7 @@ export default function FeaturedArtistPage({
       </Head>
 
       <div className="trance-backdrop min-h-screen text-gray-100">
-        <Navigation currentPage="young-artists" />
+        <Navigation currentPage="featured-artist" />
 
         {/* Hero Section - Enhanced */}
         <section className="relative overflow-hidden bg-gradient-to-br from-purple-900/30 via-cyan-900/30 to-pink-900/30">
