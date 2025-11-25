@@ -1,4 +1,4 @@
-// components/Navigation.tsx - UPDATED with Featured Artist
+// components/Navigation.tsx - SIMPLIFIED DESKTOP VIEW
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
@@ -16,7 +16,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
     <nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-20">
-          {/* Logo & Brand */}
+          {/* Logo & Brand - KEEP THIS ON THE RIGHT (RTL Start) */}
           <Link
             href="/"
             className="flex items-center gap-3 hover:opacity-90 transition"
@@ -31,8 +31,9 @@ export default function Navigation({ currentPage }: NavigationProps) {
             <span className="text-xl font-semibold hidden sm:block">יוצאים לטראק</span>
           </Link>
 
-          {/* Desktop Menu */}
+          {/* Desktop Menu - KEEP THIS LTR in CODE FOR RTL DISPLAY */}
           <div className="hidden md:flex items-center gap-8">
+            {/* Primary Links */}
             <Link
               href="/"
               className={`text-base font-medium transition ${
@@ -53,17 +54,6 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               הטראק השבועי
             </Link>
-            {/* NEW: Featured Artist Link */}
-            <Link
-              href="/featured-artist"
-              className={`text-base font-medium transition ${
-                isActive("featured-artist")
-                  ? "text-white hover:text-purple-400"
-                  : "text-gray-300 hover:text-white"
-              }`}
-            >
-              האמן שאתם חייבים להכיר
-            </Link>
             <Link
               href="/episodes"
               className={`text-base font-medium transition ${
@@ -74,36 +64,21 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               פרקים
             </Link>
-            <Link
-              href="/young-artists"
-              className={`text-base font-medium transition ${
-                isActive("young-artists")
-                  ? "text-white hover:text-purple-400"
-                  : "text-gray-300 hover:text-white"
-              }`}
-            >
-              אמנים צעירים
-            </Link>
-            <Link
-              href="/about"
-              className={`text-base font-medium transition ${
-                isActive("about")
-                  ? "text-white hover:text-purple-400"
-                  : "text-gray-300 hover:text-white"
-              }`}
-            >
-              אודות
-            </Link>
-            <Link
-              href="/advertisers"
-              className={`text-base font-medium transition ${
-                isActive("advertisers")
-                  ? "text-white hover:text-purple-400"
-                  : "text-gray-300 hover:text-white"
-              }`}
-            >
-              למפרסמים
-            </Link>
+            
+            {/* Secondary Links (e.g., in a dropdown or moved elsewhere) 
+            
+            // REMOVED FROM NAVBAR TO SIMPLIFY:
+            // - האמן שאתם חייבים להכיר
+            // - אמנים צעירים
+            // - אודות
+            // - למפרסמים
+
+            // If you MUST keep them, consider a dropdown for secondary items (More).
+            
+            */}
+
+
+            {/* Action Buttons (Keep them on the left, which means they are last in the code) */}
             <Link
               href="/submit-track"
               className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
@@ -118,7 +93,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button - KEEP THIS ON THE LEFT (RTL End) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden text-gray-300 hover:text-white p-2"
@@ -133,9 +108,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu (Keep all links here for accessibility) */}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-1">
+            {/* The order here is already correct (Home -> ... -> Vote) */}
             <Link
               href="/"
               className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
@@ -154,7 +130,6 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               הטראק השבועי
             </Link>
-            {/* NEW: Mobile Featured Artist Link */}
             <Link
               href="/featured-artist"
               className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
