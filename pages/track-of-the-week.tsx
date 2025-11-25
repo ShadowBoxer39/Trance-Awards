@@ -1,14 +1,13 @@
-// pages/track-of-the-week.tsx - FINAL STABLE DESIGN & FUNCTIONALITY
+// pages/track-of-the-week.tsx - FINAL STABLE DESIGN & FUNCTIONALITY (Type Fixes Applied)
 
-import Head from "next/head";
-import Link from "next/link";
-import { useState, useEffect } from "react";
-import Navigation from "../components/Navigation";
-import SEO from "@/components/SEO";
+import React, { useState, useEffect } from 'react';
 import { GetServerSideProps } from 'next';
-import supabase from '../lib/supabaseServer'; // Import needed for SSR data fetch
+import Link from 'next/link';
+import supabase from '../lib/supabaseServer';
+import Navigation from '../components/Navigation';
+import SEO from '@/components/SEO';
 
-interface TrackOfWeek {
+interface TrackSubmission {
   id: number;
   name: string;
   photo_url: string | null;
@@ -16,7 +15,6 @@ interface TrackOfWeek {
   youtube_url: string;
   description: string;
   created_at: string;
-  // NOTE: Assuming your SSR logic passes these basic fields
 }
 
 // NEW: Interface for comments (matching your DB structure)
@@ -27,51 +25,58 @@ interface Comment {
   created_at: string; // Timestamp from DB
 }
 
-// NEW: Interface for reactions (matching your simplified state)
+// NEW: Interface for reactions - USE STRING LITERALS as keys (FIXED)
 interface ReactionState {
-    '🔥': number;
-    '🤯': number;
-    '😎': number;
-    '😐': number;
+    fire: number;
+    mind_blown: number;
+    cool: number;
+    not_feeling_it: number;
 }
+
+// Helper to map DB keys to emojis and labels
+const REACTION_MAP = {
+    fire: { emoji: '🔥', label: 'אש' },
+    mind_blown: { emoji: '🤯', label: 'מפוצץ' },
+    cool: { emoji: '😎', label: 'סבבה' },
+    not_feeling_it: { emoji: '😐', label: 'לא עפתי' },
+};
 
 
 interface TrackPageProps {
-  track: TrackOfWeek | null;
+  track: TrackSubmission | null;
   error: string | null;
 }
 
-
-// Helper to extract YouTube video ID
-function getYouTubeId(url: string): string | null {
+const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/g;
   const match = url.match(regex);
   return match ? match[1] : null;
-}
-
+};
 
 // --- Main Component ---
 export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
-  // Use simple reaction state matching the UI counts
+  // Initialize state with default string keys (FIXED)
   const [reactions, setReactions] = useState<ReactionState>({
-    '🔥': 0,
-    '🤯': 0,
-    '😎': 0,
-    '😐': 0,
+    fire: 0,
+    mind_blown: 0,
+    cool: 0,
+    not_feeling_it: 0,
   });
   
-  const [comments, setComments] = useState<Comment[]>([]); // Array for comments
-  const [newComment, setNewComment] = useState({ name: "", text: "" });
-  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentName, setCommentName] = useState('');
+  const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null); // State for submission errors
-
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  
+  const [selectedReaction, setSelectedReaction] = useState<keyof ReactionState | null>(null); // Use fixed type
+  
   const currentTrack = track;
-
+  const videoId = track ? getYouTubeVideoId(track.youtube_url) : null;
+  const isVideoAvailable = track && videoId;
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
-    // Load commenter name from local storage if exists
     const savedName = localStorage.getItem('track_commenter_name');
     if (savedName) setNewComment(prev => ({ ...prev, name: savedName }));
   }, []);
@@ -82,8 +87,7 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
   const fetchComments = async () => {
     if (!currentTrack) return;
     try {
-      // Use the public API for reading comments
-      const res = await fetch(`/api/track-comment-public?trackId=${currentTrack.id}`);
+      const res = await fetch(`/api/track-comment-public?trackId=${currentTrack.id}`); 
       const data = await res.json();
       if (data.comments) {
         setComments(data.comments);
@@ -96,29 +100,26 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
   const fetchReactions = async () => {
     if (!currentTrack) return;
     try {
-      // Use the reaction API
-      const res = await fetch(`/api/track-reaction?trackId=${currentTrack.id}`);
+      const res = await fetch(`/api/track-reaction?trackId=${currentTrack.id}`); 
       const data = await res.json();
       if (data.reactions) {
-        // Assume API returns {fire: 5, cool: 1, ...} -> set as state
-        setReactions(data.reactions);
+        // API returns object with string keys (e.g., {fire: 5, cool: 1})
+        setReactions(data.reactions as ReactionState);
       }
     } catch (err) {
       console.error('Failed to load reactions:', err);
     }
   };
 
-
-  // --- Main Initialization Effect ---
+  // Main Initialization Effect
   useEffect(() => {
     if (currentTrack) {
-      fetchComments(); // FIX: Now fetches comments on load
+      fetchComments(); 
       fetchReactions();
       
-      // Load user's previous reaction
       const userReaction = localStorage.getItem(`track_reaction_${currentTrack.id}`);
-      if (userReaction) {
-        setSelectedReaction(userReaction);
+      if (userReaction && userReaction in REACTION_MAP) { // Safe check
+        setSelectedReaction(userReaction as keyof ReactionState);
       }
     }
   }, [currentTrack]);
@@ -126,15 +127,14 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
 
   // --- Submission and Interaction Logic ---
 
-  const handleCommentSubmit = async (e: React.FormEvent) => {
+  const submitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentTrack || !newComment.name.trim() || !newComment.text.trim() || isSubmitting) return;
-
+    
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      // API expects a comment object inside the body (as seen in /api/track-comment.ts)
       const response = await fetch("/api/track-comment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -150,25 +150,23 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
       const result = await response.json();
 
       if (!response.ok || !result.ok) {
-        throw new Error(result.error || "שגיאה בשליחת התגובה");
+        throw new Error(result.error || 'שגיאה בשליחת התגובה');
       }
 
-      // Success: Clear text, save name, and reload comments
       setNewComment(prev => ({ ...prev, text: "" }));
       localStorage.setItem('track_commenter_name', newComment.name.trim()); 
-      fetchComments(); // Synchronize state with DB
+      fetchComments(); 
 
     } catch (error: any) {
-      setSubmitError(error.message || "שגיאה לא ידועה בשליחה");
+      setSubmitError(error.message || 'שגיאה לא ידועה בשליחה');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleReaction = async (reactionType: keyof typeof reactions) => {
+  const handleReaction = async (reactionType: keyof ReactionState) => {
     if (!currentTrack) return;
     
-    // Check if user already reacted
     const userReaction = localStorage.getItem(`track_reaction_${currentTrack.id}`);
     if (userReaction) {
       alert("כבר הגבתם לטראק הזה. אפשר להגיב רק פעם אחת!");
@@ -179,20 +177,18 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
     setSelectedReaction(reactionType);
     setReactions(prev => ({ ...prev, [reactionType]: prev[reactionType] + 1 }));
 
-    // Save to localStorage
     localStorage.setItem(`track_reaction_${currentTrack.id}`, reactionType);
     
     try {
       // POST the reaction type
-      await fetch("/api/track-reaction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/track-reaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           trackId: currentTrack.id,
           reactionType: reactionType,
         }),
       });
-      // Final fetch to ensure data integrity
       fetchReactions(); 
     } catch (err) {
       console.error("Error saving reaction:", err);
@@ -203,25 +199,6 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
       alert('שגיאה בשליחת הריאקשן');
     }
   };
-
-
-  // --- UI Logic ---
-  
-  const reactionEmojis: { [key: string]: { emoji: string; label: string } } = {
-    '🔥': { emoji: '🔥', label: 'אש' },
-    '🤯': { emoji: '🤯', label: 'מפוצץ' },
-    '😎': { emoji: '😎', label: 'סבבה' },
-    '😐': { emoji: '😐', label: 'לא עפתי' },
-  };
-
-  // Maps UI labels to the simple key names used in the DB/state
-  const uiReactionMap: Record<string, keyof ReactionState> = {
-    '🔥': 'fire',
-    '🤯': 'mind_blown',
-    '😎': 'cool',
-    '😐': 'not_feeling_it',
-  };
-
 
   if (error) {
     return (
@@ -277,7 +254,7 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                     <iframe
                       width="100%"
                       height="100%"
-                      src={`https://www.youtube.com/embed/${getYouTubeId(currentTrack.youtube_url)}`}
+                      src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
                       title={currentTrack.track_title}
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -290,10 +267,11 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                 <div className="glass-card rounded-2xl p-6">
                   <h3 className="text-lg font-bold mb-4 text-white/90">מה דעתכם על הטראק?</h3>
                   <div className="grid grid-cols-4 gap-3">
-                    {Object.entries(uiReactionMap).map(([emoji, type]) => (
+                    {/* Map over defined reaction types for display */}
+                    {Object.entries(REACTION_MAP).map(([type, { emoji, label }]) => (
                       <button
                         key={type}
-                        onClick={() => handleReaction(type)}
+                        onClick={() => handleReaction(type as keyof ReactionState)}
                         disabled={!!selectedReaction && selectedReaction !== type}
                         className={`glass-card p-4 rounded-xl transition-all border ${
                           selectedReaction === type
@@ -304,12 +282,10 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                         }`}
                       >
                         <div className="text-3xl mb-2">{emoji}</div>
-                        <div className="text-xs text-gray-400 mb-1">
-                           {reactionEmojis[emoji as keyof typeof reactionEmojis]?.label || type}
-                        </div>
-                        {/* Access count by the type key */}
+                        <div className="text-xs text-gray-400 mb-1">{label}</div>
+                        {/* Access count by the string key */}
                         <div className="text-lg font-bold text-purple-400">
-                          {reactions[type] || 0}
+                          {reactions[type as keyof ReactionState] || 0}
                         </div>
                       </button>
                     ))}
@@ -321,11 +297,11 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                   <h3 className="text-lg font-bold mb-4 text-white/90">תגובות ({(comments || []).length})</h3>
                   
                   {/* Comment Form */}
-                  <form onSubmit={handleCommentSubmit} className="mb-6">
+                  <form onSubmit={submitComment} className="mb-6">
                     <div className="space-y-3">
                       <input
                         type="text"
-                        placeholder="השם שלך *"
+                        placeholder="שם (יוצג לצד התגובה) *"
                         value={newComment.name}
                         onChange={(e) => setNewComment({ ...newComment, name: e.target.value })}
                         className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
@@ -356,8 +332,8 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                       <p className="text-gray-500 text-center py-8">אין תגובות עדיין. היו הראשונים!</p>
                     ) : (
                       comments.map((comment) => (
-                        <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4 relative group">
-                          <div className="flex items-start justify-between mb-2">
+                        <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4 border border-white/10">
+                          <div className="flex justify-between items-center mb-2">
                             <div className="font-semibold text-purple-400">{comment.name}</div>
                             <div className="flex items-center gap-2">
                               <div className="text-xs text-gray-500">
@@ -402,7 +378,7 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                 <div className="glass-card rounded-2xl p-6 text-center border-2 border-purple-500/20">
                   <h3 className="text-xl font-bold mb-2">שלחו טראק מומלץ!</h3>
                   <p className="text-sm text-gray-400 mb-4">הטראק שלכם יכול להיות הבחירה הבאה</p>
-                  <Link href="/submit-track" className="btn-secondary px-6 py-3 rounded-lg font-medium inline-block">
+                  <Link href="/submit-track" className="btn-secondary px-6 py-3 rounded-lg inline-block">
                     הגישו טראק
                   </Link>
                 </div>
@@ -448,11 +424,11 @@ export const getServerSideProps: GetServerSideProps<TrackPageProps> = async () =
       .from('track_of_the_week_submissions')
       .select('*')
       .eq('is_approved', true)
-      .order('created_at', { ascending: false }) // Use created_at if approved_at isn't always set
+      .order('created_at', { ascending: false }) 
       .limit(1)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 means "No rows found"
+    if (error && error.code !== 'PGRST116') { 
       console.error('Supabase fetch error:', error);
       return { props: { track: null, error: `שגיאת מסד נתונים: ${error.message}` } };
     }
