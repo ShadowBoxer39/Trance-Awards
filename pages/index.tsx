@@ -194,7 +194,7 @@ function TrackOfWeekComments({ trackId }: { trackId: number }) {
     // Fetch comments from the API
     const fetchComments = async () => {
       try {
-        const response = await fetch(`/api/track-comment?trackId=${trackId}`);
+        const response = await fetch(`/api/track-comment-public?trackId=${trackId}`);
         if (response.ok) {
           const data = await response.json();
           setComments(data.comments || []);
