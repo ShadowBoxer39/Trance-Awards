@@ -4,7 +4,8 @@ import "../styles/theme.css";
 import type { AppProps } from "next/app";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/router";
-import { milkyway, primaryFont } from "../lib/fonts"; // <-- FIX: Changed 'gan' to 'primaryFont'
+import Head from "next/head";
+import { milkyway, primaryFont } from "../lib/fonts";
 import PlayerProvider from "../components/PlayerProvider";
 import { trackPageVisit, trackPageExit } from "../lib/analytics";
 
@@ -24,6 +25,7 @@ export default function App({ Component, pageProps }: AppProps) {
       }
       visitIdRef.current = trackPageVisit(url);
     };
+
     router.events.on('routeChangeComplete', handleRouteChange);
 
     // 3. Track browser/tab closing
@@ -32,6 +34,7 @@ export default function App({ Component, pageProps }: AppProps) {
         trackPageExit(visitIdRef.current);
       }
     };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
@@ -41,10 +44,16 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router]);
 
   return (
-    <main className={`${milkyway.variable} ${primaryFont.variable} ${primaryFont.className}`}> {/* <-- FIX: Applied primaryFont variable and class */}
-      <PlayerProvider>
-        <Component {...pageProps} />
-      </PlayerProvider>
-    </main>
+    <>
+      <Head>
+        <meta name="google-site-verification" content="FB62yhdwejgL4Mr9ZnDf-owMzfeP2nBoRVoCxXyTsGI" />
+      </Head>
+
+      <main className={`${milkyway.variable} ${primaryFont.variable} ${primaryFont.className}`}>
+        <PlayerProvider>
+          <Component {...pageProps} />
+        </PlayerProvider>
+      </main>
+    </>
   );
 }
