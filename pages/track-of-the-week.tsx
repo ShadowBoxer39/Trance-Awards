@@ -64,6 +64,20 @@ export default function TrackOfTheWeekPage({
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
+
+const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('USER:', user); // ADD THIS LINE
+    setUser(user);
+    if (user) {
+      const userInfo = getGoogleUserInfo(user);
+      console.log('USER INFO:', userInfo); // ADD THIS LINE
+      if (userInfo) {
+        setUserName(userInfo.name);
+        setUserPhoto(userInfo.photoUrl);
+      }
+    }
+  };
     
     // Initialize Supabase client and check auth
     const supabase = createClient(
