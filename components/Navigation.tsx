@@ -1,4 +1,4 @@
-// components/Navigation.tsx - REVISED with "More" Dropdown
+// components/Navigation.tsx - REVISED for Improved UX (Grouping)
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
@@ -8,42 +8,45 @@ interface NavigationProps {
 }
 
 // ----------------------------------------------------
-// NEW: More Dropdown Component
+// NEW: Community Dropdown Component
 // ----------------------------------------------------
-const MoreDropdown = ({ currentPage, isActive }: { currentPage?: NavigationProps['currentPage'], isActive: (page: string) => boolean }) => {
+const CommunityDropdown = ({ currentPage, isActive }: { currentPage?: NavigationProps['currentPage'], isActive: (page: string) => boolean }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const secondaryLinks = [
+  const communityLinks = [
     { href: "/featured-artist", label: "האמן שאתם חייבים להכיר", page: "featured-artist" },
     { href: "/young-artists", label: "אמנים צעירים", page: "young-artists" },
     { href: "/about", label: "אודות", page: "about" },
     { href: "/advertisers", label: "למפרסמים", page: "advertisers" },
   ];
   
-  // Determine if the current active page is within the secondary links
-  const isSecondaryActive = secondaryLinks.some(link => isActive(link.page));
+  // Determine if the current active page is within this group
+  const isCommunityActive = communityLinks.some(link => isActive(link.page));
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        // The "More" link is active if any of the secondary links are the current page
+        // The "Community" link is active if any of its children are active
         className={`text-base font-medium transition flex items-center gap-1 ${
-          isSecondaryActive
+          isCommunityActive
             ? "text-white hover:text-purple-400"
             : "text-gray-300 hover:text-white"
         }`}
       >
-        עוד
+        קהילה
         <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"></path>
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-gray-900 ring-1 ring-black ring-opacity-5 z-50 origin-top-right">
+        <div 
+          onMouseLeave={() => setIsOpen(false)}
+          className="absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-gray-900 ring-1 ring-black ring-opacity-5 z-50 origin-top-right"
+        >
           <div className="py-1">
-            {secondaryLinks.map((link) => (
+            {communityLinks.map((link) => (
               <Link
                 key={link.page}
                 href={link.href}
@@ -89,9 +92,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
             <span className="text-xl font-semibold hidden sm:block">יוצאים לטראק</span>
           </Link>
 
-          {/* Desktop Menu - SIMPLIFIED WITH DROPDOWN */}
+          {/* Desktop Menu - SIMPLIFIED */}
           <div className="hidden md:flex items-center gap-8">
-            {/* Primary Links */}
+            
+            {/* Core Link 1: Home */}
             <Link
               href="/"
               className={`text-base font-medium transition ${
@@ -102,6 +106,8 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               בית
             </Link>
+            
+            {/* Core Link 2: Track of the Week */}
             <Link
               href="/track-of-the-week"
               className={`text-base font-medium transition ${
@@ -112,6 +118,8 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               הטראק השבועי
             </Link>
+
+            {/* Core Link 3: Episodes */}
             <Link
               href="/episodes"
               className={`text-base font-medium transition ${
@@ -123,16 +131,18 @@ export default function Navigation({ currentPage }: NavigationProps) {
               פרקים
             </Link>
             
-            {/* Dropdown for Secondary Links */}
-            <MoreDropdown currentPage={currentPage} isActive={isActive} />
+            {/* NEW Core Link 4: Community Dropdown */}
+            <CommunityDropdown currentPage={currentPage} isActive={isActive} />
 
-            {/* Action Buttons (RTL End) */}
+            {/* Action Button 1 (Secondary): Submit Track */}
             <Link
               href="/submit-track"
               className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
             >
-              בחירת טראק השבוע
+              הגישו טראק
             </Link>
+
+            {/* Action Button 2 (Primary): Vote */}
             <Link
               href="/vote"
               className="btn-primary px-6 py-3 rounded-lg text-base font-medium"
@@ -141,7 +151,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
             </Link>
           </div>
 
-          {/* Mobile Menu Button (RTL End) */}
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden text-gray-300 hover:text-white p-2"
@@ -156,9 +166,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
           </button>
         </div>
 
-        {/* Mobile Menu (All links are listed here, in logical reading order) */}
+        {/* Mobile Menu - LISTING ALL PAGES LOGICALLY */}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-1">
+            {/* Core Pages */}
             <Link
               href="/"
               className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
@@ -178,15 +189,6 @@ export default function Navigation({ currentPage }: NavigationProps) {
               הטראק השבועי
             </Link>
             <Link
-              href="/featured-artist"
-              className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
-                isActive("featured-artist") ? "text-white" : "text-gray-300 hover:text-white"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              האמן שאתם חייבים להכיר
-            </Link>
-            <Link
               href="/episodes"
               className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
                 isActive("episodes") ? "text-white" : "text-gray-300 hover:text-white"
@@ -195,39 +197,31 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               פרקים
             </Link>
-            <Link
-              href="/young-artists"
-              className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
-                isActive("young-artists") ? "text-white" : "text-gray-300 hover:text-white"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              אמנים צעירים
-            </Link>
-            <Link
-              href="/about"
-              className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
-                isActive("about") ? "text-white" : "text-gray-300 hover:text-white"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              אודות
-            </Link>
-            <Link
-              href="/advertisers"
-              className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
-                isActive("advertisers") ? "text-white" : "text-gray-300 hover:text-white"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              למפרסמים
-            </Link>
+            
+            {/* Community Links (nested for mobile clarity) */}
+            <div className="pt-2 border-t border-gray-700/50 mt-2">
+              <p className="text-sm font-semibold px-4 pt-2 text-purple-400">קהילה</p>
+              {communityLinks.map((link) => (
+                <Link
+                  key={link.page}
+                  href={link.href}
+                  className={`block text-base font-medium py-2 px-6 rounded-lg hover:bg-gray-800 transition ${
+                    isActive(link.page) ? "text-white" : "text-gray-300 hover:text-white"
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* CTA Buttons */}
             <Link
               href="/submit-track"
-              className="block btn-secondary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
+              className="block btn-secondary px-4 py-3 rounded-lg text-base font-medium text-center mt-4"
               onClick={() => setMobileMenuOpen(false)}
             >
-              בחירת טראק השבוע
+              הגישו טראק
             </Link>
             <Link
               href="/vote"
