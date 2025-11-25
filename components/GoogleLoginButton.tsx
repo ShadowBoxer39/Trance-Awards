@@ -1,4 +1,4 @@
-// components/GoogleLoginButton.tsx - FIXED with proper redirectTo
+// components/GoogleLoginButton.tsx - WORKS WITH ANY DOMAIN (preview/production/localhost)
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -14,23 +14,28 @@ export default function GoogleLoginButton() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
 
+      // Get the current page URL dynamically - works for ANY domain
+      const currentUrl = window.location.href;
+      
       console.log('🚀 Starting Google OAuth login...');
+      console.log('📍 Current URL:', currentUrl);
+      console.log('📍 Will redirect back to:', currentUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/track-of-the-week`, // FIXED: Use full origin URL
+          redirectTo: currentUrl, // Redirect back to wherever we are now!
         },
       });
 
       if (error) {
-        console.error('Google login error:', error);
-        alert('שגיאה בהתחברות עם Google');
+        console.error('❌ Google login error:', error);
+        alert('שגיאה בהתחברות עם Google: ' + error.message);
       } else {
-        console.log('✅ OAuth redirect initiated:', data);
+        console.log('✅ OAuth redirect initiated');
       }
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('💥 Unexpected error:', err);
       alert('שגיאה בהתחברות');
     } finally {
       setIsLoading(false);
