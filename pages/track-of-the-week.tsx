@@ -1,4 +1,4 @@
-// pages/track-of-the-week.tsx - WITH GOOGLE AUTH (FIXED)
+// pages/track-of-the-week.tsx - WITH GOOGLE AUTH (FIXED - OAuth Callback Handling)
 import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -65,17 +65,47 @@ export default function TrackOfTheWeekPage({
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
     
-    // Initialize Supabase client FIRST
+    // Initialize Supabase client
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    // CRITICAL: Handle OAuth callback first
+    const handleOAuthCallback = async () => {
+      // Check if this is an OAuth callback (has code/access_token in URL)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const queryParams = new URLSearchParams(window.location.search);
+      
+      if (hashParams.get('access_token') || queryParams.get('code')) {
+        console.log('🔐 Handling OAuth callback...');
+        
+        // Let Supabase process the callback
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('OAuth callback error:', error);
+        } else {
+          console.log('✅ OAuth callback successful:', data);
+        }
+        
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
     // Check for authenticated user
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // First, handle any OAuth callback
+      await handleOAuthCallback();
+      
+      // Then get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
+      
       console.log('USER:', user);
       setUser(user);
+      
       if (user) {
         const userInfo = getGoogleUserInfo(user);
         console.log('USER INFO:', userInfo);
@@ -90,6 +120,7 @@ export default function TrackOfTheWeekPage({
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔄 Auth state changed:', _event, session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
         const userInfo = getGoogleUserInfo(session.user);
@@ -200,8 +231,11 @@ export default function TrackOfTheWeekPage({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          trackId: currentTrack.id,
-          comment,
+          track_id: currentTrack.id,
+          name: userName,
+          text: newComment.text.trim(),
+          user_id: user.id,
+          user_photo_url: userPhoto,
         }),
       });
 
@@ -550,7 +584,7 @@ export default function TrackOfTheWeekPage({
           </div>
         </section>
 
-        {/* Previous Tracks Archive - keeping rest of the code as is */}
+        {/* Previous Tracks Archive */}
         {pastTracks.length > 0 && (
           <section className="max-w-6xl mx-auto px-6 py-12">
             <div className="mb-8 text-center">
@@ -627,7 +661,7 @@ export default function TrackOfTheWeekPage({
   );
 }
 
-// Server-side props with ENV VAR CHECK
+// Server-side props
 export async function getServerSideProps() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.warn("⚠️ Supabase env vars not configured");
