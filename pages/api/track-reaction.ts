@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Valid reaction types
-    const validReactions = ["fire", "heart", "mind_blown", "raising_hands"];
+    const validReactions = ["fire", "mind_blown", "cool", "not_feeling_it"];
     if (!validReactions.includes(reactionType)) {
       return res.status(400).json({ error: "Invalid reaction type" });
     }
@@ -44,9 +44,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Update reactions
     const currentReactions = track?.reactions || {
       fire: 0,
-      heart: 0,
       mind_blown: 0,
-      raising_hands: 0,
+      cool: 0,
+      not_feeling_it: 0,
     };
 
     const updatedReactions = {
