@@ -1,91 +1,134 @@
-// pages/api/artist-comment.ts - WITH SUPABASE
-import type { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
+// pages/api/artist-comment.ts - Handle featured artist comments
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // POST - Add a new comment
-  if (req.method === "POST") {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  // Handle POST - Create new comment
+  if (req.method === 'POST') {
     try {
-      const { artistId, comment } = req.body;
+      const { artist_id, name, text, user_id, user_photo_url } = req.body;
 
-      if (!artistId || !comment || !comment.name || !comment.text) {
-        return res.status(400).json({ error: "Missing required fields" });
+      console.log('📝 Received artist comment request:', { 
+        artist_id, 
+        name, 
+        text_length: text?.length, 
+        user_id: user_id ? 'present' : 'missing',
+        user_photo_url: user_photo_url ? 'present' : 'missing'
+      });
+
+      // Validate required fields
+      if (!artist_id || !text || !name) {
+        console.error('❌ Missing required fields');
+        return res.status(400).json({ 
+          error: 'Missing required fields',
+          received: { artist_id: !!artist_id, text: !!text, name: !!name }
+        });
       }
 
-      // Validate comment length
-      if (comment.name.length > 50 || comment.text.length > 500) {
-        return res.status(400).json({ error: "Comment too long" });
+      // Validate text length
+      if (text.length > 500) {
+        console.error('❌ Comment too long:', text.length);
+        return res.status(400).json({ 
+          error: 'Comment text too long (max 500 characters)' 
+        });
       }
 
-      // Insert comment into database
+      // Create comment object
+      const commentData = {
+        artist_id: parseInt(artist_id),
+        name: name.trim(),
+        text: text.trim(),
+        user_id: user_id || null,
+        user_photo_url: user_photo_url || null,
+        timestamp: new Date().toISOString(),
+      };
+
+      console.log('💾 Inserting comment:', commentData);
+
+      // Insert into featured_artist_comments table
       const { data, error } = await supabase
-        .from("featured_artist_comments")
-        .insert({
-          artist_id: artistId,
-          name: comment.name.trim(),
-          text: comment.text.trim(),
-        })
+        .from('featured_artist_comments')
+        .insert([commentData])
         .select()
         .single();
 
       if (error) {
-        console.error("Supabase error inserting comment:", error);
-        return res.status(500).json({ error: "Failed to save comment" });
+        console.error('❌ Supabase error:', error);
+        return res.status(500).json({ 
+          error: 'Failed to save comment to database',
+          details: error.message,
+          code: error.code,
+          hint: error.hint
+        });
       }
 
-      return res.status(200).json({
-        success: true,
-        comment: {
-          id: data.id,
-          name: data.name,
-          text: data.text,
-          timestamp: data.created_at,
-        },
+      console.log('✅ Comment saved successfully:', data.id);
+
+      return res.status(200).json({ 
+        success: true, 
+        comment: data 
       });
-    } catch (error) {
-      console.error("Error in artist-comment POST:", error);
-      return res.status(500).json({ error: "Internal server error" });
+
+    } catch (error: any) {
+      console.error('💥 Unexpected error in POST:', error);
+      return res.status(500).json({ 
+        error: 'Internal server error',
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   }
 
-  // DELETE - Remove a comment (requires admin key)
-  if (req.method === "DELETE") {
+  // Handle DELETE - Delete comment (admin only)
+  else if (req.method === 'DELETE') {
     try {
       const { commentId, adminKey } = req.body;
 
-      // Verify admin key
+      // Validate admin key
       if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
-        return res.status(403).json({ error: "Unauthorized" });
+        console.error('❌ Unauthorized delete attempt');
+        return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      if (!commentId) {
-        return res.status(400).json({ error: "Missing commentId" });
-      }
+      console.log('🗑️ Deleting comment:', commentId);
 
+      // Delete from featured_artist_comments
       const { error } = await supabase
-        .from("featured_artist_comments")
+        .from('featured_artist_comments')
         .delete()
-        .eq("id", commentId);
+        .eq('id', commentId);
 
       if (error) {
-        console.error("Supabase error deleting comment:", error);
-        return res.status(500).json({ error: "Failed to delete comment" });
+        console.error('❌ Delete error:', error);
+        return res.status(500).json({ 
+          error: 'Failed to delete comment',
+          details: error.message 
+        });
       }
 
-      return res.status(200).json({
-        success: true,
-        message: "Comment deleted",
+      console.log('✅ Comment deleted successfully');
+      return res.status(200).json({ success: true });
+
+    } catch (error: any) {
+      console.error('💥 Unexpected error in DELETE:', error);
+      return res.status(500).json({ 
+        error: 'Internal server error',
+        details: error.message 
       });
-    } catch (error) {
-      console.error("Error in artist-comment DELETE:", error);
-      return res.status(500).json({ error: "Internal server error" });
     }
   }
 
-  return res.status(405).json({ error: "Method not allowed" });
+  // Method not allowed
+  else {
+    res.setHeader('Allow', ['POST', 'DELETE']);
+    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+  }
 }
