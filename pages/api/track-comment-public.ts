@@ -1,10 +1,10 @@
-// pages/api/track-comment-public.ts - Fetch comments (public, no auth required)
+// pages/api/track-comment-public.ts - Fetch comments (public)
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export default async function handler(
@@ -30,7 +30,7 @@ export default async function handler(
       .select('*')
       .eq('track_id', parseInt(trackId as string))
       .eq('is_visible', true)
-      .order('created_at', { ascending: false });
+      .order('timestamp', { ascending: false });
 
     if (error) {
       console.error('❌ Error fetching comments:', error);
@@ -42,17 +42,7 @@ export default async function handler(
 
     console.log(`✅ Found ${data.length} comments`);
 
-    // Transform to frontend format
-    const comments = data.map(comment => ({
-      id: comment.id,
-      name: comment.user_name,           // Transform user_name -> name
-      text: comment.comment_text,        // Transform comment_text -> text
-      timestamp: comment.created_at,
-      user_id: comment.user_id,
-      user_photo_url: comment.user_photo_url,
-    }));
-
-    return res.status(200).json({ comments });
+    return res.status(200).json({ comments: data });
 
   } catch (error: any) {
     console.error('💥 Unexpected error:', error);
