@@ -244,133 +244,14 @@ export default function FeaturedArtistPage({
           </div>
         </section>
 
-        {/* Main Content */}
+        {/* Main Content - COLUMNS SWAPPED HERE */}
         <section className="max-w-6xl mx-auto px-6 py-8 md:py-12">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Column - Artist Profile + Track */}
+            
+            {/* NEW LEFT COLUMN (2/3 width) - Artist Info & Socials */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Large Artist Photo */}
-              <div className="glass-card rounded-3xl overflow-hidden border-4 border-purple-500/50">
-                <div className="aspect-square bg-gray-900">
-                  <img
-                    src={artist.profile_photo_url}
-                    alt={artist.stage_name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* SoundCloud Embed */}
-              <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <span>🎵</span>
-                  הטראק המוצג
-                </h3>
-                <div className="rounded-lg overflow-hidden">
-                  <iframe
-                    width="100%"
-                    height="166"
-                    scrolling="no"
-                    style={{ border: "none" }}
-                    allow="autoplay"
-                    src={artist.track_url}
-                  />
-                </div>
-              </div>
-
-              {/* Reactions */}
-              <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-lg font-bold mb-4">מה דעתכם על האמן?</h3>
-                <div className="grid grid-cols-4 gap-3">
-                  {Object.entries(reactionEmojis).map(([type, { emoji, label }]) => (
-                    <button
-                      key={type}
-                      onClick={() => handleReaction(type as keyof typeof reactions)}
-                      disabled={!!selectedReaction}
-                      className={`glass-card p-4 rounded-xl transition-all ${
-                        selectedReaction === type
-                          ? "ring-2 ring-purple-500 scale-105"
-                          : selectedReaction
-                          ? "opacity-50"
-                          : "hover:scale-105 hover:bg-purple-500/10"
-                      }`}
-                    >
-                      <div className="text-3xl mb-2">{emoji}</div>
-                      <div className="text-xs text-gray-400 mb-1">{label}</div>
-                      <div className="text-lg font-bold text-purple-400">
-                        {reactions[type as keyof typeof reactions]}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Comments Section */}
-              <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-lg font-bold mb-4">תגובות ({comments.length})</h3>
-
-                {/* Comment Form */}
-                <form onSubmit={handleCommentSubmit} className="mb-6">
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      placeholder="השם שלך"
-                      value={newComment.name}
-                      onChange={(e) => setNewComment({ ...newComment, name: e.target.value })}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
-                      maxLength={50}
-                    />
-                    <textarea
-                      placeholder="מה דעתך על האמן?"
-                      value={newComment.text}
-                      onChange={(e) => setNewComment({ ...newComment, text: e.target.value })}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
-                      maxLength={500}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newComment.name.trim() || !newComment.text.trim() || isSubmitting}
-                      className="btn-primary px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? "שולח..." : "שלח תגובה"}
-                    </button>
-                  </div>
-                </form>
-
-                {/* Comments List */}
-                <div className="space-y-4">
-                  {comments.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">אין תגובות עדיין. היו הראשונים!</p>
-                  ) : (
-                    comments.map((comment) => (
-                      <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4 relative group">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="font-semibold text-purple-400">{comment.name}</div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-xs text-gray-500">
-                              {new Date(comment.timestamp).toLocaleDateString("he-IL")}
-                            </div>
-                            {/* Delete button - only visible on hover */}
-                            <button
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
-                              title="מחק תגובה (דרוש מפתח אדמין)"
-                            >
-                              🗑️ מחק
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-gray-300">{comment.text}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Enhanced Artist Info */}
-            <div className="space-y-6">
-              {/* Artist Bio Card - HUGE & PROMINENT */}
+              
+              {/* Artist Bio Card - HUGE & PROMINENT (Original Right Column Content) */}
               <div className="glass-card rounded-3xl p-8 border-4 border-purple-500/50 bg-gradient-to-br from-purple-500/20 via-transparent to-cyan-500/20 shadow-2xl shadow-purple-500/30">
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 mb-4">
@@ -448,7 +329,7 @@ export default function FeaturedArtistPage({
                 </div>
               </div>
 
-              {/* Apply CTA */}
+              {/* Apply CTA (Original Right Column Content) */}
               <div className="glass-card rounded-2xl p-6 text-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border-2 border-cyan-500/20">
                 <span className="text-4xl mb-3 block">🎤</span>
                 <h3 className="text-lg font-bold mb-2">אתם אמנים צעירים?</h3>
@@ -456,6 +337,129 @@ export default function FeaturedArtistPage({
                 <Link href="/young-artists" className="btn-primary px-6 py-3 rounded-lg inline-block font-medium">
                   הגישו מועמדות
                 </Link>
+              </div>
+
+            </div>
+
+            {/* NEW RIGHT COLUMN (1/3 width) - Media and Engagement */}
+            <div className="space-y-6">
+              
+              {/* Large Artist Photo (Original Left Column Content) */}
+              <div className="glass-card rounded-3xl overflow-hidden border-4 border-purple-500/50">
+                <div className="aspect-square bg-gray-900">
+                  <img
+                    src={artist.profile_photo_url}
+                    alt={artist.stage_name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* SoundCloud Embed (Original Left Column Content) */}
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <span>🎵</span>
+                  הטראק המוצג
+                </h3>
+                <div className="rounded-lg overflow-hidden">
+                  <iframe
+                    width="100%"
+                    height="166"
+                    scrolling="no"
+                    style={{ border: "none" }}
+                    allow="autoplay"
+                    src={artist.track_url}
+                  />
+                </div>
+              </div>
+
+              {/* Reactions (Original Left Column Content) */}
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold mb-4">מה דעתכם על האמן?</h3>
+                <div className="grid grid-cols-4 gap-3">
+                  {Object.entries(reactionEmojis).map(([type, { emoji, label }]) => (
+                    <button
+                      key={type}
+                      onClick={() => handleReaction(type as keyof typeof reactions)}
+                      disabled={!!selectedReaction}
+                      className={`glass-card p-4 rounded-xl transition-all ${
+                        selectedReaction === type
+                          ? "ring-2 ring-purple-500 scale-105"
+                          : selectedReaction
+                          ? "opacity-50"
+                          : "hover:scale-105 hover:bg-purple-500/10"
+                      }`}
+                    >
+                      <div className="text-3xl mb-2">{emoji}</div>
+                      <div className="text-xs text-gray-400 mb-1">{label}</div>
+                      <div className="text-lg font-bold text-purple-400">
+                        {reactions[type as keyof typeof reactions]}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Comments Section (Original Left Column Content) */}
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold mb-4">תגובות ({comments.length})</h3>
+
+                {/* Comment Form */}
+                <form onSubmit={handleCommentSubmit} className="mb-6">
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="השם שלך"
+                      value={newComment.name}
+                      onChange={(e) => setNewComment({ ...newComment, name: e.target.value })}
+                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+                      maxLength={50}
+                    />
+                    <textarea
+                      placeholder="מה דעתך על האמן?"
+                      value={newComment.text}
+                      onChange={(e) => setNewComment({ ...newComment, text: e.target.value })}
+                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
+                      maxLength={500}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newComment.name.trim() || !newComment.text.trim() || isSubmitting}
+                      className="btn-primary px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? "שולח..." : "שלח תגובה"}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Comments List */}
+                <div className="space-y-4">
+                  {comments.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">אין תגובות עדיין. היו הראשונים!</p>
+                  ) : (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4 relative group">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="font-semibold text-purple-400">{comment.name}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs text-gray-500">
+                              {new Date(comment.timestamp).toLocaleDateString("he-IL")}
+                            </div>
+                            {/* Delete button - only visible on hover */}
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
+                              title="מחק תגובה (דרוש מפתח אדמין)"
+                            >
+                              🗑️ מחק
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-gray-300">{comment.text}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -465,7 +469,10 @@ export default function FeaturedArtistPage({
         <footer className="border-t border-gray-800 mt-16">
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="text-center">
-              <Link href="/" className="text-gray-400 hover:text-gray-300 transition">
+              <Link
+                href="/"
+                className="text-gray-400 hover:text-purple-400 transition"
+              >
                 חזרה לדף הבית
               </Link>
               <div className="text-sm text-gray-500 mt-4">© 2025 יוצאים לטראק</div>
