@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { CATEGORIES } from "@/data/awards-data";
 import { createClient } from "@supabase/supabase-js"; 
 
-// Helper function to extract YouTube video ID 
+// Helper function to extract YouTube video ID
 const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   const match = url.match(regex);
@@ -91,6 +91,7 @@ export default function Admin() {
 
   const [visits, setVisits] = React.useState<VisitData[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = React.useState(false);
+  const [dateRange, setDateRange] = React.useState<"7d" | "30d" | "all">("30d");
   
   const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics" | "track-submissions">("votes");
 
@@ -695,7 +696,6 @@ export default function Admin() {
             {/* ENHANCED ANALYTICS TAB - THIS IS THE NEW PART */}
             {/* ============================================= */}
             {activeTab === "analytics" && (() => {
-              const [dateRange, setDateRange] = React.useState<"7d" | "30d" | "all">("30d");
               
               const analytics = React.useMemo(() => {
                 if (!visits || visits.length === 0) return null;
