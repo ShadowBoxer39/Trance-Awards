@@ -1,60 +1,50 @@
-// pages/api/track-comment.ts
-import type { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { supabase } from '../../lib/supabaseClient';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ error: "Supabase not configured" });
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const { trackId, comment } = req.body;
+    const { track_id, name, text, user_id, user_photo_url } = req.body;
 
-    if (!trackId || !comment || !comment.name || !comment.text) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // Validate required fields
+    if (!track_id || !text || !user_id) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Validate comment length
-    if (comment.name.length > 50 || comment.text.length > 500) {
-      return res.status(400).json({ error: "Comment too long" });
+    // Validate text length
+    if (text.trim().length === 0) {
+      return res.status(400).json({ error: 'Comment cannot be empty' });
+    }
+
+    if (text.length > 1000) {
+      return res.status(400).json({ error: 'Comment is too long (max 1000 characters)' });
     }
 
     // Insert comment into database
     const { data, error } = await supabase
-      .from("track_of_the_week_comments")
-      .insert({
-        track_id: trackId,
-        name: comment.name.trim(),
-        text: comment.text.trim(),
-      })
-      .select()
-      .single();
+      .from('track_comments')
+      .insert([
+        {
+          track_id,
+          name: name || 'משתמש',
+          text: text.trim(),
+          user_id,
+          user_photo_url,
+        },
+      ])
+      .select();
 
     if (error) {
-      console.error("Supabase error inserting comment:", error);
-      return res.status(500).json({ error: "Failed to save comment" });
+      console.error('Supabase error:', error);
+      return res.status(500).json({ error: 'Failed to save comment' });
     }
 
-    return res.status(200).json({
-      success: true,
-      comment: {
-        id: data.id,
-        name: data.name,
-        text: data.text,
-        timestamp: data.created_at,
-      },
-    });
+    return res.status(200).json({ success: true, comment: data[0] });
   } catch (error) {
-    console.error("Error in track-comment POST:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error('Error saving comment:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
