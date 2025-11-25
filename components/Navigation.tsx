@@ -1,11 +1,10 @@
-// components/Navigation.tsx - REUSABLE NAVIGATION COMPONENT
+// components/Navigation.tsx - UPDATED with Featured Artist
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 
-// *** MODIFICATION 1: Add new page keys ***
 interface NavigationProps {
-  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track"; 
+  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist"; 
 }
 
 export default function Navigation({ currentPage }: NavigationProps) {
@@ -44,7 +43,6 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               בית
             </Link>
-            {/* *** MODIFICATION 2: Add Track of the Week Link *** */}
             <Link
               href="/track-of-the-week"
               className={`text-base font-medium transition ${
@@ -54,6 +52,17 @@ export default function Navigation({ currentPage }: NavigationProps) {
               }`}
             >
               הטראק השבועי
+            </Link>
+            {/* NEW: Featured Artist Link */}
+            <Link
+              href="/featured-artist"
+              className={`text-base font-medium transition ${
+                isActive("featured-artist")
+                  ? "text-white hover:text-purple-400"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              האמן שאתם חייבים להכיר
             </Link>
             <Link
               href="/episodes"
@@ -95,12 +104,11 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               למפרסמים
             </Link>
-            {/* *** MODIFICATION 3: Add Submit Track Link (optional, can be a button) *** */}
-             <Link
+            <Link
               href="/submit-track"
               className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
             >
-             בחירת טראק השבוע
+              בחירת טראק השבוע
             </Link>
             <Link
               href="/vote"
@@ -137,7 +145,6 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               בית
             </Link>
-            {/* *** MODIFICATION 4: Add Mobile Track of the Week Link *** */}
             <Link
               href="/track-of-the-week"
               className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
@@ -146,6 +153,16 @@ export default function Navigation({ currentPage }: NavigationProps) {
               onClick={() => setMobileMenuOpen(false)}
             >
               הטראק השבועי
+            </Link>
+            {/* NEW: Mobile Featured Artist Link */}
+            <Link
+              href="/featured-artist"
+              className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
+                isActive("featured-artist") ? "text-white" : "text-gray-300 hover:text-white"
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              האמן שאתם חייבים להכיר
             </Link>
             <Link
               href="/episodes"
@@ -183,13 +200,12 @@ export default function Navigation({ currentPage }: NavigationProps) {
             >
               למפרסמים
             </Link>
-            {/* *** MODIFICATION 5: Add Mobile Submit Track Link *** */}
             <Link
               href="/submit-track"
               className="block btn-secondary px-4 py-3 rounded-lg text-base font-medium text-center mt-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-         בחירת טראק השבוע
+              בחירת טראק השבוע
             </Link>
             <Link
               href="/vote"
