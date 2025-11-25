@@ -1,9 +1,7 @@
-// pages/track-of-the-week.tsx - BULLETPROOF VERSION
-// With comprehensive error handling and logging
-
+// pages/track-of-the-week.tsx - ENHANCED VERSION WITH ENV FIX
 import Head from "next/head";
-import Link from "next/link"; 
-import { useEffect } from "react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
 
@@ -17,6 +15,18 @@ interface TrackOfWeek {
   created_at: string;
   approved_at?: string;
   is_approved: boolean;
+  reactions?: {
+    fire: number;
+    heart: number;
+    mind_blown: number;
+    raising_hands: number;
+  };
+  comments?: Array<{
+    id: string;
+    name: string;
+    text: string;
+    timestamp: string;
+  }>;
 }
 
 // Helper to extract YouTube video ID
@@ -29,20 +39,98 @@ function getYouTubeId(url: string): string | null {
 export default function TrackOfTheWeekPage({
   currentTrack,
   pastTracks,
-  debugInfo,
 }: {
   currentTrack: TrackOfWeek | null;
   pastTracks: TrackOfWeek[];
-  debugInfo?: any;
 }) {
+  const [reactions, setReactions] = useState({
+    fire: 0,
+    heart: 0,
+    mind_blown: 0,
+    raising_hands: 0,
+  });
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState({ name: "", text: "" });
+  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
-    
-    // Client-side debug logging
-    if (debugInfo) {
-      console.log("🔍 Track Debug Info:", debugInfo);
+    if (currentTrack) {
+      setReactions(currentTrack.reactions || { fire: 0, heart: 0, mind_blown: 0, raising_hands: 0 });
+      setComments(currentTrack.comments || []);
     }
-  }, [debugInfo]);
+  }, [currentTrack]);
+
+  const handleReaction = async (reactionType: keyof typeof reactions) => {
+    if (!currentTrack || selectedReaction) return;
+
+    setSelectedReaction(reactionType);
+    const newReactions = { ...reactions, [reactionType]: reactions[reactionType] + 1 };
+    setReactions(newReactions);
+
+    try {
+      const response = await fetch("/api/track-reaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trackId: currentTrack.id,
+          reactionType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save reaction");
+      }
+    } catch (error) {
+      console.error("Error saving reaction:", error);
+      setSelectedReaction(null);
+    }
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentTrack || !newComment.name.trim() || !newComment.text.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    const comment = {
+      id: Date.now().toString(),
+      name: newComment.name.trim(),
+      text: newComment.text.trim(),
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      const response = await fetch("/api/track-comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trackId: currentTrack.id,
+          comment,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save comment");
+      }
+
+      setComments([comment, ...comments]);
+      setNewComment({ name: "", text: "" });
+    } catch (error) {
+      console.error("Error saving comment:", error);
+      alert("שגיאה בשמירת התגובה");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const reactionEmojis: { [key: string]: { emoji: string; label: string } } = {
+    fire: { emoji: "🔥", label: "אש!" },
+    heart: { emoji: "❤️", label: "אהבה" },
+    mind_blown: { emoji: "🤯", label: "מדהים" },
+    raising_hands: { emoji: "🙌", label: "כיף" },
+  };
 
   if (!currentTrack) {
     return (
@@ -57,20 +145,7 @@ export default function TrackOfTheWeekPage({
           <div className="max-w-4xl mx-auto px-6 py-20 text-center">
             <h1 className="text-4xl font-bold mb-6">הטראק השבועי של הקהילה</h1>
             <p className="text-gray-400 mb-8">אין טראק פעיל כרגע. בקרו שוב בקרוב!</p>
-            
-            {/* Debug info for troubleshooting */}
-            {debugInfo && process.env.NODE_ENV === 'development' && (
-              <details className="mt-8 text-left bg-gray-900 p-4 rounded max-w-2xl mx-auto">
-                <summary className="cursor-pointer text-yellow-400 font-semibold mb-2">
-                  🔍 Debug Info (dev only)
-                </summary>
-                <pre className="text-xs text-gray-300 overflow-auto">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-              </details>
-            )}
-            
-            <Link href="/" className="btn-primary px-6 py-3 rounded-lg inline-block mt-8">
+            <Link href="/" className="btn-primary px-6 py-3 rounded-lg inline-block">
               חזרה לדף הבית
             </Link>
           </div>
@@ -114,7 +189,9 @@ export default function TrackOfTheWeekPage({
         {/* Main Content */}
         <section className="max-w-6xl mx-auto px-6 py-8 md:py-12">
           <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+            {/* Left Column - Video + Reactions */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* YouTube Player */}
               <div className="glass-card rounded-2xl overflow-hidden">
                 <div className="aspect-video bg-gray-900">
                   <iframe
@@ -128,8 +205,86 @@ export default function TrackOfTheWeekPage({
                   />
                 </div>
               </div>
+
+              {/* Reactions */}
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold mb-4">מה דעתכם על הטראק?</h3>
+                <div className="grid grid-cols-4 gap-3">
+                  {Object.entries(reactionEmojis).map(([type, { emoji, label }]) => (
+                    <button
+                      key={type}
+                      onClick={() => handleReaction(type as keyof typeof reactions)}
+                      disabled={!!selectedReaction}
+                      className={`glass-card p-4 rounded-xl transition-all ${
+                        selectedReaction === type
+                          ? "ring-2 ring-purple-500 scale-105"
+                          : selectedReaction
+                          ? "opacity-50"
+                          : "hover:scale-105 hover:bg-purple-500/10"
+                      }`}
+                    >
+                      <div className="text-3xl mb-2">{emoji}</div>
+                      <div className="text-xs text-gray-400 mb-1">{label}</div>
+                      <div className="text-lg font-bold text-purple-400">{reactions[type as keyof typeof reactions]}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Comments Section */}
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold mb-4">תגובות ({comments.length})</h3>
+                
+                {/* Comment Form */}
+                <form onSubmit={handleCommentSubmit} className="mb-6">
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="השם שלך"
+                      value={newComment.name}
+                      onChange={(e) => setNewComment({ ...newComment, name: e.target.value })}
+                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+                      maxLength={50}
+                    />
+                    <textarea
+                      placeholder="מה דעתך על הטראק?"
+                      value={newComment.text}
+                      onChange={(e) => setNewComment({ ...newComment, text: e.target.value })}
+                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
+                      maxLength={500}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newComment.name.trim() || !newComment.text.trim() || isSubmitting}
+                      className="btn-primary px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? "שולח..." : "שלח תגובה"}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Comments List */}
+                <div className="space-y-4">
+                  {comments.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">אין תגובות עדיין. היו הראשונים!</p>
+                  ) : (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="font-semibold text-purple-400">{comment.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(comment.timestamp).toLocaleDateString("he-IL")}
+                          </div>
+                        </div>
+                        <p className="text-gray-300">{comment.text}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
+            {/* Right Column - Submitter Info */}
             <div className="space-y-6">
               <div className="glass-card rounded-2xl p-6 border-2 border-purple-500/30">
                 <div className="text-center mb-4">
@@ -202,6 +357,7 @@ export default function TrackOfTheWeekPage({
           </div>
         </section>
 
+        {/* Previous Tracks Archive */}
         {pastTracks.length > 0 && (
           <section className="max-w-6xl mx-auto px-6 py-12">
             <div className="mb-8 text-center">
@@ -278,26 +434,17 @@ export default function TrackOfTheWeekPage({
   );
 }
 
+// Server-side props with ENV VAR CHECK
 export async function getServerSideProps() {
-  const debugInfo: any = {
-    timestamp: new Date().toISOString(),
-    hasEnvVars: false,
-    attempts: [],
-  };
-
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.warn("⚠️ Supabase env vars not configured");
-    debugInfo.error = "Missing Supabase environment variables";
     return {
       props: {
         currentTrack: null,
         pastTracks: [],
-        debugInfo,
       },
     };
   }
-
-  debugInfo.hasEnvVars = true;
 
   try {
     const { createClient } = require("@supabase/supabase-js");
@@ -306,79 +453,41 @@ export async function getServerSideProps() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
-    // Attempt 1: Try with approved_at sorting
-    console.log("🔍 Attempt 1: Querying with approved_at sort...");
     const { data: currentTrack, error: currentError } = await supabase
       .from("track_of_the_week_submissions")
-      .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
+      .select("*")
       .eq("is_approved", true)
       .order("approved_at", { ascending: false })
       .limit(1)
       .single();
 
-    debugInfo.attempts.push({
-      method: "approved_at sort",
-      success: !!currentTrack,
-      error: currentError?.message || null,
-      track: currentTrack ? { id: currentTrack.id, title: currentTrack.track_title } : null,
-    });
-
-    console.log("Current track result:", currentTrack);
-    console.log("Current track error:", currentError);
-
-    // Fallback: If that didn't work, try with created_at
-    let finalTrack = currentTrack;
-    if (!currentTrack && currentError) {
-      console.log("🔍 Attempt 2: Fallback to created_at sort...");
-      const { data: fallbackTrack, error: fallbackError } = await supabase
-        .from("track_of_the_week_submissions")
-        .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
-        .eq("is_approved", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      debugInfo.attempts.push({
-        method: "created_at sort (fallback)",
-        success: !!fallbackTrack,
-        error: fallbackError?.message || null,
-        track: fallbackTrack ? { id: fallbackTrack.id, title: fallbackTrack.track_title } : null,
-      });
-
-      console.log("Fallback track result:", fallbackTrack);
-      finalTrack = fallbackTrack;
+    if (currentError) {
+      console.error("Current track error:", currentError);
     }
 
-    // Get past tracks
     const { data: pastTracks, error: pastError } = await supabase
       .from("track_of_the_week_submissions")
-      .select("id, name, photo_url, track_title, youtube_url, description, created_at, approved_at, is_approved")
+      .select("*")
       .eq("is_approved", true)
-      .order("created_at", { ascending: false })
+      .order("approved_at", { ascending: false })
       .range(1, 12);
 
-    debugInfo.pastTracksCount = pastTracks?.length || 0;
-
-    console.log("=== FINAL RESULT ===");
-    console.log("Current track:", finalTrack);
-    console.log("Past tracks count:", pastTracks?.length || 0);
-    console.log("===================");
+    if (pastError) {
+      console.error("Past tracks error:", pastError);
+    }
 
     return {
       props: {
-        currentTrack: finalTrack || null,
+        currentTrack: currentTrack || null,
         pastTracks: pastTracks || [],
-        debugInfo,
       },
     };
   } catch (error: any) {
-    console.error("❌ Fatal error fetching track data:", error);
-    debugInfo.fatalError = error.message;
+    console.error("❌ Error fetching track data:", error);
     return {
       props: {
         currentTrack: null,
         pastTracks: [],
-        debugInfo,
       },
     };
   }
