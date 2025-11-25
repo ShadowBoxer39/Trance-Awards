@@ -17,9 +17,9 @@ interface TrackOfWeek {
   is_approved: boolean;
   reactions?: {
     fire: number;
-    heart: number;
     mind_blown: number;
-    raising_hands: number;
+    cool: number;
+    not_feeling_it: number;
   };
   comments?: Array<{
     id: string;
@@ -45,9 +45,9 @@ export default function TrackOfTheWeekPage({
 }) {
   const [reactions, setReactions] = useState({
     fire: 0,
-    heart: 0,
     mind_blown: 0,
-    raising_hands: 0,
+    cool: 0,
+    not_feeling_it: 0,
   });
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState({ name: "", text: "" });
@@ -57,7 +57,7 @@ export default function TrackOfTheWeekPage({
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
     if (currentTrack) {
-      setReactions(currentTrack.reactions || { fire: 0, heart: 0, mind_blown: 0, raising_hands: 0 });
+      setReactions(currentTrack.reactions || { fire: 0, mind_blown: 0, cool: 0, not_feeling_it: 0 });
       setComments(currentTrack.comments || []);
     }
   }, [currentTrack]);
@@ -126,10 +126,10 @@ export default function TrackOfTheWeekPage({
   };
 
   const reactionEmojis: { [key: string]: { emoji: string; label: string } } = {
-    fire: { emoji: "🔥", label: "אש!" },
-    heart: { emoji: "❤️", label: "אהבה" },
-    mind_blown: { emoji: "🤯", label: "מדהים" },
-    raising_hands: { emoji: "🙌", label: "כיף" },
+    fire: { emoji: "🔥", label: "אש" },
+    mind_blown: { emoji: "🤯", label: "מפוצץ את המוח" },
+    cool: { emoji: "😎", label: "סבבה" },
+    not_feeling_it: { emoji: "😐", label: "לא עפתי" },
   };
 
   if (!currentTrack) {
@@ -284,17 +284,22 @@ export default function TrackOfTheWeekPage({
               </div>
             </div>
 
-            {/* Right Column - Submitter Info */}
+            {/* Right Column - Enhanced Submitter Spotlight */}
             <div className="space-y-6">
-              <div className="glass-card rounded-2xl p-6 border-2 border-purple-500/30">
-                <div className="text-center mb-4">
-                  <span className="text-sm font-semibold text-purple-400 uppercase tracking-wide">
-                    נבחר על ידי
-                  </span>
+              {/* ENHANCED Submitter Card - HERO STYLE */}
+              <div className="glass-card rounded-3xl p-8 border-4 border-purple-500/50 bg-gradient-to-br from-purple-500/20 via-transparent to-cyan-500/20 shadow-2xl shadow-purple-500/30">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 mb-4">
+                    <span className="text-xl">✨</span>
+                    <span className="text-sm font-bold text-white uppercase tracking-wider">
+                      בחירת השבוע
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-col items-center mb-6">
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-purple-500/50 bg-gray-700 mb-4 ring-4 ring-purple-500/20">
+                <div className="flex flex-col items-center mb-8">
+                  {/* HUGE Profile Image */}
+                  <div className="w-40 h-40 rounded-full overflow-hidden border-8 border-purple-500 bg-gray-700 mb-6 ring-8 ring-purple-500/30 shadow-2xl shadow-purple-500/50 transform hover:scale-105 transition-transform">
                     {currentTrack.photo_url ? (
                       <img
                         src={currentTrack.photo_url}
@@ -302,23 +307,39 @@ export default function TrackOfTheWeekPage({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-4xl text-gray-500">
+                      <div className="w-full h-full flex items-center justify-center text-6xl text-gray-500">
                         👤
                       </div>
                     )}
                   </div>
-                  <h3 className="text-xl font-bold text-white">{currentTrack.name}</h3>
+                  
+                  {/* LARGE Name */}
+                  <h3 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                    {currentTrack.name}
+                  </h3>
+                  
+                  {/* Subtitle */}
+                  <p className="text-purple-300 text-sm font-medium">
+                    בחר את הטראק הזה בשבילכם
+                  </p>
                 </div>
 
-                <div className="bg-black/30 rounded-lg p-4 mb-6">
-                  <h4 className="text-sm font-semibold text-gray-400 mb-2">למה הטראק הזה?</h4>
-                  <p className="text-gray-300 leading-relaxed text-sm">{currentTrack.description}</p>
+                {/* Enhanced Description Box */}
+                <div className="bg-black/40 rounded-2xl p-6 mb-8 border-2 border-purple-500/30 backdrop-blur-sm">
+                  <h4 className="text-base font-bold text-purple-300 mb-3 flex items-center gap-2">
+                    <span>💭</span>
+                    למה הטראק הזה?
+                  </h4>
+                  <p className="text-gray-200 leading-relaxed text-base font-medium">
+                    {currentTrack.description}
+                  </p>
                 </div>
 
-                <div className="space-y-2">
+                {/* Action Buttons */}
+                <div className="space-y-3">
                   <button
                     onClick={() => {
-                      const text = `🎵 ${currentTrack.track_title}\nהטראק השבועי של קהילת יוצאים לטראק!\n${window.location.href}`;
+                      const text = `🎵 ${currentTrack.track_title}\nנבחר על ידי ${currentTrack.name}\nהטראק השבועי של קהילת יוצאים לטראק!\n${window.location.href}`;
                       if (navigator.share) {
                         navigator.share({ text });
                       } else {
@@ -326,21 +347,21 @@ export default function TrackOfTheWeekPage({
                         alert("הקישור הועתק!");
                       }
                     }}
-                    className="w-full btn-secondary px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 px-4 py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all text-white"
                   >
-                    <span>📤</span>
-                    שתפו את הטראק
+                    <span className="text-xl">📤</span>
+                    <span className="text-lg">שתפו את הבחירה של {currentTrack.name}</span>
                   </button>
                   <a
                     href={currentTrack.youtube_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full btn-secondary px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2"
+                    className="w-full btn-secondary px-4 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-800 transition-all"
                   >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
                     </svg>
-                    צפו ב-YouTube
+                    <span className="text-lg">צפו ב-YouTube</span>
                   </a>
                 </div>
               </div>
