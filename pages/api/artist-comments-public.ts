@@ -1,7 +1,7 @@
-// pages/api/artist-comment-public.ts - Fetch artist comments (public)
+// pages/api/artist-comment-public.ts - Fetch artist comments (public) - FIXED
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
- 
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -28,7 +28,7 @@ export default async function handler(
     const { data, error } = await supabase
       .from('featured_artist_comments')
       .select('*')
-      .eq('artist_id', parseInt(artistId as string))
+      .eq('artist_id', artistId) // Keep as string - no parseInt!
       .eq('is_visible', true)
       .order('timestamp', { ascending: false });
 
@@ -40,7 +40,7 @@ export default async function handler(
       });
     }
 
-    console.log(`✅ Found ${data.length} comments`);
+    console.log('✅ Found ${data.length} comments');
 
     return res.status(200).json({ comments: data });
 
@@ -48,7 +48,7 @@ export default async function handler(
     console.error('💥 Unexpected error:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
-      details: error.message 
+      details: error.message
     });
   }
 }
