@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '../../lib/supabaseServer';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -22,6 +22,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (text.length > 1000) {
       return res.status(400).json({ error: 'Comment is too long (max 1000 characters)' });
     }
+
+    // Create Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
     // Insert comment into database
     const { data, error } = await supabase
