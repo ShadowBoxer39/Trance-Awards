@@ -1,6 +1,6 @@
-// pages/track-of-the-week.tsx - FINAL STABLE DESIGN & FUNCTIONALITY (Type Fixes Applied)
+// pages/track-of-the-week.tsx - FINAL STABLE VERSION (Type Fixes Applied)
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback for stability
 import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import supabase from '../lib/supabaseServer';
@@ -17,7 +17,7 @@ interface TrackSubmission {
   created_at: string;
 }
 
-// NEW: Interface for comments (matching your DB structure)
+// Interface for comments (matching your DB structure)
 interface Comment {
   id: string;
   name: string;
@@ -25,7 +25,7 @@ interface Comment {
   created_at: string; // Timestamp from DB
 }
 
-// NEW: Interface for reactions - USE STRING LITERALS as keys (FIXED)
+// Interface for reactions - use string literals as keys
 interface ReactionState {
     fire: number;
     mind_blown: number;
@@ -55,7 +55,6 @@ const getYouTubeVideoId = (url: string): string | null => {
 
 // --- Main Component ---
 export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
-  // Initialize state with default string keys (FIXED)
   const [reactions, setReactions] = useState<ReactionState>({
     fire: 0,
     mind_blown: 0,
@@ -64,27 +63,20 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
   });
   
   const [comments, setComments] = useState<Comment[]>([]);
-  const [commentName, setCommentName] = useState('');
-  const [commentText, setCommentText] = useState('');
+  // State for the form input
+  const [newComment, setNewComment] = useState({ name: "", text: "" }); 
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  
-  const [selectedReaction, setSelectedReaction] = useState<keyof ReactionState | null>(null); // Use fixed type
+  const [selectedReaction, setSelectedReaction] = useState<keyof ReactionState | null>(null);
   
   const currentTrack = track;
   const videoId = track ? getYouTubeVideoId(track.youtube_url) : null;
   const isVideoAvailable = track && videoId;
 
-  useEffect(() => {
-    document.documentElement.setAttribute("dir", "rtl");
-    const savedName = localStorage.getItem('track_commenter_name');
-    if (savedName) setNewComment(prev => ({ ...prev, name: savedName }));
-  }, []);
-
-
   // --- Data Fetching Functions ---
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!currentTrack) return;
     try {
       const res = await fetch(`/api/track-comment-public?trackId=${currentTrack.id}`); 
@@ -95,34 +87,47 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
     } catch (err) {
       console.error('Failed to load comments:', err);
     }
-  };
+  }, [currentTrack]); // Dependency on currentTrack
 
-  const fetchReactions = async () => {
+  const fetchReactions = useCallback(async () => {
     if (!currentTrack) return;
     try {
       const res = await fetch(`/api/track-reaction?trackId=${currentTrack.id}`); 
       const data = await res.json();
       if (data.reactions) {
-        // API returns object with string keys (e.g., {fire: 5, cool: 1})
         setReactions(data.reactions as ReactionState);
       }
     } catch (err) {
       console.error('Failed to load reactions:', err);
     }
-  };
+  }, [currentTrack]); // Dependency on currentTrack
 
-  // Main Initialization Effect
+  // FIX: Separate Effect for initial setup and local storage read
+  useEffect(() => {
+    document.documentElement.setAttribute("dir", "rtl");
+    
+    if (currentTrack) {
+        // FIX: Correctly call setNewComment via destructuring (local variable)
+        const savedName = localStorage.getItem('track_commenter_name');
+        if (savedName) {
+            setNewComment(prev => ({ ...prev, name: savedName })); 
+        }
+
+        const userReaction = localStorage.getItem(`track_reaction_${currentTrack.id}`);
+        if (userReaction && userReaction in REACTION_MAP) { 
+            setSelectedReaction(userReaction as keyof ReactionState);
+        }
+    }
+  }, [currentTrack]); // Depend on currentTrack
+
+  // Main Effect: Called on component mount and track change
   useEffect(() => {
     if (currentTrack) {
-      fetchComments(); 
+      fetchComments(); // Ensures comments are fetched
       fetchReactions();
-      
-      const userReaction = localStorage.getItem(`track_reaction_${currentTrack.id}`);
-      if (userReaction && userReaction in REACTION_MAP) { // Safe check
-        setSelectedReaction(userReaction as keyof ReactionState);
-      }
     }
-  }, [currentTrack]);
+    // Note: Dependencies are already handled by the useCallback hooks above
+  }, [fetchComments, fetchReactions, currentTrack]);
 
 
   // --- Submission and Interaction Logic ---
@@ -153,9 +158,10 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
         throw new Error(result.error || 'שגיאה בשליחת התגובה');
       }
 
+      // Success: Clear text, save name, and reload comments
       setNewComment(prev => ({ ...prev, text: "" }));
       localStorage.setItem('track_commenter_name', newComment.name.trim()); 
-      fetchComments(); 
+      await fetchComments(); // Await fetch for immediate update
 
     } catch (error: any) {
       setSubmitError(error.message || 'שגיאה לא ידועה בשליחה');
@@ -301,10 +307,10 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                     <div className="space-y-3">
                       <input
                         type="text"
-                        placeholder="שם (יוצג לצד התגובה) *"
+                        placeholder="שם *"
                         value={newComment.name}
                         onChange={(e) => setNewComment({ ...newComment, name: e.target.value })}
-                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
                         maxLength={50}
                         required
                       />
@@ -312,7 +318,7 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                         placeholder="מה דעתך על הטראק? *"
                         value={newComment.text}
                         onChange={(e) => setNewComment({ ...newComment, text: e.target.value })}
-                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
+                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
                         maxLength={500}
                         required
                       />
@@ -332,7 +338,7 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
                       <p className="text-gray-500 text-center py-8">אין תגובות עדיין. היו הראשונים!</p>
                     ) : (
                       comments.map((comment) => (
-                        <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4 border border-white/10">
+                        <div key={comment.id} className="bg-black/30 rounded-lg p-4 border border-white/10">
                           <div className="flex justify-between items-center mb-2">
                             <div className="font-semibold text-purple-400">{comment.name}</div>
                             <div className="flex items-center gap-2">
@@ -416,10 +422,8 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
 // Server-side props to fetch the current Track of the Week
 export const getServerSideProps: GetServerSideProps<TrackPageProps> = async () => {
   try {
-    // This client is configured to use SUPABASE_SERVICE_ROLE_KEY (safe server-side)
     const supabaseClient = require('../lib/supabaseServer').default; 
     
-    // Fetch the most recently approved track
     const { data, error } = await supabaseClient
       .from('track_of_the_week_submissions')
       .select('*')
