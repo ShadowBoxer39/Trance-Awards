@@ -22,15 +22,11 @@ export default function GoogleLoginButton({
       );
       
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}${redirectTo}`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
+  provider: 'google',
+  options: {
+    redirectTo: window.location.href, // Use current page URL
+  },
+});
 
       if (error) throw error;
     } catch (error: any) {
