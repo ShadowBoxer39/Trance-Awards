@@ -56,18 +56,46 @@ export default function TrackOfTheWeekPage({
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
+    
     if (currentTrack) {
-      setReactions(currentTrack.reactions || { fire: 0, mind_blown: 0, cool: 0, not_feeling_it: 0 });
-      setComments(currentTrack.comments || []);
+      // Fetch reactions from API
+      fetch(`/api/track-reaction?trackId=${currentTrack.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.reactions) {
+            setReactions(data.reactions);
+          }
+        })
+        .catch(err => console.error('Failed to load reactions:', err));
+
+      // Fetch comments from API
+      fetch(`/api/track-comment?trackId=${currentTrack.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.comments) {
+            setComments(data.comments);
+          }
+        })
+        .catch(err => console.error('Failed to load comments:', err));
+
+      // Check if user already reacted (from localStorage)
+      const userReaction = localStorage.getItem(`track_reaction_${currentTrack.id}`);
+      if (userReaction) {
+        setSelectedReaction(userReaction);
+      }
     }
   }, [currentTrack]);
 
   const handleReaction = async (reactionType: keyof typeof reactions) => {
     if (!currentTrack || selectedReaction) return;
 
+    // Optimistic update
     setSelectedReaction(reactionType);
     const newReactions = { ...reactions, [reactionType]: reactions[reactionType] + 1 };
     setReactions(newReactions);
+
+    // Save to localStorage
+    localStorage.setItem(`track_reaction_${currentTrack.id}`, reactionType);
 
     try {
       const response = await fetch("/api/track-reaction", {
@@ -82,9 +110,17 @@ export default function TrackOfTheWeekPage({
       if (!response.ok) {
         throw new Error("Failed to save reaction");
       }
+
+      const data = await response.json();
+      if (data.reactions) {
+        setReactions(data.reactions);
+      }
     } catch (error) {
       console.error("Error saving reaction:", error);
+      // Revert on error
       setSelectedReaction(null);
+      setReactions(reactions);
+      localStorage.removeItem(`track_reaction_${currentTrack.id}`);
     }
   };
 
@@ -115,13 +151,43 @@ export default function TrackOfTheWeekPage({
         throw new Error("Failed to save comment");
       }
 
-      setComments([comment, ...comments]);
+      const data = await response.json();
+      setComments([data.comment, ...comments]);
       setNewComment({ name: "", text: "" });
     } catch (error) {
       console.error("Error saving comment:", error);
       alert("שגיאה בשמירת התגובה");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    const adminKey = prompt("הזן מפתח אדמין למחיקת התגובה:");
+    
+    if (!adminKey) return;
+
+    try {
+      const response = await fetch("/api/track-comment", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          commentId,
+          adminKey,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete comment");
+      }
+
+      // Remove comment from state
+      setComments(comments.filter((c) => c.id !== commentId));
+      alert("התגובה נמחקה בהצלחה");
+    } catch (error: any) {
+      console.error("Error deleting comment:", error);
+      alert(error.message === "Unauthorized" ? "מפתח אדמין שגוי" : "שגיאה במחיקת התגובה");
     }
   };
 
@@ -269,11 +335,21 @@ export default function TrackOfTheWeekPage({
                     <p className="text-gray-500 text-center py-8">אין תגובות עדיין. היו הראשונים!</p>
                   ) : (
                     comments.map((comment) => (
-                      <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4">
+                      <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4 relative group">
                         <div className="flex items-start justify-between mb-2">
                           <div className="font-semibold text-purple-400">{comment.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(comment.timestamp).toLocaleDateString("he-IL")}
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs text-gray-500">
+                              {new Date(comment.timestamp).toLocaleDateString("he-IL")}
+                            </div>
+                            {/* Delete button - only visible on hover */}
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
+                              title="מחק תגובה (דרוש מפתח אדמין)"
+                            >
+                              🗑️ מחק
+                            </button>
                           </div>
                         </div>
                         <p className="text-gray-300">{comment.text}</p>
