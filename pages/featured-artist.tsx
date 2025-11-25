@@ -244,14 +244,16 @@ export default function FeaturedArtistPage({
           </div>
         </section>
 
-        {/* Main Content - COLUMNS SWAPPED HERE */}
+        {/* Main Content - REARRANGED COLUMNS */}
         <section className="max-w-6xl mx-auto px-6 py-8 md:py-12">
           <div className="grid lg:grid-cols-3 gap-8">
             
-            {/* NEW LEFT COLUMN (2/3 width) - Artist Info & Socials */}
+            {/* ------------------------------------------------------------------ */}
+            {/* NEW LEFT COLUMN (2/3 width) - Artist Info, Socials, REACTIONS & COMMENTS */}
+            {/* ------------------------------------------------------------------ */}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Artist Bio Card - HUGE & PROMINENT (Original Right Column Content) */}
+              {/* Artist Bio Card - HUGE & PROMINENT */}
               <div className="glass-card rounded-3xl p-8 border-4 border-purple-500/50 bg-gradient-to-br from-purple-500/20 via-transparent to-cyan-500/20 shadow-2xl shadow-purple-500/30">
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 mb-4">
@@ -285,7 +287,7 @@ export default function FeaturedArtistPage({
                 {/* Social Links - Enhanced */}
                 <div>
                   <h4 className="text-sm font-semibold mb-3 text-gray-400">עקבו אחריו</h4>
-                  <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {artist.instagram_url && (
                       <a
                         href={artist.instagram_url}
@@ -329,51 +331,7 @@ export default function FeaturedArtistPage({
                 </div>
               </div>
 
-              {/* Apply CTA (Original Right Column Content) */}
-              <div className="glass-card rounded-2xl p-6 text-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border-2 border-cyan-500/20">
-                <span className="text-4xl mb-3 block">🎤</span>
-                <h3 className="text-lg font-bold mb-2">אתם אמנים צעירים?</h3>
-                <p className="text-sm text-gray-400 mb-4">הגישו מועמדות להופיע בתכנית!</p>
-                <Link href="/young-artists" className="btn-primary px-6 py-3 rounded-lg inline-block font-medium">
-                  הגישו מועמדות
-                </Link>
-              </div>
-
-            </div>
-
-            {/* NEW RIGHT COLUMN (1/3 width) - Media and Engagement */}
-            <div className="space-y-6">
-              
-              {/* Large Artist Photo (Original Left Column Content) */}
-              <div className="glass-card rounded-3xl overflow-hidden border-4 border-purple-500/50">
-                <div className="aspect-square bg-gray-900">
-                  <img
-                    src={artist.profile_photo_url}
-                    alt={artist.stage_name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* SoundCloud Embed (Original Left Column Content) */}
-              <div className="glass-card rounded-2xl p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <span>🎵</span>
-                  הטראק המוצג
-                </h3>
-                <div className="rounded-lg overflow-hidden">
-                  <iframe
-                    width="100%"
-                    height="166"
-                    scrolling="no"
-                    style={{ border: "none" }}
-                    allow="autoplay"
-                    src={artist.track_url}
-                  />
-                </div>
-              </div>
-
-              {/* Reactions (Original Left Column Content) */}
+              {/* Reactions (Moved to Primary Column) */}
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="text-lg font-bold mb-4">מה דעתכם על האמן?</h3>
                 <div className="grid grid-cols-4 gap-3">
@@ -400,7 +358,7 @@ export default function FeaturedArtistPage({
                 </div>
               </div>
 
-              {/* Comments Section (Original Left Column Content) */}
+              {/* Comments Section (Moved to Primary Column) */}
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="text-lg font-bold mb-4">תגובות ({comments.length})</h3>
 
@@ -461,6 +419,53 @@ export default function FeaturedArtistPage({
                   )}
                 </div>
               </div>
+
+            </div>
+
+            {/* ------------------------------------------------------------------ */}
+            {/* NEW RIGHT COLUMN (1/3 width) - Media and CTA */}
+            {/* ------------------------------------------------------------------ */}
+            <div className="space-y-6">
+              
+              {/* Large Artist Photo */}
+              <div className="glass-card rounded-3xl overflow-hidden border-4 border-purple-500/50">
+                <div className="aspect-square bg-gray-900">
+                  <img
+                    src={artist.profile_photo_url}
+                    alt={artist.stage_name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* SoundCloud Embed */}
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <span>🎵</span>
+                  הטראק המוצג
+                </h3>
+                <div className="rounded-lg overflow-hidden">
+                  <iframe
+                    width="100%"
+                    height="166"
+                    scrolling="no"
+                    style={{ border: "none" }}
+                    allow="autoplay"
+                    src={artist.track_url}
+                  />
+                </div>
+              </div>
+              
+              {/* Apply CTA (Moved to Secondary Column & Made Smaller) */}
+              <div className="glass-card rounded-2xl p-6 text-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border-2 border-cyan-500/20">
+                <span className="text-4xl mb-3 block">🎤</span>
+                <h3 className="text-lg font-bold mb-2">אתם אמנים צעירים?</h3>
+                <p className="text-sm text-gray-400 mb-4">הגישו מועמדות להופיע בתכנית!</p>
+                <Link href="/young-artists" className="btn-primary px-6 py-3 rounded-lg inline-block font-medium">
+                  הגישו מועמדות
+                </Link>
+              </div>
+
             </div>
           </div>
         </section>
