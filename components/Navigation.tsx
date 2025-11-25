@@ -1,4 +1,4 @@
-// components/Navigation.tsx - SIMPLIFIED DESKTOP VIEW
+// components/Navigation.tsx - REVISED with "More" Dropdown
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
@@ -6,6 +6,64 @@ import React from "react";
 interface NavigationProps {
   currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist"; 
 }
+
+// ----------------------------------------------------
+// NEW: More Dropdown Component
+// ----------------------------------------------------
+const MoreDropdown = ({ currentPage, isActive }: { currentPage?: NavigationProps['currentPage'], isActive: (page: string) => boolean }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const secondaryLinks = [
+    { href: "/featured-artist", label: "האמן שאתם חייבים להכיר", page: "featured-artist" },
+    { href: "/young-artists", label: "אמנים צעירים", page: "young-artists" },
+    { href: "/about", label: "אודות", page: "about" },
+    { href: "/advertisers", label: "למפרסמים", page: "advertisers" },
+  ];
+  
+  // Determine if the current active page is within the secondary links
+  const isSecondaryActive = secondaryLinks.some(link => isActive(link.page));
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        // The "More" link is active if any of the secondary links are the current page
+        className={`text-base font-medium transition flex items-center gap-1 ${
+          isSecondaryActive
+            ? "text-white hover:text-purple-400"
+            : "text-gray-300 hover:text-white"
+        }`}
+      >
+        עוד
+        <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-gray-900 ring-1 ring-black ring-opacity-5 z-50 origin-top-right">
+          <div className="py-1">
+            {secondaryLinks.map((link) => (
+              <Link
+                key={link.page}
+                href={link.href}
+                className={`block px-4 py-2 text-sm transition ${
+                  isActive(link.page)
+                    ? "text-purple-400 bg-gray-800"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+// ----------------------------------------------------
 
 export default function Navigation({ currentPage }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -16,7 +74,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
     <nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-20">
-          {/* Logo & Brand - KEEP THIS ON THE RIGHT (RTL Start) */}
+          {/* Logo & Brand (RTL Start) */}
           <Link
             href="/"
             className="flex items-center gap-3 hover:opacity-90 transition"
@@ -31,7 +89,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
             <span className="text-xl font-semibold hidden sm:block">יוצאים לטראק</span>
           </Link>
 
-          {/* Desktop Menu - KEEP THIS LTR in CODE FOR RTL DISPLAY */}
+          {/* Desktop Menu - SIMPLIFIED WITH DROPDOWN */}
           <div className="hidden md:flex items-center gap-8">
             {/* Primary Links */}
             <Link
@@ -65,20 +123,10 @@ export default function Navigation({ currentPage }: NavigationProps) {
               פרקים
             </Link>
             
-            {/* Secondary Links (e.g., in a dropdown or moved elsewhere) 
-            
-            // REMOVED FROM NAVBAR TO SIMPLIFY:
-            // - האמן שאתם חייבים להכיר
-            // - אמנים צעירים
-            // - אודות
-            // - למפרסמים
+            {/* Dropdown for Secondary Links */}
+            <MoreDropdown currentPage={currentPage} isActive={isActive} />
 
-            // If you MUST keep them, consider a dropdown for secondary items (More).
-            
-            */}
-
-
-            {/* Action Buttons (Keep them on the left, which means they are last in the code) */}
+            {/* Action Buttons (RTL End) */}
             <Link
               href="/submit-track"
               className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
@@ -93,7 +141,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
             </Link>
           </div>
 
-          {/* Mobile Menu Button - KEEP THIS ON THE LEFT (RTL End) */}
+          {/* Mobile Menu Button (RTL End) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden text-gray-300 hover:text-white p-2"
@@ -108,10 +156,9 @@ export default function Navigation({ currentPage }: NavigationProps) {
           </button>
         </div>
 
-        {/* Mobile Menu (Keep all links here for accessibility) */}
+        {/* Mobile Menu (All links are listed here, in logical reading order) */}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-1">
-            {/* The order here is already correct (Home -> ... -> Vote) */}
             <Link
               href="/"
               className={`block text-base font-medium py-3 px-4 rounded-lg hover:bg-gray-800 transition ${
