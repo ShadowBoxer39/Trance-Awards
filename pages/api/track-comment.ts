@@ -28,36 +28,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Comment too long" });
     }
 
-    // Get current track
-    const { data: track, error: fetchError } = await supabase
-      .from("track_of_the_week_submissions")
-      .select("comments")
-      .eq("id", trackId)
+    // Insert comment into database
+    const { data, error } = await supabase
+      .from("track_of_the_week_comments")
+      .insert({
+        track_id: trackId,
+        name: comment.name.trim(),
+        text: comment.text.trim(),
+      })
+      .select()
       .single();
 
-    if (fetchError) {
-      console.error("Error fetching track:", fetchError);
-      return res.status(500).json({ error: "Failed to fetch track" });
-    }
-
-    // Add new comment to array
-    const currentComments = track?.comments || [];
-    const updatedComments = [comment, ...currentComments];
-
-    // Save to database
-    const { error: updateError } = await supabase
-      .from("track_of_the_week_submissions")
-      .update({ comments: updatedComments })
-      .eq("id", trackId);
-
-    if (updateError) {
-      console.error("Error updating comments:", updateError);
+    if (error) {
+      console.error("Supabase error inserting comment:", error);
       return res.status(500).json({ error: "Failed to save comment" });
     }
 
-    return res.status(200).json({ success: true, comment });
+    return res.status(200).json({
+      success: true,
+      comment: {
+        id: data.id,
+        name: data.name,
+        text: data.text,
+        timestamp: data.created_at,
+      },
+    });
   } catch (error) {
-    console.error("Error in track-comment API:", error);
+    console.error("Error in track-comment POST:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 }

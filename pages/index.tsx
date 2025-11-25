@@ -74,6 +74,226 @@ function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: 
   );
 }
 
+// --- Rotating Comments Component ---
+function FeaturedArtistComments() {
+  const [comments, setComments] = useState<any[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch comments from the API
+    const fetchComments = async () => {
+      try {
+        const response = await fetch('/api/artist-comments-public?artistId=kanok');
+        if (response.ok) {
+          const data = await response.json();
+          setComments(data.comments || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch comments:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, []);
+
+  useEffect(() => {
+    if (comments.length === 0) return;
+
+    // Rotate comments every 5 seconds
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % comments.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [comments.length]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-black/30 rounded-lg p-4 animate-pulse">
+        <div className="h-4 bg-gray-700 rounded w-3/4 mb-2" />
+        <div className="h-4 bg-gray-700 rounded w-1/2" />
+      </div>
+    );
+  }
+
+  if (comments.length === 0) {
+    return (
+      <div className="bg-black/30 rounded-lg p-4 border-2 border-purple-500/30">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">💬</span>
+          <h4 className="text-sm font-semibold text-purple-400">מה הקהילה אומרת?</h4>
+        </div>
+        <p className="text-gray-400 text-sm">
+          היו הראשונים להגיב על האמן!
+        </p>
+      </div>
+    );
+  }
+
+  const currentComment = comments[currentIndex];
+
+  return (
+    <div className="relative">
+      <div className="bg-black/30 rounded-lg p-4 border-2 border-purple-500/30 min-h-[100px]">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">💬</span>
+            <h4 className="text-sm font-semibold text-purple-400">מה הקהילה אומרת?</h4>
+          </div>
+          <div className="text-xs text-gray-500">
+            {currentIndex + 1} / {comments.length}
+          </div>
+        </div>
+        
+        <div className="transition-opacity duration-500">
+          <p className="text-gray-300 text-sm leading-relaxed mb-2">
+            "{currentComment.text}"
+          </p>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-purple-400 font-medium">
+              — {currentComment.name}
+            </span>
+            <span className="text-xs text-gray-500">
+              {new Date(currentComment.timestamp).toLocaleDateString('he-IL')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Dots */}
+      {comments.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-3">
+          {comments.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`h-1.5 rounded-full transition-all ${
+                idx === currentIndex
+                  ? 'w-6 bg-purple-500'
+                  : 'w-1.5 bg-gray-600 hover:bg-gray-500'
+              }`}
+              aria-label={`Comment ${idx + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Track of the Week Rotating Comments Component ---
+function TrackOfWeekComments({ trackId }: { trackId: number }) {
+  const [comments, setComments] = useState<any[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch comments from the API
+    const fetchComments = async () => {
+      try {
+        const response = await fetch(`/api/track-comment-public?trackId=${trackId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setComments(data.comments || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch track comments:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [trackId]);
+
+  useEffect(() => {
+    if (comments.length === 0) return;
+
+    // Rotate comments every 5 seconds
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % comments.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [comments.length]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-black/30 rounded-lg p-4 animate-pulse">
+        <div className="h-4 bg-gray-700 rounded w-3/4 mb-2" />
+        <div className="h-4 bg-gray-700 rounded w-1/2" />
+      </div>
+    );
+  }
+
+  if (comments.length === 0) {
+    return (
+      <div className="bg-black/30 rounded-lg p-4 border-2 border-green-500/30">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">💬</span>
+          <h4 className="text-sm font-semibold text-green-400">מה הקהילה אומרת?</h4>
+        </div>
+        <p className="text-gray-400 text-sm">
+          היו הראשונים להגיב על הטראק!
+        </p>
+      </div>
+    );
+  }
+
+  const currentComment = comments[currentIndex];
+
+  return (
+    <div className="relative">
+      <div className="bg-black/30 rounded-lg p-4 border-2 border-green-500/30 min-h-[100px]">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">💬</span>
+            <h4 className="text-sm font-semibold text-green-400">מה הקהילה אומרת?</h4>
+          </div>
+          <div className="text-xs text-gray-500">
+            {currentIndex + 1} / {comments.length}
+          </div>
+        </div>
+        
+        <div className="transition-opacity duration-500">
+          <p className="text-gray-300 text-sm leading-relaxed mb-2">
+            "{currentComment.text}"
+          </p>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-green-400 font-medium">
+              — {currentComment.name}
+            </span>
+            <span className="text-xs text-gray-500">
+              {new Date(currentComment.timestamp).toLocaleDateString('he-IL')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Dots */}
+      {comments.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-3">
+          {comments.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`h-1.5 rounded-full transition-all ${
+                idx === currentIndex
+                  ? 'w-6 bg-green-500'
+                  : 'w-1.5 bg-gray-600 hover:bg-gray-500'
+              }`}
+              aria-label={`Comment ${idx + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home({ 
   episodes, 
   episodesError,
@@ -226,7 +446,7 @@ export default function Home({
                         התכנית מוקלטת באולפני <span className="font-bold text-purple-400">המיוזיק רום</span> – אולפן פודקאסטים ייחודי ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
                       </p>
                       <a 
-                        href="https://www.instagram.com/musikroom.love/" 
+                        href="https://www.facebook.com/p/MusikRoom-61568565972669/" 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="inline-flex items-center gap-2 text-sm font-semibold text-purple-300 hover:text-purple-200 underline-offset-4 hover:underline transition"
@@ -343,6 +563,9 @@ export default function Home({
                   </div>
                 </div>
 
+                {/* NEW: Rotating Comments Section */}
+                <FeaturedArtistComments />
+
                 <div>
                   <h4 className="text-sm font-semibold mb-3 text-gray-400">עקבו אחריו</h4>
                   <div className="flex flex-wrap gap-3">
@@ -362,8 +585,8 @@ export default function Home({
                 </div>
 
                 <div className="pt-2">
-                  <Link href="/young-artists" className="btn-primary px-6 py-3 rounded-lg font-medium inline-block">
-                    הרשמו בעצמכם או גלו עוד אמנים 
+                  <Link href="/featured-artist" className="btn-primary px-6 py-3 rounded-lg font-medium inline-block">
+                    עוד פרטים והגיבו ←
                   </Link>
                 </div>
               </div>
@@ -442,12 +665,15 @@ export default function Home({
                     </p>
                   </div>
 
+                  {/* NEW: Rotating Comments */}
+                  <TrackOfWeekComments trackId={trackOfWeek.id} />
+
                   {/* CTA */}
                   <Link
                     href="/track-of-the-week"
                     className="btn-secondary px-6 py-3 rounded-lg font-medium text-center"
                   >
-                    עוד פרטים ←
+                    עוד פרטים והגיבו ←
                   </Link>
                 </div>
               </div>
