@@ -1,11 +1,11 @@
-// pages/api/artist-comments-public.ts
+// pages/api/artist-comments-public.ts - WITH SUPABASE
 import type { NextApiRequest, NextApiResponse } from "next";
+import { createClient } from "@supabase/supabase-js";
 
-// Import the same storage as artist-comment.ts
-// In a real implementation, this would be in Supabase
-let artistComments: Record<string, any[]> = {
-  kanok: [],
-};
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -19,11 +19,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Missing artistId" });
     }
 
-    const comments = artistComments[artistId] || [];
+    // Fetch comments from database, ordered by newest first
+    const { data, error } = await supabase
+      .from("featured_artist_comments")
+      .select("id, name, text, created_at")
+      .eq("artist_id", artistId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error("Supabase error fetching comments:", error);
+      return res.status(500).json({ error: "Failed to fetch comments" });
+    }
+
+    // Format comments for frontend
+    const comments = data.map((comment) => ({
+      id: comment.id,
+      name: comment.name,
+      text: comment.text,
+      timestamp: comment.created_at,
+    }));
 
     return res.status(200).json({
       success: true,
-      comments: comments.slice(0, 10), // Return max 10 most recent comments
+      comments: comments,
     });
   } catch (error) {
     console.error("Error in artist-comments-public API:", error);
