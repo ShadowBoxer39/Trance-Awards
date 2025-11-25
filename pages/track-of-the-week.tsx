@@ -372,7 +372,7 @@ export default function TrackOfTheWeekPage({
                   <div className="mb-8 text-center bg-purple-500/10 rounded-xl p-6 border border-purple-500/30">
                     <p className="text-white mb-4 font-medium">התחברו כדי להוסיף תגובה</p>
                     <div className="flex justify-center">
-                      <GoogleLoginButton redirectTo="/track-of-the-week" />
+                      <GoogleLoginButton redirectTo = 'https://tracktrip.co.il/track-of-the-week' />
                     </div>
                   </div>
                 ) : (
