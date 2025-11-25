@@ -226,7 +226,7 @@ export default function Home({
                         התכנית מוקלטת באולפני <span className="font-bold text-purple-400">המיוזיק רום</span> – אולפן פודקאסטים ייחודי ומרחב יצירתי ל־DJs להפקות וידאו מקצועיות.
                       </p>
                       <a 
-                        href="https://www.instagram.com/musikroom.love/" 
+                        href="https://www.facebook.com/p/MusikRoom-61568565972669/" 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="inline-flex items-center gap-2 text-sm font-semibold text-purple-300 hover:text-purple-200 underline-offset-4 hover:underline transition"
@@ -362,8 +362,8 @@ export default function Home({
                 </div>
 
                 <div className="pt-2">
-                  <Link href="/young-artists" className="btn-primary px-6 py-3 rounded-lg font-medium inline-block">
-                    הרשמו בעצמכם או גלו עוד אמנים 
+                  <Link href="/featured-artist" className="btn-primary px-6 py-3 rounded-lg font-medium inline-block">
+                    עוד פרטים והגיבו ←
                   </Link>
                 </div>
               </div>
