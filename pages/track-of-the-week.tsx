@@ -1,6 +1,6 @@
-// pages/track-of-the-week.tsx - FINAL FIX FOR COMMENT FETCHING
+// pages/track-of-the-week.tsx - FINAL STABLE VERSION
 
-import React, { useState, useEffect } from 'react'; // Added useState, useEffect
+import React, { useState, useEffect } from 'react';
 import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import supabase from '../lib/supabaseServer';
@@ -25,6 +25,11 @@ interface Comment {
   created_at: string;
 }
 
+interface Reaction {
+  type: string;
+  count: number;
+}
+
 interface TrackPageProps {
   track: TrackSubmission | null;
   error: string | null;
@@ -44,20 +49,24 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   
-  // State for Reactions (assuming existence of a similar API)
-  const [reactions, setReactions] = useState<{ reaction: string, count: number }[]>([]);
+  // Use array state for reactions to ensure stability
+  const [reactions, setReactions] = useState<Reaction[]>([]);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    document.documentElement.setAttribute("dir", "rtl");
-  }, []);
-
   const currentTrack = track;
+  const videoId = track ? getYouTubeVideoId(track.youtube_url) : null;
+  const isVideoAvailable = track && videoId;
 
-  // --- Comment Fetching Logic (The fix) ---
+  useEffect(() => {
+    document.documentElement.setAttribute("dir", "rtl");
+    // Load name from local storage if exists
+    const savedName = localStorage.getItem('track_commenter_name');
+    if (savedName) setCommentName(savedName);
+  }, []);
+  
+  // --- Comment Fetching Logic ---
   const fetchComments = () => {
     if (!currentTrack) return;
-    // Assuming a public, unauthenticated GET endpoint exists for reading comments
     fetch(`/api/track-comment-public?trackId=${currentTrack.id}`) 
       .then(res => res.json())
       .then(data => {
@@ -71,11 +80,13 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
   // --- Reaction Fetching Logic ---
   const fetchReactions = () => {
     if (!currentTrack) return;
-    fetch(`/api/track-reaction?trackId=${currentTrack.id}`) // Assuming a public reaction API exists
+    fetch(`/api/track-reaction?trackId=${currentTrack.id}`) 
       .then(res => res.json())
       .then(data => {
         if (data.reactions) {
-          setReactions(data.reactions);
+          // Converts the flat object response (e.g., {fire: 5, cool: 1}) to an array [{type: 'fire', count: 5}]
+          const reactionArray = Object.entries(data.reactions).map(([type, count]) => ({ type, count: count as number }));
+          setReactions(reactionArray);
         }
       })
       .catch(err => console.error('Failed to load reactions:', err));
@@ -84,10 +95,9 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
   // Main Effect: Called on component mount and track change
   useEffect(() => {
     if (currentTrack) {
-      fetchComments(); // FIX: Fetch comments on load
+      fetchComments(); // Ensure comments are fetched
       fetchReactions();
       
-      // Load user's previous reaction from local storage
       const userReaction = localStorage.getItem(`track_reaction_${currentTrack.id}`);
       if (userReaction) {
         setSelectedReaction(userReaction);
@@ -110,8 +120,10 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           trackId: currentTrack.id,
-          name: commentName.trim(),
-          text: commentText.trim(),
+          comment: { // API expects 'comment' object wrapper
+            name: commentName.trim(),
+            text: commentText.trim(),
+          }
         }),
       });
 
@@ -121,9 +133,9 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
         throw new Error(result.error || 'שגיאה בשליחת התגובה');
       }
 
-      // Success: Clear form and refetch data
+      // Success: Clear text and refetch data
       setCommentText('');
-      setCommentName(commentName.trim()); // Keep name for future comments
+      localStorage.setItem('track_commenter_name', commentName.trim()); // Save name
       fetchComments(); 
       
     } catch (err: any) {
@@ -140,27 +152,55 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
     const isRemoving = selectedReaction === reaction;
     const newReaction = isRemoving ? null : reaction;
 
-    // Optimistic update
+    // Optimistic update (for faster UX)
     setSelectedReaction(newReaction);
+    
+    // Update local state array optimistically (only works if we use the object form, but for this file's state, we use array)
+    setReactions(prev => {
+        const index = prev.findIndex(r => r.type === reaction);
+        if (index > -1) {
+            const newArr = [...prev];
+            newArr[index].count += isRemoving ? -1 : 1;
+            return newArr;
+        }
+        return prev;
+    });
+
     localStorage.setItem(`track_reaction_${currentTrack.id}`, newReaction || '');
     
     try {
+      // POST the single reaction type
       await fetch('/api/track-reaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           trackId: currentTrack.id,
-          reaction: newReaction,
-          previousReaction: isRemoving ? reaction : selectedReaction,
+          reactionType: newReaction, // The API handles the increment
+          // No need to send previousReaction if API handles atomic increment
         }),
       });
-      fetchReactions(); // Fetch actual counts
+      // Final fetch to ensure data integrity
+      fetchReactions(); 
     } catch (err) {
       // Revert if error occurs
+      console.error("Error saving reaction:", err);
       setSelectedReaction(isRemoving ? reaction : null);
-      localStorage.setItem(`track_reaction_${currentTrack.id}`, isRemoving ? reaction : '');
+      localStorage.removeItem(`track_reaction_${currentTrack.id}`);
       alert('שגיאה בשליחת הריאקשן');
     }
+  };
+
+  const reactionMap = {
+    '🔥': 'fire',
+    '🤯': 'mind_blown',
+    '😎': 'cool',
+    '😐': 'not_feeling_it',
+  };
+  const emojiMap: Record<string, string> = {
+    'fire': '🔥',
+    'mind_blown': '🤯',
+    'cool': '😎',
+    'not_feeling_it': '😐',
   };
   
 
@@ -175,9 +215,6 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
       </div>
     );
   }
-
-  const videoId = track ? getYouTubeVideoId(track.youtube_url) : null;
-  const isVideoAvailable = track && videoId;
 
   return (
     <div className="min-h-screen trance-backdrop text-gray-100">
@@ -300,22 +337,42 @@ export default function TrackOfTheWeekPage({ track, error }: TrackPageProps) {
               <div className="mt-10 pt-6 border-t border-white/10 text-center">
                 <h3 className="text-2xl font-semibold mb-4 text-white">איך הטראק גרם לכם להרגיש?</h3>
                 <div className="flex justify-center gap-4 flex-wrap">
-                  {['🔥', '🤯', '🙏', '🕺', '😴'].map(reaction => (
+                  {reactions.map(r => (
                     <button
-                      key={reaction}
-                      onClick={() => handleReaction(reaction)}
+                      key={r.type}
+                      onClick={() => handleReaction(r.type)}
                       className={`glass rounded-full px-6 py-3 text-2xl transition-all border ${
-                        selectedReaction === reaction 
+                        selectedReaction === r.type 
                           ? 'border-purple-500 ring-2 ring-purple-500/50 scale-110' 
                           : 'border-white/10 hover:border-purple-500/50'
                       }`}
                     >
-                      {reaction}
+                      {emojiMap[r.type] || r.type}
                       <span className="text-sm ms-2 text-white/70">
-                        ({reactions.find(r => r.reaction === reaction)?.count || 0})
+                        ({r.count})
                       </span>
                     </button>
                   ))}
+                  {/* Fallback buttons for types not yet in DB */}
+                  {Object.keys(reactionMap).map(emoji => {
+                      const type = reactionMap[emoji as keyof typeof reactionMap];
+                      if (!reactions.find(r => r.type === type)) {
+                          return (
+                              <button
+                                key={emoji}
+                                onClick={() => handleReaction(type)}
+                                disabled={!!selectedReaction}
+                                className={`glass rounded-full px-6 py-3 text-2xl transition-all border ${
+                                    selectedReaction ? 'opacity-50 border-gray-800' : 'border-white/10 hover:border-purple-500/50'
+                                }`}
+                              >
+                                {emoji}
+                                <span className="text-sm ms-2 text-white/70">(0)</span>
+                              </button>
+                          );
+                      }
+                      return null;
+                  })}
                 </div>
               </div>
               
