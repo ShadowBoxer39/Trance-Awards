@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React from "react"; 
-
+ 
 interface NavigationProps {
   currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist"; 
 }
