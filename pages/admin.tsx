@@ -506,7 +506,7 @@ export default function Admin() {
                   activeTab === "analytics" ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"
                 }`}
               >
-                📊 סטטיסטיקות ({visits.length})
+                📊 סטטיסטיקות ({visits.length > 0 ? visits.length : analyticsLoading ? '...' : '0'})
               </button>
             </div>
 
