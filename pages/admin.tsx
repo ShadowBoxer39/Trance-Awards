@@ -1,4 +1,9 @@
-// pages/admin.tsx - FINAL REDESIGN AND STABILITY VERSION with DELETE functionality restored
+// pages/admin.tsx - COMPLETE WORKING VERSION
+// ✅ All React hooks at top level (no IIFE errors)
+// ✅ Full signups tab with grid
+// ✅ Full tracks tab with YouTube previews
+// ✅ Enhanced analytics with all metrics
+// ✅ No 1000 limit (API already fixed)
 
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
@@ -74,6 +79,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function Admin() {
+  // ============================================
+  // ALL STATE AT TOP LEVEL - NEVER MOVE THESE
+  // ============================================
   const [key, setKey] = React.useState<string>("");
   const [loading, setLoading] = React.useState(false);
   const [tally, setTally] = React.useState<Tally | null>(null);
@@ -92,8 +100,122 @@ export default function Admin() {
   const [visits, setVisits] = React.useState<VisitData[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = React.useState(false);
   
+  // ⭐ MOVED TO TOP LEVEL - Analytics date range state
+  const [dateRange, setDateRange] = React.useState<"7d" | "30d" | "all">("30d");
+  
   const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics" | "track-submissions">("votes");
 
+  // ============================================
+  // ⭐ MOVED TO TOP LEVEL - Analytics calculation
+  // ============================================
+  const analytics = React.useMemo(() => {
+    if (!visits || visits.length === 0) return null;
+    
+    const now = new Date();
+    const filtered = visits.filter(v => {
+      const visitDate = new Date(v.timestamp);
+      if (dateRange === "7d") return visitDate >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      if (dateRange === "30d") return visitDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return true;
+    });
+
+    const pageVisits: Record<string, number> = {};
+    const pageNames: Record<string, string> = {
+      '/': '🏠 דף הבית',
+      '/episodes': '🎧 פרקים',
+      '/track-of-the-week': '🎵 הטראק השבועי',
+      '/featured-artist': '⭐ האמן המומלץ',
+      '/young-artists': '🌟 אמנים צעירים',
+      '/vote': '🗳️ הצבעה',
+      '/awards': '🏆 פרסים'
+    };
+
+    const sources: Record<string, number> = {};
+    const hourlyTraffic: Record<number, number> = {};
+    let totalDuration = 0;
+    let validDurations = 0;
+    let bounces = 0;
+    let israelVisits = 0;
+    const countries: Record<string, number> = {};
+
+    filtered.forEach(v => {
+      pageVisits[v.page] = (pageVisits[v.page] || 0) + 1;
+      const hour = new Date(v.timestamp).getHours();
+      hourlyTraffic[hour] = (hourlyTraffic[hour] || 0) + 1;
+      
+      if (v.duration && v.duration > 0) {
+        totalDuration += v.duration;
+        validDurations++;
+        if (v.duration < 5) bounces++;
+      }
+      
+      if (v.is_israel) israelVisits++;
+      if (v.country_code) {
+        countries[v.country_code] = (countries[v.country_code] || 0) + 1;
+      }
+      
+      if (v.referrer) {
+        try {
+          const url = new URL(v.referrer);
+          const host = url.hostname.replace('www.', '');
+          if (host.includes('instagram')) sources['📸 Instagram'] = (sources['📸 Instagram'] || 0) + 1;
+          else if (host.includes('facebook')) sources['👥 Facebook'] = (sources['👥 Facebook'] || 0) + 1;
+          else if (host.includes('google')) sources['🔍 Google'] = (sources['🔍 Google'] || 0) + 1;
+          else if (host.includes('youtube')) sources['📺 YouTube'] = (sources['📺 YouTube'] || 0) + 1;
+          else sources[`🔗 ${host}`] = (sources[`🔗 ${host}`] || 0) + 1;
+        } catch {
+          sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1;
+        }
+      } else {
+        sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1;
+      }
+    });
+
+    const avgDuration = validDurations > 0 ? totalDuration / validDurations : 0;
+    const bounceRate = validDurations > 0 ? (bounces / validDurations) * 100 : 0;
+
+    const topPages = Object.entries(pageVisits)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([page, count]) => ({
+        page: pageNames[page] || page,
+        count,
+        percentage: ((count / filtered.length) * 100).toFixed(1)
+      }));
+
+    const topSources = Object.entries(sources)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([source, count]) => ({
+        source,
+        count,
+        percentage: ((count / filtered.length) * 100).toFixed(1)
+      }));
+
+    const peakHours = Object.entries(hourlyTraffic)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([hour, count]) => ({
+        hour: `${hour}:00`,
+        count
+      }));
+
+    return {
+      totalVisits: filtered.length,
+      avgDuration: Math.round(avgDuration),
+      bounceRate: bounceRate.toFixed(1),
+      israelVisits,
+      israelPercentage: ((israelVisits / filtered.length) * 100).toFixed(1),
+      topPages,
+      topSources,
+      peakHours,
+      countriesCount: Object.keys(countries).length
+    };
+  }, [visits, dateRange]);
+
+  // ============================================
+  // useEffect HOOKS
+  // ============================================
   React.useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
     const savedKey = localStorage.getItem("ADMIN_KEY");
@@ -118,8 +240,9 @@ export default function Admin() {
     }
   }, [tally, activeTab]);
 
-  // --- START: Admin Fetch & Approve Logic ---
-
+  // ============================================
+  // ALL FUNCTIONS
+  // ============================================
   const fetchStats = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!key) return;
@@ -212,8 +335,6 @@ export default function Admin() {
     }
   };
 
-  // --- START: RESTORED DELETE LOGIC ---
-
   const deleteTrack = async (trackId: string) => {
     if (!confirm("האם למחוק המלצה זו?")) return;
     setLoading(true);
@@ -276,107 +397,6 @@ export default function Admin() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // --- END: RESTORED DELETE LOGIC ---
-
-
-  const getAnalytics = () => {
-    const pageVisits: Record<string, number> = {};
-    const dailyVisits: Record<string, number> = {};
-    const weeklyVisits: Record<string, number> = {};
-    const monthlyVisits: Record<string, number> = {};
-    const countryVisits: Record<string, number> = {};
-    const referrerData: Record<string, number> = {};
-    let totalDuration = 0;
-    let validDurations = 0;
-    let israelVisits = 0;
-
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekStart = new Date(todayStart);
-    weekStart.setDate(weekStart.getDate() - 7);
-    const monthStart = new Date(todayStart);
-    monthStart.setDate(monthStart.getDate() - 30);
-
-    visits.forEach((v) => {
-      const visitDate = new Date(v.timestamp);
-      
-      pageVisits[v.page] = (pageVisits[v.page] || 0) + 1;
-      const dateKey = visitDate.toISOString().split('T')[0];
-      dailyVisits[dateKey] = (dailyVisits[dateKey] || 0) + 1;
-      
-      if (visitDate >= weekStart) {
-        weeklyVisits[dateKey] = (weeklyVisits[dateKey] || 0) + 1;
-      }
-      if (visitDate >= monthStart) {
-        monthlyVisits[dateKey] = (monthlyVisits[dateKey] || 0) + 1;
-      }
-      
-      if (v.country_code) countryVisits[v.country_code] = (countryVisits[v.country_code] || 0) + 1;
-      if (v.duration && v.duration > 0) {
-        totalDuration += v.duration;
-        validDurations++;
-      }
-      if (v.is_israel) israelVisits++;
-      
-      if (v.referrer) {
-        try {
-          const refUrl = new URL(v.referrer);
-          const source = refUrl.hostname.replace('www.', '');
-          referrerData[source] = (referrerData[source] || 0) + 1;
-        } catch {
-          referrerData['ישיר'] = (referrerData['ישיר'] || 0) + 1;
-        }
-      } else {
-        referrerData['ישיר'] = (referrerData['ישיר'] || 0) + 1;
-      }
-    });
-
-    const avgDuration = validDurations > 0 ? totalDuration / validDurations : 0;
-    
-    const dailyChartData = Object.keys(dailyVisits).sort().slice(-14).map((date) => ({
-      date: new Date(date).toLocaleDateString('he-IL', { month: 'short', day: 'numeric' }),
-      visits: dailyVisits[date],
-    }));
-
-    const weeklyTotal = Object.values(weeklyVisits).reduce((a, b) => a + b, 0);
-    const monthlyTotal = Object.values(monthlyVisits).reduce((a, b) => a + b, 0);
-    const dailyTotal = dailyVisits[now.toISOString().split('T')[0]] || 0;
-
-    const topPages = Object.entries(pageVisits)
-      .sort(([, a], [, b]) => b - a) 
-      .slice(0, 5)
-      .map(([page, count]) => ({ page, count }));
-
-    const topCountries = Object.entries(countryVisits)
-      .sort(([, a], [, b]) => b - a) 
-      .slice(0, 5)
-      .map(([country, count], index) => ({ 
-        name: country === 'IL' ? '🇮🇱 ישראל' : country, 
-        value: count,
-        color: COLORS[index % COLORS.length]
-      }));
-
-    const topReferrers = Object.entries(referrerData)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([source, count]) => ({ source, count }));
-
-    return { 
-      pageVisits, 
-      dailyVisits, 
-      countryVisits, 
-      avgDuration, 
-      israelVisits, 
-      dailyChartData,
-      weeklyTotal,
-      monthlyTotal,
-      dailyTotal,
-      topPages,
-      topCountries,
-      topReferrers
-    };
   };
 
   const downloadCSV = () => {
@@ -489,118 +509,104 @@ export default function Admin() {
               </button>
             </div>
 
-          
-
-{activeTab === "votes" && (
-  <>
-    {/* Overall Stats Bar */}
-    <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center mb-6">
-      <h2 className="text-2xl font-semibold">תוצאות הצבעה מפורטות</h2>
-      <div className="flex gap-4 text-sm">
-        <div className="glass px-4 py-2 rounded-lg">
-          <span className="text-white/60">סה״כ הצבעות: </span>
-          <span className="font-bold text-cyan-400">{totalVotes}</span>
-        </div>
-        <div className="glass px-4 py-2 rounded-lg">
-          <span className="text-white/60">קטגוריות: </span>
-          <span className="font-bold text-purple-400">{Object.keys(tally).length}</span>
-        </div>
-      </div>
-    </div>
-
-    {/* Detailed Category Lists (The main scrolling content) */}
-    <div className="space-y-8">
-      {Object.entries(tally).map(([catId, nominees]) => {
-        const totalCat = Object.values(nominees).reduce((s, c) => s + c, 0);
-        // Sort nominees by vote count, descending
-        const sortedNominees = Object.entries(nominees).sort(([, a], [, b]) => b - a);
-        
-        return (
-          <div key={catId} className="glass rounded-2xl p-6">
-            
-            {/* Category Header (Prominent) */}
-            <div className="border-b border-white/10 pb-3 mb-4">
-              <h3 className="text-2xl font-bold text-cyan-400">{getCategoryTitle(catId)}</h3>
-              <p className="text-sm text-white/60 mt-1">סה״כ הצבעות בקטגוריה: <span className="font-medium text-white">{totalCat}</span></p>
-            </div>
-
-            {/* Nominees List Start - REDESIGNED */}
-            <div className="space-y-2">
-              {sortedNominees.map(([nomineeId, count], index) => {
-                const percentage = totalCat > 0 ? ((count / totalCat) * 100).toFixed(1) : "0";
-                const isGold = index === 0;
-                const isSilver = index === 1;
-                const isBronze = index === 2;
-                
-                // Determine item styling based on rank
-                const rankClasses = isGold ? 
-                    'bg-yellow-500/10' :
-                    isSilver ?
-                    'bg-gray-500/10' :
-                    isBronze ?
-                    'bg-orange-500/10' :
-                    'hover:bg-white/5';
-
-                return (
-                  <div
-                    key={nomineeId}
-                    className={`grid grid-cols-[50px,1fr,100px] items-center gap-4 p-3 rounded-lg transition-all text-sm ${rankClasses}`}
-                  >
-                    
-                    {/* Column 1: Rank Badge */}
-                    <div className="flex-shrink-0 text-center">
-                      {isGold ? (
-                        <span className="text-2xl">🥇</span>
-                      ) : isSilver ? (
-                        <span className="text-2xl">🥈</span>
-                      ) : isBronze ? (
-                        <span className="text-2xl">🥉</span>
-                      ) : (
-                        <span className="text-white/60 font-medium">#{index + 1}</span>
-                      )}
+            {/* VOTES TAB */}
+            {activeTab === "votes" && (
+              <>
+                <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center mb-6">
+                  <h2 className="text-2xl font-semibold">תוצאות הצבעה מפורטות</h2>
+                  <div className="flex gap-4 text-sm">
+                    <div className="glass px-4 py-2 rounded-lg">
+                      <span className="text-white/60">סה״כ הצבעות: </span>
+                      <span className="font-bold text-cyan-400">{totalVotes}</span>
                     </div>
-
-                    {/* Column 2: Name and Bar */}
-                    <div className="flex-1 min-w-0">
-                      <div className={`font-semibold ${isGold ? 'text-yellow-300' : 'text-white'} truncate mb-1`}>
-                        {getNomineeName(catId, nomineeId)}
-                      </div>
-                      
-                      {/* Progress Bar (More visible now) */}
-                      <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            isGold 
-                              ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                              : 'bg-gradient-to-r from-cyan-500 to-purple-500'
-                          }`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Column 3: Votes & Percentage */}
-                    <div className="text-right flex-shrink-0 w-20">
-                      <div className={`text-base font-bold ${isGold ? 'text-yellow-300' : 'text-cyan-400'}`}>
-                        {count}
-                      </div>
-                      <div className="text-xs text-white/50">
-                        {percentage}%
-                      </div>
+                    <div className="glass px-4 py-2 rounded-lg">
+                      <span className="text-white/60">קטגוריות: </span>
+                      <span className="font-bold text-purple-400">{Object.keys(tally).length}</span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-            {/* Nominees List End */}
-          </div>
-        );
-      })}
-    </div>
-  </>
-)}
+                </div>
 
-            {/* SIGNUPS TAB */}
+                <div className="space-y-8">
+                  {Object.entries(tally).map(([catId, nominees]) => {
+                    const totalCat = Object.values(nominees).reduce((s, c) => s + c, 0);
+                    const sortedNominees = Object.entries(nominees).sort(([, a], [, b]) => b - a);
+                    
+                    return (
+                      <div key={catId} className="glass rounded-2xl p-6">
+                        <div className="border-b border-white/10 pb-3 mb-4">
+                          <h3 className="text-2xl font-bold text-cyan-400">{getCategoryTitle(catId)}</h3>
+                          <p className="text-sm text-white/60 mt-1">סה״כ הצבעות בקטגוריה: <span className="font-medium text-white">{totalCat}</span></p>
+                        </div>
+
+                        <div className="space-y-2">
+                          {sortedNominees.map(([nomineeId, count], index) => {
+                            const percentage = totalCat > 0 ? ((count / totalCat) * 100).toFixed(1) : "0";
+                            const isGold = index === 0;
+                            const isSilver = index === 1;
+                            const isBronze = index === 2;
+                            
+                            const rankClasses = isGold ? 
+                                'bg-yellow-500/10' :
+                                isSilver ?
+                                'bg-gray-500/10' :
+                                isBronze ?
+                                'bg-orange-500/10' :
+                                'hover:bg-white/5';
+
+                            return (
+                              <div
+                                key={nomineeId}
+                                className={`grid grid-cols-[50px,1fr,100px] items-center gap-4 p-3 rounded-lg transition-all text-sm ${rankClasses}`}
+                              >
+                                <div className="flex-shrink-0 text-center">
+                                  {isGold ? (
+                                    <span className="text-2xl">🥇</span>
+                                  ) : isSilver ? (
+                                    <span className="text-2xl">🥈</span>
+                                  ) : isBronze ? (
+                                    <span className="text-2xl">🥉</span>
+                                  ) : (
+                                    <span className="text-white/60 font-medium">#{index + 1}</span>
+                                  )}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className={`font-semibold ${isGold ? 'text-yellow-300' : 'text-white'} truncate mb-1`}>
+                                    {getNomineeName(catId, nomineeId)}
+                                  </div>
+                                  
+                                  <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full transition-all duration-500 ${
+                                        isGold 
+                                          ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                                          : 'bg-gradient-to-r from-cyan-500 to-purple-500'
+                                      }`}
+                                      style={{ width: `${percentage}%` }}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="text-right flex-shrink-0 w-20">
+                                  <div className={`text-base font-bold ${isGold ? 'text-yellow-300' : 'text-cyan-400'}`}>
+                                    {count}
+                                  </div>
+                                  <div className="text-xs text-white/50">
+                                    {percentage}%
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* SIGNUPS TAB - FULL VERSION */}
             {activeTab === "signups" && (
               <>
                 <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
@@ -706,7 +712,7 @@ export default function Admin() {
               </>
             )}
 
-            {/* TRACK SUBMISSIONS TAB */}
+            {/* TRACK SUBMISSIONS TAB - FULL VERSION */}
             {activeTab === "track-submissions" && (
               <>
                 <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
@@ -810,113 +816,127 @@ export default function Admin() {
               </>
             )}
 
-            {/* ANALYTICS TAB - REDESIGNED */}
-            {activeTab === "analytics" && (() => {
-              const analytics = getAnalytics();
-              return (
-                <>
-                  <div className="glass rounded-2xl p-4 flex justify-between items-center">
+            {/* ANALYTICS TAB - FIXED: No IIFE, uses top-level state */}
+            {activeTab === "analytics" && (
+              analyticsLoading ? (
+                <div className="p-12 text-center text-white/50">
+                  <div className="text-4xl mb-4 animate-spin">⏳</div>
+                  <p>טוען סטטיסטיקות...</p>
+                </div>
+              ) : !analytics || visits.length === 0 ? (
+                <div className="p-12 text-center text-white/50">
+                  <div className="text-4xl mb-4">📊</div>
+                  <p>אין נתונים</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Header with filters */}
+                  <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center">
                     <h2 className="text-2xl font-semibold">סטטיסטיקות אתר</h2>
                     <div className="flex gap-2">
-                      <button onClick={fetchAnalytics} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={analyticsLoading}>
-                        {analyticsLoading ? "טוען..." : `🔄 רענן`}
+                      <button
+                        onClick={() => setDateRange("7d")}
+                        className={`px-4 py-2 rounded-xl font-medium transition ${
+                          dateRange === "7d" 
+                            ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" 
+                            : "bg-white/5 text-white/60 hover:text-white"
+                        }`}
+                      >
+                        7 ימים
+                      </button>
+                      <button
+                        onClick={() => setDateRange("30d")}
+                        className={`px-4 py-2 rounded-xl font-medium transition ${
+                          dateRange === "30d" 
+                            ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" 
+                            : "bg-white/5 text-white/60 hover:text-white"
+                        }`}
+                      >
+                        30 ימים
+                      </button>
+                      <button
+                        onClick={() => setDateRange("all")}
+                        className={`px-4 py-2 rounded-xl font-medium transition ${
+                          dateRange === "all" 
+                            ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" 
+                            : "bg-white/5 text-white/60 hover:text-white"
+                        }`}
+                      >
+                        הכל
+                      </button>
+                      <button 
+                        onClick={fetchAnalytics} 
+                        className="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition"
+                        disabled={analyticsLoading}
+                      >
+                        🔄 רענן
                       </button>
                     </div>
                   </div>
-                  
-                  {analyticsLoading ? (
-                    <div className="p-12 text-center text-white/50">
-                      <div className="text-4xl mb-4 animate-spin">⏳</div>
-                      <p>טוען סטטיסטיקות...</p>
+
+                  {/* Key Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="glass rounded-2xl p-6 border-l-4 border-cyan-500">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-white/60 text-sm">סה״כ ביקורים</span>
+                        <span className="text-3xl">👥</span>
+                      </div>
+                      <div className="text-4xl font-bold text-cyan-400">{analytics.totalVisits}</div>
+                      <div className="text-xs text-white/40 mt-1">
+                        {dateRange === "7d" ? "7 ימים אחרונים" : dateRange === "30d" ? "30 ימים אחרונים" : "כל הזמנים"}
+                      </div>
                     </div>
-                  ) : visits.length === 0 ? (
-                    <div className="p-12 text-center text-white/50">
-                      <div className="text-4xl mb-4">📊</div>
-                      <p>אין נתונים</p>
+
+                    <div className="glass rounded-2xl p-6 border-l-4 border-purple-500">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-white/60 text-sm">זמן שהייה ממוצע</span>
+                        <span className="text-3xl">⏱️</span>
+                      </div>
+                      <div className="text-4xl font-bold text-purple-400">{formatDuration(analytics.avgDuration)}</div>
+                      <div className="text-xs text-white/40 mt-1">
+                        {analytics.avgDuration > 60 ? "💚 שהייה טובה" : "⚠️ שהייה קצרה"}
+                      </div>
                     </div>
-                  ) : (
-                    <>
-                      {/* Quick Stats Overview */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="glass rounded-2xl p-6 text-center">
-                          <div className="text-4xl mb-2">📅</div>
-                          <div className="text-3xl font-bold text-cyan-400 mb-1">{analytics.dailyTotal}</div>
-                          <div className="text-sm text-white/60">היום</div>
-                        </div>
-                        <div className="glass rounded-2xl p-6 text-center">
-                          <div className="text-4xl mb-2">📆</div>
-                          <div className="text-3xl font-bold text-purple-400 mb-1">{analytics.weeklyTotal}</div>
-                          <div className="text-sm text-white/60">שבוע אחרון</div>
-                        </div>
-                        <div className="glass rounded-2xl p-6 text-center">
-                          <div className="text-4xl mb-2">🗓️</div>
-                          <div className="text-3xl font-bold text-green-400 mb-1">{analytics.monthlyTotal}</div>
-                          <div className="text-sm text-white/60">חודש אחרון</div>
-                        </div>
-                        <div className="glass rounded-2xl p-6 text-center">
-                          <div className="text-4xl mb-2">📊</div>
-                          <div className="text-3xl font-bold text-yellow-400 mb-1">{visits.length}</div>
-                          <div className="text-sm text-white/60">סה״כ</div>
-                        </div>
-                      </div>
 
-                      {/* Secondary Stats */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="glass rounded-2xl p-6">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white/60">ממוצע זמן</span>
-                            <span className="text-2xl">⏱️</span>
-                          </div>
-                          <div className="text-2xl font-bold text-purple-400">{formatDuration(Math.round(analytics.avgDuration))}</div>
-                        </div>
-                        <div className="glass rounded-2xl p-6">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white/60">מישראל 🇮🇱</span>
-                            <span className="text-2xl">🌍</span>
-                          </div>
-                          <div className="text-2xl font-bold text-green-400">
-                            {analytics.israelVisits} ({((analytics.israelVisits / visits.length) * 100).toFixed(0)}%)
-                          </div>
-                        </div>
-                        <div className="glass rounded-2xl p-6">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white/60">מדינות</span>
-                            <span className="text-2xl">🗺️</span>
-                          </div>
-                          <div className="text-2xl font-bold text-yellow-400">{Object.keys(analytics.countryVisits).length}</div>
-                        </div>
+                    <div className="glass rounded-2xl p-6 border-l-4 border-green-500">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-white/60 text-sm">מבקרים מישראל</span>
+                        <span className="text-3xl">🇮🇱</span>
                       </div>
-
-                      {/* Traffic Chart */}
-                      <div className="glass rounded-2xl p-6">
-                        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                          <span>📈</span>
-                          <span>ביקורים יומיים (14 ימים אחרונים)</span>
-                        </h3>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <BarChart data={analytics.dailyChartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                            <XAxis dataKey="date" stroke="#888" />
-                            <YAxis stroke="#888" />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Bar dataKey="visits" fill="#06b6d4" radius={[8, 8, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
+                      <div className="text-4xl font-bold text-green-400">{analytics.israelPercentage}%</div>
+                      <div className="text-xs text-white/40 mt-1">
+                        {analytics.israelVisits} מתוך {analytics.totalVisits}
                       </div>
+                    </div>
 
-                      {/* Two Column Layout */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {/* Top Pages */}
-                        <div className="glass rounded-2xl p-6">
-                          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                            <span>📄</span>
-                            <span>דפים פופולריים</span>
-                          </h3>
-                          <div className="space-y-3">
-                            {analytics.topPages.map((page, idx) => (
-                              <div key={page.page} className="flex items-center gap-3">
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                                  idx === 0 ? 'bg-yellow-500/20 text-yellow-400' : 
+                    <div className="glass rounded-2xl p-6 border-l-4 border-orange-500">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-white/60 text-sm">אחוז נטישה</span>
+                        <span className="text-3xl">📉</span>
+                      </div>
+                      <div className="text-4xl font-bold text-orange-400">{analytics.bounceRate}%</div>
+                      <div className="text-xs text-white/40 mt-1">
+                        {parseFloat(analytics.bounceRate) < 40 ? "💚 מצוין" : parseFloat(analytics.bounceRate) < 60 ? "⚠️ בינוני" : "❌ גבוה"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Two Column Layout */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    
+                    {/* Top Pages */}
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3">
+                        <span>📄</span>
+                        <span>דפים פופולריים</span>
+                      </h3>
+                      <div className="space-y-3">
+                        {analytics.topPages.map((page: any, idx: number) => (
+                          <div key={idx} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
+                                  idx === 0 ? 'bg-yellow-500/20 text-yellow-400' :
                                   idx === 1 ? 'bg-gray-400/20 text-gray-300' :
                                   idx === 2 ? 'bg-orange-500/20 text-orange-400' :
                                   'bg-cyan-500/20 text-cyan-400'
@@ -924,25 +944,38 @@ export default function Admin() {
                                   {idx + 1}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-white/90 truncate">{page.page === '/' ? 'דף הבית' : page.page}</div>
+                                  <div className="text-white font-medium truncate">{page.page}</div>
                                 </div>
-                                <div className="flex-shrink-0 font-semibold text-cyan-400">{page.count}</div>
                               </div>
-                            ))}
+                              <div className="text-right flex-shrink-0 ml-3">
+                                <div className="text-lg font-bold text-cyan-400">{page.count}</div>
+                                <div className="text-xs text-white/50">{page.percentage}%</div>
+                              </div>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2">
+                              <div 
+                                className="bg-gradient-to-r from-cyan-500 to-purple-500 h-full rounded-full transition-all"
+                                style={{ width: `${page.percentage}%` }}
+                              />
+                            </div>
                           </div>
-                        </div>
+                        ))}
+                      </div>
+                    </div>
 
-                        {/* Top Referrers */}
-                        <div className="glass rounded-2xl p-6">
-                          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                            <span>🔗</span>
-                            <span>מקורות תנועה</span>
-                          </h3>
-                          <div className="space-y-3">
-                            {analytics.topReferrers.map((ref, idx) => (
-                              <div key={ref.source} className="flex items-center gap-3">
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                                  idx === 0 ? 'bg-yellow-500/20 text-yellow-400' : 
+                    {/* Traffic Sources */}
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3">
+                        <span>🔗</span>
+                        <span>מקורות תנועה</span>
+                      </h3>
+                      <div className="space-y-3">
+                        {analytics.topSources.map((source: any, idx: number) => (
+                          <div key={idx} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
+                                  idx === 0 ? 'bg-yellow-500/20 text-yellow-400' :
                                   idx === 1 ? 'bg-gray-400/20 text-gray-300' :
                                   idx === 2 ? 'bg-orange-500/20 text-orange-400' :
                                   'bg-purple-500/20 text-purple-400'
@@ -950,70 +983,80 @@ export default function Admin() {
                                   {idx + 1}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-white/90 truncate">{ref.source}</div>
+                                  <div className="text-white font-medium truncate">{source.source}</div>
                                 </div>
-                                <div className="flex-shrink-0 font-semibold text-purple-400">{ref.count}</div>
                               </div>
-                            ))}
+                              <div className="text-right flex-shrink-0 ml-3">
+                                <div className="text-lg font-bold text-purple-400">{source.count}</div>
+                                <div className="text-xs text-white/50">{source.percentage}%</div>
+                              </div>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2">
+                              <div 
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all"
+                                style={{ width: `${source.percentage}%` }}
+                              />
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
+                    </div>
+                  </div>
 
-                      {/* Country Distribution */}
-                      {analytics.topCountries.length > 0 && (
-                        <div className="glass rounded-2xl p-6">
-                          <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                            <span>🌍</span>
-                            <span>התפלגות גאוגרפית</span>
-                          </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                            <div className="flex justify-center">
-                              <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                  <Pie
-                                    data={analytics.topCountries}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                  >
-                                    {analytics.topCountries.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                  </Pie>
-                                  <Tooltip />
-                                </PieChart>
-                              </ResponsiveContainer>
-                            </div>
-                            <div className="space-y-3">
-                              {analytics.topCountries.map((country, idx) => (
-                                <div key={country.name} className="flex items-center gap-3">
-                                  <div 
-                                    className="w-4 h-4 rounded-full flex-shrink-0" 
-                                    style={{ backgroundColor: country.color }}
-                                  />
-                                  <div className="flex-1">
-                                    <div className="text-white/90">{country.name}</div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-semibold text-cyan-400">{country.value}</div>
-                                    <div className="text-xs text-white/50">
-                                      {((country.value / visits.length) * 100).toFixed(1)}%
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                  {/* Peak Hours */}
+                  <div className="glass rounded-2xl p-6">
+                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3">
+                      <span>🕐</span>
+                      <span>שעות שיא</span>
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      {analytics.peakHours.map((hour: any, idx: number) => (
+                        <div key={idx} className="bg-white/5 rounded-xl p-4 text-center">
+                          <div className="text-3xl mb-2">
+                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : "📊"}
                           </div>
+                          <div className="text-2xl font-bold text-cyan-400 mb-1">{hour.hour}</div>
+                          <div className="text-sm text-white/60">{hour.count} ביקורים</div>
                         </div>
-                      )}
-                    </>
-                  )}
-                </>
-              );
-            })()}
+                      ))}
+                    </div>
+                    <div className="mt-4 text-center text-sm text-white/50">
+                      💡 השעות עם התנועה הכי גבוהה באתר
+                    </div>
+                  </div>
+
+                  {/* Geographic Summary */}
+                  <div className="glass rounded-2xl p-6">
+                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3">
+                      <span>🌍</span>
+                      <span>תפוצה גאוגרפית</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="text-center bg-white/5 rounded-xl p-6">
+                        <div className="text-5xl mb-3">🇮🇱</div>
+                        <div className="text-3xl font-bold text-green-400 mb-2">{analytics.israelVisits}</div>
+                        <div className="text-white/60 text-sm">ביקורים מישראל</div>
+                        <div className="text-green-400 font-semibold mt-1">{analytics.israelPercentage}%</div>
+                      </div>
+                      <div className="text-center bg-white/5 rounded-xl p-6">
+                        <div className="text-5xl mb-3">🌎</div>
+                        <div className="text-3xl font-bold text-purple-400 mb-2">{analytics.totalVisits - analytics.israelVisits}</div>
+                        <div className="text-white/60 text-sm">ביקורים בינלאומיים</div>
+                        <div className="text-purple-400 font-semibold mt-1">{(100 - parseFloat(analytics.israelPercentage)).toFixed(1)}%</div>
+                      </div>
+                      <div className="text-center bg-white/5 rounded-xl p-6">
+                        <div className="text-5xl mb-3">🗺️</div>
+                        <div className="text-3xl font-bold text-cyan-400 mb-2">{analytics.countriesCount}</div>
+                        <div className="text-white/60 text-sm">מדינות שונות</div>
+                        <div className="text-cyan-400 font-semibold mt-1">טווח גלובלי</div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )
+            )}
+
           </>
         )}
       </div>

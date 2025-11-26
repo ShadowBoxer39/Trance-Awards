@@ -1,4 +1,4 @@
-// pages/api/artist-comment.ts - Handle featured artist comments
+// pages/api/artist-comment.ts - FIXED (no parseInt!)
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
@@ -41,13 +41,14 @@ export default async function handler(
         });
       }
 
-      // Create comment object
+      // Create comment object - KEEP artist_id AS STRING (no parseInt!)
       const commentData = {
-        artist_id: parseInt(artist_id),
+        artist_id: artist_id, // String like "kanok" - DON'T parse as int!
         name: name.trim(),
         text: text.trim(),
         user_id: user_id || null,
         user_photo_url: user_photo_url || null,
+        is_visible: true,
         timestamp: new Date().toISOString(),
       };
 

@@ -1,9 +1,13 @@
-// pages/featured-artist.tsx - Dedicated page for featured young artist
+// pages/featured-artist.tsx - WITH GOOGLE OAUTH (uses mock data, no database)
 import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { createClient } from '@supabase/supabase-js';
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
+import GoogleLoginButton from "../components/GoogleLoginButton";
+import { getGoogleUserInfo } from "../lib/googleAuthHelpers";
+import type { User } from '@supabase/supabase-js';
 
 interface FeaturedArtist {
   id: string;
@@ -27,6 +31,7 @@ interface FeaturedArtist {
     name: string;
     text: string;
     timestamp: string;
+    user_photo_url?: string;
   }>;
 }
 
@@ -42,13 +47,84 @@ export default function FeaturedArtistPage({
     heart: 0,
   });
   const [comments, setComments] = useState<any[]>([]);
-  const [newComment, setNewComment] = useState({ name: "", text: "" });
+  const [newComment, setNewComment] = useState({ text: "" });
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [userName, setUserName] = useState('');
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
     
+    // Initialize Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // CRITICAL: Handle OAuth callback first
+    const handleOAuthCallback = async () => {
+      const url = window.location.href;
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const queryParams = new URLSearchParams(window.location.search);
+
+      // Only try to exchange if we actually have an OAuth response
+      if (hashParams.get('access_token') || queryParams.get('code')) {
+        console.log('🔐 Handling OAuth callback...');
+
+        // IMPORTANT: exchange the code for a session
+        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+
+        if (error) {
+          console.error('OAuth callback error:', error);
+        } else {
+          console.log('✅ OAuth callback successful:', data);
+        }
+
+        // Clean up URL (remove the code/access_token query params)
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
+    // Check for authenticated user
+    const checkUser = async () => {
+      await handleOAuthCallback();
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
+      
+      console.log('USER:', user);
+      setUser(user);
+      
+      if (user) {
+        const userInfo = getGoogleUserInfo(user);
+        console.log('USER INFO:', userInfo);
+        if (userInfo) {
+          setUserName(userInfo.name);
+          setUserPhoto(userInfo.photoUrl);
+        }
+      }
+    };
+
+    checkUser();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔄 Auth state changed:', _event, session?.user?.email);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const userInfo = getGoogleUserInfo(session.user);
+        if (userInfo) {
+          setUserName(userInfo.name);
+          setUserPhoto(userInfo.photoUrl);
+        }
+      } else {
+        setUserName('');
+        setUserPhoto(null);
+      }
+    });
+
     if (artist) {
       // Load reactions from API
       fetch(`/api/artist-reaction?artistId=${artist.id}`)
@@ -76,17 +152,19 @@ export default function FeaturedArtistPage({
         setSelectedReaction(userReaction);
       }
     }
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [artist]);
 
   const handleReaction = async (reactionType: keyof typeof reactions) => {
     if (!artist || selectedReaction) return;
 
-    // Optimistic update
     setSelectedReaction(reactionType);
     const newReactions = { ...reactions, [reactionType]: reactions[reactionType] + 1 };
     setReactions(newReactions);
 
-    // Save to localStorage
     localStorage.setItem(`artist_reaction_${artist.id}`, reactionType);
 
     try {
@@ -109,7 +187,6 @@ export default function FeaturedArtistPage({
       }
     } catch (error) {
       console.error("Error saving reaction:", error);
-      // Revert on error
       setSelectedReaction(null);
       setReactions(reactions);
       localStorage.removeItem(`artist_reaction_${artist.id}`);
@@ -118,24 +195,26 @@ export default function FeaturedArtistPage({
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!artist || !newComment.name.trim() || !newComment.text.trim() || isSubmitting) return;
+    
+    if (!user) {
+      alert('יש להתחבר כדי להוסיף תגובה');
+      return;
+    }
+    
+    if (!artist || !newComment.text.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-
-    const comment = {
-      id: Date.now().toString(),
-      name: newComment.name.trim(),
-      text: newComment.text.trim(),
-      timestamp: new Date().toISOString(),
-    };
 
     try {
       const response = await fetch("/api/artist-comment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          artistId: artist.id,
-          comment,
+          artist_id: artist.id,
+          name: userName,
+          text: newComment.text.trim(),
+          user_id: user.id,
+          user_photo_url: userPhoto,
         }),
       });
 
@@ -145,13 +224,24 @@ export default function FeaturedArtistPage({
 
       const data = await response.json();
       setComments([data.comment, ...comments]);
-      setNewComment({ name: "", text: "" });
+      setNewComment({ text: "" });
     } catch (error) {
       console.error("Error saving comment:", error);
       alert("שגיאה בשמירת התגובה");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleLogout = async () => {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserName('');
+    setUserPhoto(null);
   };
 
   const handleDeleteComment = async (commentId: string) => {
@@ -174,7 +264,6 @@ export default function FeaturedArtistPage({
         throw new Error(data.error || "Failed to delete comment");
       }
 
-      // Remove comment from state
       setComments(comments.filter((c) => c.id !== commentId));
       alert("התגובה נמחקה בהצלחה");
     } catch (error: any) {
@@ -226,7 +315,7 @@ export default function FeaturedArtistPage({
       <div className="trance-backdrop min-h-screen text-gray-100">
         <Navigation currentPage="featured-artist" />
 
-        {/* Hero Section - Enhanced */}
+        {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-purple-900/30 via-cyan-900/30 to-pink-900/30">
           <div className="absolute inset-0 bg-[url('/images/grid.svg')] opacity-10" />
           <div className="max-w-6xl mx-auto px-6 py-12 md:py-16 relative z-10">
@@ -244,16 +333,14 @@ export default function FeaturedArtistPage({
           </div>
         </section>
 
-        {/* Main Content - REARRANGED COLUMNS */}
+        {/* Main Content */}
         <section className="max-w-6xl mx-auto px-6 py-8 md:py-12">
           <div className="grid lg:grid-cols-3 gap-8">
             
-            {/* ------------------------------------------------------------------ */}
-            {/* NEW LEFT COLUMN (2/3 width) - Artist Info, Socials, REACTIONS & COMMENTS */}
-            {/* ------------------------------------------------------------------ */}
+            {/* Left Column - Artist Info, Reactions & Comments */}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Artist Bio Card - HUGE & PROMINENT */}
+              {/* Artist Bio Card */}
               <div className="glass-card rounded-3xl p-8 border-4 border-purple-500/50 bg-gradient-to-br from-purple-500/20 via-transparent to-cyan-500/20 shadow-2xl shadow-purple-500/30">
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 mb-4">
@@ -284,7 +371,7 @@ export default function FeaturedArtistPage({
                   </p>
                 </div>
 
-                {/* Social Links - Enhanced */}
+                {/* Social Links */}
                 <div>
                   <h4 className="text-sm font-semibold mb-3 text-gray-400">עקבו אחריו</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -331,7 +418,7 @@ export default function FeaturedArtistPage({
                 </div>
               </div>
 
-              {/* Reactions (Moved to Primary Column) */}
+              {/* Reactions */}
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="text-lg font-bold mb-4">מה דעתכם על האמן?</h3>
                 <div className="grid grid-cols-4 gap-3">
@@ -358,37 +445,59 @@ export default function FeaturedArtistPage({
                 </div>
               </div>
 
-              {/* Comments Section (Moved to Primary Column) */}
+              {/* Comments Section - WITH GOOGLE OAUTH */}
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="text-lg font-bold mb-4">תגובות ({comments.length})</h3>
 
-                {/* Comment Form */}
-                <form onSubmit={handleCommentSubmit} className="mb-6">
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      placeholder="השם שלך"
-                      value={newComment.name}
-                      onChange={(e) => setNewComment({ ...newComment, name: e.target.value })}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
-                      maxLength={50}
-                    />
-                    <textarea
-                      placeholder="מה דעתך על האמן?"
-                      value={newComment.text}
-                      onChange={(e) => setNewComment({ ...newComment, text: e.target.value })}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
-                      maxLength={500}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newComment.name.trim() || !newComment.text.trim() || isSubmitting}
-                      className="btn-primary px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? "שולח..." : "שלח תגובה"}
-                    </button>
+                {/* Authentication Section */}
+                {!user ? (
+                  <div className="mb-8 text-center bg-purple-500/10 rounded-xl p-6 border border-purple-500/30">
+                    <p className="text-white mb-4 font-medium">התחברו כדי להוסיף תגובה</p>
+                    <div className="flex justify-center">
+                      <GoogleLoginButton />
+                    </div>
                   </div>
-                </form>
+                ) : (
+                  <div className="mb-6">
+                    {/* User Info & Logout */}
+                    <div className="flex items-center justify-between mb-4 bg-purple-500/10 rounded-lg p-3 border border-purple-500/30">
+                      <div className="flex items-center gap-3">
+                        {userPhoto && (
+                          <img 
+                            src={userPhoto} 
+                            alt={userName}
+                            className="w-10 h-10 rounded-full border-2 border-purple-500"
+                          />
+                        )}
+                        <span className="text-white font-medium">{userName}</span>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="text-purple-300 hover:text-purple-100 text-sm transition px-3 py-1 rounded bg-purple-500/20 hover:bg-purple-500/30"
+                      >
+                        התנתק
+                      </button>
+                    </div>
+
+                    {/* Comment Form */}
+                    <form onSubmit={handleCommentSubmit} className="space-y-3">
+                      <textarea
+                        placeholder="מה דעתך על האמן?"
+                        value={newComment.text}
+                        onChange={(e) => setNewComment({ text: e.target.value })}
+                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none min-h-[100px] resize-none"
+                        maxLength={500}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newComment.text.trim() || isSubmitting}
+                        className="btn-primary px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSubmitting ? "שולח..." : "שלח תגובה"}
+                      </button>
+                    </form>
+                  </div>
+                )}
 
                 {/* Comments List */}
                 <div className="space-y-4">
@@ -397,23 +506,33 @@ export default function FeaturedArtistPage({
                   ) : (
                     comments.map((comment) => (
                       <div key={comment.id} className="bg-gray-900/30 rounded-lg p-4 relative group">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="font-semibold text-purple-400">{comment.name}</div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-xs text-gray-500">
-                              {new Date(comment.timestamp).toLocaleDateString("he-IL")}
+                        <div className="flex items-start gap-3">
+                          {comment.user_photo_url && (
+                            <img 
+                              src={comment.user_photo_url} 
+                              alt={comment.name}
+                              className="w-10 h-10 rounded-full border-2 border-purple-500 flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="font-semibold text-purple-400">{comment.name}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-xs text-gray-500">
+                                  {new Date(comment.timestamp).toLocaleDateString("he-IL")}
+                                </div>
+                                <button
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
+                                  title="מחק תגובה (דרוש מפתח אדמין)"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
                             </div>
-                            {/* Delete button - only visible on hover */}
-                            <button
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
-                              title="מחק תגובה (דרוש מפתח אדמין)"
-                            >
-                              🗑️ מחק
-                            </button>
+                            <p className="text-gray-300">{comment.text}</p>
                           </div>
                         </div>
-                        <p className="text-gray-300">{comment.text}</p>
                       </div>
                     ))
                   )}
@@ -422,9 +541,7 @@ export default function FeaturedArtistPage({
 
             </div>
 
-            {/* ------------------------------------------------------------------ */}
-            {/* NEW RIGHT COLUMN (1/3 width) - Media and CTA */}
-            {/* ------------------------------------------------------------------ */}
+            {/* Right Column - Media and CTA */}
             <div className="space-y-6">
               
               {/* Large Artist Photo */}
@@ -456,7 +573,7 @@ export default function FeaturedArtistPage({
                 </div>
               </div>
               
-              {/* Apply CTA (Moved to Secondary Column & Made Smaller) */}
+              {/* Apply CTA */}
               <div className="glass-card rounded-2xl p-6 text-center bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border-2 border-cyan-500/20">
                 <span className="text-4xl mb-3 block">🎤</span>
                 <h3 className="text-lg font-bold mb-2">אתם אמנים צעירים?</h3>
@@ -489,10 +606,8 @@ export default function FeaturedArtistPage({
   );
 }
 
-// Server-side props
+// Server-side props - Uses hardcoded Kanok data (no database needed)
 export async function getServerSideProps() {
-  // For now, return Kanok as featured artist
-  // Later this can be dynamic from database
   const artist: FeaturedArtist = {
     id: "kanok",
     name: "טל רנדליך",

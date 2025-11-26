@@ -66,7 +66,7 @@ function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: 
 
   return (
     <div>
-      <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1">
+      <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1"> 
         {count.toLocaleString('en-US')}{suffix}
       </div>
       <div className="text-sm text-gray-500">{label}</div>
