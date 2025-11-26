@@ -19,7 +19,7 @@ export default async function handler(
       console.log('📋 Fetching current featured artist');
 
       // Validate admin key
-      if (!key || key !== process.env.NEXT_PUBLIC_ADMIN_KEY) {
+      if (!key || key !== process.env.ADMIN_KEY) {
         console.error('❌ Unauthorized: Invalid admin key');
         return res.status(401).json({ 
           ok: false,
