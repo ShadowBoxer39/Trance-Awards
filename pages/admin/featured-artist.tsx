@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
 
 interface FeaturedArtist {
@@ -31,18 +31,13 @@ interface FormData {
 
 export default function FeaturedArtistAdmin() {
   const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentArtist, setCurrentArtist] = useState<FeaturedArtist | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoPreview, setPhotoPreview] = useState('');
-
-  const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
   
   const [formData, setFormData] = useState<FormData>({
     artist_id: '',
@@ -63,27 +58,32 @@ export default function FeaturedArtistAdmin() {
     fetchCurrentArtist();
   }, []);
 
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+  const checkAuth = () => {
+    // Check if admin key is stored in sessionStorage
+    const adminKey = sessionStorage.getItem('adminKey');
     
-    if (!user) {
-      router.push('/admin');
-      return;
+    if (!adminKey) {
+      // Prompt for admin key
+      const key = prompt('הזן מפתח אדמין:');
+      
+      if (key === process.env.NEXT_PUBLIC_ADMIN_KEY) {
+        sessionStorage.setItem('adminKey', key);
+        setIsAuthenticated(true);
+        setLoading(false);
+      } else {
+        alert('מפתח אדמין שגוי');
+        router.push('/');
+      }
+    } else {
+      // Verify stored key
+      if (adminKey === process.env.NEXT_PUBLIC_ADMIN_KEY) {
+        setIsAuthenticated(true);
+        setLoading(false);
+      } else {
+        sessionStorage.removeItem('adminKey');
+        router.push('/');
+      }
     }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.is_admin) {
-      router.push('/admin');
-      return;
-    }
-
-    setIsAdmin(true);
-    setLoading(false);
   };
 
   const fetchCurrentArtist = async () => {
@@ -274,7 +274,7 @@ export default function FeaturedArtistAdmin() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAuthenticated) {
     return null;
   }
 
