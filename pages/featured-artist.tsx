@@ -23,11 +23,15 @@ interface FeaturedArtist {
 }
 
 interface Comment {
-  id: number;
+  id: number | string;
   user_id: string;
-  content: string;
-  created_at: string;
-  profiles: {
+  content?: string;
+  text?: string;
+  name?: string;
+  created_at?: string;
+  timestamp?: string;
+  user_photo_url?: string;
+  profiles?: {
     display_name: string;
   } | null;
 }
