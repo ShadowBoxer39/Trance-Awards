@@ -80,6 +80,14 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
           console.error('OAuth callback error:', error);
         } else {
           console.log('✅ OAuth callback successful:', data);
+          
+          // Scroll to comments after successful login
+          setTimeout(() => {
+            const commentsSection = document.getElementById('comments-section');
+            if (commentsSection) {
+              commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 500);
         }
         
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -503,7 +511,7 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
         </div>
 
         {/* Comments */}
-        <div className="max-w-4xl mx-auto">
+        <div id="comments-section" className="max-w-4xl mx-auto">
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500" />
             <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl p-8 border border-gray-800">
@@ -571,15 +579,35 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
                 ) : (
                   comments.map((comment) => (
                     <div key={comment.id} className="bg-black/30 border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-colors">
-                      <div className="flex justify-between items-start mb-3">
-                        <span className="font-bold text-purple-400">
-                          {comment.profiles?.display_name || 'משתמש'}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {new Date(comment.created_at).toLocaleDateString('he-IL')}
-                        </span>
+                      <div className="flex items-start gap-3">
+                        {comment.user_photo_url && (
+                          <img 
+                            src={comment.user_photo_url} 
+                            alt={comment.name}
+                            className="w-10 h-10 rounded-full border-2 border-purple-500 flex-shrink-0"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-3">
+                            <span className="font-bold text-purple-400">
+                              {comment.name || 'משתמש'}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-500">
+                                {new Date(comment.timestamp || comment.created_at).toLocaleDateString('he-IL')}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteComment(comment.id.toString())}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
+                                title="מחק תגובה (דרוש מפתח אדמין)"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-gray-300 leading-relaxed">{comment.text || comment.content}</p>
+                        </div>
                       </div>
-                      <p className="text-gray-300 leading-relaxed">{comment.content}</p>
                     </div>
                   ))
                 )}
