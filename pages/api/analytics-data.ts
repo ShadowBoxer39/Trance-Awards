@@ -1,35 +1,45 @@
-// pages/api/analytics-data.ts (REWRITTEN: GET Only)
-import type { NextApiRequest, NextApiResponse } from "next";
-import supabase from "../../lib/supabaseServer"; // Reusing the shared server client
+// pages/api/analytics-data.ts - NO LIMITS VERSION
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
-  }
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-  // Security Check: Ensure only authorized users can access this data
-  const key = (req.query.key as string) || "";
-  const ADMIN_KEY = process.env.ADMIN_KEY;
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const { key } = req.query;
 
-  if (!ADMIN_KEY || key !== ADMIN_KEY) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
+  if (key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 
   try {
-    // Fetch all columns from the 'site_visits' table
+    console.log('📊 Loading ALL visits (no limit)...');
+    
+    // Get ALL visits - NO LIMIT!
     const { data, error } = await supabase
-      .from("site_visits")
-      .select("*") 
-      .order("timestamp", { ascending: false });
+      .from('site_visits')
+      .select('*')
+      .order('timestamp', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      return res.status(500).json({ ok: false, error: error.message });
+    }
 
-    return res.status(200).json({
-      ok: true,
-      visits: data || [],
+    console.log(`✅ Loaded ${data?.length || 0} visits (unlimited)`);
+
+    return res.status(200).json({ 
+      ok: true, 
+      visits: data || []
     });
-  } catch (e) {
-    console.error("analytics-data fetch error:", e);
-    return res.status(500).json({ ok: false, error: "server_db_error" });
+
+  } catch (error: any) {
+    console.error('💥 Error:', error);
+    return res.status(500).json({ ok: false, error: error.message });
   }
 }
