@@ -1,5 +1,5 @@
 import { GetServerSideProps } from 'next';
-import supabase from '@/lib/supabaseServer';
+import { createClient } from "@supabase/supabase-js";
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FaInstagram, FaSoundcloud, FaSpotify, FaFire, FaHeart } from 'react-icons/fa';
@@ -35,6 +35,11 @@ interface PageProps {
   previousArtists: FeaturedArtist[];
 }
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export default function FeaturedArtistPage({ artist, previousArtists }: PageProps) {
   const [user, setUser] = useState<any>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -63,6 +68,8 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
 
   const fetchComments = async () => {
     if (!artist) return;
+
+    
 
     const { data, error } = await supabase
       .from('featured_artist_comments')
