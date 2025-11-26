@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Navigation from '@/components/Navigation';
+import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { FaInstagram, FaSoundcloud, FaSpotify, FaFire, FaHeart, FaPlay } from 'react-icons/fa';
 import { GiSunglasses } from 'react-icons/gi';
 import { BsEmojiDizzy } from 'react-icons/bs';
@@ -55,6 +56,8 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
   const [submitting, setSubmitting] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -63,19 +66,114 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
   }, []);
 
   useEffect(() => {
+    // Handle OAuth callback first
+    const handleOAuthCallback = async () => {
+      const url = window.location.href;
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const queryParams = new URLSearchParams(window.location.search);
+
+      if (hashParams.get('access_token') || queryParams.get('code')) {
+        console.log('🔐 Handling OAuth callback...');
+        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+        
+        if (error) {
+          console.error('OAuth callback error:', error);
+        } else {
+          console.log('✅ OAuth callback successful:', data);
+        }
+        
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
+    const checkUser = async () => {
+      await handleOAuthCallback();
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
+      
+      setUser(user);
+      
+      if (user) {
+        // Import dynamically to avoid SSR issues
+        const { getGoogleUserInfo } = await import('../lib/googleAuthHelpers');
+        const userInfo = getGoogleUserInfo(user);
+        if (userInfo) {
+          setUserName(userInfo.name);
+          setUserPhoto(userInfo.photoUrl);
+        }
+      }
+    };
+
     checkUser();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const { getGoogleUserInfo } = await import('../lib/googleAuthHelpers');
+        const userInfo = getGoogleUserInfo(session.user);
+        if (userInfo) {
+          setUserName(userInfo.name);
+          setUserPhoto(userInfo.photoUrl);
+        }
+      } else {
+        setUserName('');
+        setUserPhoto(null);
+      }
+    });
+
     if (artist) {
       fetchComments();
       fetchReactions();
+      
+      // Check localStorage for user reaction
+      const userReaction = localStorage.getItem(`artist_reaction_${artist.artist_id}`);
+      if (userReaction) {
+        setUserReaction(userReaction);
+      }
     }
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [artist]);
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-  };
+  const handleReaction = async (reactionType: string) => {
+    if (!artist || userReaction) return;
 
-  const fetchComments = async () => {
+    // Optimistic update
+    setUserReaction(reactionType);
+    const newReactions = { ...reactions, [reactionType]: reactions[reactionType] + 1 };
+    setReactions(newReactions);
+
+    // Save to localStorage
+    localStorage.setItem(`artist_reaction_${artist.artist_id}`, reactionType);
+
+    try {
+      const response = await fetch("/api/artist-reaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artistId: artist.artist_id,
+          reactionType,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save reaction");
+
+      const data = await response.json();
+      if (data.reactions) {
+        setReactions(data.reactions);
+      }
+    } catch (error) {
+      console.error("Error saving reaction:", error);
+      // Revert on error
+      setUserReaction(null);
+      setReactions(reactions);
+      localStorage.removeItem(`artist_reaction_${artist.artist_id}`);
+    }
+  };
     if (!artist) return;
 
     const { data, error } = await supabase
@@ -89,85 +187,105 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
     }
   };
 
+  const fetchComments = async () => {
+    if (!artist) return;
+
+    try {
+      const response = await fetch(`/api/artist-comments-public?artistId=${artist.artist_id}`);
+      const data = await response.json();
+      if (data.comments) {
+        setComments(data.comments);
+      }
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    }
+  };
+
   const fetchReactions = async () => {
     if (!artist) return;
 
-    const { data, error } = await supabase
-      .from('featured_artist_reactions')
-      .select('reaction_type, user_id')
-      .eq('artist_id', artist.artist_id);
-
-    if (data) {
-      const counts = {
-        fire: data.filter(r => r.reaction_type === 'fire').length,
-        cool: data.filter(r => r.reaction_type === 'cool').length,
-        heart: data.filter(r => r.reaction_type === 'heart').length,
-        mind_blown: data.filter(r => r.reaction_type === 'mind_blown').length
-      };
-      setReactions(counts);
-
-      if (user) {
-        const userReactionData = data.find(r => r.user_id === user.id);
-        if (userReactionData) {
-          setUserReaction(userReactionData.reaction_type);
-        }
+    try {
+      const response = await fetch(`/api/artist-reaction?artistId=${artist.artist_id}`);
+      const data = await response.json();
+      if (data.reactions) {
+        setReactions(data.reactions);
       }
+    } catch (error) {
+      console.error('Failed to load reactions:', error);
     }
   };
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !newComment.trim() || !artist) return;
+    
+    if (!user) {
+      alert('יש להתחבר כדי להוסיף תגובה');
+      return;
+    }
+    
+    if (!artist || !newComment.trim() || submitting) return;
 
     setSubmitting(true);
 
-    const { error } = await supabase
-      .from('featured_artist_comments')
-      .insert([{
-        artist_id: artist.artist_id,
-        user_id: user.id,
-        content: newComment.trim()
-      }]);
+    try {
+      const response = await fetch("/api/artist-comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artist_id: artist.artist_id,
+          name: userName,
+          text: newComment.trim(),
+          user_id: user.id,
+          user_photo_url: userPhoto,
+        }),
+      });
 
-    if (!error) {
+      if (!response.ok) throw new Error("Failed to save comment");
+
+      const data = await response.json();
+      setComments([data.comment, ...comments]);
       setNewComment('');
-      fetchComments();
-    } else {
-      alert('שגיאה בשליחת התגובה');
+    } catch (error) {
+      console.error("Error saving comment:", error);
+      alert("שגיאה בשמירת התגובה");
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
   };
 
-  const handleReaction = async (reactionType: string) => {
-    if (!user || !artist) {
-      alert('יש להתחבר כדי להגיב');
-      return;
-    }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setUserName('');
+    setUserPhoto(null);
+  };
 
-    if (userReaction === reactionType) {
-      await supabase
-        .from('featured_artist_reactions')
-        .delete()
-        .eq('artist_id', artist.artist_id)
-        .eq('user_id', user.id);
-      
-      setUserReaction(null);
-    } else {
-      await supabase
-        .from('featured_artist_reactions')
-        .upsert({
-          artist_id: artist.artist_id,
-          user_id: user.id,
-          reaction_type: reactionType
-        }, {
-          onConflict: 'artist_id,user_id'
-        });
-      
-      setUserReaction(reactionType);
-    }
+  const handleDeleteComment = async (commentId: string) => {
+    const adminKey = prompt("הזן מפתח אדמין למחיקת התגובה:");
+    
+    if (!adminKey) return;
 
-    fetchReactions();
+    try {
+      const response = await fetch("/api/artist-comment", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          commentId,
+          adminKey,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete comment");
+      }
+
+      setComments(comments.filter((c) => c.id.toString() !== commentId));
+      alert("התגובה נמחקה בהצלחה");
+    } catch (error: any) {
+      console.error("Error deleting comment:", error);
+      alert(error.message === "Unauthorized" ? "מפתח אדמין שגוי" : "שגיאה במחיקת התגובה");
+    }
   };
 
   const reactionButtons = [
@@ -405,26 +523,57 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
                 תגובות ({comments.length})
               </h3>
 
-              {user ? (
-                <form onSubmit={handleCommentSubmit} className="mb-8">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="שתפו את המחשבות שלכם..."
-                    rows={4}
-                    className="w-full px-6 py-4 bg-black/50 border-2 border-gray-800 focus:border-purple-500 rounded-2xl focus:outline-none resize-none text-white placeholder-gray-500 transition-colors"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newComment.trim() || submitting}
-                    className="mt-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl disabled:opacity-50 transition-all shadow-lg hover:shadow-purple-500/50"
-                  >
-                    {submitting ? 'שולח...' : 'שלח תגובה'}
-                  </button>
-                </form>
+              {!user ? (
+                <div className="mb-8 text-center bg-gradient-to-br from-purple-500/20 to-cyan-500/20 rounded-2xl p-8 border-2 border-purple-500/30">
+                  <div className="text-5xl mb-4">🔐</div>
+                  <p className="text-white text-lg mb-6 font-medium">התחברו כדי להוסיף תגובה</p>
+                  <div className="flex justify-center">
+                    <GoogleLoginButton />
+                  </div>
+                </div>
               ) : (
-                <div className="mb-8 p-6 bg-purple-500/10 rounded-2xl border-2 border-purple-500/30 text-center">
-                  <p className="text-purple-300 font-medium">התחבר כדי להגיב</p>
+                <div className="mb-8">
+                  {/* User Info & Logout */}
+                  <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-2xl p-4 border-2 border-purple-500/30">
+                    <div className="flex items-center gap-4">
+                      {userPhoto && (
+                        <div className="relative">
+                          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full blur-sm" />
+                          <img 
+                            src={userPhoto} 
+                            alt={userName}
+                            className="relative w-12 h-12 rounded-full border-2 border-white"
+                          />
+                        </div>
+                      )}
+                      <span className="text-white font-bold text-lg">{userName}</span>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="text-white hover:text-gray-200 text-sm font-medium transition px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/50"
+                    >
+                      התנתק
+                    </button>
+                  </div>
+
+                  {/* Comment Form */}
+                  <form onSubmit={handleCommentSubmit} className="space-y-4">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="שתפו את המחשבות שלכם..."
+                      rows={4}
+                      maxLength={500}
+                      className="w-full px-6 py-4 bg-black/50 border-2 border-gray-800 focus:border-purple-500 rounded-2xl focus:outline-none resize-none text-white placeholder-gray-500 transition-colors"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newComment.trim() || submitting}
+                      className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-purple-500/50"
+                    >
+                      {submitting ? 'שולח...' : 'שלח תגובה'}
+                    </button>
+                  </form>
                 </div>
               )}
 
