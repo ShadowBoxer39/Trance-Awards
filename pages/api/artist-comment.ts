@@ -48,6 +48,7 @@ export default async function handler(
         text: text.trim(),
         user_id: user_id || null,
         user_photo_url: user_photo_url || null,
+        is_visible: true,
         timestamp: new Date().toISOString(),
       };
 
