@@ -85,13 +85,19 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
         } else {
           console.log('✅ OAuth callback successful:', data);
           
-          // Scroll to comments after successful login
-          setTimeout(() => {
+          // Scroll to comments after successful login with retry
+          const scrollToComments = () => {
             const commentsSection = document.getElementById('comments-section');
             if (commentsSection) {
-              commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              commentsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              console.log('📍 Scrolled to comments section');
+            } else {
+              console.log('⏳ Comments section not ready, retrying...');
+              setTimeout(scrollToComments, 300);
             }
-          }, 500);
+          };
+          
+          setTimeout(scrollToComments, 1000);
         }
         
         window.history.replaceState({}, document.title, window.location.pathname);
