@@ -27,7 +27,7 @@ interface Comment {
   created_at: string;
   profiles: {
     display_name: string;
-  };
+  } | null;
 }
 
 interface PageProps {
