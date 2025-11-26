@@ -2,6 +2,7 @@ import { GetServerSideProps } from 'next';
 import { createClient } from "@supabase/supabase-js";
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Navigation from '@/components/Navigation';
 import { FaInstagram, FaSoundcloud, FaSpotify, FaFire, FaHeart } from 'react-icons/fa';
 import { GiSunglasses } from 'react-icons/gi';
 import { BsEmojiDizzy } from 'react-icons/bs';
@@ -181,6 +182,9 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white">
+      {/* Navigation */}
+      <Navigation currentPage="featured-artist" />
+
       {/* Hero Section */}
       <div className="relative py-20 px-4">
         <div className="container mx-auto max-w-4xl text-center">
