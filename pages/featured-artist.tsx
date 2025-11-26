@@ -1,7 +1,6 @@
 import { GetServerSideProps } from 'next';
 import { createClient } from "@supabase/supabase-js";
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Navigation from '@/components/Navigation';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { FaInstagram, FaSoundcloud, FaSpotify, FaFire, FaHeart, FaPlay } from 'react-icons/fa';
@@ -353,12 +352,11 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
             
             {/* Artist Photo - Center Label */}
             <div className="absolute inset-20 rounded-full overflow-hidden border-4 border-purple-600 shadow-2xl shadow-purple-500/50 group-hover:scale-110 transition-transform duration-500">
-              <Image
-                src={artist.profile_photo_url}
-                alt={artist.stage_name}
-                fill
-                className="object-cover"
-              />
+              <img
+  src={artist.profile_photo_url}
+  alt={artist.stage_name}
+  className="w-full h-full object-cover"
+/>
             </div>
 
             {/* Play Button Overlay */}
@@ -644,7 +642,7 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
                   <div className="absolute -inset-1 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition duration-300" />
                   <div className="relative bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden border border-gray-800 group-hover:border-gray-600 transition-colors">
                     <div className="relative w-full aspect-square">
-                      <Image
+                      <img
                         src={prevArtist.profile_photo_url}
                         alt={prevArtist.stage_name}
                         fill
