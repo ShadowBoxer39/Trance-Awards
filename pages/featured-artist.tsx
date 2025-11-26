@@ -1,5 +1,5 @@
 import { GetServerSideProps } from 'next';
-import { supabase } from '@/lib/supabaseClient';
+import supabase from '@/lib/supabaseServer';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FaInstagram, FaSoundcloud, FaSpotify, FaFire, FaHeart } from 'react-icons/fa';
