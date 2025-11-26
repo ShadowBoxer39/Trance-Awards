@@ -69,8 +69,6 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
   const fetchComments = async () => {
     if (!artist) return;
 
-    
-
     const { data, error } = await supabase
       .from('featured_artist_comments')
       .select(`
@@ -84,7 +82,7 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
       .order('created_at', { ascending: false });
 
     if (data) {
-      setComments(data);
+      setComments(data as Comment[]);
     }
   };
 
@@ -145,7 +143,6 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
     }
 
     if (userReaction === reactionType) {
-      // Remove reaction
       await supabase
         .from('featured_artist_reactions')
         .delete()
@@ -154,7 +151,6 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
       
       setUserReaction(null);
     } else {
-      // Add or update reaction
       await supabase
         .from('featured_artist_reactions')
         .upsert({
@@ -383,20 +379,23 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  // Fetch current artist (most recent)
-  const { data: artist } = await supabase
+  const supabaseServer = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data: artist } = await supabaseServer
     .from('featured_artists')
     .select('*')
     .order('featured_at', { ascending: false })
     .limit(1)
     .single();
 
-  // Fetch previous artists (up to 8)
-  const { data: previousArtists } = await supabase
+  const { data: previousArtists } = await supabaseServer
     .from('featured_artists')
     .select('*')
     .order('featured_at', { ascending: false })
-    .range(1, 8); // Skip first (current), get next 8
+    .range(1, 8);
 
   return {
     props: {
