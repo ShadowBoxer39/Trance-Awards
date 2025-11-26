@@ -96,10 +96,10 @@ export default function ArtistPage({ artist, episodes }: ArtistPageProps) {
         {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-6 -mt-20 relative z-10">
           <div className="glass-card rounded-2xl p-8 md:p-12">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+            <div className="flex flex-col md:flex-row-reverse items-center md:items-start gap-8">
               
               {/* Profile Photo */}
-              <div className="relative">
+              <div className="relative flex-shrink-0">
                 {artist.profile_photo_url ? (
                   <img
                     src={artist.profile_photo_url}
@@ -116,9 +116,9 @@ export default function ArtistPage({ artist, episodes }: ArtistPageProps) {
               </div>
 
               {/* Artist Info */}
-              <div className="flex-1 text-center md:text-right">
+              <div className="flex-1 text-center md:text-right w-full">
                 {/* Name */}
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 break-words">
                   <span className="gradient-text">{displayName}</span>
                 </h1>
 
@@ -128,7 +128,7 @@ export default function ArtistPage({ artist, episodes }: ArtistPageProps) {
                 )}
 
                 {/* Genre & Location */}
-                <div className="flex flex-wrap justify-center md:justify-end gap-3 mb-6">
+                <div className="flex flex-wrap justify-center md:justify-start gap-3 mb-6">
                   {artist.genre && (
                     <span className="px-4 py-2 bg-purple-600/30 rounded-full text-sm">
                       {artist.genre}
@@ -143,13 +143,13 @@ export default function ArtistPage({ artist, episodes }: ArtistPageProps) {
 
                 {/* Bio */}
                 {artist.bio && (
-                  <p className="text-lg text-gray-300 leading-relaxed mb-6 max-w-3xl mx-auto md:mx-0">
+                  <p className="text-lg text-gray-300 leading-relaxed mb-6 max-w-3xl">
                     {artist.bio}
                   </p>
                 )}
 
                 {/* Social Links */}
-                <div className="flex flex-wrap justify-center md:justify-end gap-3">
+                <div className="flex flex-wrap justify-center md:justify-start gap-3">
                   {artist.instagram_url && (
                     <a
                       href={artist.instagram_url}
