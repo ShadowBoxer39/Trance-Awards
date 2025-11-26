@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+// pages/admin/featured-artist.tsx - Following admin.tsx pattern
+import React from "react";
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 
@@ -30,15 +31,17 @@ interface FormData {
 
 export default function FeaturedArtistAdmin() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [currentArtist, setCurrentArtist] = useState<FeaturedArtist | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState('');
   
-  const [formData, setFormData] = useState<FormData>({
+  // ALL STATE AT TOP LEVEL
+  const [key, setKey] = React.useState<string>("");
+  const [loading, setLoading] = React.useState(false);
+  const [currentArtist, setCurrentArtist] = React.useState<FeaturedArtist | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = React.useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = React.useState(false);
+  const [photoPreview, setPhotoPreview] = React.useState('');
+  
+  const [formData, setFormData] = React.useState<FormData>({
     artist_id: '',
     name: '',
     stage_name: '',
@@ -50,49 +53,35 @@ export default function FeaturedArtistAdmin() {
     spotify_url: ''
   });
 
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [errors, setErrors] = React.useState<Partial<FormData>>({});
 
-  useEffect(() => {
-    checkAuth();
-    fetchCurrentArtist();
+  // useEffect hooks
+  React.useEffect(() => {
+    document.documentElement.setAttribute("dir", "rtl");
+    const savedKey = localStorage.getItem("ADMIN_KEY");
+    if (savedKey) {
+      setKey(savedKey);
+      fetchCurrentArtist(savedKey);
+    }
   }, []);
 
-  const checkAuth = () => {
-    // Check if admin key is stored in sessionStorage
-    const adminKey = sessionStorage.getItem('adminKey');
+  // Functions
+  const fetchCurrentArtist = async (adminKey?: string) => {
+    const keyToUse = adminKey || key;
+    if (!keyToUse) return;
     
-    if (!adminKey) {
-      // Prompt for admin key
-      const key = prompt('הזן מפתח אדמין:');
-      
-      if (key === process.env.NEXT_PUBLIC_ADMIN_KEY) {
-        sessionStorage.setItem('adminKey', key);
-        setIsAuthenticated(true);
-        setLoading(false);
-      } else {
-        alert('מפתח אדמין שגוי');
-        router.push('/');
-      }
-    } else {
-      // Verify stored key
-      if (adminKey === process.env.NEXT_PUBLIC_ADMIN_KEY) {
-        setIsAuthenticated(true);
-        setLoading(false);
-      } else {
-        sessionStorage.removeItem('adminKey');
-        router.push('/');
-      }
-    }
-  };
-
-  const fetchCurrentArtist = async () => {
     try {
-      const response = await fetch('/api/featured-artist-current');
-      if (response.ok) {
-        const data = await response.json();
+      const response = await fetch(`/api/featured-artist-current?key=${encodeURIComponent(keyToUse)}&_t=${Date.now()}`);
+      const data = await response.json();
+      
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || 'Failed to fetch');
+      }
+      
+      if (data.artist) {
         setCurrentArtist(data.artist);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching current artist:', error);
     }
   };
@@ -101,22 +90,21 @@ export default function FeaturedArtistAdmin() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear error for this field
     if (errors[name as keyof FormData]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
 
   const uploadToImgur = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('image', file);
+    const formDataImgur = new FormData();
+    formDataImgur.append('image', file);
 
     const response = await fetch('https://api.imgur.com/3/image', {
       method: 'POST',
       headers: {
         Authorization: 'Client-ID 546c25a59c58ad7',
       },
-      body: formData,
+      body: formDataImgur,
     });
 
     if (!response.ok) {
@@ -131,7 +119,6 @@ export default function FeaturedArtistAdmin() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file
     if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
       alert('רק קבצי JPG או PNG מותרים');
       return;
@@ -145,14 +132,12 @@ export default function FeaturedArtistAdmin() {
     setUploadingPhoto(true);
     
     try {
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
 
-      // Upload to Imgur
       const url = await uploadToImgur(file);
       setFormData(prev => ({ ...prev, profile_photo_url: url }));
       setErrors(prev => ({ ...prev, profile_photo_url: undefined }));
@@ -211,10 +196,10 @@ export default function FeaturedArtistAdmin() {
       const response = await fetch('/api/featured-artist', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'X-Admin-Key': sessionStorage.getItem('adminKey') || ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          key,
           artist_id: formData.artist_id.toLowerCase().trim(),
           name: formData.name.trim(),
           stage_name: formData.stage_name.trim(),
@@ -227,12 +212,13 @@ export default function FeaturedArtistAdmin() {
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
+      const data = await response.json();
+
+      if (!response.ok || !data?.ok) {
         if (response.status === 409) {
           alert('שגיאה: Artist ID כבר קיים במערכת');
         } else {
-          throw new Error(data.error || 'Failed to save artist');
+          throw new Error(data?.error || 'Failed to save artist');
         }
         return;
       }
@@ -258,7 +244,7 @@ export default function FeaturedArtistAdmin() {
       
       // Redirect to featured artist page
       router.push('/featured-artist');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
       alert('שגיאה בשמירת האמן. נסה שוב.');
     } finally {
@@ -269,36 +255,60 @@ export default function FeaturedArtistAdmin() {
   const bioLength = formData.bio.length;
   const bioColor = bioLength < 50 ? 'text-red-500' : bioLength > 1000 ? 'text-red-500' : 'text-green-500';
 
-  if (loading) {
+  // If no key entered yet, show login form
+  if (!key) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black flex items-center justify-center">
-        <div className="text-white text-xl">טוען...</div>
-      </div>
+      <main className="min-h-screen neon-backdrop text-white">
+        <div className="max-w-7xl mx-auto p-4 space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <h1 className="text-3xl sm:text-4xl font-bold gradient-title">ניהול אמן מוצג</h1>
+          </div>
+
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (key) {
+              localStorage.setItem("ADMIN_KEY", key);
+              fetchCurrentArtist();
+            }
+          }} className="glass p-6 rounded-2xl max-w-md mx-auto space-y-4">
+            <label className="text-sm text-white/80">Admin Key</label>
+            <input
+              className="w-full rounded-xl bg-black/50 border border-white/15 px-4 py-3"
+              type="password"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              placeholder="Paste ADMIN_KEY"
+            />
+            <button
+              className="w-full btn-primary rounded-2xl px-4 py-3 disabled:opacity-50 font-semibold"
+              disabled={!key || loading}
+              type="submit"
+            >
+              {loading ? "טוען…" : "כניסה"}
+            </button>
+          </form>
+        </div>
+      </main>
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <main className="min-h-screen neon-backdrop text-white">
+      <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Header */}
-        <div className="mb-8">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="text-3xl sm:text-4xl font-bold gradient-title">ניהול אמן מוצג</h1>
           <button
             onClick={() => router.push('/admin')}
-            className="text-purple-300 hover:text-white mb-4 flex items-center gap-2"
+            className="text-purple-300 hover:text-white transition flex items-center gap-2"
           >
             ← חזרה לדף ניהול
           </button>
-          <h1 className="text-4xl font-bold mb-2">ניהול אמן מוצג</h1>
-          <p className="text-purple-200">העלה אמן חדש - האמן יוצג מיד באתר</p>
         </div>
 
         {/* Current Artist Display */}
         {currentArtist && (
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 mb-8 border border-purple-500/30">
+          <div className="glass rounded-2xl p-6 border border-purple-500/30">
             <h2 className="text-2xl font-bold mb-4">האמן הנוכחי</h2>
             <div className="flex items-center gap-6">
               <div className="relative w-24 h-24 rounded-full overflow-hidden">
@@ -321,7 +331,7 @@ export default function FeaturedArtistAdmin() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-md rounded-lg p-8 border border-purple-500/30">
+        <form onSubmit={handleSubmit} className="glass rounded-2xl p-8 border border-purple-500/30">
           <h2 className="text-2xl font-bold mb-6">הוספת אמן חדש</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -508,6 +518,6 @@ export default function FeaturedArtistAdmin() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
