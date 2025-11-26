@@ -79,7 +79,7 @@ export default function ArtistPage({ artist, episodes }: ArtistPageProps) {
       </Head>
 
       <div className="trance-backdrop min-h-screen text-gray-100">
-        <Navigation currentPage="artists" />
+        <Navigation currentPage="episodes" />
 
         {/* Cover Photo */}
         {artist.cover_photo_url && (
