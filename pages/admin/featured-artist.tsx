@@ -86,15 +86,14 @@ export default function FeaturedArtistAdmin() {
   };
 
   const fetchCurrentArtist = async () => {
-    const { data, error } = await supabase
-      .from('featured_artists')
-      .select('*')
-      .order('featured_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (data) {
-      setCurrentArtist(data);
+    try {
+      const response = await fetch('/api/featured-artist-current');
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentArtist(data.artist);
+      }
+    } catch (error) {
+      console.error('Error fetching current artist:', error);
     }
   };
 
@@ -209,9 +208,13 @@ export default function FeaturedArtistAdmin() {
     setSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('featured_artists')
-        .insert([{
+      const response = await fetch('/api/featured-artist', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Admin-Key': sessionStorage.getItem('adminKey') || ''
+        },
+        body: JSON.stringify({
           artist_id: formData.artist_id.toLowerCase().trim(),
           name: formData.name.trim(),
           stage_name: formData.stage_name.trim(),
@@ -221,14 +224,15 @@ export default function FeaturedArtistAdmin() {
           instagram_url: formData.instagram_url.trim() || null,
           soundcloud_profile_url: formData.soundcloud_profile_url.trim() || null,
           spotify_url: formData.spotify_url.trim() || null,
-          featured_at: new Date().toISOString()
-        }]);
+        }),
+      });
 
-      if (error) {
-        if (error.code === '23505') { // Unique violation
+      if (!response.ok) {
+        const data = await response.json();
+        if (response.status === 409) {
           alert('שגיאה: Artist ID כבר קיים במערכת');
         } else {
-          throw error;
+          throw new Error(data.error || 'Failed to save artist');
         }
         return;
       }
