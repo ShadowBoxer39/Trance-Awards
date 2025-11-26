@@ -645,8 +645,8 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
                       <img
                         src={prevArtist.profile_photo_url}
                         alt={prevArtist.stage_name}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  
+                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     </div>
                     <div className="p-4 bg-gradient-to-t from-black/90 to-transparent absolute bottom-0 left-0 right-0">
