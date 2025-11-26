@@ -90,7 +90,7 @@ function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: 
 }
 
 // Rotating Comments Component for Featured Artist
-function FeaturedArtistComments() {
+function FeaturedArtistComments({ artistId }: { artistId: string }) {
   const [comments, setComments] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,7 +98,7 @@ function FeaturedArtistComments() {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await fetch('/api/artist-comments-public?artistId=kanok');
+        const response = await fetch(`/api/artist-comments-public?artistId=${artistId}`);
         if (response.ok) {
           const data = await response.json();
           setComments(data.comments || []);
@@ -111,7 +111,7 @@ function FeaturedArtistComments() {
     };
 
     fetchComments();
-  }, []);
+  }, [artistId]);
 
   useEffect(() => {
     if (comments.length === 0) return;
@@ -556,7 +556,7 @@ export default function Home({
                     </div>
                   </div>
 
-                  <FeaturedArtistComments />
+                  <FeaturedArtistComments artistId={featuredArtist.artist_id} />
 
                   <div>
                     <h4 className="text-sm font-semibold mb-3 text-gray-400">עקבו אחריו</h4>
