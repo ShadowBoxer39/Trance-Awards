@@ -171,10 +171,10 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
   };
 
   const reactionButtons = [
-    { type: 'fire', icon: FaFire, label: 'אש', color: 'from-orange-500 to-red-500', glow: 'shadow-orange-500/50' },
-    { type: 'cool', icon: GiSunglasses, label: 'מגניב', color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50' },
-    { type: 'heart', icon: FaHeart, label: 'אהבה', color: 'from-pink-500 to-red-500', glow: 'shadow-pink-500/50' },
-    { type: 'mind_blown', icon: BsEmojiDizzy, label: 'מפוצץ', color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50' }
+    { type: 'fire', icon: FaFire, emoji: '🔥', label: 'אש', color: 'from-orange-500 to-red-500', glow: 'shadow-orange-500/50' },
+    { type: 'cool', icon: GiSunglasses, emoji: '😎', label: 'מגניב', color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50' },
+    { type: 'heart', icon: FaHeart, emoji: '❤️', label: 'אהבה', color: 'from-pink-500 to-red-500', glow: 'shadow-pink-500/50' },
+    { type: 'mind_blown', icon: BsEmojiDizzy, emoji: '🤯', label: 'מפוצץ', color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50' }
   ];
 
   if (!artist) {
@@ -239,7 +239,14 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
 
             {/* Play Button Overlay */}
             <div 
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={() => {
+                setIsPlaying(true);
+                // Scroll to music player
+                const musicPlayer = document.getElementById('music-player');
+                if (musicPlayer) {
+                  musicPlayer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }}
               className="absolute inset-0 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             >
               <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center shadow-2xl backdrop-blur-sm transform hover:scale-110 transition-transform">
@@ -329,19 +336,19 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
         </div>
 
         {/* Music Player - Floating Card */}
-        <div className="mb-16">
+        <div id="music-player" className="mb-16">
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-pink-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500" />
+            <div className={`absolute -inset-1 bg-gradient-to-r from-orange-600 to-pink-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500 ${isPlaying ? 'animate-pulse' : ''}`} />
             <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl p-8 border border-gray-800">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center animate-pulse">
+                <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center ${isPlaying ? 'animate-pulse' : ''}`}>
                   <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
                   </svg>
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-white">שמעו את המוזיקה</h3>
-                  <p className="text-gray-400">הטראק המומלץ</p>
+                  <p className="text-gray-400">הטראק המומלץ {isPlaying && '🎵'}</p>
                 </div>
               </div>
               <iframe
@@ -352,6 +359,7 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
                 allow="autoplay"
                 src={artist.soundcloud_track_url}
                 className="rounded-xl"
+                onLoad={() => setIsPlaying(false)}
               />
             </div>
           </div>
@@ -363,7 +371,7 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
             מה אתם חושבים?
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {reactionButtons.map(({ type, icon: Icon, label, color, glow }) => (
+            {reactionButtons.map(({ type, icon: Icon, emoji, label, color, glow }) => (
               <button
                 key={type}
                 onClick={() => handleReaction(type)}
@@ -379,7 +387,7 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
                     ? `border-white ${glow} shadow-2xl`
                     : 'border-gray-800'
                 }`}>
-                  <Icon className={`mx-auto text-5xl mb-3 bg-gradient-to-br ${color} bg-clip-text text-transparent`} />
+                  <div className="text-5xl mb-3">{emoji}</div>
                   <div className="text-3xl font-black text-white mb-1">{reactions[type as keyof typeof reactions]}</div>
                   <div className="text-sm text-gray-400">{label}</div>
                 </div>
