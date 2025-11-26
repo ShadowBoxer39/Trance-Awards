@@ -137,7 +137,7 @@ export default function FeaturedArtistPage({
         .catch(err => console.error('Failed to load reactions:', err));
 
       // Load comments from API
-      fetch(`/api/artist-comment-public?artistId=${artist.id}`)
+      fetch(`/api/artist-comments-public?artistId=${artist.id}`)
         .then(res => res.json())
         .then(data => {
           if (data.comments) {
