@@ -71,18 +71,12 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
 
     const { data, error } = await supabase
       .from('featured_artist_comments')
-      .select(`
-        id,
-        user_id,
-        content,
-        created_at,
-        profiles (display_name)
-      `)
+      .select('id, user_id, content, created_at, profiles!inner(display_name)')
       .eq('artist_id', artist.artist_id)
       .order('created_at', { ascending: false });
 
     if (data) {
-      setComments(data as Comment[]);
+      setComments(data as any);
     }
   };
 
