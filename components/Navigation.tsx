@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import React from "react"; 
- 
+import React from "react";
+
 interface NavigationProps {
   currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist"; 
 }
@@ -88,48 +88,50 @@ export default function Navigation({ currentPage }: NavigationProps) {
               </button>
 
               {communityOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-gray-900 border border-gray-800 py-2">
-                  <Link
-                    href="/episodes"
-                    className={`block px-4 py-3 text-sm transition ${
-                      isActive("episodes")
-                        ? "text-purple-400 bg-gray-800"
-                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                    }`}
-                  >
-                    🎧 פרקים
-                  </Link>
-                  <Link
-                    href="/young-artists"
-                    className={`block px-4 py-3 text-sm transition ${
-                      isActive("young-artists")
-                        ? "text-purple-400 bg-gray-800"
-                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                    }`}
-                  >
-                    🌟 אמנים צעירים
-                  </Link>
-                  <div className="border-t border-gray-800 my-1"></div>
-                  <Link
-                    href="/about"
-                    className={`block px-4 py-3 text-sm transition ${
-                      isActive("about")
-                        ? "text-purple-400 bg-gray-800"
-                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                    }`}
-                  >
-                    אודות
-                  </Link>
-                  <Link
-                    href="/advertisers"
-                    className={`block px-4 py-3 text-sm transition ${
-                      isActive("advertisers")
-                        ? "text-purple-400 bg-gray-800"
-                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                    }`}
-                  >
-                    למפרסמים
-                  </Link>
+                <div className="absolute right-0 top-full pt-1 w-64 z-50">
+                  <div className="rounded-xl shadow-xl bg-gray-900 border border-gray-800 py-2">
+                    <Link
+                      href="/episodes"
+                      className={`block px-4 py-3 text-sm transition ${
+                        isActive("episodes")
+                          ? "text-purple-400 bg-gray-800"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }`}
+                    >
+                      🎧 פרקים
+                    </Link>
+                    <Link
+                      href="/young-artists"
+                      className={`block px-4 py-3 text-sm transition ${
+                        isActive("young-artists")
+                          ? "text-purple-400 bg-gray-800"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }`}
+                    >
+                      🌟 אמנים צעירים
+                    </Link>
+                    <div className="border-t border-gray-800 my-1"></div>
+                    <Link
+                      href="/about"
+                      className={`block px-4 py-3 text-sm transition ${
+                        isActive("about")
+                          ? "text-purple-400 bg-gray-800"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }`}
+                    >
+                      אודות
+                    </Link>
+                    <Link
+                      href="/advertisers"
+                      className={`block px-4 py-3 text-sm transition ${
+                        isActive("advertisers")
+                          ? "text-purple-400 bg-gray-800"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }`}
+                    >
+                      למפרסמים
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
