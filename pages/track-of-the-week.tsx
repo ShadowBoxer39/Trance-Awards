@@ -671,9 +671,12 @@ export default function TrackOfTheWeekPage({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {pastTracks.slice(0, 8).map((track) => (
-                <div
+                <a
                   key={track.id}
-                  className="glass-card rounded-2xl overflow-hidden border-2 border-purple-500/20 hover:border-purple-500/50 transition-all group cursor-pointer transform hover:scale-105"
+                  href={track.youtube_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="glass-card rounded-2xl overflow-hidden border-2 border-purple-500/20 hover:border-purple-500/50 transition-all group cursor-pointer transform hover:scale-105 block"
                 >
                   <div className="relative aspect-video bg-black">
                     <img
@@ -710,7 +713,7 @@ export default function TrackOfTheWeekPage({
                       </div>
                     </div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </section>
