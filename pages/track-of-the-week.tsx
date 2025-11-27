@@ -1,14 +1,14 @@
-// pages/track-of-the-week.tsx - FINAL FIX: Community Design, Sticky Nav, and Archive Links
+// pages/track-of-the-week.tsx - FINAL FIXED VERSION
 
 import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { createClient, User } from '@supabase/supabase-js';
+// FIX: Combined imports to avoid 'Duplicate identifier' error
+import { createClient, type User } from '@supabase/supabase-js'; 
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
 import GoogleLoginButton from "../components/GoogleLoginButton";
 import { getGoogleUserInfo } from "../lib/googleAuthHelpers";
-import type { User } from '@supabase/supabase-js';
 import { FaFire, FaHeart, FaPlay, FaWhatsapp } from 'react-icons/fa';
 import { GiSunglasses } from 'react-icons/gi';
 import { BsEmojiDizzy } from 'react-icons/bs';
@@ -72,7 +72,7 @@ export default function TrackOfTheWeekPage({
   const [user, setUser] = useState<User | null>(null);
   const [userName, setUserName] = useState('');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
-  const [scrollY, setScrollY] = useState(0); 
+  const [scrollY, setScrollY] = useState(0); 
   const [isPlaying, setIsPlaying] = useState(false);
 
 
@@ -104,7 +104,7 @@ export default function TrackOfTheWeekPage({
       
       setUser(user);
       if (user) {
-        const userInfo = getGoogleUserInfo(user); 
+        const userInfo = getGoogleUserInfo(user); 
         if (userInfo) {
           setUserName(userInfo.name);
           setUserPhoto(userInfo.photoUrl);
@@ -151,7 +151,7 @@ export default function TrackOfTheWeekPage({
   }, [currentTrack]);
 
 
-  // --- Handlers (Unchanged Functionality) ---
+  // --- Handlers (Unchanged Functionality) ---
   const handleReaction = async (reactionType: keyof typeof reactions) => { /* ... unchanged ... */ };
   const handleCommentSubmit = async (e: React.FormEvent) => { /* ... unchanged ... */ };
   const handleLogout = async () => { /* ... unchanged ... */ };
@@ -173,7 +173,7 @@ export default function TrackOfTheWeekPage({
   ];
 
 
-  // --- JSX Rendering ---
+  // --- JSX Rendering ---
 
   if (!currentTrack) {
     return (
@@ -244,8 +244,7 @@ export default function TrackOfTheWeekPage({
         }
       `}</style>
 
-      {/* --- ROOT CONTAINER: FIXED STICKY NAVIGATION (Issue 1) --- */}
-      {/* Removed overflow-hidden class to fix sticky nav. */}
+      {/* --- ROOT CONTAINER: FIXED STICKY NAVIGATION ISSUE (Issue 1) --- */}
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative"> 
         {/* Animated Background Orbs (fixed position, z-index 0) */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0"> 
@@ -257,7 +256,6 @@ export default function TrackOfTheWeekPage({
         <Navigation currentPage="track-of-the-week" />
 
         {/* --- Hero Section: Community Card (z-index 10) --- */}
-        {/* Parallax hero content has z-10 */}
         <section className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-20">
           
           {/* Badge */}
@@ -279,10 +277,10 @@ export default function TrackOfTheWeekPage({
             <div className="flex items-center gap-4 border-b border-gray-700/50 pb-4 mb-4">
               <div className="flex-shrink-0 relative w-16 h-16 rounded-full overflow-hidden border-2 border-cyan-500 shadow-lg">
                 {currentTrack.photo_url ? (
-                  <img 
-                    src={currentTrack.photo_url} 
-                    alt={currentTrack.name} 
-                    className="w-full h-full object-cover" 
+                  <img 
+                    src={currentTrack.photo_url} 
+                    alt={currentTrack.name} 
+                    className="w-full h-full object-cover" 
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center text-3xl">👤</div>
@@ -329,19 +327,19 @@ export default function TrackOfTheWeekPage({
             {/* Chat Bubble Card - rounded-tl-none for the bubble shape */}
             <div className="relative glass-card rounded-3xl rounded-tl-none p-8 border-2 border-purple-500/30">
               <h3 className="text-lg font-bold text-purple-300 mb-4 flex items-center gap-2 justify-center">
-                <span>💬</span> 
+                <span>💬</span> 
                 <span>ההמלצה האישית של {currentTrack.name}:</span>
               </h3>
               <p className="text-gray-200 leading-relaxed text-center text-lg">
                 {currentTrack.description}
               </p>
             </div>
-            
+            
           </div>
         </section>
 
         {/* Video Player & Reactions (Issue 2 Fix) */}
-        {/* Added z-20 to ensure content sections scroll over the z-10 Hero section */}
+        {/* Added z-20 to ensure content sections scroll over the z-10 Hero section, fixing the visual overlap */}
         <section className="relative z-20 max-w-7xl mx-auto px-6 pb-12">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left - Video */}
@@ -398,7 +396,6 @@ export default function TrackOfTheWeekPage({
                 ) : (
                   <div className="mb-6">{/* ... form ... */}</div>
                 )}
-                {/* ... Comment list ... */}
               </div>
             </div>
 
@@ -456,7 +453,7 @@ export default function TrackOfTheWeekPage({
                 <a
                   // ISSUE 3 FIX: Element is now an <a> tag linking to YouTube
                   key={track.id}
-                  href={track.youtube_url} 
+                  href={track.youtube_url} 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="glass-card rounded-2xl overflow-hidden border-2 border-purple-500/20 hover:border-purple-500/50 transition-all group cursor-pointer transform hover:scale-105 block"
