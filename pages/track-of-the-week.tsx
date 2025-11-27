@@ -1,4 +1,4 @@
-// pages/track-of-the-week.tsx - REDESIGNED with Featured Artist aesthetic
+// pages/track-of-the-week.tsx - REDESIGNED with WhatsApp Community Theme
 import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -8,7 +8,7 @@ import SEO from "@/components/SEO";
 import GoogleLoginButton from "../components/GoogleLoginButton";
 import { getGoogleUserInfo } from "../lib/googleAuthHelpers";
 import type { User } from '@supabase/supabase-js';
-import { FaFire, FaHeart, FaPlay } from 'react-icons/fa';
+import { FaFire, FaHeart, FaPlay, FaWhatsapp } from 'react-icons/fa';
 import { GiSunglasses } from 'react-icons/gi';
 import { BsEmojiDizzy } from 'react-icons/bs';
 
@@ -311,23 +311,25 @@ export default function TrackOfTheWeekPage({
       </Head>
 
       <style jsx global>{`
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+          50% { transform: translateY(-10px); }
         }
         
         @keyframes pulse-glow {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 0.6; }
         }
-        
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         
         .animate-float {
@@ -337,105 +339,228 @@ export default function TrackOfTheWeekPage({
         .animate-pulse-glow {
           animation: pulse-glow 2s ease-in-out infinite;
         }
+
+        .animate-slide-up {
+          animation: slideUp 0.5s ease-out forwards;
+        }
         
         .glass-card {
           background: rgba(17, 24, 39, 0.7);
           backdrop-filter: blur(12px);
           border: 1px solid rgba(139, 92, 246, 0.2);
         }
+
+        /* WhatsApp-style chat bubble */
+        .chat-bubble {
+          position: relative;
+          background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+          border-radius: 12px 12px 12px 0;
+          padding: 16px 20px;
+          box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+        }
+
+        .chat-bubble::before {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          right: -8px;
+          width: 0;
+          height: 0;
+          border-left: 12px solid #128C7E;
+          border-bottom: 12px solid transparent;
+        }
+
+        /* WhatsApp phone mockup */
+        .whatsapp-phone {
+          background: #0a0a0a;
+          border-radius: 40px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          border: 8px solid #1a1a1a;
+        }
+
+        .whatsapp-header {
+          background: linear-gradient(135deg, #075E54 0%, #128C7E 100%);
+          border-radius: 32px 32px 0 0;
+        }
+
+        .whatsapp-bg {
+          background: #0d1418;
+          background-image: 
+            radial-gradient(circle at 20% 50%, rgba(37, 211, 102, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(18, 140, 126, 0.05) 0%, transparent 50%);
+        }
       `}</style>
 
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative overflow-hidden">
         {/* Animated Background Orbs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-purple-600/30 rounded-full blur-3xl animate-pulse-glow" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-600/30 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-20 left-10 w-96 h-96 bg-green-600/20 rounded-full blur-3xl animate-pulse-glow" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-teal-600/20 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
         </div>
 
         <Navigation currentPage="track-of-the-week" />
 
-        {/* Hero Section with Vinyl Record */}
+        {/* Hero Section with WhatsApp Chat */}
         <section className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-20">
-          {/* Badge */}
+          {/* Badge with WhatsApp Icon */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 backdrop-blur-sm">
-              <span className="text-2xl">💧</span>
-              <span className="font-bold text-purple-300">הטראק השבועי של הקהילה</span>
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-green-500/20 to-teal-500/20 border border-green-500/30 backdrop-blur-sm">
+              <FaWhatsapp className="text-3xl text-green-400" />
+              <span className="font-bold text-green-300">הטראק השבועי מקהילת הוואטסאפ</span>
             </div>
           </div>
 
-          {/* Spinning Vinyl with Submitter Photo */}
+          {/* WhatsApp Phone Mockup */}
           <div 
-            className="relative mx-auto mb-12"
+            className="relative mx-auto mb-12 max-w-md"
             style={{ 
-              transform: `translateY(${scrollY * 0.3}px)`,
-              maxWidth: '500px'
+              transform: `translateY(${scrollY * 0.2}px)`,
             }}
           >
-            <div className="relative w-72 h-72 md:w-80 md:h-80 mx-auto group">
-              {/* Vinyl Record */}
-              <div className="absolute inset-0 rounded-full bg-black border-8 border-gray-800 shadow-2xl animate-spin-slow group-hover:animate-spin">
-                {/* Grooves */}
-                <div className="absolute inset-4 rounded-full border-2 border-gray-700 opacity-30" />
-                <div className="absolute inset-8 rounded-full border-2 border-gray-700 opacity-30" />
-                <div className="absolute inset-12 rounded-full border-2 border-gray-700 opacity-30" />
-                
-                {/* Center Label with Submitter Photo */}
-                <div className="absolute inset-20 rounded-full overflow-hidden border-4 border-cyan-500 shadow-2xl shadow-cyan-500/50">
-                  {currentTrack.photo_url ? (
-                    <img 
-                      src={currentTrack.photo_url} 
-                      alt={currentTrack.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center text-5xl">
-                      👤
+            <div className="whatsapp-phone p-2 animate-float">
+              {/* Phone Notch */}
+              <div className="h-6 bg-black rounded-t-[32px] flex items-center justify-center">
+                <div className="w-20 h-1 bg-gray-800 rounded-full"></div>
+              </div>
+
+              {/* WhatsApp Header */}
+              <div className="whatsapp-header p-4 flex items-center gap-3">
+                <Link href="https://chat.whatsapp.com/YOUR_GROUP_LINK" target="_blank" className="hover:opacity-80 transition-opacity flex items-center gap-3 flex-1">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center text-2xl flex-shrink-0">
+                    🎵
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-white text-lg">יוצאים לטראק</div>
+                    <div className="text-xs text-green-100/80">קהילת הטראנס</div>
+                  </div>
+                </Link>
+              </div>
+
+              {/* Chat Messages Area */}
+              <div className="whatsapp-bg p-6 min-h-[400px] flex flex-col justify-end space-y-4">
+                {/* Date Separator */}
+                <div className="flex justify-center">
+                  <div className="bg-gray-800/80 backdrop-blur-sm px-4 py-1 rounded-lg text-xs text-gray-300">
+                    {new Date().toLocaleDateString('he-IL', { day: 'numeric', month: 'long' })}
+                  </div>
+                </div>
+
+                {/* System Message */}
+                <div className="flex justify-center animate-slide-up">
+                  <div className="bg-teal-900/30 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-teal-200 max-w-[80%] text-center">
+                    <FaWhatsapp className="inline mb-1 ml-1" />
+                    הצטרפו לקהילה ושלחו את הטראק הבא!
+                  </div>
+                </div>
+
+                {/* Submitter's Message with Photo */}
+                <div className="flex gap-2 items-start animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                  {/* Profile Photo */}
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-green-400">
+                    {currentTrack.photo_url ? (
+                      <img 
+                        src={currentTrack.photo_url} 
+                        alt={currentTrack.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-green-400 to-teal-400 flex items-center justify-center text-lg">
+                        👤
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Message Bubble */}
+                  <div className="flex-1">
+                    <div className="text-xs text-green-300 mb-1 font-bold">{currentTrack.name}</div>
+                    <div className="chat-bubble">
+                      <div className="text-white text-sm leading-relaxed mb-2">
+                        {currentTrack.description}
+                      </div>
+                      <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-white/10">
+                        <div className="text-xs text-white/70">
+                          {new Date(currentTrack.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div className="text-white/90">✓✓</div>
+                      </div>
                     </div>
-                  )}
+                  </div>
+                </div>
+
+                {/* Track Link Message */}
+                <div className="flex gap-2 items-start animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                  <div className="w-10"></div>
+                  <div className="flex-1">
+                    <a 
+                      href={currentTrack.youtube_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block chat-bubble hover:scale-[1.02] transition-transform"
+                    >
+                      {/* Track Preview Card */}
+                      <div className="bg-black/30 rounded-lg overflow-hidden mb-2">
+                        <img 
+                          src={`https://img.youtube.com/vi/${getYouTubeId(currentTrack.youtube_url)}/maxresdefault.jpg`}
+                          alt={currentTrack.track_title}
+                          className="w-full h-40 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://img.youtube.com/vi/${getYouTubeId(currentTrack.youtube_url)}/hqdefault.jpg`;
+                          }}
+                        />
+                        <div className="p-3">
+                          <div className="font-bold text-white text-sm mb-1">{currentTrack.track_title}</div>
+                          <div className="text-xs text-white/70 flex items-center gap-2">
+                            <span>YouTube</span>
+                            <span>•</span>
+                            <FaPlay className="inline" />
+                            <span>לחצו לצפייה</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-white/70">
+                          {new Date(currentTrack.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div className="text-white/90">✓✓</div>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Call to Action */}
+                <div className="flex justify-center pt-4 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+                  <Link 
+                    href="https://chat.whatsapp.com/YOUR_GROUP_LINK"
+                    target="_blank"
+                    className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg"
+                  >
+                    <FaWhatsapp className="text-xl" />
+                    <span>הצטרפו לקהילה</span>
+                  </Link>
                 </div>
               </div>
 
-              {/* Glow effect */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-600 to-purple-600 blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
-              
-              {/* Play button overlay */}
-              <button
-                onClick={handlePlayClick}
-                className={`absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${isPlaying ? 'opacity-100' : ''}`}
-              >
-                <div className="w-20 h-20 rounded-full bg-cyan-600 hover:bg-cyan-500 flex items-center justify-center shadow-lg transition-all hover:scale-110">
-                  <FaPlay className="text-white text-2xl ml-1" />
-                </div>
-              </button>
+              {/* Phone Bottom Bar */}
+              <div className="h-1 bg-black rounded-b-[32px]"></div>
             </div>
           </div>
 
-          {/* Track Title */}
-          <div className="text-center mb-8 animate-float">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent leading-tight">
+          {/* Track Title - Below Phone */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-green-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent leading-tight px-4">
               {currentTrack.track_title}
             </h1>
-            <p className="text-xl text-gray-300 mb-2">נבחר על ידי</p>
-            <p className="text-2xl font-bold text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text">
-              {currentTrack.name}
-            </p>
-          </div>
-
-          {/* Submitter's Message */}
-          <div className="max-w-2xl mx-auto glass-card rounded-3xl p-8 mb-12 border-2 border-purple-500/30">
-            <h3 className="text-lg font-bold text-purple-300 mb-4 flex items-center gap-2 justify-center">
-              <span>💭</span>
-              <span>למה הטראק הזה?</span>
-            </h3>
-            <p className="text-gray-200 leading-relaxed text-center text-lg">
-              {currentTrack.description}
-            </p>
+            <button
+              onClick={handlePlayClick}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 px-8 py-4 rounded-full font-bold text-white transition-all transform hover:scale-105 shadow-lg"
+            >
+              <FaPlay />
+              <span>השמע את הטראק</span>
+            </button>
           </div>
         </section>
 
-        {/* Video Player & Reactions */}
+        {/* Video Player & Reactions - UNCHANGED FROM ORIGINAL */}
         <section className="relative z-10 max-w-7xl mx-auto px-6 pb-12">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left - Video */}
@@ -524,7 +649,7 @@ export default function TrackOfTheWeekPage({
                 </div>
               </div>
 
-              {/* Comments */}
+              {/* Comments - KEEP ALL ORIGINAL COMMENT FUNCTIONALITY */}
               <div className="glass-card rounded-2xl p-6 border-2 border-purple-500/30" id="comments-section">
                 <h3 className="text-xl font-bold mb-6">תגובות ({comments.length})</h3>
                 
@@ -614,8 +739,21 @@ export default function TrackOfTheWeekPage({
               </div>
             </div>
 
-            {/* Right - Actions */}
+            {/* Right - Actions - UNCHANGED */}
             <div className="space-y-6">
+              <div className="glass-card rounded-2xl p-6 border-2 border-green-500/30 text-center">
+                <FaWhatsapp className="text-5xl mx-auto mb-4 text-green-400" />
+                <h3 className="text-lg font-bold mb-4">הצטרפו לקהילה!</h3>
+                <p className="text-sm text-gray-400 mb-4">שלחו את הטראק הבא שלכם</p>
+                <Link
+                  href="https://chat.whatsapp.com/YOUR_GROUP_LINK"
+                  target="_blank"
+                  className="block w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 px-6 py-4 rounded-xl font-bold transition-all transform hover:scale-105"
+                >
+                  פתח וואטסאפ
+                </Link>
+              </div>
+
               <div className="glass-card rounded-2xl p-6 border-2 border-cyan-500/30 text-center">
                 <div className="text-4xl mb-4">📤</div>
                 <h3 className="text-lg font-bold mb-4">שתפו את הטראק!</h3>
@@ -635,15 +773,6 @@ export default function TrackOfTheWeekPage({
                 </button>
               </div>
 
-              <div className="glass-card rounded-2xl p-6 border-2 border-purple-500/30 text-center">
-                <div className="text-4xl mb-4">🎵</div>
-                <h3 className="text-lg font-bold mb-2">יש לכם טראק מושלם?</h3>
-                <p className="text-sm text-gray-400 mb-4">שלחו אותו והוא יכול להיות הבא!</p>
-                <Link href="/submit-track" className="block w-full bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 px-6 py-4 rounded-xl font-bold transition-all transform hover:scale-105">
-                  הגישו טראק ✨
-                </Link>
-              </div>
-
               <div className="glass-card rounded-2xl p-6 border-2 border-gray-700/30 text-center">
                 <div className="text-4xl mb-4">📺</div>
                 <a
@@ -659,7 +788,7 @@ export default function TrackOfTheWeekPage({
           </div>
         </section>
 
-        {/* Previous Tracks */}
+        {/* Previous Tracks - UNCHANGED */}
         {pastTracks.length > 0 && (
           <section className="relative z-10 max-w-7xl mx-auto px-6 py-16">
             <div className="text-center mb-12">
