@@ -360,12 +360,12 @@ export default function TrackOfTheWeekPage({
         </div>
 
         {/* Sticky Navigation with high z-index */}
-        <div className="sticky top-0 z-50">
+        <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-md">
           <Navigation currentPage="track-of-the-week" />
         </div>
 
         {/* Hero Section with Community Badge */}
-        <section className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-20">
+        <section className="relative z-0 max-w-7xl mx-auto px-6 py-12 md:py-20">
           {/* Badge */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 backdrop-blur-sm">
@@ -449,8 +449,8 @@ export default function TrackOfTheWeekPage({
           </div>
         </section>
 
-        {/* Video Player & Reactions - UNCHANGED FROM ORIGINAL */}
-        <section className="relative z-10 max-w-7xl mx-auto px-6 pb-12">
+        {/* Video Player & Reactions */}
+        <section className="relative z-0 max-w-7xl mx-auto px-6 pb-12">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left - Video */}
             <div className="lg:col-span-2">
@@ -685,9 +685,9 @@ export default function TrackOfTheWeekPage({
           </div>
         </section>
 
-        {/* Previous Tracks - UNCHANGED */}
+        {/* Previous Tracks */}
         {pastTracks.length > 0 && (
-          <section className="relative z-10 max-w-7xl mx-auto px-6 py-16">
+          <section className="relative z-0 max-w-7xl mx-auto px-6 py-16">
             <div className="text-center mb-12">
               <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
                 הטראקים השבועיים הקודמים
@@ -742,7 +742,7 @@ export default function TrackOfTheWeekPage({
           </section>
         )}
 
-        <footer className="relative z-10 border-t border-gray-800 mt-16">
+        <footer className="relative z-0 border-t border-gray-800 mt-16">
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="text-center">
               <Link href="/" className="text-gray-400 hover:text-gray-300 transition">
