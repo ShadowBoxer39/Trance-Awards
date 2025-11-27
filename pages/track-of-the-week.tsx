@@ -351,7 +351,8 @@ export default function TrackOfTheWeekPage({
         }
       `}</style>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative overflow-hidden">
+     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative overflow-x-hidden">
+
         {/* Animated Background Orbs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-96 h-96 bg-purple-600/30 rounded-full blur-3xl animate-pulse-glow" />
@@ -360,9 +361,9 @@ export default function TrackOfTheWeekPage({
         </div>
 
         {/* Sticky Navigation with high z-index */}
-        <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-md">
+     
           <Navigation currentPage="track-of-the-week" />
-        </div>
+
 
         {/* Hero Section with Community Badge */}
         <section className="relative z-0 max-w-7xl mx-auto px-6 py-12 md:py-20">
@@ -377,10 +378,7 @@ export default function TrackOfTheWeekPage({
           {/* Submitter Card with Subtle WhatsApp Badge */}
           <div 
             className="relative mx-auto mb-12 max-w-2xl"
-            style={{ 
-              transform: `translateY(${scrollY * 0.3}px)`,
-            }}
-          >
+                     >
             <div className="glass-card rounded-3xl p-8 md:p-12 border-2 border-purple-500/30 animate-float">
               {/* Submitter Info */}
               <div className="flex items-center gap-4 mb-6">
