@@ -1,4 +1,4 @@
-// pages/index.tsx - FIXED WITH MOBILE CORRECTIONS
+// pages/index.tsx - UPDATED WITH DYNAMIC FEATURED ARTIST
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,7 +17,7 @@ interface Episode {
   channelTitle: string;
 }
 
-// NEW: Track of the Week interface
+// Track of the Week interface
 interface TrackOfWeek {
   id: number;
   name: string;
@@ -28,6 +28,21 @@ interface TrackOfWeek {
   created_at: string;
 }
 
+// Featured Artist interface
+interface FeaturedArtist {
+  id: number;
+  artist_id: string;
+  name: string;
+  stage_name: string;
+  bio: string;
+  profile_photo_url: string;
+  soundcloud_track_url: string;
+  instagram_url?: string;
+  soundcloud_profile_url?: string;
+  spotify_url?: string;
+  featured_at: string;
+}
+
 // Helper to extract YouTube video ID
 function getYouTubeId(url: string): string | null {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -35,7 +50,7 @@ function getYouTubeId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-// --- Inline Component for Counting Stats ---
+// Inline Component for Counting Stats
 function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: string, label: string }) {
   const [count, setCount] = useState(0);
   const duration = 1500;
@@ -74,17 +89,16 @@ function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: 
   );
 }
 
-// --- Rotating Comments Component ---
-function FeaturedArtistComments() {
+// Rotating Comments Component for Featured Artist
+function FeaturedArtistComments({ artistId }: { artistId: string }) {
   const [comments, setComments] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch comments from the API
     const fetchComments = async () => {
       try {
-        const response = await fetch('/api/artist-comments-public?artistId=kanok');
+        const response = await fetch(`/api/artist-comments-public?artistId=${artistId}`);
         if (response.ok) {
           const data = await response.json();
           setComments(data.comments || []);
@@ -97,12 +111,11 @@ function FeaturedArtistComments() {
     };
 
     fetchComments();
-  }, []);
+  }, [artistId]);
 
   useEffect(() => {
     if (comments.length === 0) return;
 
-    // Rotate comments every 5 seconds
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % comments.length);
     }, 5000);
@@ -163,7 +176,6 @@ function FeaturedArtistComments() {
         </div>
       </div>
 
-      {/* Navigation Dots */}
       {comments.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-3">
           {comments.map((_, idx) => (
@@ -184,14 +196,13 @@ function FeaturedArtistComments() {
   );
 }
 
-// --- Track of the Week Rotating Comments Component ---
+// Track of the Week Rotating Comments Component
 function TrackOfWeekComments({ trackId }: { trackId: number }) {
   const [comments, setComments] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch comments from the API
     const fetchComments = async () => {
       try {
         const response = await fetch(`/api/track-comment-public?trackId=${trackId}`);
@@ -212,7 +223,6 @@ function TrackOfWeekComments({ trackId }: { trackId: number }) {
   useEffect(() => {
     if (comments.length === 0) return;
 
-    // Rotate comments every 5 seconds
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % comments.length);
     }, 5000);
@@ -273,7 +283,6 @@ function TrackOfWeekComments({ trackId }: { trackId: number }) {
         </div>
       </div>
 
-      {/* Navigation Dots */}
       {comments.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-3">
           {comments.map((_, idx) => (
@@ -297,11 +306,13 @@ function TrackOfWeekComments({ trackId }: { trackId: number }) {
 export default function Home({ 
   episodes, 
   episodesError,
-  trackOfWeek 
+  trackOfWeek,
+  featuredArtist
 }: { 
   episodes: Episode[], 
   episodesError: string | null,
-  trackOfWeek: TrackOfWeek | null 
+  trackOfWeek: TrackOfWeek | null,
+  featuredArtist: FeaturedArtist | null
 }) {
   
   React.useEffect(() => {
@@ -332,18 +343,15 @@ export default function Home({
       <div className="trance-backdrop min-h-screen text-gray-100">
         <Navigation currentPage="home" />
 
-        {/* HERO - REDESIGNED */}
+        {/* HERO */}
         <header className="relative overflow-hidden">
-          {/* Animated Background Gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-cyan-900/20 to-pink-900/20 animate-gradient" />
           
-          {/* Floating Orbs */}
           <div className="absolute top-20 right-20 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-float" />
           <div className="absolute bottom-20 left-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-float-delayed" />
           
           <div className="max-w-7xl mx-auto px-6 pt-20 pb-16 relative z-10">
             <div className="text-center max-w-5xl mx-auto">
-              {/* Eyebrow */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 mb-6 backdrop-blur-sm">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
@@ -352,14 +360,12 @@ export default function Home({
                 <span className="text-sm font-medium text-purple-300 tracking-wide">תכנית הטראנס מספר 1 בישראל</span>
               </div>
 
-              {/* Main Title with Gradient */}
               <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight">
                 <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient-x">
                   יוצאים לטראק
                 </span>
               </h1>
 
-              {/* Subtitle */}
               <p className="text-xl md:text-3xl text-gray-300 mb-4 font-light leading-relaxed max-w-3xl mx-auto">
                 עושים כבוד לאגדות, נותנים במה לצעירים
               </p>
@@ -368,40 +374,32 @@ export default function Home({
               </p>
 
               {/* CTA Buttons */}
-           
+              <div className="flex flex-wrap gap-4 justify-center mb-16">
+                <Link 
+                  href="/episodes" 
+                  className="group relative px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300 hover:scale-105 flex items-center justify-center min-w-[200px]"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                    </svg>
+                    האזינו לפרקים
+                  </span>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 blur opacity-50 group-hover:opacity-75 transition-opacity" />
+                </Link>
+                
+                <Link 
+                  href="/young-artists" 
+                  className="px-10 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2 justify-center min-w-[200px]"
+                >
+                  <span className="text-2xl">🌟</span>
+                  אמנים צעירים
+                </Link>
+              </div>
 
-<div className="flex flex-wrap gap-4 justify-center mb-16">
-  {/* Primary Button: Listen to Episodes */}
-  <Link 
-    href="/episodes" 
-    // Increased padding (px-10 py-4) and added justify-center for consistent alignment
-    className="group relative px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300 hover:scale-105 flex items-center justify-center min-w-[200px]"
-  >
-    <span className="relative z-10 flex items-center gap-2">
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
-      </svg>
-      האזינו לפרקים
-    </span>
-    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 blur opacity-50 group-hover:opacity-75 transition-opacity" />
-  </Link>
-  
-  {/* Secondary Button: Young Artists */}
-  <Link 
-    href="/young-artists" 
-    // Increased padding (px-10 py-4) to match primary button
-    className="px-10 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2 justify-center min-w-[200px]"
-  >
-    <span className="text-2xl">🌟</span>
-    אמנים צעירים
-  </Link>
-</div>
-
-            {/* Stats - MOBILE FIXED: Added smaller padding and responsive text sizing */}
+              {/* Stats */}
               <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto">
-                {/* FIXED: Reduced padding on mobile (p-3 sm:p-4 md:p-6), smaller text on mobile */}
                 <div className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 hover:scale-105 transition-transform">
-                  {/* FIXED: Smaller text on mobile - text-3xl sm:text-4xl md:text-5xl */}
                   <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1 break-words">
                     <CountUpStat target={50} suffix="+" label="" />
                   </div>
@@ -423,7 +421,7 @@ export default function Home({
                 </div>
               </div>
 
-              {/* Music Room Partner Card - PROMINENT */}
+              {/* Music Room Partner Card */}
               <div className="mt-16 max-w-2xl mx-auto">
                 <div className="glass-card rounded-2xl p-8 border-2 border-purple-500/40 hover:border-purple-500/70 transition-all shadow-xl shadow-purple-500/20">
                   <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-right">
@@ -463,7 +461,6 @@ export default function Home({
             </div>
           </div>
 
-          {/* Bottom Wave */}
           <div className="absolute bottom-0 left-0 right-0">
             <svg viewBox="0 0 1440 120" className="w-full h-20 fill-current text-gray-900/50">
               <path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7C1248,53,1344,43,1392,37.3L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z" />
@@ -524,10 +521,7 @@ export default function Home({
           )}
         </section>
 
-        {/* REMOVED: Duplicate mobile-only MusikRoom section (lines 308-323) */}
-        {/* This section was causing the duplicate appearance on mobile */}
-
-        {/* Featured Young Artist */}
+        {/* Featured Young Artist - UPDATED TO USE DATABASE */}
         <section className="max-w-7xl mx-auto px-6 py-16">
           <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-purple-500/30">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
@@ -539,62 +533,71 @@ export default function Home({
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 items-start">
-              <div className="w-full">
-                <div className="aspect-square rounded-xl overflow-hidden bg-gray-900">
-                  <img src="/images/kanok.png" alt="Featured Artist" className="w-full h-full object-cover" />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-6">
-                <div>
-                  <h3 className="text-2xl font-semibold mb-2">טל רנדליך (Kanok)</h3>
-                  <p className="text-gray-400 leading-relaxed">
-                  טל קאנוק הוא אמן שכשאתה שומע אותו אתה מרגיש שהוא פורט לך על מיתרי הרגש.
-                    יש משהו בצלילים שהוא מייצר שמצליח ללטף אותך ולגרום לך להרגיש שאתה בידיים טובות.
-                    לכו תשמעו את המוזיקה שלו, אתם לא תצטערו.
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-lg font-semibold mb-3">הטראק המוצג</h4>
-                  <div className="rounded-lg overflow-hidden">
-                    <iframe width="100%" height="166" scrolling="no" style={{ border: 'none' }} allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/kanok_music/kanok-light-beam&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"></iframe>         
+            {featuredArtist ? (
+              <div className="grid md:grid-cols-2 gap-8 items-start">
+                <div className="w-full">
+                  <div className="aspect-square rounded-xl overflow-hidden bg-gray-900">
+                    <img src={featuredArtist.profile_photo_url} alt={featuredArtist.stage_name} className="w-full h-full object-cover" />
                   </div>
                 </div>
 
-                {/* NEW: Rotating Comments Section */}
-                <FeaturedArtistComments />
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <h3 className="text-2xl font-semibold mb-2">{featuredArtist.name} ({featuredArtist.stage_name})</h3>
+                    <p className="text-gray-400 leading-relaxed">
+                      {featuredArtist.bio}
+                    </p>
+                  </div>
 
-                <div>
-                  <h4 className="text-sm font-semibold mb-3 text-gray-400">עקבו אחריו</h4>
-                  <div className="flex flex-wrap gap-3">
-                    <a href="https://www.instagram.com/kanok_music/" target="_blank" rel="noopener noreferrer" className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                      Instagram
-                    </a>
-                    <a href="https://soundcloud.com/kanok_music" target="_blank" rel="noopener noreferrer" className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-                      SoundCloud
-                    </a>
-                    <a href="https://open.spotify.com/artist/3gayXKIE0S2wgeaSigcwIC?si=MOMSUPgpS6mjB8T2Qu8dww" target="_blank" rel="noopener noreferrer" className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-                      Spotify
-                    </a>
+                  <div>
+                    <h4 className="text-lg font-semibold mb-3">הטראק המוצג</h4>
+                    <div className="rounded-lg overflow-hidden">
+                      <iframe width="100%" height="166" scrolling="no" style={{ border: 'none' }} allow="autoplay" src={featuredArtist.soundcloud_track_url}></iframe>         
+                    </div>
+                  </div>
+
+                  <FeaturedArtistComments artistId={featuredArtist.artist_id} />
+
+                  <div>
+                    <h4 className="text-sm font-semibold mb-3 text-gray-400">עקבו אחריו</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {featuredArtist.instagram_url && (
+                        <a href={featuredArtist.instagram_url} target="_blank" rel="noopener noreferrer" className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                          Instagram
+                        </a>
+                      )}
+                      {featuredArtist.soundcloud_profile_url && (
+                        <a href={featuredArtist.soundcloud_profile_url} target="_blank" rel="noopener noreferrer" className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                          SoundCloud
+                        </a>
+                      )}
+                      {featuredArtist.spotify_url && (
+                        <a href={featuredArtist.spotify_url} target="_blank" rel="noopener noreferrer" className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                          Spotify
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Link href="/featured-artist" className="btn-primary px-6 py-3 rounded-lg font-medium inline-block">
+                      עוד פרטים והגיבו ←
+                    </Link>
                   </div>
                 </div>
-
-                <div className="pt-2">
-                  <Link href="/featured-artist" className="btn-primary px-6 py-3 rounded-lg font-medium inline-block">
-                    עוד פרטים והגיבו ←
-                  </Link>
-                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-400">אין אמן מוצג כרגע</p>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* *** Track of the Week Section - FIXED *** */}
+        {/* Track of the Week Section */}
         <section className="max-w-7xl mx-auto px-6 pb-16">
           <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-green-500/30">
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -606,7 +609,6 @@ export default function Home({
 
             {trackOfWeek ? (
               <div className="grid md:grid-cols-2 gap-6 items-start">
-                {/* Left: YouTube Player */}
                 <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
                   <iframe
                     width="100%"
@@ -619,10 +621,8 @@ export default function Home({
                   />
                 </div>
 
-                {/* Right: Submitter Info */}
                 <div className="flex flex-col gap-4">
                   <div className="flex items-start gap-4">
-                    {/* Profile Photo */}
                     <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-green-500/50 bg-gray-700 flex-shrink-0">
                       {trackOfWeek.photo_url ? (
                         <img
@@ -630,7 +630,6 @@ export default function Home({
                           alt={trackOfWeek.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            // If image fails to load, show emoji instead
                             e.currentTarget.style.display = 'none';
                             if (e.currentTarget.nextElementSibling) {
                               (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
@@ -646,7 +645,6 @@ export default function Home({
                       </div>
                     </div>
 
-                    {/* Name & Title */}
                     <div>
                       <h3 className="text-xl font-bold text-white mb-1">
                         {trackOfWeek.track_title}
@@ -657,7 +655,6 @@ export default function Home({
                     </div>
                   </div>
 
-                  {/* Description */}
                   <div className="bg-black/30 rounded-lg p-4">
                     <p className="text-sm text-gray-400 mb-2">למה הטראק הזה?</p>
                     <p className="text-gray-300 leading-relaxed">
@@ -665,10 +662,8 @@ export default function Home({
                     </p>
                   </div>
 
-                  {/* NEW: Rotating Comments */}
                   <TrackOfWeekComments trackId={trackOfWeek.id} />
 
-                  {/* CTA */}
                   <Link
                     href="/track-of-the-week"
                     className="btn-secondary px-6 py-3 rounded-lg font-medium text-center"
@@ -678,7 +673,6 @@ export default function Home({
                 </div>
               </div>
             ) : (
-              // No track approved yet
               <div className="text-center py-8">
                 <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
                   הגיע הזמן לשמוע מה בוחרת קהילת הטראנס הגדולה בישראל! בכל שבוע, טרק חדש וסיפור אישי מאחוריו.
@@ -821,7 +815,7 @@ export default function Home({
   );
 }
 
-// Server-side data fetching with Track of the Week
+// Server-side data fetching with Track of the Week AND Featured Artist
 export async function getServerSideProps() {
   const mockReq = {} as any;
   let episodesData: any;
@@ -840,6 +834,7 @@ export async function getServerSideProps() {
   let episodes: Episode[] = [];
   let episodesError: string | null = null;
   let trackOfWeek: TrackOfWeek | null = null;
+  let featuredArtist: FeaturedArtist | null = null;
 
   // Fetch episodes
   try {
@@ -873,11 +868,31 @@ export async function getServerSideProps() {
     console.error("SSR Track of Week fetch failed:", err.message);
   }
 
+  // Fetch Featured Artist
+  try {
+    const supabase = require('../lib/supabaseServer').default;
+    const { data, error } = await supabase
+      .from('featured_artists')
+      .select('*')
+      .order('featured_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Featured Artist fetch error:', error);
+    } else if (data) {
+      featuredArtist = data;
+    }
+  } catch (err: any) {
+    console.error("SSR Featured Artist fetch failed:", err.message);
+  }
+
   return {
     props: {
       episodes,
       episodesError,
       trackOfWeek,
+      featuredArtist,
     },
   };
 }
