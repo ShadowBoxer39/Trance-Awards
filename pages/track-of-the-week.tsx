@@ -9,7 +9,7 @@ import SEO from "@/components/SEO";
 import GoogleLoginButton from "../components/GoogleLoginButton";
 import { getGoogleUserInfo } from "../lib/googleAuthHelpers";
 import type { User } from '@supabase/supabase-js';
-import { FaFire, FaHeart, FaPlay, FaWhatsapp } from 'react-icons/fa'; // Added FaWhatsapp
+import { FaFire, FaHeart, FaPlay, FaWhatsapp } from 'react-icons/fa';
 import { GiSunglasses } from 'react-icons/gi';
 import { BsEmojiDizzy } from 'react-icons/bs';
 
@@ -58,7 +58,7 @@ export default function TrackOfTheWeekPage({
   currentTrack: TrackOfWeek | null;
   pastTracks: TrackOfWeek[];
 }) {
-  // --- State Declarations (Hooks MUST be at the top) ---
+  // --- State Declarations ---
   const [reactions, setReactions] = useState({
     fire: 0,
     mind_blown: 0,
@@ -244,12 +244,11 @@ export default function TrackOfTheWeekPage({
         }
       `}</style>
 
-      {/* --- ROOT CONTAINER: FIXED STICKY NAVIGATION ISSUE (Issue 1 & 2) --- */}
-      {/* 1. Removed overflow-hidden to fix sticky nav and element overlap. */}
-      {/* 2. Changed parallax section to z-10 and main content to z-20 to fix overlap. */}
+      {/* --- ROOT CONTAINER: FIXED STICKY NAVIGATION (Issue 1) --- */}
+      {/* Removed overflow-hidden class to fix sticky nav. */}
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative"> 
-        {/* Animated Background Orbs (fixed position) */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {/* Animated Background Orbs (fixed position, z-index 0) */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0"> 
           <div className="absolute top-20 left-10 w-96 h-96 bg-purple-600/30 rounded-full blur-3xl animate-pulse-glow" />
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-600/30 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
           <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
@@ -257,8 +256,8 @@ export default function TrackOfTheWeekPage({
 
         <Navigation currentPage="track-of-the-week" />
 
-        {/* --- Hero Section: Community Card --- */}
-        {/* Parallax hero content should have z-index to scroll above fixed background */}
+        {/* --- Hero Section: Community Card (z-index 10) --- */}
+        {/* Parallax hero content has z-10 */}
         <section className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-20">
           
           {/* Badge */}
@@ -324,7 +323,6 @@ export default function TrackOfTheWeekPage({
           </div>
 
           {/* Submitter's Message - NOW THE TALKING BUBBLE */}
-          {/* This section will scroll under the navigation */}
           <div className="max-w-2xl mx-auto mb-12 group">
             {/* Glow Effect */}
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500" />
@@ -338,11 +336,12 @@ export default function TrackOfTheWeekPage({
                 {currentTrack.description}
               </p>
             </div>
+            
           </div>
         </section>
 
         {/* Video Player & Reactions (Issue 2 Fix) */}
-        {/* Changed z-index on content elements to z-20 to ensure they scroll over the hero section, fixing overlap. */}
+        {/* Added z-20 to ensure content sections scroll over the z-10 Hero section */}
         <section className="relative z-20 max-w-7xl mx-auto px-6 pb-12">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left - Video */}
@@ -442,7 +441,7 @@ export default function TrackOfTheWeekPage({
           </div>
         </section>
 
-        {/* Previous Tracks (Issue 3 Fix) */}
+        {/* Previous Tracks (Issue 3 Fix: Made clickable to YouTube) */}
         {pastTracks.length > 0 && (
           <section className="relative z-10 max-w-7xl mx-auto px-6 py-16">
             <div className="text-center mb-12">
@@ -455,7 +454,7 @@ export default function TrackOfTheWeekPage({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {pastTracks.slice(0, 8).map((track) => (
                 <a
-                  // ISSUE 3 FIX: Changed div to <a> and added href to YouTube URL
+                  // ISSUE 3 FIX: Element is now an <a> tag linking to YouTube
                   key={track.id}
                   href={track.youtube_url} 
                   target="_blank"
