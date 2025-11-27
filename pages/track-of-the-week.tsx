@@ -359,7 +359,10 @@ export default function TrackOfTheWeekPage({
           <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
         </div>
 
-        <Navigation currentPage="track-of-the-week" />
+        {/* Sticky Navigation with high z-index */}
+        <div className="sticky top-0 z-50">
+          <Navigation currentPage="track-of-the-week" />
+        </div>
 
         {/* Hero Section with Community Badge */}
         <section className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-20">
