@@ -322,9 +322,7 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
       </div>
 
       {/* Navigation */}
-      <div className="relative z-50">
-        <Navigation currentPage="featured-artist" />
-      </div>
+    <Navigation currentPage="featured-artist" />
 
       {/* Hero Section - Parallax Effect */}
       <div className="relative min-h-screen flex items-center justify-center px-4" style={{ transform: `translateY(${scrollY * 0.5}px)` }}>
