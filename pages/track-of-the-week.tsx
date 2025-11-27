@@ -683,62 +683,68 @@ export default function TrackOfTheWeekPage({
           </div>
         </section>
 
-        {/* Previous Tracks */}
-        {pastTracks.length > 0 && (
-          <section className="relative z-0 max-w-7xl mx-auto px-6 py-16">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                הטראקים השבועיים הקודמים
-              </h2>
-              <p className="text-gray-400">גלו עוד בחירות מדהימות מהקהילה</p>
+       {/* Previous Tracks */}
+{pastTracks.length > 0 && (
+  <section className="relative z-0 max-w-7xl mx-auto px-6 py-16">
+    <div className="text-center mb-12">
+      <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+        הטראקים השבועיים הקודמים
+      </h2>
+      <p className="text-gray-400">גלו עוד בחירות מדהימות מהקהילה</p>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {pastTracks.slice(0, 8).map((track) => (
+        <a
+          key={track.id}
+          href={track.youtube_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <div className="glass-card rounded-2xl overflow-hidden border-2 border-purple-500/20 hover:border-purple-500/50 transition-all group cursor-pointer transform hover:scale-105">
+            <div className="relative aspect-video bg-black">
+              <img
+                src={`https://img.youtube.com/vi/${getYouTubeId(track.youtube_url)}/maxresdefault.jpg`}
+                alt={track.track_title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = `https://img.youtube.com/vi/${getYouTubeId(track.youtube_url)}/hqdefault.jpg`;
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+              <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <FaPlay className="text-white text-4xl" />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {pastTracks.slice(0, 8).map((track) => (
-                <div
-                  key={track.id}
-                  className="glass-card rounded-2xl overflow-hidden border-2 border-purple-500/20 hover:border-purple-500/50 transition-all group cursor-pointer transform hover:scale-105"
-                >
-                  <div className="relative aspect-video bg-black">
-                    <img
-                      src={`https://img.youtube.com/vi/${getYouTubeId(track.youtube_url)}/maxresdefault.jpg`}
-                      alt={track.track_title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = `https://img.youtube.com/vi/${getYouTubeId(track.youtube_url)}/hqdefault.jpg`;
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                    <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <FaPlay className="text-white text-4xl" />
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="font-bold text-white line-clamp-2 mb-3 group-hover:text-purple-300 transition-colors">
-                      {track.track_title}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 overflow-hidden flex-shrink-0">
-                        {track.photo_url ? (
-                          <img src={track.photo_url} alt={track.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-sm">👤</div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-400 truncate">{track.name}</p>
-                        <p className="text-xs text-gray-600">
-                          {new Date(track.approved_at || track.created_at).toLocaleDateString("he-IL")}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+            <div className="p-4">
+              <h3 className="font-bold text-white line-clamp-2 mb-3 group-hover:text-purple-300 transition-colors">
+                {track.track_title}
+              </h3>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 overflow-hidden flex-shrink-0">
+                  {track.photo_url ? (
+                    <img src={track.photo_url} alt={track.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-sm">👤</div>
+                  )}
                 </div>
-              ))}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-400 truncate">{track.name}</p>
+                  <p className="text-xs text-gray-600">
+                    {new Date(track.approved_at || track.created_at).toLocaleDateString("he-IL")}
+                  </p>
+                </div>
+              </div>
             </div>
-          </section>
-        )}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+)}
+
 
         <footer className="relative z-0 border-t border-gray-800 mt-16">
           <div className="max-w-7xl mx-auto px-6 py-8">
