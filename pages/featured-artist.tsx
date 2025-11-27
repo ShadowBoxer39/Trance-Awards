@@ -295,9 +295,9 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
 
   const reactionButtons = [
     { type: 'fire', icon: FaFire, emoji: '🔥', label: 'אש', color: 'from-orange-500 to-red-500', glow: 'shadow-orange-500/50' },
-    { type: 'cool', icon: GiSunglasses, emoji: '😎', label: 'מגניב', color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50' },
-    { type: 'heart', icon: FaHeart, emoji: '❤️', label: 'אהבה', color: 'from-pink-500 to-red-500', glow: 'shadow-pink-500/50' },
-    { type: 'mind_blown', icon: BsEmojiDizzy, emoji: '🤯', label: 'מפוצץ', color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50' }
+    { type: 'cool', icon: GiSunglasses, emoji: '😎', label: 'וואלה סבבה', color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50' },
+    { type: 'heart', icon: FaHeart, emoji: '❤️', label: 'אהבתי', color: 'from-pink-500 to-red-500', glow: 'shadow-pink-500/50' },
+    { type: 'mind_blown', icon: BsEmojiDizzy, emoji: '🤯', label: 'מפוצץ את המוח', color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50' }
   ];
 
   if (!artist) {
@@ -331,7 +331,7 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
           {/* Animated Badge */}
           <div className="mb-8 inline-block animate-bounce">
             <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 text-white text-sm font-bold px-8 py-3 rounded-full shadow-lg shadow-purple-500/50 animate-gradient-x">
-              ⭐ האמן המוצג של השבוע ⭐
+              ⭐ האמן המומלץ של יוצאים לטראק ⭐
             </div>
           </div>
 
