@@ -3,7 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from '@supabase/supabase-js';
-import Navigation from "../components/Navigation";
+import Navigation from "../components/Navigation"; 
 import SEO from "@/components/SEO";
 import GoogleLoginButton from "../components/GoogleLoginButton";
 import { getGoogleUserInfo } from "../lib/googleAuthHelpers";
