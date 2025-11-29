@@ -117,3 +117,80 @@ export async function getArtistProfile(artistId: string) {
     return null;
   }
 }
+
+/**
+ * Get artist's top tracks from Spotify
+ */
+export async function getArtistTopTracks(artistId: string, market: string = 'IL') {
+  try {
+    const token = await getAccessToken();
+
+    const response = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=${market}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Spotify API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+
+    return data.tracks.slice(0, 5).map((track: any) => ({
+      id: track.id,
+      name: track.name,
+      album: track.album.name,
+      albumCover: track.album.images[0]?.url,
+      duration: track.duration_ms,
+      previewUrl: track.preview_url,
+      spotifyUrl: track.external_urls.spotify,
+      embedUrl: `https://open.spotify.com/embed/track/${track.id}`,
+    }));
+  } catch (error) {
+    console.error('Error fetching top tracks:', error);
+    return null;
+  }
+}
+
+/**
+ * Get artist's full discography (albums + singles)
+ */
+export async function getArtistDiscography(artistId: string) {
+  try {
+    const token = await getAccessToken();
+
+    const response = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album,single&market=IL&limit=50`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Spotify API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+
+    return data.items.map((album: any) => ({
+      id: album.id,
+      name: album.name,
+      releaseDate: album.release_date,
+      type: album.album_type,
+      coverImage: album.images[0]?.url,
+      spotifyUrl: album.external_urls.spotify,
+      totalTracks: album.total_tracks,
+    }));
+  } catch (error) {
+    console.error('Error fetching discography:', error);
+    return null;
+  }
+}
