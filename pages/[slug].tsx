@@ -1,11 +1,16 @@
-// pages/[slug].tsx - Premium Artist Profile Page
-import React, { useState, useEffect } from "react";
+// pages/[slug].tsx - ENHANCED Premium Artist Profile Page
+import React, { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Navigation from "../components/Navigation";
-import { getArtistLatestRelease, getArtistProfile } from "../lib/spotify";
+import { 
+  getArtistLatestRelease, 
+  getArtistProfile, 
+  getArtistTopTracks,
+  getArtistDiscography 
+} from "../lib/spotify";
 import { 
   FaInstagram, 
   FaFacebook, 
@@ -14,7 +19,11 @@ import {
   FaYoutube, 
   FaGlobe,
   FaPlay,
-  FaEye
+  FaEye,
+  FaUsers,
+  FaFire,
+  FaCalendar,
+  FaCompactDisc
 } from 'react-icons/fa';
 
 // ==========================================
@@ -42,6 +51,8 @@ interface Artist {
   city: string | null;
   total_episodes: number;
   spotify_artist_id: string | null;
+  instagram_reels: string[];
+  photo_gallery: string[];
 }
 
 interface Episode {
@@ -68,19 +79,108 @@ interface SpotifyRelease {
   coverImage: string;
 }
 
+interface SpotifyProfile {
+  name: string;
+  followers: number;
+  genres: string[];
+  popularity: number;
+  image: string;
+  spotifyUrl: string;
+}
+
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  album: string;
+  albumCover: string;
+  duration: number;
+  previewUrl: string | null;
+  spotifyUrl: string;
+  embedUrl: string;
+}
+
+interface DiscographyItem {
+  id: string;
+  name: string;
+  releaseDate: string;
+  type: string;
+  coverImage: string;
+  spotifyUrl: string;
+  totalTracks: number;
+}
+
 interface ArtistPageProps {
   artist: Artist;
   episodes: Episode[];
   spotifyRelease: SpotifyRelease | null;
+  spotifyProfile: SpotifyProfile | null;
+  topTracks: SpotifyTrack[] | null;
+  discography: DiscographyItem[] | null;
 }
 
 // ==========================================
-// COMPONENT
+// ANIMATED COUNTER COMPONENT
 // ==========================================
 
-export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistPageProps) {
+function AnimatedCounter({ end, duration = 2000 }: { end: number; duration?: number }) {
+  const [count, setCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const increment = end / (duration / 16);
+    let current = 0;
+
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [isVisible, end, duration]);
+
+  return <div ref={ref}>{count.toLocaleString()}</div>;
+}
+
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
+
+export default function ArtistPage({ 
+  artist, 
+  episodes, 
+  spotifyRelease, 
+  spotifyProfile,
+  topTracks,
+  discography 
+}: ArtistPageProps) {
   const displayName = artist.stage_name || artist.name;
   const [scrollY, setScrollY] = useState(0);
+  const [activeTrack, setActiveTrack] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -93,65 +193,29 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
   const heroTranslate = scrollY * 0.5;
 
   const socialLinks = [
-    { 
-      icon: 'instagram', 
-      url: artist.instagram_url, 
-      label: 'Instagram',
-      color: 'hover:text-pink-400'
-    },
-    { 
-      icon: 'facebook', 
-      url: artist.facebook_url, 
-      label: 'Facebook',
-      color: 'hover:text-blue-400'
-    },
-    { 
-      icon: 'soundcloud', 
-      url: artist.soundcloud_url, 
-      label: 'SoundCloud',
-      color: 'hover:text-orange-400'
-    },
-    { 
-      icon: 'spotify', 
-      url: artist.spotify_url, 
-      label: 'Spotify',
-      color: 'hover:text-green-400'
-    },
-    { 
-      icon: 'youtube', 
-      url: artist.youtube_url, 
-      label: 'YouTube',
-      color: 'hover:text-red-400'
-    },
-    { 
-      icon: 'website', 
-      url: artist.website_url, 
-      label: 'Website',
-      color: 'hover:text-cyan-400'
-    },
+    { icon: 'instagram', url: artist.instagram_url, label: 'Instagram', color: 'hover:text-pink-400' },
+    { icon: 'facebook', url: artist.facebook_url, label: 'Facebook', color: 'hover:text-blue-400' },
+    { icon: 'soundcloud', url: artist.soundcloud_url, label: 'SoundCloud', color: 'hover:text-orange-400' },
+    { icon: 'spotify', url: artist.spotify_url, label: 'Spotify', color: 'hover:text-green-400' },
+    { icon: 'youtube', url: artist.youtube_url, label: 'YouTube', color: 'hover:text-red-400' },
+    { icon: 'website', url: artist.website_url, label: 'Website', color: 'hover:text-cyan-400' },
   ].filter(link => link.url);
 
   return (
     <>
       <Head>
         <title>{displayName} - יוצאים לטראק</title>
-        <meta
-          name="description"
-          content={`${artist.bio || `כל הפרקים עם ${displayName}`}`}
-        />
+        <meta name="description" content={artist.bio || `כל הפרקים עם ${displayName}`} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/images/logo.png" />
-        
         <meta property="og:title" content={`${displayName} - יוצאים לטראק`} />
         <meta property="og:description" content={artist.bio || `כל הפרקים עם ${displayName}`} />
-        {artist.profile_photo_url && (
-          <meta property="og:image" content={artist.profile_photo_url} />
-        )}
+        {artist.profile_photo_url && <meta property="og:image" content={artist.profile_photo_url} />}
         <meta property="og:type" content="profile" />
       </Head>
 
       <div className="min-h-screen bg-gray-900 text-white">
-        {/* Navigation - Sticky */}
+        {/* Navigation */}
         <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-md">
           <Navigation currentPage="episodes" />
         </div>
@@ -186,25 +250,15 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
           </div>
 
           {/* Hero Content */}
-          <div 
-            className="relative z-20 text-center max-w-4xl mx-auto px-6"
-            style={{ opacity: heroOpacity }}
-          >
-            {/* Profile Photo with Animated Glow */}
+          <div className="relative z-20 text-center max-w-4xl mx-auto px-6" style={{ opacity: heroOpacity }}>
+            {/* Profile Photo */}
             <div className="mb-8 inline-block animate-float">
               <div className="relative w-40 h-40 md:w-48 md:h-48 mx-auto">
-                {/* Rotating Glow Ring */}
                 <div className="absolute inset-0 rounded-full glow-ring" />
                 <div className="absolute inset-1 rounded-full bg-gray-900" />
-                
-                {/* Profile Image */}
                 <div className="absolute inset-2 rounded-full overflow-hidden border-4 border-cyan-400/50">
                   {artist.profile_photo_url ? (
-                    <img
-                      src={artist.profile_photo_url}
-                      alt={displayName}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={artist.profile_photo_url} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
                       <span className="text-6xl font-bold">{displayName[0]}</span>
@@ -262,35 +316,114 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
 
         {/* Main Content */}
         <div className="relative z-10">
+          {/* Artist Stats Bar */}
+          {spotifyProfile && (
+            <section className="py-12 px-6 bg-gradient-to-r from-purple-900/30 via-gray-900/50 to-cyan-900/30">
+              <div className="max-w-7xl mx-auto">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
+                  <div className="glass-card p-6 hover-lift">
+                    <FaUsers className="w-10 h-10 mx-auto mb-3 text-purple-400" />
+                    <div className="text-3xl font-bold gradient-text mb-2">
+                      <AnimatedCounter end={spotifyProfile.followers} />
+                    </div>
+                    <div className="text-gray-400 text-sm">Spotify Followers</div>
+                  </div>
+
+                  <div className="glass-card p-6 hover-lift">
+                    <FaFire className="w-10 h-10 mx-auto mb-3 text-orange-400" />
+                    <div className="text-3xl font-bold gradient-text mb-2">
+                      <AnimatedCounter end={spotifyProfile.popularity} />
+                    </div>
+                    <div className="text-gray-400 text-sm">Popularity Score</div>
+                  </div>
+
+                  <div className="glass-card p-6 hover-lift col-span-2 md:col-span-1">
+                    <FaCompactDisc className="w-10 h-10 mx-auto mb-3 text-cyan-400" />
+                    <div className="text-3xl font-bold gradient-text mb-2">
+                      <AnimatedCounter end={discography?.length || 0} />
+                    </div>
+                    <div className="text-gray-400 text-sm">Releases</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Top Tracks Section */}
+          {topTracks && topTracks.length > 0 && (
+            <section className="py-20 px-6">
+              <div className="max-w-7xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center gradient-text flex items-center justify-center gap-3">
+                  <FaFire className="text-orange-400" />
+                  Top Tracks
+                </h2>
+
+                <div className="grid gap-4 max-w-4xl mx-auto">
+                  {topTracks.map((track, index) => (
+                    <div key={track.id} className="glass-card p-4 hover-lift group">
+                      <div className="flex items-center gap-4">
+                        {/* Track Number */}
+                        <div className="text-2xl font-bold text-gray-600 w-8">
+                          {index + 1}
+                        </div>
+
+                        {/* Album Cover */}
+                        <div className="relative w-16 h-16 flex-shrink-0">
+                          <img src={track.albumCover} alt={track.album} className="w-full h-full rounded" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <FaPlay className="text-white text-xl" />
+                          </div>
+                        </div>
+
+                        {/* Track Info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-white truncate group-hover:text-purple-400 transition">
+                            {track.name}
+                          </h3>
+                          <p className="text-sm text-gray-400 truncate">{track.album}</p>
+                        </div>
+
+                        {/* Duration */}
+                        <div className="text-sm text-gray-400 hidden md:block">
+                          {Math.floor(track.duration / 60000)}:{String(Math.floor((track.duration % 60000) / 1000)).padStart(2, '0')}
+                        </div>
+
+                        {/* Play on Spotify */}
+                        <a
+                          href={track.spotifyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-spotify px-4 py-2"
+                        >
+                          <FaSpotify className="text-xl" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Episode Showcase Section */}
           {episodes.length > 0 && (
-            <section className="py-20 px-6">
+            <section className="py-20 px-6 bg-gradient-to-b from-transparent to-gray-900/50">
               <div className="max-w-7xl mx-auto">
                 <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center gradient-text">
                   {episodes.length === 1 ? 'פרק עם' : 'פרקים עם'} {displayName}
                 </h2>
 
                 {episodes.length === 1 ? (
-                  // Single Episode - Large Showcase
                   <div className="max-w-6xl mx-auto">
                     <div className="glass-card overflow-hidden hover-lift">
                       <div className="grid md:grid-cols-2 gap-8 p-8">
-                        {/* Thumbnail */}
                         <div className="relative aspect-video rounded-lg overflow-hidden group">
-                          <img
-                            src={episodes[0].thumbnail_url}
-                            alt={episodes[0].title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                          
-                          {/* Play Button Overlay */}
+                          <img src={episodes[0].thumbnail_url} alt={episodes[0].title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <div className="play-button">
                               <FaPlay className="text-white text-2xl ml-1" />
                             </div>
                           </div>
-
-                          {/* Episode Number Badge */}
                           {episodes[0].episode_number && (
                             <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-cyan-600 text-white px-4 py-2 rounded-full font-bold text-lg shadow-lg">
                               #{episodes[0].episode_number}
@@ -298,12 +431,10 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
                           )}
                         </div>
 
-                        {/* Episode Details */}
                         <div className="flex flex-col justify-center">
                           <h3 className="text-3xl font-bold mb-4 text-white">
                             {episodes[0].clean_title || episodes[0].title}
                           </h3>
-                          
                           <div className="flex items-center gap-4 text-gray-400 mb-6">
                             <span>{new Date(episodes[0].published_at).toLocaleDateString('he-IL')}</span>
                             {episodes[0].view_count && (
@@ -313,12 +444,9 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
                               </>
                             )}
                           </div>
-
                           <p className="text-gray-300 mb-8 leading-relaxed">
                             צפו בפרק המלא עם {displayName} ב-יוצאים לטראק, הפודקאסט הגדול בישראל לטראנס.
                           </p>
-
-                          {/* Watch Button */}
                           <a
                             href={`https://www.youtube.com/watch?v=${episodes[0].youtube_video_id}`}
                             target="_blank"
@@ -333,7 +461,6 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
                     </div>
                   </div>
                 ) : (
-                  // Multiple Episodes - Grid
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {episodes.map((episode) => (
                       <a
@@ -344,36 +471,24 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
                         className="glass-card rounded-xl overflow-hidden hover-lift group"
                       >
                         <div className="aspect-video bg-gray-800 relative overflow-hidden">
-                          <img
-                            src={episode.thumbnail_url}
-                            alt={episode.title}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                          />
+                          <img src={episode.thumbnail_url} alt={episode.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <FaPlay className="w-16 h-16 text-white" />
                           </div>
-                          
                           {episode.episode_number && (
                             <div className="absolute top-3 right-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
                               #{episode.episode_number}
                             </div>
                           )}
                         </div>
-
                         <div className="p-4">
                           <h3 className="text-base font-semibold mb-2 line-clamp-2 group-hover:text-purple-400 transition">
                             {episode.clean_title || episode.title}
                           </h3>
-                          
                           <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-                            <span className="px-2 py-1 bg-purple-600/30 rounded">
-                              {episode.role}
-                            </span>
-                            <span>
-                              {new Date(episode.published_at).toLocaleDateString('he-IL')}
-                            </span>
+                            <span className="px-2 py-1 bg-purple-600/30 rounded">{episode.role}</span>
+                            <span>{new Date(episode.published_at).toLocaleDateString('he-IL')}</span>
                           </div>
-
                           {episode.view_count && (
                             <div className="flex items-center gap-2 text-xs text-gray-500">
                               <FaEye className="w-4 h-4" />
@@ -389,9 +504,78 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
             </section>
           )}
 
-          {/* Spotify Latest Release Section */}
-          {spotifyRelease && (
+          {/* Instagram Reels Section */}
+          {artist.instagram_reels && artist.instagram_reels.length > 0 && (
+            <section className="py-20 px-6">
+              <div className="max-w-7xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center gradient-text flex items-center justify-center gap-3">
+                  <FaInstagram className="text-pink-400" />
+                  Instagram Reels
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {artist.instagram_reels.map((reelUrl, index) => (
+                    <div key={index} className="glass-card overflow-hidden hover-lift">
+                      <iframe
+                        src={`${reelUrl}embed`}
+                        width="100%"
+                        height="600"
+                        frameBorder="0"
+                        scrolling="no"
+                        allowTransparency={true}
+                        allow="encrypted-media"
+                        className="w-full"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Discography Timeline */}
+          {discography && discography.length > 0 && (
             <section className="py-20 px-6 bg-gradient-to-b from-transparent to-gray-900/50">
+              <div className="max-w-7xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center gradient-text flex items-center justify-center gap-3">
+                  <FaCalendar className="text-purple-400" />
+                  Discography
+                </h2>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                  {discography.map((release) => (
+                    <a
+                      key={release.id}
+                      href={release.spotifyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="glass-card overflow-hidden hover-lift group"
+                    >
+                      <div className="relative aspect-square">
+                        <img src={release.coverImage} alt={release.name} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <FaSpotify className="text-white text-4xl" />
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-sm mb-1 line-clamp-2 group-hover:text-purple-400 transition">
+                          {release.name}
+                        </h3>
+                        <p className="text-xs text-gray-400">{new Date(release.releaseDate).getFullYear()}</p>
+                        <span className="inline-block mt-2 px-2 py-1 bg-purple-600/30 rounded text-xs">
+                          {release.type === 'album' ? 'Album' : 'Single'}
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Spotify Latest Release */}
+          {spotifyRelease && (
+            <section className="py-20 px-6">
               <div className="max-w-5xl mx-auto">
                 <h2 className="text-4xl md:text-5xl font-bold mb-8 text-center flex items-center justify-center gap-3">
                   <span className="gradient-text-green">Latest Release</span>
@@ -400,11 +584,8 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
 
                 <div className="glass-card p-8">
                   <div className="grid md:grid-cols-2 gap-8 mb-8">
-                    {/* Release Info */}
                     <div className="flex flex-col justify-center">
-                      <h3 className="text-3xl font-bold mb-4 text-white">
-                        {spotifyRelease.name}
-                      </h3>
+                      <h3 className="text-3xl font-bold mb-4 text-white">{spotifyRelease.name}</h3>
                       <p className="text-gray-400 mb-6">
                         {spotifyRelease.type === 'album' ? 'Album' : 'Single'} • {new Date(spotifyRelease.releaseDate).getFullYear()}
                       </p>
@@ -419,19 +600,13 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
                       </a>
                     </div>
 
-                    {/* Album Cover */}
                     {spotifyRelease.coverImage && (
                       <div className="relative aspect-square rounded-lg overflow-hidden">
-                        <img
-                          src={spotifyRelease.coverImage}
-                          alt={spotifyRelease.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={spotifyRelease.coverImage} alt={spotifyRelease.name} className="w-full h-full object-cover" />
                       </div>
                     )}
                   </div>
 
-                  {/* Spotify Embed */}
                   <div className="w-full rounded-lg overflow-hidden">
                     <iframe
                       src={spotifyRelease.embedUrl}
@@ -503,7 +678,6 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
 
         {/* Custom Styles */}
         <style jsx>{`
-          /* Animated Background Orbs */
           .orb {
             position: absolute;
             border-radius: 50%;
@@ -538,7 +712,6 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
             animation: pulse-glow 4s ease-in-out infinite;
           }
 
-          /* Animations */
           @keyframes float {
             0%, 100% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-20px) rotate(5deg); }
@@ -555,14 +728,8 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
           }
 
           @keyframes slide-up {
-            from {
-              opacity: 0;
-              transform: translateY(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
           }
 
           @keyframes bounce-subtle {
@@ -583,19 +750,12 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
             animation: bounce-subtle 1.5s ease-in-out infinite;
           }
 
-          /* Glow Ring */
           .glow-ring {
-            background: conic-gradient(
-              from 0deg,
-              #8b5cf6,
-              #06b6d4,
-              #8b5cf6
-            );
+            background: conic-gradient(from 0deg, #8b5cf6, #06b6d4, #8b5cf6);
             animation: spin-slow 8s linear infinite;
             filter: blur(4px);
           }
 
-          /* Glass Card */
           .glass-card {
             background: rgba(17, 24, 39, 0.7);
             backdrop-filter: blur(10px);
@@ -603,7 +763,6 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
             border-radius: 1rem;
           }
 
-          /* Gradient Text */
           .gradient-text {
             background: linear-gradient(to right, #06b6d4, #8b5cf6, #06b6d4);
             background-clip: text;
@@ -633,7 +792,6 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
             100% { background-position: 0% 50%; }
           }
 
-          /* Hover Lift */
           .hover-lift {
             transition: all 0.3s ease;
           }
@@ -643,7 +801,6 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
             box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
           }
 
-          /* Play Button */
           .play-button {
             width: 5rem;
             height: 5rem;
@@ -659,7 +816,6 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
             transform: scale(1.1);
           }
 
-          /* Button Gradient */
           .btn-gradient {
             padding: 1rem 2rem;
             background: linear-gradient(to right, #8b5cf6, #06b6d4);
@@ -672,6 +828,22 @@ export default function ArtistPage({ artist, episodes, spotifyRelease }: ArtistP
           .btn-gradient:hover {
             box-shadow: 0 0 40px rgba(168, 85, 247, 0.6);
             transform: translateY(-2px);
+          }
+
+          .btn-spotify {
+            padding: 0.5rem 1rem;
+            background: #1DB954;
+            color: white;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .btn-spotify:hover {
+            background: #1ed760;
+            transform: scale(1.05);
           }
         `}</style>
       </div>
@@ -703,15 +875,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const slug = params?.slug as string;
 
   const reservedSlugs = [
-    'episodes',
-    'admin',
-    'track-of-the-week',
-    'about',
-    'api',
-    'young-artists',
-    '_next',
-    'images',
-    'favicon.ico',
+    'episodes', 'admin', 'track-of-the-week', 'about', 'api',
+    'young-artists', '_next', 'images', 'favicon.ico',
   ];
 
   if (reservedSlugs.includes(slug)) {
@@ -742,17 +907,9 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         role,
         episode_id,
         episodes (
-          id,
-          youtube_video_id,
-          episode_number,
-          title,
-          clean_title,
-          description,
-          thumbnail_url,
-          published_at,
-          duration,
-          view_count,
-          is_special
+          id, youtube_video_id, episode_number, title, clean_title,
+          description, thumbnail_url, published_at, duration,
+          view_count, is_special
         )
       `)
       .eq('artist_id', artist.id)
@@ -770,24 +927,34 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     // Fetch Spotify data if artist has Spotify ID
     let spotifyRelease = null;
     let spotifyProfileImage = null;
+    let spotifyProfile = null;
+    let topTracks = null;
+    let discography = null;
     
     if (artist.spotify_artist_id) {
       try {
-        // Fetch latest release
-        spotifyRelease = await getArtistLatestRelease(artist.spotify_artist_id);
-        
-        // Fetch artist profile for image
-        const spotifyProfile = await getArtistProfile(artist.spotify_artist_id);
-        
-        if (spotifyProfile?.image) {
-          spotifyProfileImage = spotifyProfile.image;
+        // Fetch all Spotify data in parallel
+        const [release, profile, tracks, disco] = await Promise.all([
+          getArtistLatestRelease(artist.spotify_artist_id),
+          getArtistProfile(artist.spotify_artist_id),
+          getArtistTopTracks(artist.spotify_artist_id),
+          getArtistDiscography(artist.spotify_artist_id),
+        ]);
+
+        spotifyRelease = release;
+        spotifyProfile = profile;
+        topTracks = tracks;
+        discography = disco;
+
+        if (profile?.image) {
+          spotifyProfileImage = profile.image;
         }
       } catch (error) {
         console.error('Failed to fetch Spotify data:', error);
       }
     }
 
-    // Merge Spotify image with artist data (Spotify takes priority if available)
+    // Merge Spotify image with artist data
     const artistWithImage = {
       ...artist,
       profile_photo_url: spotifyProfileImage || artist.profile_photo_url,
@@ -799,6 +966,9 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         artist: artistWithImage,
         episodes,
         spotifyRelease,
+        spotifyProfile,
+        topTracks,
+        discography,
       },
     };
   } catch (error) {
