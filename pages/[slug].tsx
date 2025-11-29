@@ -1,11 +1,11 @@
 // pages/[slug].tsx - Premium Artist Profile Page
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Navigation from "../components/Navigation";
 import { getArtistLatestRelease, getArtistProfile } from "../lib/spotify";
-import { useState, useEffect } from "react";
 
 // ==========================================
 // TYPES
