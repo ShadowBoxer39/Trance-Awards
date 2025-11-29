@@ -3,7 +3,7 @@
 // ✅ Full signups tab with grid
 // ✅ Full tracks tab with YouTube previews
 // ✅ Enhanced analytics with all metrics
-// ✅ No 1000 limit (API already fixed)
+// ✅ Added "today" date range filter for analytics
 
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
@@ -100,13 +100,13 @@ export default function Admin() {
   const [visits, setVisits] = React.useState<VisitData[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = React.useState(false);
   
-  // ⭐ MOVED TO TOP LEVEL - Analytics date range state
-  const [dateRange, setDateRange] = React.useState<"7d" | "30d" | "all">("30d");
+  // ⭐ Analytics date range state – now includes "today"
+  const [dateRange, setDateRange] = React.useState<"today" | "7d" | "30d" | "all">("30d");
   
   const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics" | "track-submissions">("votes");
 
   // ============================================
-  // ⭐ MOVED TO TOP LEVEL - Analytics calculation
+  // Analytics calculation
   // ============================================
   const analytics = React.useMemo(() => {
     if (!visits || visits.length === 0) return null;
@@ -114,8 +114,22 @@ export default function Admin() {
     const now = new Date();
     const filtered = visits.filter(v => {
       const visitDate = new Date(v.timestamp);
-      if (dateRange === "7d") return visitDate >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      if (dateRange === "30d") return visitDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      if (dateRange === "today") {
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+        return visitDate >= startOfDay;
+      }
+
+      if (dateRange === "7d") {
+        return visitDate >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+
+      if (dateRange === "30d") {
+        return visitDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+
+      // "all"
       return true;
     });
 
@@ -180,7 +194,7 @@ export default function Admin() {
       .map(([page, count]) => ({
         page: pageNames[page] || page,
         count,
-        percentage: ((count / filtered.length) * 100).toFixed(1)
+        percentage: filtered.length ? ((count / filtered.length) * 100).toFixed(1) : "0.0"
       }));
 
     const topSources = Object.entries(sources)
@@ -189,7 +203,7 @@ export default function Admin() {
       .map(([source, count]) => ({
         source,
         count,
-        percentage: ((count / filtered.length) * 100).toFixed(1)
+        percentage: filtered.length ? ((count / filtered.length) * 100).toFixed(1) : "0.0"
       }));
 
     const peakHours = Object.entries(hourlyTraffic)
@@ -205,7 +219,7 @@ export default function Admin() {
       avgDuration: Math.round(avgDuration),
       bounceRate: bounceRate.toFixed(1),
       israelVisits,
-      israelPercentage: ((israelVisits / filtered.length) * 100).toFixed(1),
+      israelPercentage: filtered.length ? ((israelVisits / filtered.length) * 100).toFixed(1) : "0.0",
       topPages,
       topSources,
       peakHours,
@@ -816,7 +830,7 @@ export default function Admin() {
               </>
             )}
 
-            {/* ANALYTICS TAB - FIXED: No IIFE, uses top-level state */}
+            {/* ANALYTICS TAB */}
             {activeTab === "analytics" && (
               analyticsLoading ? (
                 <div className="p-12 text-center text-white/50">
@@ -834,6 +848,17 @@ export default function Admin() {
                   <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center">
                     <h2 className="text-2xl font-semibold">סטטיסטיקות אתר</h2>
                     <div className="flex gap-2">
+                      {/* NEW: Today button */}
+                      <button
+                        onClick={() => setDateRange("today")}
+                        className={`px-4 py-2 rounded-xl font-medium transition ${
+                          dateRange === "today" 
+                            ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" 
+                            : "bg-white/5 text-white/60 hover:text-white"
+                        }`}
+                      >
+                        היום
+                      </button>
                       <button
                         onClick={() => setDateRange("7d")}
                         className={`px-4 py-2 rounded-xl font-medium transition ${
@@ -883,7 +908,13 @@ export default function Admin() {
                       </div>
                       <div className="text-4xl font-bold text-cyan-400">{analytics.totalVisits}</div>
                       <div className="text-xs text-white/40 mt-1">
-                        {dateRange === "7d" ? "7 ימים אחרונים" : dateRange === "30d" ? "30 ימים אחרונים" : "כל הזמנים"}
+                        {dateRange === "today"
+                          ? "היום"
+                          : dateRange === "7d"
+                          ? "7 ימים אחרונים"
+                          : dateRange === "30d"
+                          ? "30 ימים אחרונים"
+                          : "כל הזמנים"}
                       </div>
                     </div>
 
