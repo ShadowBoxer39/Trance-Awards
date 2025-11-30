@@ -1,4 +1,4 @@
-// pages/[slug].tsx - V10: Final Polish, Aura & Complete Layout
+// pages/[slug].tsx - V11: FINAL STRUCTURAL & LAYOUT FIX
 
 import React, { useEffect } from "react";
 import Head from "next/head";
@@ -278,7 +278,7 @@ export default function ArtistPage({
         display: none;
     }
     .album-cover-container {
-        width: 200px; /* ~200px */
+        width: 200px; 
         height: 200px;
     }
     /* Background Animation Orbs (New) */
