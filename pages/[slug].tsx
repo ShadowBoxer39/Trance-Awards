@@ -992,22 +992,30 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       return { notFound: true };
     }
 
-    // 2. Fetch most recent episode for this artist
-    const { data: episodeRows, error: episodeError } = await supabase
-      .from("artist_episodes")
-      .select("episodes (*)")
-      .eq("artist_id", artist.id)
-      .order("episode_id", { ascending: false })
-      .limit(1);
+   // 2. Fetch most recent episode for this artist
+const { data: episodeRows, error: episodeError } = await supabase
+  .from("artist_episodes")
+  .select("episodes (*)")
+  .eq("artist_id", artist.id)
+  .order("episode_id", { ascending: false })
+  .limit(1);
 
-    if (episodeError) {
-      console.error("artist_episodes error:", episodeError);
-    }
+if (episodeError) {
+  console.error("artist_episodes error:", episodeError);
+}
 
-    const episode =
-      (episodeRows && episodeRows[0]
-        ? (episodeRows[0].episodes as Episode)
-        : null) || null;
+// Supabase can return `episodes` as an object OR an array – normalize it
+let episode: Episode | null = null;
+
+if (episodeRows && episodeRows[0] && episodeRows[0].episodes) {
+  const rawEpisodes = episodeRows[0].episodes as any;
+
+  if (Array.isArray(rawEpisodes)) {
+    episode = (rawEpisodes[0] as Episode) ?? null;
+  } else {
+    episode = rawEpisodes as Episode;
+  }
+}
 
     // 3. Fetch Spotify data
     let spotifyTopTracks: SpotifyTrack[] = [];
