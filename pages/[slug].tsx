@@ -391,97 +391,99 @@ const totalAlbums = spotifyDiscography.filter(
           <Navigation currentPage="episodes" />
         </div>
 
-        {/* HERO */}
-        <section className="py-12 px-6 hero-header-bg">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8">
-            {/* Photo */}
-            <div className="order-1 md:order-2">
-              <div className="w-52 h-52 md:w-60 md:h-60 rounded-full overflow-hidden border-4 border-[var(--accent-color)] hero-photo">
-                {artist.profile_photo_url ? (
-                  <img
-                    src={artist.profile_photo_url}
-                    alt={displayName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
-                    <span className="text-5xl font-black">
-                      {displayName[0]}
-                    </span>
-                  </div>
-                )}
-              </div>
+   {/* HERO */}
+<section className="py-12 px-6 hero-header-bg">
+  <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8">
+    {/* Photo */}
+    <div className="order-1 md:order-2">
+      <div className="w-52 h-52 md:w-60 md:h-60 rounded-full overflow-hidden border-4 border-[var(--accent-color)] hero-photo">
+        {artist.profile_photo_url ? (
+          <img
+            src={artist.profile_photo_url}
+            alt={displayName}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
+            <span className="text-5xl font-black">
+              {displayName[0]}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* Text */}
+    <div className="flex-1 text-center md:text-right order-2 md:order-1">
+      <span className="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs mb-2">
+        {artist.genre || "Psytrance"}
+      </span>
+
+      <h1 className="text-4xl md:text-5xl font-extrabold mb-3 gradient-title">
+        {displayName}
+      </h1>
+
+      <p className="text-gray-200 text-base md:text-lg mb-5 max-w-xl mx-auto md:mx-0 leading-relaxed">
+        {artist.short_bio ||
+          "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק ומלודיה."}
+      </p>
+
+      {/* Stats row */}
+      <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10 text-xs">
+        {/* total releases -> 'טראקים בחוץ' */}
+        <div className="flex gap-2 text-right border-r border-white/15 pr-4">
+          <div className="text-2xl font-bold text-cyan-300">
+            {totalReleases}
+          </div>
+          <div className="text-xs text-gray-300 flex items-center gap-1">
+            <FaMusic className="w-3 h-3 text-cyan-300" />
+            <span>טראקים בחוץ</span>
+          </div>
+        </div>
+
+        {/* albums */}
+        <div className="flex gap-2 text-right border-r border-white/15 pr-4">
+          <div className="text-2xl font-bold text-cyan-300">
+            {totalAlbums}
+          </div>
+          <div className="text-xs text-gray-300 flex items-center gap-1">
+            <FaStar className="w-3 h-3 text-yellow-400" />
+            <span>אלבומים</span>
+          </div>
+        </div>
+
+        {/* since (only if we have year in DB) */}
+        {firstMusicYear && (
+          <div className="flex gap-2 text-right">
+            <div className="text-2xl font-bold text-cyan-300">
+              {firstMusicYear}
             </div>
-
-            {/* Text */}
-            <div className="flex-1 text-center md:text-right order-2 md:order-1">
-              <span className="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs mb-2">
-                {artist.genre || "Psytrance"}
-              </span>
-
-              <h1 className="text-4xl md:text-5xl font-extrabold mb-3 gradient-title">
-                {displayName}
-              </h1>
-
-              <p className="text-gray-200 text-base md:text-lg mb-5 max-w-xl mx-auto md:mx-0 leading-relaxed">
-                {artist.short_bio ||
-                  "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק ומלודיה."}
-              </p>
-
-              <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10 text-xs">
-                {/* total releases -> 'טראקים בחוץ' */}
-                <div className="flex gap-2 text-right border-r border-white/15 pr-4">
-                  <div className="text-2xl font-bold text-cyan-300">
-                    {totalReleases}
-                  </div>
-                  <div className="text-xs text-gray-300 flex items-center gap-1">
-                    <FaMusic className="w-3 h-3 text-cyan-300" />
-                    <span>טראקים בחוץ</span>
-                  </div>
-                </div>
-
-              {/* albums from Spotify */}
-<div className="flex gap-2 text-right border-r border-white/15 pr-4">
-  <div className="text-2xl font-bold text-cyan-300">
-    {totalAlbums}
-  </div>
-  <div className="text-xs text-gray-300 flex items-center gap-1">
-    <FaStar className="w-3 h-3 text-yellow-400" />
-    <span>אלבומים</span>
-  </div>
-</div>
-
-
-             {firstMusicYear && (
-  <div className="flex gap-2 text-right">
-    <div className="text-2xl font-bold text-cyan-300">
-      {firstMusicYear}
-    </div>
-    <div className="text-xs text-gray-300 flex items-center gap-1">
-      <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
-      <span>יוצר מאז</span>
-    </div>
-  </div>
-)}
-
-
-              <div className="flex flex-wrap justify-center md:justify-end gap-3 mt-5">
-                {socialLinks.map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.url!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`text-2xl ${link.color} ${link.hover} transition-transform hover:scale-110`}
-                    title={link.label}
-                  >
-                    <link.icon />
-                  </a>
-                ))}
-              </div>
+            <div className="text-xs text-gray-300 flex items-center gap-1">
+              <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
+              <span>יוצר מאז</span>
             </div>
           </div>
-        </section>
+        )}
+      </div>
+
+      {/* Social icons */}
+      <div className="flex flex-wrap justify-center md:justify-end gap-3 mt-5">
+        {socialLinks.map((link, index) => (
+          <a
+            key={index}
+            href={link.url!}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`text-2xl ${link.color} ${link.hover} transition-transform hover:scale-110`}
+            title={link.label}
+          >
+            <link.icon className="w-5 h-5" />
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* MAIN 2-COLUMN LAYOUT */}
         <section className="pb-10 px-6">
