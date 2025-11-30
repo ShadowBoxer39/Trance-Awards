@@ -1,4 +1,4 @@
-// pages/[slug].tsx - V10: Final Polish, Aura & Episode Fix
+// pages/[slug].tsx - V10: Final Polish, Aura & Complete Layout
 
 import React, { useEffect } from "react";
 import Head from "next/head";
@@ -271,18 +271,14 @@ export default function ArtistPage({
         padding-bottom: 20px;
         scrollbar-width: none;
         -ms-overflow-style: none;
-        margin-left: -16px; /* Adjust left padding for scroll */
+        margin-left: -16px; 
         padding-left: 16px;
     }
     .horizontal-scroll-container::-webkit-scrollbar {
         display: none;
     }
-    .album-cover-size {
-        width: 13rem; /* ~208px */
-        height: 13rem; /* ~208px */
-    }
     .album-cover-container {
-        width: 200px; /* New explicit width for Discography */
+        width: 200px; /* ~200px */
         height: 200px;
     }
     /* Background Animation Orbs (New) */
@@ -299,7 +295,6 @@ export default function ArtistPage({
     }
     #orb-1 { top: 10%; right: 5%; animation-delay: 0s; }
     #orb-2 { bottom: 5%; left: 10%; animation-delay: -15s; }
-
   `;
 
   return (
@@ -576,7 +571,19 @@ export default function ArtistPage({
                 </h2>
 
                 {/* --- VIDEO HIGHLIGHTS (Best Set AND Episode) --- */}
-                {/* 1. EPISODE CARD (ALWAYS SHOW IF AVAILABLE) */}
+                
+                {/* 1. BEST LIVE SET CARD */}
+                {artist.festival_sets && artist.festival_sets.length > 0 && (
+                    <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
+                            <FaStar className="text-3xl text-yellow-400" />
+                            הסט החי המומלץ
+                        </h3>
+                        <LiveSetCard set={artist.festival_sets[0]} isFeatured={true} />
+                    </div>
+                )}
+
+                {/* 2. TRACK TRIP EPISODE CARD */}
                 {episode && (
                     <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-purple-400">
@@ -609,18 +616,7 @@ export default function ArtistPage({
                         </a>
                     </div>
                 )}
-
-                {/* 2. BEST LIVE SET CARD (FIRST SET) */}
-                {artist.festival_sets && artist.festival_sets.length > 0 && (
-                    <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
-                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
-                            <FaStar className="text-3xl text-yellow-400" />
-                            הסט החי המומלץ
-                        </h3>
-                        <LiveSetCard set={artist.festival_sets[0]} isFeatured={true} />
-                    </div>
-                )}
-
+                
                 {/* 3. REMAINING SETS (LIST) */}
                 {artist.festival_sets && artist.festival_sets.length > 1 && (
                     <div className="glass-card-deep p-6 rounded-2xl">
