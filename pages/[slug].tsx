@@ -1,4 +1,4 @@
-// pages/[slug].tsx - V8: Hyper-Glow Experience (Fixed Import Location)
+// pages/[slug].tsx - V8: Final Structural Fix
 
 import React, { useEffect } from "react";
 import Head from "next/head";
@@ -141,11 +141,10 @@ export default function ArtistPage({
   const hasSoundCloudContent = artist.soundcloud_profile_url !== null;
 
   // --- 1. Custom Flattering Metrics ---
-  // FIXED: Ensure achievements is an array before finding the first year
   const firstMusicYear = artist.achievements?.find(a => a.year)?.year || '2018';
   const totalTracksOut = spotifyDiscography.filter(d => d.type === 'single' || d.type === 'album').length;
   
-  // --- 2. Social Links Definition (Moved inside component scope) ---
+  // --- 2. Social Links Definition ---
   const socialLinks = [
     { icon: FaInstagram, url: artist.instagram_url, label: 'Instagram', color: 'text-pink-400', hover: 'hover:text-pink-300' },
     { icon: FaSoundcloud, url: artist.soundcloud_profile_url, label: 'SoundCloud', color: 'text-orange-400', hover: 'hover:text-orange-300' },
@@ -154,7 +153,6 @@ export default function ArtistPage({
     { icon: FaFacebook, url: artist.facebook_url, label: 'Facebook', color: 'text-blue-400', hover: 'hover:text-blue-300' },
     { icon: FaGlobe, url: artist.website_url, label: 'Website', color: 'text-purple-400', hover: 'hover:text-purple-300' },
   ].filter(link => link.url);
-  // --- End Social Links Definition ---
 
 
   // --- Custom Style Block for Dynamic Accent and Animation ---
@@ -427,7 +425,7 @@ export default function ArtistPage({
                                     />
                                     <div className="text-sm font-bold text-white truncate">{album.name}</div>
                                     <div className="text-xs text-gray-400">{album.type === 'album' ? 'אלבום' : 'סינגל'} • {new Date(album.releaseDate).getFullYear()}</div>
-                                </div>
+                                </a>
                             ))}
                         </div>
                         <Link href={artist.spotify_url || '#'} target="_blank" className="text-cyan-400 text-sm mt-3 flex items-center justify-end gap-1 hover:underline">
@@ -513,7 +511,7 @@ export default function ArtistPage({
                 ) : (
                     <div className="glass-card-deep p-6 rounded-2xl text-center text-gray-400">
                         <FaExclamationTriangle className="text-5xl mx-auto mb-3 text-red-500" />
-                        <p>אין נתוני וידאו או פרקים זמינים כרגע ל-Media Center.</p>
+                        <p>אין נתוני וידאו זמינים כרגע ל-Media Center.</p>
                     </div>
                 )}
                 
@@ -572,10 +570,11 @@ export default function ArtistPage({
                         </div>
                     </div>
                   )}
+
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
         {/* Footer */}
         <footer className="border-t border-white/10 bg-black/50 mt-16">
