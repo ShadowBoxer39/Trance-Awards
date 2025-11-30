@@ -862,7 +862,7 @@ const totalAlbums = spotifyDiscography.filter(
                 <div className="glass-card p-3 glass-hover border-l-4 border-[var(--soundcloud-color)]">
                   <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-[var(--soundcloud-color)]">
                     <FaSoundcloud className="text-xl" />
-                    סטים אחרונים בסאונדקלאוד
+                    שחרורים אחרונים בסאונדקלאוד
                   </h3>
                   <div className="rounded-lg overflow-hidden border border-[var(--soundcloud-color)]/40">
                     <iframe
