@@ -238,6 +238,12 @@ const firstMusicYear =
 
 const totalReleases = spotifyDiscography.length;
 
+  const mainFestivalSet =
+  artist.festival_sets && artist.festival_sets.length > 0
+    ? artist.festival_sets[0]
+    : null;
+
+
 // albums from Spotify discography
 const totalAlbums = spotifyDiscography.filter(
   (item) => item.type === "album"
