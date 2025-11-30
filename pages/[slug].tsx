@@ -1,4 +1,4 @@
-// pages/[slug].tsx - V8: Refined Hyper-Glow & Horizontal Scroll
+// pages/[slug].tsx - V8: Hyper-Glow Experience (Fixed Import Location)
 
 import React, { useEffect } from "react";
 import Head from "next/head";
@@ -20,15 +20,15 @@ import {
   FaStar,
   FaBroadcastTower,
   FaArrowRight,
-  FaClock,
   FaCalendarAlt,
-  FaBriefcase, // New icon for Booking/Label
+  FaBriefcase,
   FaExclamationTriangle
 } from 'react-icons/fa';
 
 // ==========================================
-// TYPES (Adding fields for Booking/Label)
+// TYPES (Ensuring all data is correctly typed)
 // ==========================================
+
 interface FestivalSet {
   title: string;
   youtube_id: string;
@@ -64,10 +64,9 @@ interface Artist {
   instagram_reels: string[];
   festival_sets: FestivalSet[];
   primary_color: string;
-  // NOTE: Assuming these exist or will be added to the DB for simplicity:
   booking_company: string;
   record_label: string;
-  achievements: Achievement[]; // Now correctly typed
+  achievements: Achievement[];
 }
 
 interface Episode {
@@ -142,9 +141,22 @@ export default function ArtistPage({
   const hasSoundCloudContent = artist.soundcloud_profile_url !== null;
 
   // --- 1. Custom Flattering Metrics ---
+  // FIXED: Ensure achievements is an array before finding the first year
   const firstMusicYear = artist.achievements?.find(a => a.year)?.year || '2018';
   const totalTracksOut = spotifyDiscography.filter(d => d.type === 'single' || d.type === 'album').length;
   
+  // --- 2. Social Links Definition (Moved inside component scope) ---
+  const socialLinks = [
+    { icon: FaInstagram, url: artist.instagram_url, label: 'Instagram', color: 'text-pink-400', hover: 'hover:text-pink-300' },
+    { icon: FaSoundcloud, url: artist.soundcloud_profile_url, label: 'SoundCloud', color: 'text-orange-400', hover: 'hover:text-orange-300' },
+    { icon: FaSpotify, url: artist.spotify_url, label: 'Spotify', color: 'text-green-400', hover: 'hover:text-green-300' },
+    { icon: FaYoutube, url: artist.youtube_url, label: 'YouTube', color: 'text-red-400', hover: 'hover:text-red-300' },
+    { icon: FaFacebook, url: artist.facebook_url, label: 'Facebook', color: 'text-blue-400', hover: 'hover:text-blue-300' },
+    { icon: FaGlobe, url: artist.website_url, label: 'Website', color: 'text-purple-400', hover: 'hover:text-purple-300' },
+  ].filter(link => link.url);
+  // --- End Social Links Definition ---
+
+
   // --- Custom Style Block for Dynamic Accent and Animation ---
   const customStyles = `
     @keyframes pulse-shadow {
@@ -170,6 +182,12 @@ export default function ArtistPage({
         box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
         transform: translateY(-2px);
     }
+    .glass-music-card {
+        border-left: 4px solid var(--spotify-color);
+    }
+    .glass-media-card {
+        border-left: 4px solid var(--soundcloud-color);
+    }
     .gradient-hero-text {
       background: linear-gradient(90deg, var(--accent-color), #ec4899, #06b6d4);
       background-clip: text;
@@ -181,8 +199,8 @@ export default function ArtistPage({
         overflow-x: auto;
         white-space: nowrap;
         padding-bottom: 20px;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
     .horizontal-scroll-container::-webkit-scrollbar {
         display: none;
@@ -196,6 +214,7 @@ export default function ArtistPage({
         <meta name="description" content={artist.short_bio || `${displayName} - אמן טראנס ישראלי`} />
       </Head>
       
+      {/* Dynamic Style injection */}
       <style jsx global>{customStyles}</style>
 
       <div className="min-h-screen trance-backdrop text-white" style={dynamicStyle}>
@@ -285,7 +304,7 @@ export default function ArtistPage({
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               
-              {/* COLUMN 1: MUSIC HUB (Spotify & SoundCloud) - 1/3 WIDTH */}
+              {/* COLUMN 1: MUSIC HUB (Spotify & SoundCloud) - 1/3 WIDTH - Always present if data exists */}
               <div className="lg:col-span-1 space-y-8">
                   
                 <h2 className="text-3xl font-black mb-6 flex items-center gap-3 text-green-500">
@@ -408,7 +427,7 @@ export default function ArtistPage({
                                     />
                                     <div className="text-sm font-bold text-white truncate">{album.name}</div>
                                     <div className="text-xs text-gray-400">{album.type === 'album' ? 'אלבום' : 'סינגל'} • {new Date(album.releaseDate).getFullYear()}</div>
-                                </a>
+                                </div>
                             ))}
                         </div>
                         <Link href={artist.spotify_url || '#'} target="_blank" className="text-cyan-400 text-sm mt-3 flex items-center justify-end gap-1 hover:underline">
@@ -416,6 +435,7 @@ export default function ArtistPage({
                         </Link>
                     </div>
                 )}
+
 
                 <h2 className="text-3xl font-black mb-6 flex items-center gap-3 text-red-500">
                     <FaBroadcastTower className="text-4xl" />
@@ -429,7 +449,7 @@ export default function ArtistPage({
                         {artist.festival_sets && artist.festival_sets.length > 0 && (
                             <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
                                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
-                                    <FaStar className="text-2xl" />
+                                    <FaStar className="text-3xl" />
                                     הסט החי המומלץ
                                 </h3>
                                 <a
@@ -497,29 +517,61 @@ export default function ArtistPage({
                     </div>
                 )}
                 
-                {/* --- INSTAGRAM REELS SECTION --- */}
-                {artist.instagram_reels && artist.instagram_reels.length > 0 && (
-                  <div className="glass-card-deep p-6 rounded-2xl">
-                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-pink-400">
-                          <FaInstagram className="text-2xl" />
-                          רגעים נבחרים (Instagram Reels)
+                {/* Remaining Festival Sets (List) */}
+                {artist.festival_sets && artist.festival_sets.length > 1 && (
+                    <div className="glass-card-deep p-6 rounded-2xl">
+                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
+                          <FaPlay className="text-2xl" />
+                          הופעות נוספות
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {artist.instagram_reels.slice(0, 4).map((reelUrl, index) => (
-                              <div key={index} className="rounded-xl overflow-hidden shadow-lg border border-pink-400/30">
-                                  <iframe
-                                      src={`${reelUrl.replace(/\/$/, '')}/embed`}
-                                      className="w-full h-[500px]"
-                                      frameBorder="0"
-                                      scrolling="no"
-                                      allowTransparency={true}
-                                      allow="encrypted-media"
-                                  />
+                      <div className="space-y-3">
+                        {artist.festival_sets.slice(1).map((set, index) => (
+                          <a
+                            key={index}
+                            href={`https://www.youtube.com/watch?v=${set.youtube_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition border border-white/5 hover:border-red-400/30"
+                          >
+                              <img
+                                  src={set.thumbnail}
+                                  alt={set.title}
+                                  className="w-16 h-12 object-cover rounded-md flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                  <div className="font-semibold text-white truncate">{set.title}</div>
+                                  <div className="text-xs text-gray-400">{set.festival} • {set.year}</div>
                               </div>
-                          ))}
+                              <FaYoutube className="text-red-500 flex-shrink-0" />
+                          </a>
+                        ))}
                       </div>
-                  </div>
-                )}
+                    </div>
+                  )}
+                  
+                  {/* NEW: INSTAGRAM REELS SECTION */}
+                  {artist.instagram_reels && artist.instagram_reels.length > 0 && (
+                    <div className="glass-card-deep p-6 rounded-2xl">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-pink-400">
+                            <FaInstagram className="text-2xl" />
+                            רגעים נבחרים (Instagram Reels)
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {artist.instagram_reels.slice(0, 4).map((reelUrl, index) => (
+                                <div key={index} className="rounded-xl overflow-hidden shadow-lg border border-pink-400/30">
+                                    <iframe
+                                        src={`${reelUrl.replace(/\/$/, '')}/embed`}
+                                        className="w-full h-[500px]"
+                                        frameBorder="0"
+                                        scrolling="no"
+                                        allowTransparency={true}
+                                        allow="encrypted-media"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -618,10 +670,6 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         console.error('Spotify API error in SSR:', error);
       }
     }
-    
-    // NOTE: Hardcoding representation details for the Nevo example (since DB fields are unknown)
-    const booking_company = "Sonic Booking"; 
-    const record_label = "Shamanic Tales";
 
     // 4. Finalize artist data
     const artistWithData = {
@@ -629,9 +677,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       profile_photo_url: spotifyProfileImage,
       festival_sets: artist.festival_sets || [],
       instagram_reels: artist.instagram_reels || [],
-      // Inject hardcoded values into the returned object:
-      booking_company: artist.booking_company || booking_company,
-      record_label: artist.record_label || record_label,
+      booking_company: artist.booking_company || "Sonic Booking",
+      record_label: artist.record_label || "Shamanic Tales",
     };
 
     return {
@@ -640,7 +687,6 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         episode,
         spotifyTopTracks,
         spotifyDiscography,
-        // spotifyProfile is intentionally excluded from props if not used, but kept for future scale
       },
     };
   } catch (error) {
