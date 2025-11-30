@@ -429,44 +429,45 @@ const totalAlbums = spotifyDiscography.filter(
       </p>
 
       {/* Stats row */}
-      <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10 text-xs">
-        {/* total releases -> 'טראקים בחוץ' */}
-        <div className="flex gap-2 text-right border-r border-white/15 pr-4">
-          <div className="text-2xl font-bold text-cyan-300">
-            {totalReleases}
-          </div>
-          <div className="text-xs text-gray-300 flex items-center gap-1">
-            <FaMusic className="w-3 h-3 text-cyan-300" />
-            <span>טראקים בחוץ</span>
-          </div>
-        </div>
-
-      {/* albums – only if > 0 */}
-{totalAlbums > 0 && (
+    <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10 text-xs">
+  {/* total releases -> 'טראקים בחוץ' */}
   <div className="flex gap-2 text-right border-r border-white/15 pr-4">
     <div className="text-2xl font-bold text-cyan-300">
-      {totalAlbums}
+      {totalReleases}
     </div>
     <div className="text-xs text-gray-300 flex items-center gap-1">
-      <FaStar className="w-3 h-3 text-yellow-400" />
-      <span>אלבומים</span>
+      <FaMusic className="w-3 h-3 text-cyan-300" />
+      <span>טראקים בחוץ</span>
     </div>
   </div>
 
-        {/* since (only if we have year in DB) */}
-      {firstMusicYear && (
-  <div className="flex gap-2 text-right">
-    <div className="text-xs text-gray-300 flex items-center gap-1">
-      <span>יוצר מאז</span>
-      <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
-    </div>
-    <div className="text-2xl font-bold text-cyan-300">
-      {firstMusicYear}
-    </div>
-  </div>
-)}
-
+  {/* albums – only if > 0 */}
+  {totalAlbums > 0 && (
+    <div className="flex gap-2 text-right border-r border-white/15 pr-4">
+      <div className="text-2xl font-bold text-cyan-300">
+        {totalAlbums}
       </div>
+      <div className="text-xs text-gray-300 flex items-center gap-1">
+        <FaStar className="w-3 h-3 text-yellow-400" />
+        <span>אלבומים</span>
+      </div>
+    </div>
+  )}
+
+  {/* since (only if we have year in DB) */}
+  {firstMusicYear && (
+    <div className="flex gap-2 text-right">
+      <div className="text-xs text-gray-300 flex items-center gap-1">
+        <span>יוצר מאז</span>
+        <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
+      </div>
+      <div className="text-2xl font-bold text-cyan-300">
+        {firstMusicYear}
+      </div>
+    </div>
+  )}
+</div>
+
 
       {/* Social icons */}
       <div className="flex flex-wrap justify-center md:justify-end gap-3 mt-5">
