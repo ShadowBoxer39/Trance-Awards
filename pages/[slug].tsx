@@ -1,4 +1,4 @@
-// pages/[slug].tsx - V4: The Robust & Immersive Music Hub
+// pages/[slug].tsx - V6: Fix Embeds & Implement Instagram Reels
 
 import React, { useEffect } from "react";
 import Head from "next/head";
@@ -45,7 +45,7 @@ interface Artist {
   instagram_url: string | null;
   facebook_url: string | null;
   soundcloud_url: string | null;
-  soundcloud_profile_url: string | null;
+  soundcloud_profile_url: string | null; // THIS FIELD IS USED FOR THE PLAYER
   spotify_url: string | null;
   youtube_url: string | null;
   website_url: string | null;
@@ -134,7 +134,6 @@ export default function ArtistPage({
     document.documentElement.setAttribute("dir", "rtl");
   }, []);
   
-  // --- Custom Style Block for Dynamic Accent and Animation ---
   const customStyles = `
     .trance-backdrop {
       background: radial-gradient(circle at top right, color-mix(in srgb, var(--accent-color) 15%, transparent) 40%),
@@ -142,12 +141,10 @@ export default function ArtistPage({
                   #0f0f1a;
       transition: all 0.5s ease-out;
     }
-    /* Dynamic Neon Ring around Avatar */
     .hero-glow {
       box-shadow: 0 0 40px 10px color-mix(in srgb, var(--accent-color) 40%, transparent);
       border-color: var(--accent-color);
     }
-    /* Primary Card Accent */
     .card-glass-accent {
       border-left: 5px solid var(--accent-color);
       box-shadow: 0 4px 15px -5px color-mix(in srgb, var(--accent-color) 20%, transparent);
@@ -179,13 +176,9 @@ export default function ArtistPage({
       animation: gradient-x 3s ease infinite; 
     }
   `;
-  // --- End Custom Style Block ---
 
-  // Check if there is any set/episode data to show in the Media Center
-  const hasMediaContent = (artist.festival_sets?.length || 0) > 0 || episode !== null;
-  // Check if there is any Spotify data to show
+  const hasMediaContent = (artist.festival_sets?.length || 0) > 0 || episode !== null || (artist.instagram_reels?.length || 0) > 0;
   const hasSpotifyContent = spotifyTopTracks.length > 0 || spotifyDiscography.length > 0;
-  // Check if there is any SoundCloud content to show
   const hasSoundCloudContent = artist.soundcloud_profile_url !== null;
 
 
@@ -349,7 +342,6 @@ export default function ArtistPage({
                                   scrolling="no"
                                   frameBorder="no"
                                   allow="autoplay"
-                                  // FIX: Use the existing and valid soundcloud_profile_url for the embed source
                                   src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloud_profile_url || '')}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true`}
                               />
                           </div>
@@ -503,6 +495,31 @@ export default function ArtistPage({
                       </div>
                     </div>
                   )}
+                  
+                  {/* NEW: INSTAGRAM REELS SECTION */}
+                  {artist.instagram_reels && artist.instagram_reels.length > 0 && (
+                    <div className="glass-card p-6 rounded-2xl">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-pink-400">
+                            <FaInstagram className="text-2xl" />
+                            רגעים נבחרים (Instagram Reels)
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {artist.instagram_reels.slice(0, 4).map((reelUrl, index) => (
+                                <div key={index} className="rounded-xl overflow-hidden shadow-lg border border-pink-400/30">
+                                    {/* Instagram Embed iframe requires /embed/ at the end for Reels */}
+                                    <iframe
+                                        src={`${reelUrl.replace(/\/$/, '')}/embed`}
+                                        className="w-full h-[500px]"
+                                        frameBorder="0"
+                                        scrolling="no"
+                                        allowTransparency={true}
+                                        allow="encrypted-media"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                  )}
 
                 </div>
               </div>
@@ -529,7 +546,7 @@ export default function ArtistPage({
 }
 
 // ==========================================
-// SERVER-SIDE DATA FETCHING (Fixed Type Casting)
+// SERVER-SIDE DATA FETCHING 
 // ==========================================
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
