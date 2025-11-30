@@ -24,6 +24,12 @@ type AdminArtistPayload = {
   primary_color: string | null;
   festival_sets: any[] | null;
   instagram_reels: string[] | null;
+  booking_agency_name: string | null;
+  booking_agency_email: string | null;
+  booking_agency_url: string | null;
+  record_label_name: string | null;
+  record_label_url: string | null;
+  management_email: string | null;
 };
 
 export default async function handler(
