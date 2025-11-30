@@ -1,4 +1,4 @@
-// pages/[slug].tsx - Hebrew Artist Page (2-column layout, polished)
+// pages/[slug].tsx - Hebrew Artist Page, balanced sizing
 
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
@@ -167,14 +167,12 @@ export default function ArtistPage({
     "--soundcloud-color": "#FF5500",
   } as React.CSSProperties;
 
-  const hasSpotifyContent =
-    spotifyTopTracks.length > 0 || spotifyDiscography.length > 0;
-  const hasSoundCloudContent = !!artist.soundcloud_profile_url;
-
   const firstMusicYear =
     artist.achievements?.find((a) => a.year)?.year || "2018";
   const totalReleases = spotifyDiscography.length;
   const totalFestivals = artist.festival_sets?.length || 0;
+
+  const hasSoundCloudContent = !!artist.soundcloud_profile_url;
 
   const socialLinks = [
     {
@@ -232,38 +230,16 @@ export default function ArtistPage({
     artist.label_name === "Shamanic Tales" ? "/images/shamanic.jpg" : null;
 
   const customStyles = `
-    @keyframes pulse-shadow {
-      0% { box-shadow: 0 0 10px 0px color-mix(in srgb, var(--accent-color) 40%, transparent); }
-      50% { box-shadow: 0 0 30px 8px color-mix(in srgb, var(--accent-color) 70%, transparent); }
-      100% { box-shadow: 0 0 10px 0px color-mix(in srgb, var(--accent-color) 40%, transparent); }
-    }
-    .hero-glow {
-      box-shadow: 0 0 40px 10px color-mix(in srgb, var(--accent-color) 40%, transparent);
-      border-color: var(--accent-color);
-      animation: pulse-shadow 3s infinite ease-in-out;
-    }
     .glass-card-deep {
-      background: rgba(7, 10, 24, 0.92);
-      backdrop-filter: blur(22px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: all 0.3s ease;
+      background: rgba(7,10,24,0.95);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.07);
+      transition: all 0.25s ease;
     }
     .glass-card-hover:hover {
       border-color: var(--accent-color);
-      box-shadow: 0 18px 45px rgba(0,0,0,0.8);
-      transform: translateY(-3px);
-    }
-    .text-spotify { color: var(--spotify-color); }
-    .text-soundcloud { color: var(--soundcloud-color); }
-    .spotify-track-item:hover {
-      background-color: rgba(29, 185, 84, 0.12);
-      border-color: rgba(29, 185, 84, 0.3);
-    }
-    .insta-gradient-border {
-      border-image: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888) 1;
-      border-width: 2px;
-      border-style: solid;
-      box-shadow: 0 0 16px rgba(255, 90, 165, 0.45);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+      transform: translateY(-2px);
     }
     .gradient-hero-text {
       background: linear-gradient(90deg, var(--accent-color), #ec4899, #06b6d4);
@@ -307,158 +283,121 @@ export default function ArtistPage({
         className="min-h-screen text-white bg-gradient-to-b from-[#050814] via-[#050017] to-black"
         style={dynamicStyle}
       >
+        {/* NAV */}
         <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-2xl border-b border-white/10">
           <Navigation currentPage="episodes" />
         </div>
 
         {/* HERO */}
-        <section className="relative py-16 px-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-12">
-              {/* Photo */}
-              <div className="relative flex-shrink-0 order-1 md:order-2">
-                <div className="w-60 h-60 md:w-72 md:h-72 rounded-full overflow-hidden border-4 hero-glow">
-                  {artist.profile_photo_url ? (
-                    <img
-                      src={artist.profile_photo_url}
-                      alt={displayName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
-                      <span className="text-8xl font-black">
-                        {displayName[0]}
-                      </span>
-                    </div>
-                  )}
+        <section className="py-10 px-6">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8">
+            {/* photo */}
+            <div className="order-1 md:order-2">
+              <div className="w-44 h-44 md:w-52 md:h-52 rounded-full overflow-hidden border-4 border-[var(--accent-color)] shadow-xl">
+                {artist.profile_photo_url ? (
+                  <img
+                    src={artist.profile_photo_url}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
+                    <span className="text-6xl font-black">
+                      {displayName[0]}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* text */}
+            <div className="flex-1 text-center md:text-right order-2 md:order-1">
+              <span className="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs mb-2">
+                {artist.genre || "Psytrance"}
+              </span>
+
+              <h1 className="text-4xl sm:text-5xl font-extrabold mb-3 gradient-hero-text">
+                {displayName}
+              </h1>
+
+              <p className="text-gray-200 text-base md:text-lg mb-5 max-w-xl mx-auto md:mx-0 leading-relaxed">
+                {artist.short_bio ||
+                  "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק ומלודיה."}
+              </p>
+
+              <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10">
+                <div className="flex gap-2 text-right border-r border-white/15 pr-4">
+                  <div className="text-2xl font-bold text-cyan-300">
+                    {totalReleases}
+                  </div>
+                  <div className="text-xs text-gray-300">
+                    <FaMusic className="inline w-3 h-3 text-cyan-300 mb-0.5" />{" "}
+                    ריליזים
+                  </div>
+                </div>
+
+                <div className="flex gap-2 text-right border-r border-white/15 pr-4">
+                  <div className="text-2xl font-bold text-cyan-300">
+                    {totalFestivals}
+                  </div>
+                  <div className="text-xs text-gray-300">
+                    <FaStar className="inline w-3 h-3 text-yellow-400 mb-0.5" />{" "}
+                    פסטיבלים
+                  </div>
+                </div>
+
+                <div className="flex gap-2 text-right">
+                  <div className="text-2xl font-bold text-cyan-300">
+                    {firstMusicYear}
+                  </div>
+                  <div className="text-xs text-gray-300">
+                    <FaCalendarAlt className="inline w-3 h-3 text-cyan-300 mb-0.5" />{" "}
+                    יוצר מאז
+                  </div>
                 </div>
               </div>
 
-              {/* Text */}
-              <div className="flex-1 text-center md:text-right order-2 md:order-1">
-                <span className="inline-block px-4 py-1 bg-white/10 border border-white/25 rounded-full text-sm mb-3">
-                  {artist.genre || "Psytrance"}
-                </span>
-
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-4 gradient-hero-text">
-                  {displayName}
-                </h1>
-
-                <p className="text-gray-200 text-xl mb-6 max-w-2xl mx-auto md:mx-0 leading-relaxed">
-                  {artist.short_bio ||
-                    "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק ומלודיה."}
-                </p>
-
-                <div className="flex flex-wrap justify-center md:justify-end gap-8 pt-5 border-t border-white/15">
-                  <div className="flex gap-3 text-right border-r border-white/20 pr-6">
-                    <div className="text-3xl font-black text-cyan-300">
-                      {totalReleases}
-                    </div>
-                    <div className="text-sm text-gray-300">
-                      <FaMusic className="inline w-4 h-4 text-cyan-300 mb-0.5" />{" "}
-                      ריליזים
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 text-right border-r border-white/20 pr-6">
-                    <div className="text-3xl font-black text-cyan-300">
-                      {totalFestivals}
-                    </div>
-                    <div className="text-sm text-gray-300">
-                      <FaStar className="inline w-4 h-4 text-yellow-400 mb-0.5" />{" "}
-                      פסטיבלים
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 text-right">
-                    <div className="text-3xl font-black text-cyan-300">
-                      {firstMusicYear}
-                    </div>
-                    <div className="text-sm text-gray-300">
-                      <FaCalendarAlt className="inline w-4 h-4 text-cyan-300 mb-0.5" />{" "}
-                      יוצר מאז
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap justify-center md:justify-end gap-4 mt-6">
-                  {socialLinks.map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.url!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`text-3xl transition-all ${link.color} ${link.hover} hover:scale-110`}
-                      title={link.label}
-                    >
-                      <link.icon />
-                    </a>
-                  ))}
-                </div>
+              <div className="flex flex-wrap justify-center md:justify-end gap-3 mt-5">
+                {socialLinks.map((link, index) => (
+                  <a
+                    key={index}
+                    href={link.url!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`text-2xl ${link.color} ${link.hover} transition-transform hover:scale-110`}
+                    title={link.label}
+                  >
+                    <link.icon />
+                  </a>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* MAIN 2-COLUMN LAYOUT */}
-        <section className="py-8 px-6">
+        {/* MAIN 2 COLUMN LAYOUT */}
+        <section className="pb-10 px-6">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-8">
-            {/* LEFT COLUMN: MEDIA, DISCOGRAPHY, INSTAGRAM */}
-            <div className="space-y-7">
-              {/* MEDIA CENTER - BIG */}
-              <div className="glass-card-deep p-6 rounded-2xl">
-                <h2 className="text-2xl font-bold mb-5 flex items-center gap-3">
-                  <span>מרכז מדיה</span>
-                  <FaBroadcastTower className="text-red-400 text-2xl" />
-                </h2>
+            {/* LEFT COLUMN: MEDIA + DISCO + IG */}
+            <div className="space-y-6">
+              {/* MEDIA CENTER */}
+              <div className="glass-card-deep rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <span>מרכז מדיה</span>
+                    <FaBroadcastTower className="text-red-400" />
+                  </h2>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Track Trip episode */}
-                  {episode && (
-                    <div className="glass-card-deep p-4 rounded-2xl glass-card-hover">
-                      <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-200">
-                        ראיון בתוכנית{" "}
-                        <FaYoutube className="text-xl text-purple-300" />
-                      </h3>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-white/10 shadow-xl mb-3">
-                        <iframe
-                          src={`https://www.youtube.com/embed/${episode.youtube_video_id}?rel=0&modestbranding=1`}
-                          title={episode.title}
-                          className="w-full h-full"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-gray-300">
-                        <div className="flex-1 text-right">
-                          <div className="font-semibold truncate">
-                            {episode.clean_title || episode.title}
-                          </div>
-                          <div className="text-[11px] text-gray-400 mt-1">
-                            פרק {episode.episode_number ?? "?"} •{" "}
-                            {new Date(
-                              episode.published_at
-                            ).toLocaleDateString("he-IL")}
-                          </div>
-                        </div>
-                        {episode.view_count && (
-                          <div className="text-[11px] text-gray-400 pl-3">
-                            {episode.view_count.toLocaleString()} צפיות
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Festival set */}
                   {mainFestivalSet && (
-                    <div className="glass-card-deep p-4 rounded-2xl glass-card-hover">
-                      <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-pink-200">
-                        סט פסטיבל נבחר{" "}
-                        <FaStar className="text-yellow-400 text-xl" />
+                    <div className="rounded-xl bg-black/40 border border-white/10 p-3">
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-1 text-pink-200">
+                        סט פסטיבל נבחר
+                        <FaStar className="text-yellow-400 text-xs" />
                       </h3>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-white/10 shadow-xl mb-3">
+                      <div className="aspect-video rounded-lg overflow-hidden border border-white/10 mb-2">
                         <iframe
                           src={`https://www.youtube.com/embed/${mainFestivalSet.youtube_id}?rel=0&modestbranding=1`}
                           title={mainFestivalSet.title}
@@ -468,7 +407,7 @@ export default function ArtistPage({
                           allowFullScreen
                         />
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-300">
+                      <div className="flex items-center justify-between text-[11px] text-gray-300">
                         <span>
                           {mainFestivalSet.festival} • {mainFestivalSet.year}
                         </span>
@@ -484,83 +423,86 @@ export default function ArtistPage({
                       </div>
                     </div>
                   )}
-                </div>
 
-                {/* More sets */}
-                {artist.festival_sets && artist.festival_sets.length > 1 && (
-                  <div className="mt-6">
-                    <div className="text-sm text-gray-300 mb-3">
-                      עוד הופעות חיות
-                    </div>
-                    <div className="space-y-3">
-                      {artist.festival_sets.slice(1).map((set, idx) => (
-                        <a
-                          key={idx}
-                          href={`https://www.youtube.com/watch?v=${set.youtube_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-4 p-3 rounded-xl border border-white/10 hover:border-red-400/60 hover:bg-white/5 transition"
-                        >
-                          <img
-                            src={set.thumbnail}
-                            alt={set.title}
-                            className="w-24 h-16 rounded-lg object-cover flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0 text-right">
-                            <div className="text-sm font-semibold truncate">
-                              {set.title}
-                            </div>
-                            <div className="text-[11px] text-gray-400">
-                              {set.festival} • {set.year}
-                            </div>
+                  {/* Episode */}
+                  {episode && (
+                    <div className="rounded-xl bg-black/40 border border-white/10 p-3">
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-1 text-purple-200">
+                        ראיון בתוכנית
+                        <FaYoutube className="text-xs text-purple-300" />
+                      </h3>
+                      <div className="aspect-video rounded-lg overflow-hidden border border-white/10 mb-2">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${episode.youtube_video_id}?rel=0&modestbranding=1`}
+                          title={episode.title}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-gray-300">
+                        <div className="flex-1 text-right">
+                          <div className="font-semibold truncate">
+                            {episode.clean_title || episode.title}
                           </div>
-                          <FaYoutube className="text-red-500 text-xl flex-shrink-0" />
-                        </a>
-                      ))}
+                          <div className="text-[10px] text-gray-400 mt-1">
+                            פרק {episode.episode_number ?? "?"} •{" "}
+                            {new Date(
+                              episode.published_at
+                            ).toLocaleDateString("he-IL")}
+                          </div>
+                        </div>
+                        {episode.view_count && (
+                          <div className="text-[10px] text-gray-400 pl-2">
+                            {episode.view_count.toLocaleString()} צפיות
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* DISCOGRAPHY */}
               {spotifyDiscography.length > 0 && (
-                <div className="glass-card-deep p-6 rounded-2xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold flex items-center gap-3">
+                <div className="glass-card-deep rounded-2xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
                       <span>דיסקוגרפיה</span>
-                      <FaCompactDisc className="text-cyan-400 text-2xl" />
+                      <FaCompactDisc className="text-cyan-400" />
                     </h2>
                   </div>
 
                   <div className="overflow-x-auto discography-scroll pb-2">
-                    <div className="flex gap-4 min-w-max">
+                    <div className="flex gap-3 min-w-max">
                       {spotifyDiscography.slice(0, 8).map((album) => (
                         <a
                           key={album.id}
                           href={album.spotifyUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-56 flex-shrink-0 p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-cyan-400/70 hover:bg-black/70 transition group"
+                          className="w-44 flex-shrink-0 p-2 rounded-xl bg-black/40 border border-white/10 hover:border-cyan-400/70 hover:bg-black/70 transition group"
                         >
-                          <div className="relative rounded-xl overflow-hidden mb-3 shadow-xl">
+                          <div className="relative rounded-lg overflow-hidden mb-2 shadow-lg h-40">
                             <img
                               src={album.coverImage}
                               alt={album.name}
-                              className="w-full h-52 object-cover transition-transform duration-300 group-hover:scale-105"
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             />
-                            <div className="absolute top-2 left-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-full">
+                            <div className="absolute top-1 left-1 bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
                               {new Date(album.releaseDate).getFullYear()}
                             </div>
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                              <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
-                                <FaPlay className="text-white text-lg ml-1" />
+                              <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center">
+                                <FaPlay className="text-white text-sm ml-0.5" />
                               </div>
                             </div>
                           </div>
-                          <div className="text-white font-semibold text-base truncate">
+                          <div className="text-xs font-semibold text-white truncate">
                             {album.name}
                           </div>
-                          <div className="text-xs text-gray-400 mt-1">
+                          <div className="text-[11px] text-gray-400 mt-0.5">
                             {getReleaseTypeLabel(album)}
                           </div>
                         </a>
@@ -569,11 +511,11 @@ export default function ArtistPage({
                   </div>
 
                   {artist.spotify_url && (
-                    <div className="flex justify-end mt-3">
+                    <div className="flex justify-end mt-2">
                       <Link
                         href={artist.spotify_url}
                         target="_blank"
-                        className="text-sm text-cyan-300 flex items-center gap-2 hover:text-cyan-200 hover:underline transition"
+                        className="text-xs text-cyan-300 flex items-center gap-1 hover:text-cyan-200 hover:underline transition"
                       >
                         לצפייה בקטלוג המלא
                         <FaArrowRight className="w-3 h-3" />
@@ -586,21 +528,21 @@ export default function ArtistPage({
               {/* INSTAGRAM */}
               {artist.instagram_reels &&
                 artist.instagram_reels.length > 0 && (
-                  <div className="glass-card-deep p-6 rounded-2xl">
-                    <h3 className="text-2xl font-bold mb-5 flex items-center gap-3 text-pink-400">
-                      <FaInstagram className="text-3xl" />
+                  <div className="glass-card-deep rounded-2xl p-4">
+                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-pink-400">
+                      <FaInstagram className="text-2xl" />
                       היילייטס מאינסטגרם
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {artist.instagram_reels.slice(0, 6).map(
                         (reelUrl, index) => (
                           <div
                             key={index}
-                            className="rounded-xl overflow-hidden insta-gradient-border hover:scale-105 transition-transform"
+                            className="rounded-xl overflow-hidden border border-pink-400/40 hover:scale-105 transition-transform"
                           >
                             <iframe
                               src={`${reelUrl.replace(/\/$/, "")}/embed`}
-                              className="w-full h-[360px]"
+                              className="w-full h-72"
                               frameBorder="0"
                               scrolling="no"
                               allow="encrypted-media"
@@ -609,57 +551,44 @@ export default function ArtistPage({
                         )
                       )}
                     </div>
-                    {artist.instagram_url && (
-                      <div className="flex justify-end mt-4">
-                        <a
-                          href={artist.instagram_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-pink-300 flex items-center gap-2 hover:text-pink-200 hover:underline transition"
-                        >
-                          לעוד סטוריז ורילס
-                          <FaArrowRight className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
                   </div>
                 )}
             </div>
 
-            {/* RIGHT COLUMN: REPRESENTATION, SPOTIFY, SOUNDCLOUD, CONTACT */}
+            {/* RIGHT COLUMN: REPRESENTATION + SPOTIFY + SC + CONTACT */}
             <div className="space-y-6">
               {/* Representation */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold flex items-center gap-3 justify-center lg:justify-start">
+              <div>
+                <h2 className="text-xl font-bold mb-3 flex items-center gap-2 justify-center lg:justify-start">
                   <span>ייצוג</span>
-                  <FaBriefcase className="text-cyan-400 text-2xl" />
+                  <FaBriefcase className="text-cyan-400" />
                 </h2>
 
-                <div className="glass-card-deep p-4 rounded-2xl space-y-4">
+                <div className="glass-card-deep rounded-2xl p-3 space-y-3">
                   {/* Booking */}
                   {artist.booking_name || artist.booking_website ? (
-                    <div className="rounded-2xl bg-black/60 border border-white/10 p-4 flex flex-col items-stretch gap-3">
+                    <div className="rounded-xl bg-black/60 border border-white/10 p-3 flex flex-col gap-2">
                       <div className="flex items-center gap-3">
                         {bookingLogo && (
-                          <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
                             <Image
                               src={bookingLogo}
                               alt={artist.booking_name || "Booking"}
-                              width={56}
-                              height={56}
+                              width={40}
+                              height={40}
                               className="w-full h-full object-cover"
                             />
                           </div>
                         )}
                         <div className="flex-1 text-right">
-                          <div className="text-xs text-gray-400 tracking-wide">
+                          <div className="text-[11px] text-gray-400">
                             בוקינג
                           </div>
-                          <div className="text-lg font-semibold">
+                          <div className="text-sm font-semibold">
                             {artist.booking_name}
                           </div>
                           {artist.booking_email && (
-                            <div className="text-xs text-gray-400">
+                            <div className="text-[11px] text-gray-400">
                               {artist.booking_email}
                             </div>
                           )}
@@ -670,7 +599,7 @@ export default function ArtistPage({
                           href={artist.booking_website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full px-4 py-2 rounded-full border border-white/30 text-xs hover:border-cyan-400 hover:text-cyan-300 transition flex items-center justify-center gap-2"
+                          className="w-full px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-cyan-400 hover:text-cyan-300 transition flex items-center justify-center gap-1"
                         >
                           לאתר הסוכנות
                           <FaExternalLinkAlt className="w-3 h-3" />
@@ -681,24 +610,24 @@ export default function ArtistPage({
 
                   {/* Label */}
                   {artist.label_name || artist.label_website ? (
-                    <div className="rounded-2xl bg-black/60 border border-white/10 p-4 flex flex-col items-stretch gap-3">
+                    <div className="rounded-xl bg-black/60 border border-white/10 p-3 flex flex-col gap-2">
                       <div className="flex items-center gap-3">
                         {labelLogo && (
-                          <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
                             <Image
                               src={labelLogo}
                               alt={artist.label_name || "Label"}
-                              width={56}
-                              height={56}
+                              width={40}
+                              height={40}
                               className="w-full h-full object-cover"
                             />
                           </div>
                         )}
                         <div className="flex-1 text-right">
-                          <div className="text-xs text-gray-400 tracking-wide">
+                          <div className="text-[11px] text-gray-400">
                             לייבל
                           </div>
-                          <div className="text-lg font-semibold">
+                          <div className="text-sm font-semibold">
                             {artist.label_name}
                           </div>
                         </div>
@@ -708,7 +637,7 @@ export default function ArtistPage({
                           href={artist.label_website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full px-4 py-2 rounded-full border border-white/30 text-xs hover:border-pink-400 hover:text-pink-300 transition flex items-center justify-center gap-2"
+                          className="w-full px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-pink-400 hover:text-pink-300 transition flex items-center justify-center gap-1"
                         >
                           לאתר הלייבל
                           <FaExternalLinkAlt className="w-3 h-3" />
@@ -721,13 +650,13 @@ export default function ArtistPage({
 
               {/* Spotify Popular Tracks */}
               {spotifyTopTracks.length > 0 && (
-                <div className="glass-card-deep p-5 rounded-2xl glass-card-hover border-l-4 border-[var(--spotify-color)]">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-spotify">
-                    <FaSpotify className="text-2xl" />
+                <div className="glass-card-deep rounded-2xl p-3 glass-card-hover border-l-4 border-[var(--spotify-color)]">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-[var(--spotify-color)]">
+                    <FaSpotify className="text-xl" />
                     טראקים פופולריים
                   </h3>
 
-                  <div className="space-y-2 mb-3">
+                  <div className="space-y-2 mb-2">
                     {spotifyTopTracks.map((track, index) => {
                       const isActive = track.id === activeTrackId;
                       return (
@@ -735,30 +664,30 @@ export default function ArtistPage({
                           key={track.id}
                           type="button"
                           onClick={() => setActiveTrackId(track.id)}
-                          className={`w-full flex items-center gap-3 p-2 rounded-xl border text-right spotify-track-item transition ${
+                          className={`w-full flex items-center gap-3 p-2 rounded-lg border text-right spotify-track-item transition ${
                             isActive
                               ? "bg-spotify/20 border-spotify/70"
                               : "bg-white/5 border-white/10"
                           }`}
                         >
-                          <span className="text-sm text-gray-300 ml-1">
+                          <span className="text-xs text-gray-300 ml-1">
                             {index + 1}
                           </span>
                           <img
                             src={track.album.images[0]?.url}
                             alt={track.album.name}
-                            className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                            className="w-9 h-9 rounded-md object-cover flex-shrink-0"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold truncate">
+                            <div className="text-xs font-semibold truncate">
                               {track.name}
                             </div>
-                            <div className="text-[11px] text-gray-400 truncate">
+                            <div className="text-[10px] text-gray-400 truncate">
                               {track.album.name}
                             </div>
                           </div>
                           <FaPlay
-                            className={`text-xs ${
+                            className={`text-[11px] ${
                               isActive ? "text-white" : "text-spotify"
                             }`}
                           />
@@ -768,7 +697,7 @@ export default function ArtistPage({
                   </div>
 
                   {activeTrackId && (
-                    <div className="mt-2 rounded-xl overflow-hidden border border-white/10">
+                    <div className="rounded-lg overflow-hidden border border-white/10">
                       <iframe
                         src={`https://open.spotify.com/embed/track/${activeTrackId}`}
                         width="100%"
@@ -781,7 +710,7 @@ export default function ArtistPage({
                   )}
 
                   {artist.spotify_url && (
-                    <div className="mt-3 text-[11px] text-gray-400 flex items-center justify-between">
+                    <div className="mt-2 text-[10px] text-gray-400 flex items-center justify-between">
                       <span>ניגון דרך ספוטיפיי</span>
                       <a
                         href={artist.spotify_url}
@@ -799,15 +728,15 @@ export default function ArtistPage({
 
               {/* SoundCloud */}
               {hasSoundCloudContent && (
-                <div className="glass-card-deep p-5 rounded-2xl glass-card-hover border-l-4 border-[var(--soundcloud-color)]">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-soundcloud">
-                    <FaSoundcloud className="text-2xl" />
+                <div className="glass-card-deep rounded-2xl p-3 glass-card-hover border-l-4 border-[var(--soundcloud-color)]">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-[var(--soundcloud-color)]">
+                    <FaSoundcloud className="text-xl" />
                     סטים אחרונים בסאונדקלאוד
                   </h3>
-                  <div className="rounded-xl overflow-hidden border border-soundcloud/40 shadow-xl">
+                  <div className="rounded-lg overflow-hidden border border-[var(--soundcloud-color)]/40">
                     <iframe
                       width="100%"
-                      height="220"
+                      height="200"
                       scrolling="no"
                       frameBorder="no"
                       allow="autoplay"
@@ -816,7 +745,7 @@ export default function ArtistPage({
                       )}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true`}
                     />
                   </div>
-                  <div className="mt-3 flex items-center justify-center gap-2 text-soundcloud text-sm">
+                  <div className="mt-2 flex items-center justify-center gap-2 text-[var(--soundcloud-color)] text-xs">
                     <FaVolumeUp className="animate-pulse" />
                     <span>המשך להאזין בסאונדקלאוד</span>
                   </div>
@@ -824,14 +753,14 @@ export default function ArtistPage({
               )}
 
               {/* Contact */}
-              <div className="glass-card-deep p-5 rounded-2xl">
-                <h3 className="text-lg font-semibold text-center mb-3">
+              <div className="glass-card-deep rounded-2xl p-3">
+                <h3 className="text-base font-semibold text-center mb-2">
                   פרטי קשר
                 </h3>
-                <div className="text-xs text-gray-400 text-center mb-1">
+                <div className="text-[11px] text-gray-400 text-center mb-1">
                   הזמנות / ניהול
                 </div>
-                <div className="flex items-center justify-center gap-2 text-sm">
+                <div className="flex items-center justify-center gap-2 text-xs">
                   <FaEnvelope className="text-cyan-400" />
                   <a
                     href={`mailto:${primaryContactEmail}`}
@@ -846,10 +775,10 @@ export default function ArtistPage({
         </section>
 
         {/* FOOTER */}
-        <footer className="border-top border-white/15 bg-black/90 mt-10">
-          <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-gray-400 text-sm">
+        <footer className="border-t border-white/15 bg-black/90">
+          <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3 text-gray-400 text-xs">
             <div>© 2025 יוצאים לטראק • כל הזכויות שמורות</div>
-            <div className="flex gap-6">
+            <div className="flex gap-4">
               <Link href="/" className="hover:text-white transition">
                 בית
               </Link>
