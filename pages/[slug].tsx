@@ -938,25 +938,26 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  try {
-    const { data: artist, error: artistError } = await supabase
-      .from("artists")
-      .select("*")
-      .eq("slug", slug)
-      .eq("is_published", true)
-      .single();
+try {
+  const { data: artistRow, error: artistError } = await supabase
+    .from("artists")
+    .select("*")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .single();
 
-    if (artistError || !artist) {
-      return { notFound: true };
-    }
+  if (artistError || !artistRow) {
+    return { notFound: true };
+  }
 
-     const artist = {
-      ...artistRow,
-      short_bio:
-        (artistRow as any).short_bio ??
-        (artistRow as any).bio ??
-        null,
-    };
+  // normalize
+  const artist = {
+    ...artistRow,
+    short_bio:
+      (artistRow as any).short_bio ??
+      (artistRow as any).bio ??
+      null,
+  };
 
     // Episodes for this artist
     const { data: episodeRows, error: episodeError } = await supabase
