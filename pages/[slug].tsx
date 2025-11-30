@@ -236,7 +236,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
   if (!visibleItems.length) return null;
 
   const stepAngle = 360 / visibleItems.length;
-  const radius = 380; // distance from center – tweak if needed
+  const radius = 320; // distance from center – tweak if needed
 
   const handleNext = () =>
     setActiveIndex((prev) => (prev + 1) % visibleItems.length);
@@ -249,37 +249,21 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
   const current = visibleItems[activeIndex];
 
   return (
-    <div className="relative w-full flex flex-col items-center py-4">
+     return (
+    <div className="relative w-full flex flex-col items-center py-4 md:py-6">
       {/* Controls + current title */}
-      <div className="flex items-center justify-between w-full mb-3">
-        <button
-          onClick={handlePrev}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/20 hover:bg-white/10 transition"
-        >
-          <FaChevronRight className="text-cyan-300" />
-        </button>
-
-        <div className="text-sm text-white/80 text-center px-2 truncate">
-          {current?.name}
-        </div>
-
-        <button
-          onClick={handleNext}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/20 hover:bg-white/10 transition"
-        >
-          <FaChevronLeft className="text-cyan-300" />
-        </button>
-      </div>
+      ...
 
       {/* 3D ring */}
       <div
-        className="relative w-full h-[320px] md:h-[380px] overflow-visible"
+        className="relative w-full max-w-4xl mx-auto h-[320px] md:h-[360px] overflow-visible"
         style={{ perspective: "1600px" }}
       >
         <div
-          className="absolute inset-0 mx-auto"
+          className="absolute inset-0 left-1/2 -translate-x-1/2"
           style={{ transformStyle: "preserve-3d" }}
         >
+
           {visibleItems.map((release, index) => {
             const angle = (index - activeIndex) * stepAngle;
             const isActive = index === activeIndex;
@@ -304,7 +288,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
                   href={release.spotifyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`rounded-3xl overflow-hidden border bg-black/70 backdrop-blur-sm w-[180px] md:w-[210px] block cursor-pointer transition ${
+                   className={`rounded-3xl overflow-hidden border bg-black/70 backdrop-blur-sm w-[170px] md:w-[200px] block cursor-pointer transition ${
                     isActive
                       ? "border-cyan-400 shadow-[0_0_40px_rgba(34,211,238,0.6)] scale-105"
                       : "border-white/10 opacity-70 scale-95"
