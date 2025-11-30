@@ -72,6 +72,12 @@ interface AdminArtist {
   tiktok_url: string | null;
   website_url: string | null;
   primary_color: string | null;
+   booking_agency_name: string | null;
+  booking_agency_email: string | null;
+  booking_agency_url: string | null;
+  record_label_name: string | null;
+  record_label_url: string | null;
+  management_email: string | null;
   festival_sets: {
     youtube_id?: string;
     festival?: string | null;
@@ -1005,6 +1011,12 @@ export default function Admin() {
               festival_sets: [],
               instagram_reels: [],
               artist_episodes: [],
+               booking_agency_name: "",
+  booking_agency_email: "",
+  booking_agency_url: "",
+  record_label_name: "",
+  record_label_url: "",
+  management_email: "",
             };
             setCurrentArtist(blank);
             setPrimaryEpisodeId("");
@@ -1180,6 +1192,93 @@ export default function Admin() {
                   </div>
                 ))}
               </div>
+              {/* Booking / Label */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+  <div>
+    <label className="block text-white/60 mb-1">שם סוכן / בוקינג</label>
+    <input
+      className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+      value={currentArtist.booking_agency_name || ""}
+      onChange={(e) =>
+        setCurrentArtist({
+          ...currentArtist,
+          booking_agency_name: e.target.value,
+        })
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block text-white/60 mb-1">אימייל בוקינג</label>
+    <input
+      className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+      value={currentArtist.booking_agency_email || ""}
+      onChange={(e) =>
+        setCurrentArtist({
+          ...currentArtist,
+          booking_agency_email: e.target.value,
+        })
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block text-white/60 mb-1">קישור לאתר הבוקינג</label>
+    <input
+      className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+      value={currentArtist.booking_agency_url || ""}
+      onChange={(e) =>
+        setCurrentArtist({
+          ...currentArtist,
+          booking_agency_url: e.target.value,
+        })
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block text-white/60 mb-1">שם לייבל</label>
+    <input
+      className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+      value={currentArtist.record_label_name || ""}
+      onChange={(e) =>
+        setCurrentArtist({
+          ...currentArtist,
+          record_label_name: e.target.value,
+        })
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block text-white/60 mb-1">קישור ללייבל</label>
+    <input
+      className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+      value={currentArtist.record_label_url || ""}
+      onChange={(e) =>
+        setCurrentArtist({
+          ...currentArtist,
+          record_label_url: e.target.value,
+        })
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block text-white/60 mb-1">אימייל לניהול / יצירת קשר</label>
+    <input
+      className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+      value={currentArtist.management_email || ""}
+      onChange={(e) =>
+        setCurrentArtist({
+          ...currentArtist,
+          management_email: e.target.value,
+        })
+      }
+    />
+  </div>
+</div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
