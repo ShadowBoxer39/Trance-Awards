@@ -1,6 +1,6 @@
-// pages/[slug].tsx - V8: Final Structural Fix
+// pages/[slug].tsx - V9: Hyper-Glow Experience & Final Polish
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { GetServerSideProps } from "next";
@@ -22,6 +22,9 @@ import {
   FaArrowRight,
   FaCalendarAlt,
   FaBriefcase,
+  FaEnvelope, // NEW
+  FaWhatsapp, // NEW
+  FaExternalLinkAlt, // NEW
   FaExclamationTriangle
 } from 'react-icons/fa';
 
@@ -36,6 +39,8 @@ interface FestivalSet {
   festival: string;
   year: string;
   location: string;
+  duration_min?: number; // Mock data for better display
+  views?: number; // Mock data for better display
 }
 
 interface Achievement {
@@ -113,6 +118,55 @@ interface ArtistPageProps {
 }
 
 // ==========================================
+// UTILITY COMPONENTS (for cleaner JSX)
+// ==========================================
+
+const LiveSetCard: React.FC<{ set: FestivalSet, isFeatured: boolean }> = ({ set, isFeatured }) => {
+    // MOCK DATA for visual effect:
+    const mockDuration = set.duration_min || 75;
+    const mockViews = set.views || 42000;
+
+    return (
+        <a
+            href={`https://www.youtube.com/watch?v=${set.youtube_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block relative rounded-xl overflow-hidden group transition-all glass-card-hover"
+        >
+            <div className="aspect-video bg-black relative">
+                <img
+                    src={set.thumbnail}
+                    alt={set.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                
+                {/* LIVE BADGE / FEATURED BADGE */}
+                <div className={`absolute top-0 left-0 p-3 ${isFeatured ? 'bg-red-600/90' : 'bg-black/70'} rounded-br-lg`}>
+                    <span className={`text-xs font-bold uppercase ${isFeatured ? 'text-white' : 'text-yellow-400'}`}>
+                        {isFeatured ? '🌟 FEATURED LIVE' : '🎥 SET'}
+                    </span>
+                </div>
+                
+                {/* INFO OVERLAY */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-4">
+                    <div className="text-xl font-bold text-white mb-1">{set.title}</div>
+                    <div className="text-sm text-gray-300 flex justify-between">
+                        <span>{set.festival} • {set.year}</span>
+                        <span className="flex items-center gap-2">
+                            <span>{mockDuration} min</span> | <span>{mockViews.toLocaleString()} views</span>
+                        </span>
+                    </div>
+                </div>
+                
+                {/* PLAY BUTTON */}
+                <FaPlay className="absolute inset-0 m-auto w-16 h-16 text-white bg-red-600/80 rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+        </a>
+    );
+};
+
+
+// ==========================================
 // MAIN COMPONENT
 // ==========================================
 
@@ -162,6 +216,12 @@ export default function ArtistPage({
       50% { box-shadow: 0 0 25px 5px color-mix(in srgb, var(--accent-color) 60%, transparent); }
       100% { box-shadow: 0 0 10px 0px color-mix(in srgb, var(--accent-color) 40%, transparent); }
     }
+    @keyframes wave {
+        0%, 100% { height: 100%; }
+        25% { height: 20%; }
+        50% { height: 60%; }
+        75% { height: 40%; }
+    }
     .hero-glow {
       box-shadow: 0 0 40px 10px color-mix(in srgb, var(--accent-color) 40%, transparent);
       border-color: var(--accent-color);
@@ -180,11 +240,18 @@ export default function ArtistPage({
         box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
         transform: translateY(-2px);
     }
-    .glass-music-card {
-        border-left: 4px solid var(--spotify-color);
+    .spotify-track-item:hover {
+        background-color: rgba(29, 185, 84, 0.1);
     }
-    .glass-media-card {
-        border-left: 4px solid var(--soundcloud-color);
+    .waveform-bar {
+        background: var(--spotify-color);
+        animation: wave 1s ease-in-out infinite alternate;
+    }
+    .insta-gradient-border {
+        border-image: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888, #8c26ab) 1;
+        border-width: 2px;
+        border-style: solid;
+        box-shadow: 0 0 10px rgba(255, 90, 165, 0.3);
     }
     .gradient-hero-text {
       background: linear-gradient(90deg, var(--accent-color), #ec4899, #06b6d4);
@@ -199,9 +266,15 @@ export default function ArtistPage({
         padding-bottom: 20px;
         scrollbar-width: none;
         -ms-overflow-style: none;
+        margin-left: -16px; /* Adjust left padding for scroll */
+        padding-left: 16px;
     }
     .horizontal-scroll-container::-webkit-scrollbar {
         display: none;
+    }
+    .album-cover-size {
+        width: 13rem; /* ~208px */
+        height: 13rem; /* ~208px */
     }
   `;
 
@@ -300,9 +373,9 @@ export default function ArtistPage({
         {/* MAIN CONTENT - MUSIC HUB & MEDIA CENTER */}
         <section className="py-8 px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8"> {/* Increased gap */}
               
-              {/* COLUMN 1: MUSIC HUB (Spotify & SoundCloud) - 1/3 WIDTH - Always present if data exists */}
+              {/* COLUMN 1: MUSIC HUB (Spotify & SoundCloud) - 1/3 WIDTH */}
               <div className="lg:col-span-1 space-y-8">
                   
                 <h2 className="text-3xl font-black mb-6 flex items-center gap-3 text-green-500">
@@ -310,25 +383,35 @@ export default function ArtistPage({
                     <span className="text-white">Music Hub</span>
                 </h2>
                 
-                {/* --- BOOKING / LABEL CARD (Fixed Data) --- */}
+                {/* --- BOOKING / LABEL CARD (Clickable) --- */}
                 <div className="glass-card-deep p-6 rounded-2xl glass-music-card glass-card-hover">
                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white">
                         <FaBriefcase className="text-2xl text-cyan-400" />
                         ייצוג
                     </h3>
                     <div className="space-y-3">
+                        {/* Booking Company */}
                         <div className="flex justify-between items-center text-gray-300">
                             <span className="text-sm font-medium">בוקינג (ניהול הופעות):</span>
-                            <span className="text-lg font-bold text-cyan-400">{artist.booking_company || 'Sonic Booking'}</span>
+                            <a href={`mailto:booking@${artist.booking_company || 'sonic-booking.co'}.il`} target="_blank" className="text-lg font-bold text-cyan-400 hover:text-white transition flex items-center gap-2">
+                                {artist.booking_company || 'Sonic Booking'} <FaExternalLinkAlt className="w-3 h-3 opacity-70" />
+                            </a>
                         </div>
+                        {/* Record Label */}
                         <div className="flex justify-between items-center text-gray-300 border-t border-white/10 pt-3">
                             <span className="text-sm font-medium">לייבל:</span>
-                            <span className="text-lg font-bold text-cyan-400">{artist.record_label || 'Shamanic Tales'}</span>
+                            <a href={`https://${artist.record_label || 'shamanictales'}.com`} target="_blank" className="text-lg font-bold text-cyan-400 hover:text-white transition flex items-center gap-2">
+                                {artist.record_label || 'Shamanic Tales'} <FaExternalLinkAlt className="w-3 h-3 opacity-70" />
+                            </a>
                         </div>
+                        {/* CTA Button */}
+                        <a href="mailto:booking@nevo.com" className="w-full mt-4 btn-primary rounded-lg px-4 py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-cyan-500 hover:scale-[1.02] transition-transform">
+                             <FaEnvelope /> Book Now
+                        </a>
                     </div>
                 </div>
 
-                {/* Spotify Top Tracks (Top 5) */}
+                {/* Spotify Top Tracks (Top 5) - Visual Upgrade */}
                 {spotifyTopTracks.length > 0 ? (
                   <div className="glass-card-deep p-6 rounded-2xl glass-music-card glass-card-hover">
                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-spotify">
@@ -342,23 +425,38 @@ export default function ArtistPage({
                           href={track.external_urls.spotify}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-4 p-3 rounded-lg bg-white/5 border border-white/5 transition-all group spotify-track-item"
+                          className="flex items-center gap-4 p-3 rounded-lg bg-white/5 border border-white/5 transition-all group spotify-track-item relative overflow-hidden"
                         >
-                            <span className="text-2xl font-bold text-spotify">{index + 1}.</span>
+                            {/* Waveform Mock (CSS Animation) */}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-0">
+                                {Array.from({ length: 12 }).map((_, i) => (
+                                    <div 
+                                        key={i} 
+                                        className="waveform-bar w-1 h-full mx-[1px] rounded-sm absolute bottom-0"
+                                        style={{ 
+                                            left: `${(i * 8)}%`,
+                                            animationDelay: `${i * 0.1}s`,
+                                            opacity: 0.7 
+                                        }}
+                                    />
+                                ))}
+                            </div>
+
+                            <span className="text-2xl font-bold text-spotify relative z-10">{index + 1}.</span>
                           <img
                             src={track.album.images[0]?.url}
                             alt={track.album.name}
-                            className="w-12 h-12 rounded-md flex-shrink-0"
+                            className="w-16 h-16 rounded-md flex-shrink-0 shadow-lg relative z-10"
                           />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-white truncate group-hover:text-spotify transition-colors">
+                          <div className="flex-1 min-w-0 text-right relative z-10">
+                            <div className="font-bold text-lg text-white truncate group-hover:text-spotify transition-colors">
                               {track.name}
                             </div>
                             <div className="text-xs text-gray-400 truncate">
-                              {track.album.name}
+                              {new Date(track.album.release_date).getFullYear()} • {track.album.name}
                             </div>
                           </div>
-                          <FaPlay className="text-green-400 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <FaPlay className="text-green-400 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity relative z-10" />
                         </a>
                       ))}
                     </div>
@@ -370,12 +468,15 @@ export default function ArtistPage({
                     </div>
                 )}
                 
-                {/* SoundCloud Player Embed (Highlight) */}
+                {/* SoundCloud Player Embed (Highlight) - Better Framing */}
                 {hasSoundCloudContent ? (
                     <div className="glass-card-deep p-6 rounded-2xl glass-media-card glass-card-hover">
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-soundcloud">
                             <FaSoundcloud className="text-2xl" />
-                            השמעה מהירה
+                            <span className="relative">
+                                השמעה מהירה
+                                <div className="absolute top-0 right-full w-2 h-2 rounded-full bg-orange-400 animate-pulse ml-2" />
+                            </span>
                         </h3>
                         <div className="rounded-xl overflow-hidden border border-soundcloud/30 shadow-lg shadow-soundcloud/10">
                             <iframe
@@ -409,22 +510,28 @@ export default function ArtistPage({
                         </h2>
                         
                         <div className="horizontal-scroll-container">
-                            {spotifyDiscography.map((album, index) => (
+                            {spotifyDiscography.slice(0, 10).map((album, index) => (
                                 <a
                                     key={album.id}
                                     href={album.spotifyUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-block w-40 h-auto p-3 m-1 rounded-lg hover:bg-white/5 transition border border-white/10 hover:border-cyan-400/50"
+                                    className="inline-block w-52 h-auto p-2 m-2 rounded-lg hover:bg-white/5 transition border border-white/10 hover:border-cyan-400/50 group"
                                     style={{ whiteSpace: 'normal' }}
                                 >
-                                    <img
-                                        src={album.coverImage}
-                                        alt={album.name}
-                                        className="w-full aspect-square object-cover rounded-md mb-2 shadow-lg"
-                                    />
-                                    <div className="text-sm font-bold text-white truncate">{album.name}</div>
-                                    <div className="text-xs text-gray-400">{album.type === 'album' ? 'אלבום' : 'סינגל'} • {new Date(album.releaseDate).getFullYear()}</div>
+                                    <div className="relative album-cover-size w-full">
+                                        <img
+                                            src={album.coverImage}
+                                            alt={album.name}
+                                            className="w-full h-full object-cover rounded-md mb-2 shadow-lg transition-transform duration-300 group-hover:scale-[1.03]"
+                                        />
+                                         <div className="absolute top-2 left-2 bg-yellow-600 px-2 py-0.5 rounded-full text-xs font-bold text-black">
+                                            {new Date(album.releaseDate).getFullYear()}
+                                        </div>
+                                    </div>
+
+                                    <div className="text-lg font-bold text-white truncate">{album.name}</div>
+                                    <div className="text-sm text-gray-400">{album.type === 'album' ? 'אלבום' : 'סינגל'}</div>
                                 </a>
                             ))}
                         </div>
@@ -442,35 +549,21 @@ export default function ArtistPage({
 
                 {/* --- VIDEO HIGHLIGHT (Best Set OR Episode) --- */}
                 {(artist.festival_sets && artist.festival_sets.length > 0) || episode ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
                         {/* 1. BEST LIVE SET CARD */}
                         {artist.festival_sets && artist.festival_sets.length > 0 && (
                             <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
                                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
-                                    <FaStar className="text-3xl" />
+                                    <FaStar className="text-3xl text-yellow-400" />
                                     הסט החי המומלץ
                                 </h3>
-                                <a
-                                    href={`https://www.youtube.com/watch?v=${artist.festival_sets[0].youtube_id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block relative rounded-xl overflow-hidden group transition-all"
-                                >
-                                    <div className="aspect-video bg-black relative">
-                                        <img
-                                            src={artist.festival_sets[0].thumbnail}
-                                            alt={artist.festival_sets[0].title}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-4">
-                                            <div className="font-bold text-white mb-1">{artist.festival_sets[0].title}</div>
-                                            <div className="text-sm text-gray-300">
-                                                {artist.festival_sets[0].festival} • {artist.festival_sets[0].year}
-                                            </div>
-                                        </div>
-                                        <FaPlay className="absolute inset-0 m-auto w-16 h-16 text-white bg-red-600/80 rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                </a>
+                                <LiveSetCard set={artist.festival_sets[0]} isFeatured={true} />
+                                
+                                {artist.festival_sets.length > 1 && (
+                                    <Link href={artist.youtube_url || '#'} target="_blank" className="text-red-400 text-sm mt-3 flex items-center justify-end gap-1 hover:underline">
+                                        עוד סטים ביוטיוב <FaArrowRight className="w-3 h-3" />
+                                    </Link>
+                                )}
                             </div>
                         )}
 
@@ -514,38 +607,6 @@ export default function ArtistPage({
                         <p>אין נתוני וידאו זמינים כרגע ל-Media Center.</p>
                     </div>
                 )}
-                
-                {/* Remaining Festival Sets (List) */}
-                {artist.festival_sets && artist.festival_sets.length > 1 && (
-                    <div className="glass-card-deep p-6 rounded-2xl">
-                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
-                          <FaPlay className="text-2xl" />
-                          הופעות נוספות
-                      </h3>
-                      <div className="space-y-3">
-                        {artist.festival_sets.slice(1).map((set, index) => (
-                          <a
-                            key={index}
-                            href={`https://www.youtube.com/watch?v=${set.youtube_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition border border-white/5 hover:border-red-400/30"
-                          >
-                              <img
-                                  src={set.thumbnail}
-                                  alt={set.title}
-                                  className="w-16 h-12 object-cover rounded-md flex-shrink-0"
-                              />
-                              <div className="flex-1 min-w-0">
-                                  <div className="font-semibold text-white truncate">{set.title}</div>
-                                  <div className="text-xs text-gray-400">{set.festival} • {set.year}</div>
-                              </div>
-                              <FaYoutube className="text-red-500 flex-shrink-0" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   
                   {/* NEW: INSTAGRAM REELS SECTION */}
                   {artist.instagram_reels && artist.instagram_reels.length > 0 && (
@@ -554,12 +615,12 @@ export default function ArtistPage({
                             <FaInstagram className="text-2xl" />
                             רגעים נבחרים (Instagram Reels)
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {artist.instagram_reels.slice(0, 4).map((reelUrl, index) => (
-                                <div key={index} className="rounded-xl overflow-hidden shadow-lg border border-pink-400/30">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4"> {/* Changed to 3 columns on desktop */}
+                            {artist.instagram_reels.slice(0, 6).map((reelUrl, index) => (
+                                <div key={index} className="rounded-xl overflow-hidden shadow-lg insta-gradient-border">
                                     <iframe
                                         src={`${reelUrl.replace(/\/$/, '')}/embed`}
-                                        className="w-full h-[500px]"
+                                        className="w-full h-[350px]" /* Reduced height for 3 columns */
                                         frameBorder="0"
                                         scrolling="no"
                                         allowTransparency={true}
@@ -568,6 +629,9 @@ export default function ArtistPage({
                                 </div>
                             ))}
                         </div>
+                         <a href={artist.instagram_url || '#'} target="_blank" className="text-pink-400 text-sm mt-3 flex items-center justify-end gap-1 hover:underline">
+                            צפה בעוד ב-Instagram <FaArrowRight className="w-3 h-3" />
+                        </a>
                     </div>
                   )}
 
@@ -576,12 +640,19 @@ export default function ArtistPage({
             </div>
           </section>
 
-        {/* Footer */}
+        {/* Footer - Artist Specific Contact */}
         <footer className="border-t border-white/10 bg-black/50 mt-16">
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-400 text-sm">
-              <div>© 2025 יוצאים לטראק</div>
-              <div className="flex gap-6">
+              <div className="flex items-center gap-2">
+                <FaBriefcase className="text-cyan-400" />
+                <span>פניות לניהול: {artist.name}</span>
+              </div>
+              <a href="mailto:booking@nevo.com" className="hover:text-white transition flex items-center gap-2">
+                <FaEnvelope className="text-white/70" />
+                booking@nevo.com
+              </a>
+              <div className="flex gap-6 mt-4 md:mt-0">
                 <Link href="/" className="hover:text-white transition">בית</Link>
                 <Link href="/episodes" className="hover:text-white transition">פרקים</Link>
                 <Link href="/track-of-the-week" className="hover:text-white transition">טראק השבוע</Link>
@@ -674,10 +745,11 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     const artistWithData = {
       ...artist,
       profile_photo_url: spotifyProfileImage,
-      festival_sets: artist.festival_sets || [],
+      festival_sets: (artist.festival_sets as FestivalSet[]) || [], // Ensure type is correct
       instagram_reels: artist.instagram_reels || [],
       booking_company: artist.booking_company || "Sonic Booking",
       record_label: artist.record_label || "Shamanic Tales",
+      achievements: (artist.achievements as Achievement[]) || [],
     };
 
     return {
