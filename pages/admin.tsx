@@ -129,7 +129,9 @@ export default function Admin() {
   // ⭐ Analytics date range state – now includes "today"
   const [dateRange, setDateRange] = React.useState<"today" | "7d" | "30d" | "all">("30d");
   
-  const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics" | "track-submissions">("votes");
+ const [activeTab, setActiveTab] = React.useState<
+  "votes" | "signups" | "analytics" | "track-submissions" | "artists"
+>("votes");
 
   // 🎧 Artists admin
   const [adminArtists, setAdminArtists] = React.useState<AdminArtist[]>([]);
@@ -643,7 +645,7 @@ export default function Admin() {
 <button
   onClick={() => setActiveTab("artists")}
   className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
-    activeTab === "artists"
+    activeTab === "artists" 
       ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
       : "text-white/60 hover:text-white"
   }`}
