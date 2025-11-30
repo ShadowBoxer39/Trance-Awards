@@ -1,4 +1,4 @@
-// pages/[slug].tsx – Artist page (final polished version, Hebrew, balanced)
+// pages/[slug].tsx – Artist page (festival YT data + fixed IG embeds)
 
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
@@ -35,14 +35,15 @@ import {
 // ---------- Types ----------
 
 interface FestivalSet {
-  title: string;
   youtube_id: string;
-  thumbnail: string;
-  festival: string;
-  year: string;
+  festival?: string;
+  year?: string;
   location?: string;
-  duration_min?: number;
-  views?: number;
+  // filled from YouTube API:
+  title?: string;
+  thumbnail?: string;
+  duration_min?: number | null;
+  views?: number | null;
 }
 
 interface Achievement {
@@ -144,6 +145,64 @@ const getReleaseTypeLabel = (item: SpotifyDiscographyItem) => {
 
   if (item.type === "album") return "אלבום";
   return "סינגל";
+};
+
+// Parse ISO8601 YT duration (e.g. PT1H23M45S) into minutes
+const parseYouTubeDurationToMinutes = (duration?: string): number | null => {
+  if (!duration) return null;
+  const match =
+    /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(duration);
+  if (!match) return null;
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  const seconds = parseInt(match[3] || "0", 10);
+  const totalMinutes = hours * 60 + minutes + seconds / 60;
+  return Math.round(totalMinutes);
+};
+
+interface YouTubeVideoInfo {
+  title: string | null;
+  thumbnail: string | null;
+  duration_min: number | null;
+  views: number | null;
+}
+
+// Fetch video info from YouTube API
+const fetchYouTubeVideoInfo = async (
+  videoId: string
+): Promise<YouTubeVideoInfo | null> => {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoId}&key=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = (await res.json()) as any;
+
+    const item = data.items?.[0];
+    if (!item) return null;
+
+    const snippet = item.snippet || {};
+    const stats = item.statistics || {};
+    const details = item.contentDetails || {};
+
+    const thumb =
+      snippet.thumbnails?.medium?.url ||
+      snippet.thumbnails?.standard?.url ||
+      snippet.thumbnails?.high?.url ||
+      null;
+
+    return {
+      title: snippet.title || null,
+      thumbnail: thumb,
+      duration_min: parseYouTubeDurationToMinutes(details.duration),
+      views: stats.viewCount ? Number(stats.viewCount) : null,
+    };
+  } catch (err) {
+    console.error("YouTube API error for video", videoId, err);
+    return null;
+  }
 };
 
 // ---------- Component ----------
@@ -426,7 +485,7 @@ export default function ArtistPage({
                       <div className="aspect-video rounded-md overflow-hidden border border-white/10 mb-2">
                         <iframe
                           src={`https://www.youtube.com/embed/${mainFestivalSet.youtube_id}?rel=0&modestbranding=1`}
-                          title={mainFestivalSet.title}
+                          title={mainFestivalSet.title || mainFestivalSet.youtube_id}
                           className="w-full h-full"
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -435,7 +494,10 @@ export default function ArtistPage({
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-gray-300">
                         <span>
-                          {mainFestivalSet.festival} • {mainFestivalSet.year}
+                          {mainFestivalSet.festival || ""}
+                          {mainFestivalSet.year
+                            ? ` • ${mainFestivalSet.year}`
+                            : ""}
                         </span>
                         <span>
                           {formatLocation(mainFestivalSet.location)}
@@ -561,20 +623,27 @@ export default function ArtistPage({
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {artist.instagram_reels.slice(0, 6).map(
-                        (reelUrl, index) => (
-                          <div
-                            key={index}
-                            className="rounded-lg overflow-hidden border border-pink-400/40 hover:scale-105 transition-transform"
-                          >
-                            <iframe
-                              src={`${reelUrl.replace(/\/$/, "")}/embed`}
-                              className="w-full h-[320px]"
-                              frameBorder="0"
-                              scrolling="no"
-                              allow="encrypted-media"
-                            />
-                          </div>
-                        )
+                        (reelUrl, index) => {
+                          const cleaned = reelUrl
+                            .replace(/\?.*$/, "")
+                            .replace(/\/$/, "");
+                          const embedUrl = `${cleaned}/embed`;
+                          return (
+                            <div
+                              key={index}
+                              className="rounded-lg overflow-hidden border border-pink-400/40 hover:scale-105 transition-transform"
+                            >
+                              <iframe
+                                src={embedUrl}
+                                className="w-full h-[360px]"
+                                frameBorder="0"
+                                scrolling="no"
+                                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                                allowFullScreen
+                              />
+                            </div>
+                          );
+                        }
                       )}
                     </div>
                   </div>
@@ -923,10 +992,29 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       }
     }
 
+    // Enrich festival sets with YouTube data
+    let festivalSets: FestivalSet[] =
+      (artist.festival_sets as FestivalSet[]) || [];
+    if (festivalSets.length) {
+      const enriched: FestivalSet[] = [];
+      for (const set of festivalSets) {
+        if (!set.youtube_id) {
+          enriched.push(set);
+          continue;
+        }
+        const info = await fetchYouTubeVideoInfo(set.youtube_id);
+        enriched.push({
+          ...set,
+          ...(info || {}),
+        });
+      }
+      festivalSets = enriched;
+    }
+
     const artistWithData: Artist = {
-      ...artist,
+      ...(artist as any),
       profile_photo_url: spotifyProfileImage,
-      festival_sets: (artist.festival_sets as FestivalSet[]) || [],
+      festival_sets: festivalSets,
       instagram_reels: artist.instagram_reels || [],
       achievements: (artist.achievements as Achievement[]) || [],
     };
