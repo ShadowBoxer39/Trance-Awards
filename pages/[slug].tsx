@@ -688,96 +688,103 @@ const totalAlbums = spotifyDiscography.filter(
 
             {/* RIGHT: Representation + Spotify + SC + Contact */}
             <div className="space-y-6 lg:col-span-1">
-              {/* REPRESENTATION */}
-              <div>
-                <h2 className="text-xl font-bold mb-3 flex items-center gap-2 justify-center lg:justify-start">
-                  <span>ייצוג</span>
-                  <FaBriefcase className="text-cyan-400" />
-                </h2>
+           {/* REPRESENTATION */}
+<div>
+  <h2 className="text-xl font-bold mb-3 flex items-center gap-2 justify-center lg:justify-start">
+    <span>ייצוג</span>
+    <FaBriefcase className="text-cyan-400" />
+  </h2>
 
-                <div className="glass-card p-3 space-y-3">
-                  {/* Booking */}
-                  {artist.booking_name || artist.booking_website ? (
-                    <div className="bg-black/70 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
-                      <div className="flex items-center gap-3">
-                        {bookingLogo && (
-                          <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
-                            <Image
-                              src={bookingLogo}
-                              alt={artist.booking_name || "Booking"}
-                              width={40}
-                              height={40}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1 text-right">
-                          <div className="text-[11px] text-gray-400">
-                            בוקינג
-                          </div>
-                          <div className="text-sm font-semibold">
-                            {artist.booking_name}
-                          </div>
-                          {artist.booking_email && (
-                            <div className="text-[11px] text-gray-400">
-                              {artist.booking_email}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {artist.booking_website && (
-                        <a
-                          href={artist.booking_website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-cyan-400 hover:text-cyan-300 transition"
-                        >
-                          לאתר הסוכנות
-                          <FaExternalLinkAlt className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  ) : null}
-
-                  {/* Label */}
-                  {artist.label_name || artist.label_website ? (
-                    <div className="bg-black/70 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
-                      <div className="flex items-center gap-3">
-                        {labelLogo && (
-                          <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
-                            <Image
-                              src={labelLogo}
-                              alt={artist.label_name || "Label"}
-                              width={40}
-                              height={40}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1 text-right">
-                          <div className="text-[11px] text-gray-400">
-                            לייבל
-                          </div>
-                          <div className="text-sm font-semibold">
-                            {artist.label_name}
-                          </div>
-                        </div>
-                      </div>
-                      {artist.label_website && (
-                        <a
-                          href={artist.label_website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-pink-400 hover:text-pink-300 transition"
-                        >
-                          לאתר הלייבל
-                          <FaExternalLinkAlt className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  ) : null}
-                </div>
+  <div className="glass-card p-3 space-y-3">
+    {/* Booking */}
+    {artist.booking_agency_name || artist.booking_agency_url ? (
+      <div className="bg-black/70 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          {bookingLogo && (
+            <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
+              <Image
+                src={bookingLogo}
+                alt={artist.booking_agency_name || "Booking"}
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="flex-1 text-right">
+            <div className="text-[11px] text-gray-400">בוקינג</div>
+            <div className="text-sm font-semibold">
+              {artist.booking_agency_name}
+            </div>
+            {artist.booking_agency_email && (
+              <div className="text-[11px] text-gray-400">
+                {artist.booking_agency_email}
               </div>
+            )}
+          </div>
+        </div>
+
+        {artist.booking_agency_url && (
+          <a
+            href={
+              artist.booking_agency_url.startsWith("http")
+                ? artist.booking_agency_url
+                : `https://${artist.booking_agency_url.replace(/^\/+/, "")}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-cyan-400 hover:text-cyan-300 transition"
+          >
+            לאתר הסוכנות
+            <FaExternalLinkAlt className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+    ) : null}
+
+    {/* Label */}
+    {artist.record_label_name || artist.record_label_url ? (
+      <div className="bg-black/70 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          {labelLogo && (
+            <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
+              <Image
+                src={labelLogo}
+                alt={artist.record_label_name || "Label"}
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="flex-1 text-right">
+            <div className="text-[11px] text-gray-400">לייבל</div>
+            <div className="text-sm font-semibold">
+              {artist.record_label_name}
+            </div>
+          </div>
+        </div>
+
+        {artist.record_label_url && (
+          <a
+            href={
+              artist.record_label_url.startsWith("http")
+                ? artist.record_label_url
+                : `https://${artist.record_label_url.replace(/^\/+/, "")}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-pink-400 hover:text-pink-300 transition"
+          >
+            לאתר הלייבל
+            <FaExternalLinkAlt className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+    ) : null}
+  </div>
+</div>
+
 
               {/* SPOTIFY TOP TRACKS */}
               {spotifyTopTracks.length > 0 && (
