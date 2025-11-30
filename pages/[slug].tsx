@@ -1,34 +1,88 @@
-// pages/[slug].tsx - Artist Profile Page
+// pages/[slug].tsx – Artist page (festival YT data + fixed IG embeds)
+
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import Image from "next/image";
+import { FaTiktok } from "react-icons/fa6";
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Navigation from "../components/Navigation";
+import {
+  getArtistProfile,
+  getArtistTopTracks,
+  getArtistDiscography,
+} from "../lib/spotify";
+import {
+  FaInstagram,
+  FaFacebook,
+  FaSoundcloud,
+  FaSpotify,
+  FaYoutube,
+  FaGlobe,
+  FaPlay,
+  FaMusic,
+  FaCompactDisc,
+  FaStar,
+  FaBroadcastTower,
+  FaArrowRight,
+  FaCalendarAlt,
+  FaBriefcase,
+  FaEnvelope,
+  FaExternalLinkAlt,
+  FaVolumeUp,
+} from "react-icons/fa";
 
-// ==========================================
-// TYPES
-// ==========================================
+// ---------- Types ----------
+
+interface FestivalSet {
+  youtube_id: string;
+  festival?: string;
+  year?: string;
+  location?: string;
+  // filled from YouTube API:
+  title?: string;
+  thumbnail?: string;
+  duration_min?: number | null;
+  views?: number | null;
+}
+
+interface Achievement {
+  icon: string;
+  year: string;
+  title: string;
+  description: string;
+}
 
 interface Artist {
   id: number;
   slug: string;
   name: string;
   stage_name: string;
-  bio: string;
+  short_bio: string;
   profile_photo_url: string | null;
-  cover_photo_url: string | null;
   instagram_url: string | null;
   facebook_url: string | null;
   soundcloud_url: string | null;
+  soundcloud_profile_url: string | null;
   spotify_url: string | null;
   youtube_url: string | null;
-  tiktok_url: string | null;
-  twitter_url: string | null;
+   tiktok_url: string | null;
   website_url: string | null;
   genre: string | null;
-  country: string | null;
-  city: string | null;
-  total_episodes: number;
+  spotify_artist_id: string | null;
+  started_year: number | null;
+  instagram_reels: string[];
+  festival_sets: FestivalSet[];
+  primary_color: string;
+
+  booking_name: string | null;
+  booking_email: string | null;
+  booking_website: string | null;
+  label_name: string | null;
+  label_website: string | null;
+
+  achievements: Achievement[];
 }
 
 interface Episode {
@@ -37,316 +91,831 @@ interface Episode {
   episode_number: number | null;
   title: string;
   clean_title: string;
-  description: string;
   thumbnail_url: string;
   published_at: string;
-  duration: number | null;
   view_count: number | null;
-  is_special: boolean;
-  role: string;
+}
+
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  album: {
+    name: string;
+    images: { url: string }[];
+    release_date: string;
+  };
+  external_urls: {
+    spotify: string;
+  };
+  preview_url: string | null;
+  duration: number;
+}
+
+interface SpotifyDiscographyItem {
+  id: string;
+  name: string;
+  releaseDate: string;
+  type: "album" | "single";
+  coverImage: string;
+  spotifyUrl: string;
+  totalTracks: number;
 }
 
 interface ArtistPageProps {
   artist: Artist;
-  episodes: Episode[];
+  episode: Episode | null;
+  spotifyTopTracks: SpotifyTrack[];
+  spotifyDiscography: SpotifyDiscographyItem[];
 }
 
-// ==========================================
-// COMPONENT
-// ==========================================
+// ---------- Helpers ----------
 
-export default function ArtistPage({ artist, episodes }: ArtistPageProps) {
+const formatLocation = (loc?: string) => {
+  if (!loc) return "";
+  const lower = loc.toLowerCase();
+  if (lower === "central israel") return "ישראל";
+  return loc;
+};
+
+const getReleaseTypeLabel = (item: SpotifyDiscographyItem) => {
+  const nameLower = item.name.toLowerCase();
+
+  // Explicit EP hints in the name
+  if (nameLower.includes(" ep") || nameLower.endsWith("ep")) return "EP";
+
+  // Treat 3+ tracks on a "single" as EP for this page
+  if (item.type === "single" && item.totalTracks >= 3) return "EP";
+
+  if (item.type === "album") return "אלבום";
+  return "סינגל";
+};
+
+// Parse ISO8601 YT duration (e.g. PT1H23M45S) into minutes
+const parseYouTubeDurationToMinutes = (duration?: string): number | null => {
+  if (!duration) return null;
+  const match =
+    /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(duration);
+  if (!match) return null;
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  const seconds = parseInt(match[3] || "0", 10);
+  const totalMinutes = hours * 60 + minutes + seconds / 60;
+  return Math.round(totalMinutes);
+};
+
+interface YouTubeVideoInfo {
+  title: string | null;
+  thumbnail: string | null;
+  duration_min: number | null;
+  views: number | null;
+}
+
+// Fetch video info from YouTube API
+const fetchYouTubeVideoInfo = async (
+  videoId: string
+): Promise<YouTubeVideoInfo | null> => {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoId}&key=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = (await res.json()) as any;
+
+    const item = data.items?.[0];
+    if (!item) return null;
+
+    const snippet = item.snippet || {};
+    const stats = item.statistics || {};
+    const details = item.contentDetails || {};
+
+    const thumb =
+      snippet.thumbnails?.medium?.url ||
+      snippet.thumbnails?.standard?.url ||
+      snippet.thumbnails?.high?.url ||
+      null;
+
+    return {
+      title: snippet.title || null,
+      thumbnail: thumb,
+      duration_min: parseYouTubeDurationToMinutes(details.duration),
+      views: stats.viewCount ? Number(stats.viewCount) : null,
+    };
+  } catch (err) {
+    console.error("YouTube API error for video", videoId, err);
+    return null;
+  }
+};
+
+// ---------- Component ----------
+
+export default function ArtistPage({
+  artist,
+  episode,
+  spotifyTopTracks,
+  spotifyDiscography,
+}: ArtistPageProps) {
   const displayName = artist.stage_name || artist.name;
+  const accentColor = artist.primary_color || "#00e0ff";
+
+  const [activeTrackId, setActiveTrackId] = useState<string | null>(
+    spotifyTopTracks[0]?.id ?? null
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("dir", "rtl");
+    document.documentElement.lang = "he";
+  }, []);
+
+  const dynamicStyle = {
+    "--accent-color": accentColor,
+    "--spotify-color": "#1DB954",
+    "--soundcloud-color": "#FF5500",
+  } as React.CSSProperties;
+
+const firstMusicYear = artist.started_year || null;
+
+
+const totalReleases = spotifyDiscography.length;
+
+  const mainFestivalSet =
+  artist.festival_sets && artist.festival_sets.length > 0
+    ? artist.festival_sets[0]
+    : null;
+
+
+// albums from Spotify discography
+const totalAlbums = spotifyDiscography.filter(
+  (item) => item.type === "album"
+).length;
+
+
+  const socialLinks = [
+    {
+      icon: FaInstagram,
+      url: artist.instagram_url,
+      label: "אינסטגרם",
+      color: "text-pink-400",
+      hover: "hover:text-pink-300",
+    },
+    {
+      icon: FaSoundcloud,
+      url: artist.soundcloud_profile_url,
+      label: "סאונדקלאוד",
+      color: "text-orange-400",
+      hover: "hover:text-orange-300",
+    },
+    {
+      icon: FaSpotify,
+      url: artist.spotify_url,
+      label: "ספוטיפיי",
+      color: "text-green-400",
+      hover: "hover:text-green-300",
+    },
+    {
+      icon: FaYoutube,
+      url: artist.youtube_url,
+      label: "יוטיוב",
+      color: "text-red-400",
+      hover: "hover:text-red-300",
+    },
+    {
+    icon: FaTiktok,
+    url: artist.tiktok_url,
+    label: "טיקטוק",
+    color: "text-white",
+    hover: "hover:text-gray-300",
+  },
+    {
+      icon: FaFacebook,
+      url: artist.facebook_url,
+      label: "פייסבוק",
+      color: "text-blue-400",
+      hover: "hover:text-blue-300",
+    },
+    {
+      icon: FaGlobe,
+      url: artist.website_url,
+      label: "אתר רשמי",
+      color: "text-purple-400",
+      hover: "hover:text-purple-300",
+    },
+  ].filter((link) => link.url);
+
+  const primaryContactEmail =
+    artist.booking_email || `booking@${artist.slug}.com`;
+
+  const bookingLogo =
+    artist.booking_name === "Sonic Booking" ? "/images/sonic.jpg" : null;
+  const labelLogo =
+    artist.label_name === "Shamanic Tales" ? "/images/shamanic.jpg" : null;
+
+  const hasSoundCloudContent = !!artist.soundcloud_profile_url;
+
+  const customStyles = `
+    .glass-card {
+      background: rgba(7,10,24,0.96);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 0.75rem;
+    }
+    .glass-hover:hover {
+      border-color: var(--accent-color);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    }
+    .gradient-title {
+      background: linear-gradient(90deg, var(--accent-color), #ec4899, #06b6d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .discography-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148,163,184,0.8) transparent;
+    }
+    .discography-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+    .discography-scroll::-webkit-scrollbar-track {
+      background: rgba(15,23,42,0.8);
+      border-radius: 999px;
+    }
+    .discography-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, var(--accent-color), #0ea5e9);
+      border-radius: 999px;
+    }
+
+    /* HERO AREA */
+    .hero-header-bg {
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.25), transparent 60%),
+        radial-gradient(circle at 10% 120%, rgba(236,72,153,0.18), transparent 55%);
+    }
+    .hero-photo {
+      box-shadow: 0 0 0 0 rgba(56,189,248,0.5);
+      animation: heroPulse 4.5s ease-in-out infinite;
+      transition: transform 0.25s ease;
+    }
+    .hero-photo:hover {
+      transform: scale(1.03);
+    }
+    @keyframes heroPulse {
+      0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
+      50% { box-shadow: 0 0 30px 10px rgba(236,72,153,0.6); }
+      100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
+    }
+  `;
 
   return (
     <>
       <Head>
-        <title>{displayName} - יוצאים לטראק</title>
+        <title>{displayName} | יוצאים לטראק</title>
         <meta
           name="description"
-          content={`כל הפרקים עם ${displayName}. ${artist.bio || ""}`}
+          content={
+            artist.short_bio ||
+            `${displayName} - אמן טראנס ישראלי פורץ דרך, סאונד חם ואנרגטי עם עומק מלודי.`
+          }
         />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/images/logo.png" />
-        
-        {/* Open Graph / Social Media */}
-        <meta property="og:title" content={`${displayName} - יוצאים לטראק`} />
-        <meta property="og:description" content={artist.bio || `כל הפרקים עם ${displayName}`} />
-        {artist.profile_photo_url && (
-          <meta property="og:image" content={artist.profile_photo_url} />
-        )}
-        <meta property="og:type" content="profile" />
       </Head>
 
-      <div className="trance-backdrop min-h-screen text-gray-100">
-        <Navigation currentPage="episodes" />
+      <style jsx global>{customStyles}</style>
 
-        {/* Cover Photo */}
-        {artist.cover_photo_url && (
-          <div className="relative w-full h-64 md:h-80 overflow-hidden">
-            <img
-              src={artist.cover_photo_url}
-              alt={`${displayName} cover`}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black"></div>
+      <div
+        className="min-h-screen text-white bg-gradient-to-b from-[#050814] via-[#050017] to-black"
+        style={dynamicStyle}
+      >
+        {/* NAV */}
+        <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-lg border-b border-white/10">
+          <Navigation currentPage="episodes" />
+        </div>
+
+   {/* HERO */}
+<section className="py-12 px-6 hero-header-bg">
+  <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8">
+    {/* Photo */}
+    <div className="order-1 md:order-2">
+      <div className="w-52 h-52 md:w-60 md:h-60 rounded-full overflow-hidden border-4 border-[var(--accent-color)] hero-photo">
+        {artist.profile_photo_url ? (
+          <img
+            src={artist.profile_photo_url}
+            alt={displayName}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
+            <span className="text-5xl font-black">
+              {displayName[0]}
+            </span>
           </div>
         )}
+      </div>
+    </div>
 
-        {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-6 -mt-20 relative z-10">
-          <div className="glass-card rounded-2xl p-8 md:p-12">
-            <div className="flex flex-col md:flex-row-reverse items-center md:items-start gap-8">
-              
-              {/* Profile Photo */}
-              <div className="relative flex-shrink-0">
-                {artist.profile_photo_url ? (
-                  <img
-                    src={artist.profile_photo_url}
-                    alt={displayName}
-                    className="w-40 h-40 md:w-48 md:h-48 rounded-full object-cover border-4 border-purple-500/50 shadow-2xl"
-                  />
-                ) : (
-                  <div className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center border-4 border-purple-500/50 shadow-2xl">
-                    <span className="text-6xl font-bold text-white">
-                      {displayName.charAt(0)}
-                    </span>
-                  </div>
-                )}
-              </div>
+    {/* Text */}
+    <div className="flex-1 text-center md:text-right order-2 md:order-1">
+      <span className="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs mb-2">
+        {artist.genre || "Psytrance"}
+      </span>
 
-              {/* Artist Info */}
-              <div className="flex-1 text-center md:text-right w-full">
-                {/* Name */}
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 break-words">
-                  <span className="gradient-text">{displayName}</span>
-                </h1>
+      <h1 className="text-4xl md:text-5xl font-extrabold mb-3 gradient-title">
+        {displayName}
+      </h1>
 
-                {/* Real Name (if different) */}
-                {artist.stage_name && artist.name !== artist.stage_name && (
-                  <p className="text-xl text-gray-400 mb-4">{artist.name}</p>
-                )}
+      <p className="text-gray-200 text-base md:text-lg mb-5 max-w-xl mx-auto md:mx-0 leading-relaxed">
+        {artist.short_bio ||
+          "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק ומלודיה."}
+      </p>
 
-                {/* Genre & Location */}
-                <div className="flex flex-wrap justify-center md:justify-start gap-3 mb-6">
-                  {artist.genre && (
-                    <span className="px-4 py-2 bg-purple-600/30 rounded-full text-sm">
-                      {artist.genre}
-                    </span>
-                  )}
-                  {artist.city && artist.country && (
-                    <span className="px-4 py-2 bg-cyan-600/30 rounded-full text-sm">
-                      {artist.city}, {artist.country}
-                    </span>
-                  )}
+      {/* Stats row */}
+    <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10 text-xs">
+  {/* total releases -> 'טראקים בחוץ' */}
+  <div className="flex gap-2 text-right border-r border-white/15 pr-4">
+    <div className="text-2xl font-bold text-cyan-300">
+      {totalReleases}
+    </div>
+    <div className="text-xs text-gray-300 flex items-center gap-1">
+      <FaMusic className="w-3 h-3 text-cyan-300" />
+      <span>טראקים בחוץ</span>
+    </div>
+  </div>
+
+  {/* albums – only if > 0 */}
+  {totalAlbums > 0 && (
+    <div className="flex gap-2 text-right border-r border-white/15 pr-4">
+      <div className="text-2xl font-bold text-cyan-300">
+        {totalAlbums}
+      </div>
+      <div className="text-xs text-gray-300 flex items-center gap-1">
+        <FaStar className="w-3 h-3 text-yellow-400" />
+        <span>אלבומים</span>
+      </div>
+    </div>
+  )}
+
+  {/* since (only if we have year in DB) */}
+  {firstMusicYear && (
+    <div className="flex gap-2 text-right">
+      <div className="text-xs text-gray-300 flex items-center gap-1">
+        <span>יוצר מאז</span>
+        <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
+      </div>
+      <div className="text-2xl font-bold text-cyan-300">
+        {firstMusicYear}
+      </div>
+    </div>
+  )}
+</div>
+
+
+      {/* Social icons */}
+      <div className="flex flex-wrap justify-center md:justify-end gap-3 mt-5">
+        {socialLinks.map((link, index) => (
+          <a
+            key={index}
+            href={link.url!}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`text-2xl ${link.color} ${link.hover} transition-transform hover:scale-110`}
+            title={link.label}
+          >
+            <link.icon className="w-5 h-5" />
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+        {/* MAIN 2-COLUMN LAYOUT */}
+        <section className="pb-10 px-6">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* LEFT: Media + Disco + IG */}
+            <div className="space-y-6 lg:col-span-2">
+              {/* MEDIA CENTER */}
+              <div className="glass-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <span>מרכז מדיה</span>
+                    <FaBroadcastTower className="text-red-400" />
+                  </h2>
                 </div>
 
-                {/* Bio */}
-                {artist.bio && (
-                  <p className="text-lg text-gray-300 leading-relaxed mb-6 max-w-3xl">
-                    {artist.bio}
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Festival set */}
+                  {mainFestivalSet && (
+                    <div className="bg-black/40 border border-white/10 rounded-lg p-3">
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-1 text-pink-200">
+                        סט פסטיבל נבחר
+                        <FaStar className="text-yellow-400 text-xs" />
+                      </h3>
+                      <div className="aspect-video rounded-md overflow-hidden border border-white/10 mb-2">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${mainFestivalSet.youtube_id}?rel=0&modestbranding=1`}
+                          title={mainFestivalSet.title || mainFestivalSet.youtube_id}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-gray-300">
+                        <span>
+                          {mainFestivalSet.festival || ""}
+                          {mainFestivalSet.year
+                            ? ` • ${mainFestivalSet.year}`
+                            : ""}
+                        </span>
+                      <span>
+  {mainFestivalSet.duration_min
+    ? `${mainFestivalSet.duration_min} דק׳`
+    : ""}
+  {typeof mainFestivalSet.views === "number"
+    ? `${
+        mainFestivalSet.duration_min ? " • " : ""
+      }${mainFestivalSet.views.toLocaleString()} צפיות`
+    : ""}
+</span>
+
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Track Trip episode */}
+                  {episode && (
+                    <div className="bg-black/40 border border-white/10 rounded-lg p-3">
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-1 text-purple-200">
+                        ראיון בתוכנית
+                        <FaYoutube className="text-xs text-purple-300" />
+                      </h3>
+                      <div className="aspect-video rounded-md overflow-hidden border border-white/10 mb-2">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${episode.youtube_video_id}?rel=0&modestbranding=1`}
+                          title={episode.title}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-gray-300">
+                        <div className="flex-1 text-right">
+                          <div className="font-semibold truncate">
+                            {episode.clean_title || episode.title}
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-1">
+                            פרק {episode.episode_number ?? "?"} •{" "}
+                            {new Date(
+                              episode.published_at
+                            ).toLocaleDateString("he-IL")}
+                          </div>
+                        </div>
+                        {episode.view_count && (
+                          <div className="text-[10px] text-gray-400 pl-2">
+                            {episode.view_count.toLocaleString()} צפיות
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* DISCOGRAPHY */}
+              {spotifyDiscography.length > 0 && (
+                <div className="glass-card p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                      <span>דיסקוגרפיה</span>
+                      <FaCompactDisc className="text-cyan-400" />
+                    </h2>
+                  </div>
+
+                  <div className="overflow-x-auto discography-scroll pb-2">
+                    <div className="flex gap-3 min-w-max">
+                      {spotifyDiscography.slice(0, 8).map((album) => (
+                        <a
+                          key={album.id}
+                          href={album.spotifyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-44 flex-shrink-0 bg-black/40 border border-white/10 rounded-lg p-2 hover:bg-black/70 hover:border-[var(--accent-color)] transition group"
+                        >
+                          <div className="relative h-40 rounded-md overflow-hidden mb-2 shadow-lg">
+                            <img
+                              src={album.coverImage}
+                              alt={album.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute top-1 left-1 px-2 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-bold">
+                              {new Date(album.releaseDate).getFullYear()}
+                            </div>
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                              <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                                <FaPlay className="text-white text-xs ml-0.5" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-xs font-semibold truncate">
+                            {album.name}
+                          </div>
+                          <div className="text-[11px] text-gray-400 mt-0.5">
+                            {getReleaseTypeLabel(album)}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  {artist.spotify_url && (
+                    <div className="flex justify-end mt-2">
+                      <Link
+                        href={artist.spotify_url}
+                        target="_blank"
+                        className="text-xs text-cyan-300 flex items-center gap-1 hover:text-cyan-200 hover:underline transition"
+                      >
+                        לצפייה בקטלוג המלא
+                        <FaArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* INSTAGRAM REELS */}
+              {artist.instagram_reels &&
+                artist.instagram_reels.length > 0 && (
+                  <div className="glass-card p-4">
+                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-pink-400">
+                      <FaInstagram className="text-2xl" />
+                      היילייטס מאינסטגרם
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {artist.instagram_reels.slice(0, 6).map(
+                        (reelUrl, index) => {
+                          const cleaned = reelUrl
+                            .replace(/\?.*$/, "")
+                            .replace(/\/$/, "");
+                          const embedUrl = `${cleaned}/embed`;
+                          return (
+                            <div
+                              key={index}
+                              className="rounded-lg overflow-hidden border border-pink-400/40 hover:scale-105 transition-transform"
+                            >
+                              <iframe
+                                src={embedUrl}
+                                className="w-full h-[360px]"
+                                frameBorder="0"
+                                scrolling="no"
+                                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                                allowFullScreen
+                              />
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  </div>
                 )}
+            </div>
 
-                {/* Social Links */}
-                <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                  {artist.instagram_url && (
-                    <a
-                      href={artist.instagram_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary p-3 rounded-lg hover:scale-110 transition-transform"
-                      aria-label="Instagram"
-                    >
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                      </svg>
-                    </a>
-                  )}
+            {/* RIGHT: Representation + Spotify + SC + Contact */}
+            <div className="space-y-6 lg:col-span-1">
+              {/* REPRESENTATION */}
+              <div>
+                <h2 className="text-xl font-bold mb-3 flex items-center gap-2 justify-center lg:justify-start">
+                  <span>ייצוג</span>
+                  <FaBriefcase className="text-cyan-400" />
+                </h2>
 
-                  {artist.facebook_url && (
-                    <a
-                      href={artist.facebook_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary p-3 rounded-lg hover:scale-110 transition-transform"
-                      aria-label="Facebook"
-                    >
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                      </svg>
-                    </a>
-                  )}
+                <div className="glass-card p-3 space-y-3">
+                  {/* Booking */}
+                  {artist.booking_name || artist.booking_website ? (
+                    <div className="bg-black/70 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
+                      <div className="flex items-center gap-3">
+                        {bookingLogo && (
+                          <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
+                            <Image
+                              src={bookingLogo}
+                              alt={artist.booking_name || "Booking"}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 text-right">
+                          <div className="text-[11px] text-gray-400">
+                            בוקינג
+                          </div>
+                          <div className="text-sm font-semibold">
+                            {artist.booking_name}
+                          </div>
+                          {artist.booking_email && (
+                            <div className="text-[11px] text-gray-400">
+                              {artist.booking_email}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {artist.booking_website && (
+                        <a
+                          href={artist.booking_website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-cyan-400 hover:text-cyan-300 transition"
+                        >
+                          לאתר הסוכנות
+                          <FaExternalLinkAlt className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  ) : null}
 
-                  {artist.soundcloud_url && (
-                    <a
-                      href={artist.soundcloud_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary p-3 rounded-lg hover:scale-110 transition-transform"
-                      aria-label="SoundCloud"
-                    >
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M7 17.939h-1v-8.068c.308-.231.639-.429 1-.566v8.634zm3 0h1v-9.224c-.229.265-.443.548-.621.857l-.379-.184v8.551zm-2 0h1v-8.848c-.508-.079-.623-.05-1-.01v8.858zm-4 0h1v-7.02c-.312.458-.555.971-.692 1.535l-.308-.182v5.667zm-3-5.25c-.606.547-1 1.354-1 2.268 0 .914.394 1.721 1 2.268v-4.536zm18.879-.671c-.204-2.837-2.404-5.079-5.117-5.079-1.022 0-1.964.328-2.762.877v10.123h9.089c1.607 0 2.911-1.393 2.911-3.106 0-2.233-2.168-3.772-4.121-2.815zm-16.879-.027c-.302-.024-.526-.03-1 .122v5.689c.446.143.636.138 1 .138v-5.949z"/>
-                      </svg>
-                    </a>
+                  {/* Label */}
+                  {artist.label_name || artist.label_website ? (
+                    <div className="bg-black/70 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
+                      <div className="flex items-center gap-3">
+                        {labelLogo && (
+                          <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
+                            <Image
+                              src={labelLogo}
+                              alt={artist.label_name || "Label"}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 text-right">
+                          <div className="text-[11px] text-gray-400">
+                            לייבל
+                          </div>
+                          <div className="text-sm font-semibold">
+                            {artist.label_name}
+                          </div>
+                        </div>
+                      </div>
+                      {artist.label_website && (
+                        <a
+                          href={artist.label_website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-pink-400 hover:text-pink-300 transition"
+                        >
+                          לאתר הלייבל
+                          <FaExternalLinkAlt className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* SPOTIFY TOP TRACKS */}
+              {spotifyTopTracks.length > 0 && (
+                <div className="glass-card p-3 glass-hover border-l-4 border-[var(--spotify-color)]">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-[var(--spotify-color)]">
+                    <FaSpotify className="text-xl" />
+                    טראקים פופולריים
+                  </h3>
+
+                  <div className="space-y-2 mb-2">
+                    {spotifyTopTracks.map((track, index) => {
+                      const isActive = track.id === activeTrackId;
+                      return (
+                        <button
+                          key={track.id}
+                          type="button"
+                          onClick={() => setActiveTrackId(track.id)}
+                          className={`w-full flex items-center gap-3 p-2 rounded-lg border text-right transition ${
+                            isActive
+                              ? "bg-spotify/20 border-spotify/70"
+                              : "bg-white/5 border-white/10"
+                          }`}
+                        >
+                          <span className="text-xs text-gray-300 ml-1">
+                            {index + 1}
+                          </span>
+                          <img
+                            src={track.album.images[0]?.url}
+                            alt={track.album.name}
+                            className="w-9 h-9 rounded-md object-cover flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-semibold truncate">
+                              {track.name}
+                            </div>
+                            <div className="text-[10px] text-gray-400 truncate">
+                              {track.album.name}
+                            </div>
+                          </div>
+                          <FaPlay
+                            className={`text-[11px] ${
+                              isActive ? "text-white" : "text-spotify"
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {activeTrackId && (
+                    <div className="rounded-lg overflow-hidden border border-white/10">
+                      <iframe
+                        src={`https://open.spotify.com/embed/track/${activeTrackId}`}
+                        width="100%"
+                        height="80"
+                        frameBorder="0"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                      />
+                    </div>
                   )}
 
                   {artist.spotify_url && (
-                    <a
-                      href={artist.spotify_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary p-3 rounded-lg hover:scale-110 transition-transform"
-                      aria-label="Spotify"
-                    >
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-                      </svg>
-                    </a>
+                    <div className="mt-2 text-[10px] text-gray-400 flex items-center justify-between">
+                      <span>ניגון דרך ספוטיפיי</span>
+                      <a
+                        href={artist.spotify_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-spotify hover:text-green-300 transition"
+                      >
+                        פתח את האמן בספוטיפיי
+                        <FaExternalLinkAlt className="w-3 h-3" />
+                      </a>
+                    </div>
                   )}
+                </div>
+              )}
 
-                  {artist.youtube_url && (
-                    <a
-                      href={artist.youtube_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary p-3 rounded-lg hover:scale-110 transition-transform"
-                      aria-label="YouTube"
-                    >
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                      </svg>
-                    </a>
-                  )}
+              {/* SOUNDCLOUD */}
+              {hasSoundCloudContent && (
+                <div className="glass-card p-3 glass-hover border-l-4 border-[var(--soundcloud-color)]">
+                  <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-[var(--soundcloud-color)]">
+                    <FaSoundcloud className="text-xl" />
+                    סטים אחרונים בסאונדקלאוד
+                  </h3>
+                  <div className="rounded-lg overflow-hidden border border-[var(--soundcloud-color)]/40">
+                    <iframe
+                      width="100%"
+                      height="320"
+                      scrolling="no"
+                      frameBorder="no"
+                      allow="autoplay"
+                      src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(
+                        artist.soundcloud_profile_url || ""
+                      )}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=true&show_user=true&show_reposts=false&show_teaser=false&visual=false`}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-center gap-2 text-[var(--soundcloud-color)] text-xs">
+                    <FaVolumeUp className="animate-pulse" />
+                    <span>המשך להאזין בסאונדקלאוד</span>
+                  </div>
+                </div>
+              )}
 
-                  {artist.website_url && (
-                    <a
-                      href={artist.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary p-3 rounded-lg hover:scale-110 transition-transform"
-                      aria-label="Website"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                      </svg>
-                    </a>
-                  )}
+              {/* CONTACT */}
+              <div className="glass-card p-3">
+                <h3 className="text-base font-semibold text-center mb-2">
+                  פרטי קשר
+                </h3>
+                <div className="text-[11px] text-gray-400 text-center mb-1">
+                  הזמנות / ניהול
+                </div>
+                <div className="flex items-center justify-center gap-2 text-xs">
+                  <FaEnvelope className="text-cyan-400" />
+                  <a
+                    href={`mailto:${primaryContactEmail}`}
+                    className="hover:text-cyan-300 transition"
+                  >
+                    {primaryContactEmail}
+                  </a>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Episodes Section */}
-        <section className="max-w-7xl mx-auto px-6 py-16">
-          <div className="mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold mb-2">
-              פרקים עם <span className="gradient-text">{displayName}</span>
-            </h2>
-            <p className="text-gray-400 text-lg">
-              {artist.total_episodes} {artist.total_episodes === 1 ? "פרק" : "פרקים"}
-            </p>
-          </div>
-
-          {episodes.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">🎵</div>
-              <p className="text-xl text-gray-400">אין פרקים זמינים כרגע</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {episodes.map((episode) => (
-                <a
-                  key={episode.id}
-                  href={`https://www.youtube.com/watch?v=${episode.youtube_video_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="glass-card rounded-xl overflow-hidden hover:scale-105 transition-transform group"
-                >
-                  {/* Thumbnail */}
-                  <div className="aspect-video bg-gray-800 relative overflow-hidden">
-                    <img
-                      src={episode.thumbnail_url}
-                      alt={episode.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                    
-                    {/* Episode Number Badge */}
-                    {episode.episode_number && (
-                      <div className="absolute top-3 right-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                        #{episode.episode_number}
-                      </div>
-                    )}
-
-                    {/* Special Badge */}
-                    {episode.is_special && (
-                      <div className="absolute top-3 left-3 bg-cyan-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                        מיוחד
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-4">
-                    <h3 className="text-base font-semibold mb-2 line-clamp-2 group-hover:text-purple-400 transition">
-                      {episode.clean_title || episode.title}
-                    </h3>
-                    
-                    {/* Role Badge */}
-                    <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-                      <span className="px-2 py-1 bg-purple-600/30 rounded">
-                        {episode.role}
-                      </span>
-                      <span>
-                        {new Date(episode.published_at).toLocaleDateString('he-IL')}
-                      </span>
-                    </div>
-
-                    {/* Stats */}
-                    {episode.view_count && (
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                        </svg>
-                        <span>{episode.view_count.toLocaleString()}</span>
-                      </div>
-                    )}
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Back to Episodes */}
-        <section className="max-w-7xl mx-auto px-6 pb-16">
-          <Link href="/episodes">
-            <span className="btn-secondary px-8 py-4 rounded-lg font-medium text-lg inline-flex items-center gap-2 hover:scale-105 transition-transform cursor-pointer">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              חזרה לכל הפרקים
-            </span>
-          </Link>
-        </section>
-
-        {/* Footer */}
-        <footer className="border-t border-gray-800 mt-16">
-          <div className="max-w-7xl mx-auto px-6 py-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-              <div>© 2025 יוצאים לטראק</div>
-              <div className="flex gap-6">
-                <Link href="/" className="hover:text-gray-300 transition">בית</Link>
-                <Link href="/episodes" className="hover:text-gray-300 transition">פרקים</Link>
-                <Link href="/track-of-the-week" className="hover:text-gray-300 transition">טראק השבוע</Link>
-              </div>
+        {/* FOOTER */}
+        <footer className="border-t border-white/15 bg-black/90">
+          <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3 text-gray-400 text-xs">
+            <div>© 2025 יוצאים לטראק • כל הזכויות שמורות</div>
+            <div className="flex gap-4">
+              <Link href="/" className="hover:text-white transition">
+                בית
+              </Link>
+              <Link href="/episodes" className="hover:text-white transition">
+                פרקים
+              </Link>
+              <Link
+                href="/track-of-the-week"
+                className="hover:text-white transition"
+              >
+                טראק השבוע
+              </Link>
             </div>
           </div>
         </footer>
@@ -355,88 +924,141 @@ export default function ArtistPage({ artist, episodes }: ArtistPageProps) {
   );
 }
 
-// ==========================================
-// SERVER-SIDE DATA FETCHING
-// ==========================================
+// ---------- Server-side props ----------
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const slug = params?.slug as string;
-
-  // Reserved slugs that should not be artist pages
-  const reservedSlugs = [
-    'episodes',
-    'admin',
-    'track-of-the-week',
-    'about',
-    'api',
-    'young-artists',
-    '_next',
-    'images',
-    'favicon.ico',
-  ];
-
-  if (reservedSlugs.includes(slug)) {
-    return { notFound: true };
-  }
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // Fetch artist
     const { data: artist, error: artistError } = await supabase
-      .from('artists')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_published', true)
+      .from("artists")
+      .select("*")
+      .eq("slug", slug)
+      .eq("is_published", true)
       .single();
 
     if (artistError || !artist) {
       return { notFound: true };
     }
 
-    // Fetch artist's episodes
-    const { data: episodesData, error: episodesError } = await supabase
-      .from('artist_episodes')
-      .select(`
-        role,
-        episode_id,
-        episodes (
-          id,
-          youtube_video_id,
-          episode_number,
-          title,
-          clean_title,
-          description,
-          thumbnail_url,
-          published_at,
-          duration,
-          view_count,
-          is_special
-        )
-      `)
-      .eq('artist_id', artist.id)
-      .order('episode_id', { ascending: true });
+    // Episodes for this artist
+    const { data: episodeRows, error: episodeError } = await supabase
+      .from("artist_episodes")
+      .select("episodes (*)")
+      .eq("artist_id", artist.id)
+      .order("episode_id", { ascending: false });
 
-    if (episodesError) {
-      console.error('Error fetching episodes:', episodesError);
+    if (episodeError) {
+      console.error("artist_episodes error:", episodeError);
     }
 
-    // Transform episodes data
-    const episodes = (episodesData || []).map((item: any) => ({
-      ...item.episodes,
-      role: item.role,
-    }));
+    let selectedEpisode: Episode | null = null;
+
+    if (episodeRows && episodeRows.length > 0) {
+      const allEpisodes: Episode[] = [];
+
+      for (const row of episodeRows) {
+        const raw = (row as any).episodes;
+        if (!raw) continue;
+        if (Array.isArray(raw)) {
+          allEpisodes.push(...(raw as Episode[]));
+        } else {
+          allEpisodes.push(raw as Episode);
+        }
+      }
+
+      const nameLower = (artist.stage_name || artist.name).toLowerCase();
+
+      selectedEpisode =
+        allEpisodes.find((e) => {
+          const t = (e.title || "").toLowerCase();
+          const ct = (e.clean_title || "").toLowerCase();
+          return t.includes(nameLower) || ct.includes(nameLower);
+        }) ||
+        allEpisodes
+          .filter((e) => typeof e.episode_number === "number")
+          .sort(
+            (a, b) =>
+              (a.episode_number ?? 9999) - (b.episode_number ?? 9999)
+          )[0] ||
+        null;
+    }
+
+    // Spotify data
+    let spotifyTopTracks: SpotifyTrack[] = [];
+    let spotifyDiscography: SpotifyDiscographyItem[] = [];
+    let spotifyProfileImage = artist.profile_photo_url;
+
+    if (artist.spotify_artist_id) {
+      try {
+        const [profile, topTracks, discography] = await Promise.all([
+          getArtistProfile(artist.spotify_artist_id),
+          getArtistTopTracks(artist.spotify_artist_id),
+          getArtistDiscography(artist.spotify_artist_id),
+        ]);
+
+        if (profile?.image) {
+          spotifyProfileImage = profile.image;
+        }
+        if (Array.isArray(topTracks)) {
+          spotifyTopTracks = topTracks as unknown as SpotifyTrack[];
+        }
+        if (Array.isArray(discography)) {
+          const unique = (discography as SpotifyDiscographyItem[]).filter(
+            (item, index, self) =>
+              index ===
+              self.findIndex(
+                (t) =>
+                  t.name === item.name && t.releaseDate === item.releaseDate
+              )
+          );
+          spotifyDiscography = unique;
+        }
+      } catch (err) {
+        console.error("Spotify API error:", err);
+      }
+    }
+
+    // Enrich festival sets with YouTube data
+    let festivalSets: FestivalSet[] =
+      (artist.festival_sets as FestivalSet[]) || [];
+    if (festivalSets.length) {
+      const enriched: FestivalSet[] = [];
+      for (const set of festivalSets) {
+        if (!set.youtube_id) {
+          enriched.push(set);
+          continue;
+        }
+        const info = await fetchYouTubeVideoInfo(set.youtube_id);
+        enriched.push({
+          ...set,
+          ...(info || {}),
+        });
+      }
+      festivalSets = enriched;
+    }
+
+    const artistWithData: Artist = {
+      ...(artist as any),
+      profile_photo_url: spotifyProfileImage,
+      festival_sets: festivalSets,
+      instagram_reels: artist.instagram_reels || [],
+      achievements: (artist.achievements as Achievement[]) || [],
+    };
 
     return {
       props: {
-        artist,
-        episodes,
+        artist: artistWithData,
+        episode: selectedEpisode,
+        spotifyTopTracks,
+        spotifyDiscography,
       },
     };
-  } catch (error) {
-    console.error('Error in getServerSideProps:', error);
+  } catch (err) {
+    console.error("getServerSideProps error:", err);
     return { notFound: true };
   }
 };
