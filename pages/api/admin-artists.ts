@@ -42,8 +42,10 @@ export default async function handler(
     return res.status(401).json({ ok: false, error: "unauthorized" });
   }
 
+  //
+  // GET: list artists + their primary episode link
+  //
   if (req.method === "GET") {
-    // list artists + their primary episode link
     const { data, error } = await supabase
       .from("artists")
       .select(
@@ -57,74 +59,73 @@ export default async function handler(
       )
       .order("id", { ascending: true });
 
-   if (error) {
-  console.error(error);
-  return res.status(500).json({ ok: false, error: error.message });
-}
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ ok: false, error: error.message });
+    }
 
-// map DB "bio" → UI field "short_bio"
-const artists = (data || []).map((a: any) => ({
-  ...a,
-  short_bio: a.bio ?? null,
-}));
+    // map DB bio -> UI short_bio
+    const artists = (data || []).map((a: any) => ({
+      ...a,
+      short_bio: a.short_bio ?? a.bio ?? null,
+    }));
 
-return res.status(200).json({ ok: true, artists });
+    return res.status(200).json({ ok: true, artists });
+  }
 
-
+  //
+  // POST: create/update artist + primary episode mapping
+  //
   if (req.method === "POST") {
-  const { artist, primaryEpisodeId } = req.body as {
-    artist: AdminArtistPayload & { artist_episodes?: any; short_bio?: string | null };
-    primaryEpisodeId?: number | null;
-  };
+    const { artist, primaryEpisodeId } = req.body as {
+      artist: AdminArtistPayload & { artist_episodes?: any; bio?: string | null };
+      primaryEpisodeId?: number | null;
+    };
 
-  if (!artist?.slug || !artist.stage_name) {
-    return res.status(400).json({
-      ok: false,
-      error: "slug and stage_name are required",
-    });
-  }
+    if (!artist?.slug || !artist.stage_name) {
+      return res.status(400).json({
+        ok: false,
+        error: "slug and stage_name are required",
+      });
+    }
 
-  // Build payload for upsert – start from artist object
-  const payload: any = { ...artist };
+    // Build payload for upsert – start from artist object
+    const payload: any = { ...artist };
 
-  // remove relation field
-  delete payload.artist_episodes;
+    // remove relation field that is not a column on artists
+    delete payload.artist_episodes;
 
-  // map short_bio -> bio (DB column) and then drop short_bio
-  if (typeof payload.short_bio !== "undefined") {
-    payload.bio = payload.short_bio;
-  }
-  delete payload.short_bio;
+    // map short_bio (UI) -> bio (DB column) and then drop short_bio
+    if (typeof payload.short_bio !== "undefined") {
+      payload.bio = payload.short_bio;
+    }
+    delete payload.short_bio;
 
-  // for new artists we don't send id so Supabase will insert
-  if (!payload.id || payload.id === 0) {
-    delete payload.id;
-  }
+    // for new artists we don't send id so Supabase will insert
+    if (!payload.id || payload.id === 0) {
+      delete payload.id;
+    }
 
-  // normalize JSON fields
-  if (!Array.isArray(payload.festival_sets)) {
-    payload.festival_sets = [];
-  }
-  if (!Array.isArray(payload.instagram_reels)) {
-    payload.instagram_reels = [];
-  }
+    // normalize JSON fields
+    if (!Array.isArray(payload.festival_sets)) {
+      payload.festival_sets = [];
+    }
+    if (!Array.isArray(payload.instagram_reels)) {
+      payload.instagram_reels = [];
+    }
 
-  const { data, error } = await supabase
-    .from("artists")
-    .upsert(payload)
-    .select()
-    .single();
-
-  ...
-}
-
+    const { data, error } = await supabase
+      .from("artists")
+      .upsert(payload)
+      .select()
+      .single();
 
     if (error) {
       console.error(error);
       return res.status(500).json({ ok: false, error: error.message });
     }
 
-    // Handle primary episode mapping (artist_episodes)
+    // Handle primary episode mapping (artist_episodes table)
     if (primaryEpisodeId) {
       // remove previous primary links
       await supabase
@@ -145,6 +146,6 @@ return res.status(200).json({ ok: true, artists });
     return res.status(200).json({ ok: true, artist: data });
   }
 
-
+  // method not allowed
   return res.status(405).json({ ok: false, error: "method not allowed" });
 }
