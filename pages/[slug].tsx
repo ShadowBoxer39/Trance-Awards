@@ -124,7 +124,6 @@ interface ArtistPageProps {
 // ==========================================
 
 const LiveSetCard: React.FC<{ set: FestivalSet, isFeatured: boolean }> = ({ set, isFeatured }) => {
-    // MOCK DATA for visual effect:
     const mockDuration = set.duration_min || 75;
     const mockViews = set.views || 42000;
 
@@ -343,6 +342,9 @@ export default function ArtistPage({
     }
     #orb-1 { top: 10%; right: 5%; animation-delay: 0s; }
     #orb-2 { bottom: 5%; left: 10%; animation-delay: -17s; }
+    .logo-glow {
+        box-shadow: 0 0 15px var(--accent-color);
+    }
   `;
 
   return (
@@ -496,31 +498,29 @@ export default function ArtistPage({
                     </h3>
                     <div className="space-y-5">
                         {/* Booking Company */}
-                        <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 hover:border-cyan-500/50 transition-all">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-400">Booking Agency</span>
-                                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
-                                    {/* Using Image component for provided logo */}
-                                    <Image src="/images/sonic.jpg" alt="Sonic Booking" width={48} height={48} className="rounded-full object-cover" />
-                                </div>
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 hover:border-cyan-500/50 transition-all grid grid-cols-[50px,1fr]">
+                            <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden mr-4">
+                                <Image src="/images/sonic.jpg" alt="Sonic Booking" width={48} height={48} className="rounded-full object-cover logo-glow" />
                             </div>
-                            <a href={`https://${artist.booking_company || 'sonic-booking.co'}.com`} target="_blank" className="text-2xl font-black text-cyan-300 hover:text-white transition flex items-center gap-2">
-                                {artist.booking_company || 'Sonic Booking'} <FaExternalLinkAlt className="w-4 h-4 opacity-70" />
-                            </a>
+                            <div>
+                                <span className="text-sm font-medium text-gray-400 block">Booking Agency</span>
+                                <a href={`https://${artist.booking_company || 'sonic-booking.co'}.com`} target="_blank" className="text-2xl font-black text-cyan-300 hover:text-white transition flex items-center gap-2">
+                                    {artist.booking_company || 'Sonic Booking'} <FaExternalLinkAlt className="w-4 h-4 opacity-70" />
+                                </a>
+                            </div>
                         </div>
 
                         {/* Record Label */}
-                        <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 hover:border-purple-500/50 transition-all">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-400">Record Label</span>
-                                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
-                                    {/* Using Image component for provided logo */}
-                                    <Image src="/images/shamanic.jpg" alt="Shamanic Tales" width={48} height={48} className="rounded-full object-cover" />
-                                </div>
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 hover:border-purple-500/50 transition-all grid grid-cols-[50px,1fr]">
+                            <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden mr-4">
+                                <Image src="/images/shamanic.jpg" alt="Shamanic Tales" width={48} height={48} className="rounded-full object-cover logo-glow" />
                             </div>
-                            <a href={`https://${artist.record_label || 'shamanictales'}.com`} target="_blank" className="text-2xl font-black text-purple-300 hover:text-white transition flex items-center gap-2">
-                                {artist.record_label || 'Shamanic Tales'} <FaExternalLinkAlt className="w-4 h-4 opacity-70" />
-                            </a>
+                            <div>
+                                <span className="text-sm font-medium text-gray-400 block">Record Label</span>
+                                <a href={`https://${artist.record_label || 'shamanictales'}.com`} target="_blank" className="text-2xl font-black text-purple-300 hover:text-white transition flex items-center gap-2">
+                                    {artist.record_label || 'Shamanic Tales'} <FaExternalLinkAlt className="w-4 h-4 opacity-70" />
+                                </a>
+                            </div>
                         </div>
 
                         {/* CTA Button */}
@@ -539,14 +539,11 @@ export default function ArtistPage({
                     </h3>
                     <div className="space-y-4">
                       {spotifyTopTracks.map((track, index) => (
-                        <a
+                        <div
                           key={track.id}
-                          href={track.external_urls.spotify}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-spotify/10 hover:border-spotify/30 transition-all group spotify-track-item relative overflow-hidden"
                         >
-                            {/* Waveform Mock (CSS Animation) - Hidden by default */}
+                            {/* Waveform Mock (CSS Animation) */}
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-0">
                                 {Array.from({ length: 12 }).map((_, i) => (
                                     <div 
@@ -595,7 +592,7 @@ export default function ArtistPage({
                                 <FaExternalLinkAlt className="text-green-400 hover:text-green-300 transition-colors text-xl" />
                             </a>
                           )}
-                        </a>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -733,7 +730,6 @@ export default function ArtistPage({
                                         <div className="font-bold text-xl text-white mb-2">{episode.clean_title || episode.title}</div>
                                         <div className="text-sm text-gray-200">
                                             {new Date(episode.published_at).toLocaleDateString('he-IL')}
-                                            {episode.view_count && ` • ${episode.view_count.toLocaleString()} צפיות`}
                                         </div>
                                     </div>
                                     <FaPlay className="absolute inset-0 m-auto w-20 h-20 text-white bg-purple-600/90 rounded-full p-4 opacity-0 group-hover:opacity-100 transition-opacity shadow-2xl" />
@@ -908,7 +904,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         }
 
       } catch (error) {
-        console.error('Spotify API error:', error);
+        console.error('Spotify API error in SSR:', error);
       }
     }
 
