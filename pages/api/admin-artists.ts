@@ -65,9 +65,9 @@ export default async function handler(
     return res.status(200).json({ ok: true, artists: data });
   }
 
-  if (req.method === "POST") {
+   if (req.method === "POST") {
     const { artist, primaryEpisodeId } = req.body as {
-      artist: AdminArtistPayload;
+      artist: AdminArtistPayload & { artist_episodes?: any };
       primaryEpisodeId?: number | null;
     };
 
@@ -78,8 +78,11 @@ export default async function handler(
       });
     }
 
-    // Build payload for upsert
+    // Build payload for upsert – start from artist object
     const payload: any = { ...artist };
+
+    // ❗ remove relation field that is NOT a column on "artists"
+    delete payload.artist_episodes;
 
     // for new artists we don't send id so Supabase will insert
     if (!payload.id || payload.id === 0) {
@@ -99,12 +102,6 @@ export default async function handler(
       .upsert(payload)
       .select()
       .single();
-
-      const payload: any = { ...artist };
-
-  // ❗ remove relation field that is not a column
-  delete payload.artist_episodes;
-
 
     if (error) {
       console.error(error);
@@ -131,6 +128,7 @@ export default async function handler(
 
     return res.status(200).json({ ok: true, artist: data });
   }
+
 
   return res.status(405).json({ ok: false, error: "method not allowed" });
 }
