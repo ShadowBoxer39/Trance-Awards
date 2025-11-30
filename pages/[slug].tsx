@@ -236,7 +236,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
   if (!visibleItems.length) return null;
 
   const stepAngle = 360 / visibleItems.length;
-  const radius = 280; // a bit smaller so it fits inside the card
+  const radius = 300; // balanced radius so cards stay inside the card
 
   const handleNext = () =>
     setActiveIndex((prev) => (prev + 1) % visibleItems.length);
@@ -249,7 +249,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
   const current = visibleItems[activeIndex];
 
   return (
-    <div className="relative w-full flex flex-col items-center py-4 md:py-6">
+    <div className="relative w-full flex flex-col items-center py-4">
       {/* Controls + current title */}
       <div className="flex items-center justify-between w-full mb-3">
         <button
@@ -271,16 +271,15 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
         </button>
       </div>
 
-         {/* 3D ring */}
+      {/* 3D ring */}
       <div
-        className="relative w-full max-w-3xl mx-auto h-[320px] md:h-[360px] overflow-visible"
+        className="relative w-full h-[320px] md:h-[380px] overflow-visible"
         style={{ perspective: "1600px" }}
       >
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-full"
+          className="absolute inset-0 mx-auto"
           style={{ transformStyle: "preserve-3d" }}
         >
-
           {visibleItems.map((release, index) => {
             const angle = (index - activeIndex) * stepAngle;
             const isActive = index === activeIndex;
@@ -349,6 +348,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
     </div>
   );
 };
+
 
 
 
