@@ -71,6 +71,7 @@ interface Artist {
   website_url: string | null;
   genre: string | null;
   spotify_artist_id: string | null;
+  started_year: number | null;
   instagram_reels: string[];
   festival_sets: FestivalSet[];
   primary_color: string;
@@ -233,8 +234,8 @@ export default function ArtistPage({
     "--soundcloud-color": "#FF5500",
   } as React.CSSProperties;
 
-const firstMusicYear =
-  artist.achievements?.find((a) => a.year)?.year || "2018";
+const firstMusicYear = artist.started_year || null;
+
 
 const totalReleases = spotifyDiscography.length;
 
@@ -451,17 +452,18 @@ const totalAlbums = spotifyDiscography.filter(
 </div>
 
 
-                {/* since */}
-                <div className="flex gap-2 text-right">
-                  <div className="text-2xl font-bold text-cyan-300">
-                    {firstMusicYear}
-                  </div>
-                  <div className="text-xs text-gray-300 flex items-center gap-1">
-                    <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
-                    <span>יוצר מאז</span>
-                  </div>
-                </div>
-              </div>
+             {firstMusicYear && (
+  <div className="flex gap-2 text-right">
+    <div className="text-2xl font-bold text-cyan-300">
+      {firstMusicYear}
+    </div>
+    <div className="text-xs text-gray-300 flex items-center gap-1">
+      <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
+      <span>יוצר מאז</span>
+    </div>
+  </div>
+)}
+
 
               <div className="flex flex-wrap justify-center md:justify-end gap-3 mt-5">
                 {socialLinks.map((link, index) => (
