@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
+import { FaTiktok } from "react-icons/fa6";
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Navigation from "../components/Navigation";
@@ -66,6 +67,7 @@ interface Artist {
   soundcloud_profile_url: string | null;
   spotify_url: string | null;
   youtube_url: string | null;
+   tiktok_url: string | null;
   website_url: string | null;
   genre: string | null;
   spotify_artist_id: string | null;
@@ -231,11 +233,16 @@ export default function ArtistPage({
     "--soundcloud-color": "#FF5500",
   } as React.CSSProperties;
 
-  const firstMusicYear =
-    artist.achievements?.find((a) => a.year)?.year || "2018";
-  const totalReleases = spotifyDiscography.length;
-  const totalFestivals = artist.festival_sets?.length || 0;
-  const mainFestivalSet = artist.festival_sets?.[0];
+const firstMusicYear =
+  artist.achievements?.find((a) => a.year)?.year || "2018";
+
+const totalReleases = spotifyDiscography.length;
+
+// albums from Spotify discography
+const totalAlbums = spotifyDiscography.filter(
+  (item) => item.type === "album"
+).length;
+
 
   const socialLinks = [
     {
@@ -266,6 +273,13 @@ export default function ArtistPage({
       color: "text-red-400",
       hover: "hover:text-red-300",
     },
+    {
+    icon: FaTiktok,
+    url: artist.tiktok_url,
+    label: "טיקטוק",
+    color: "text-white",
+    hover: "hover:text-gray-300",
+  },
     {
       icon: FaFacebook,
       url: artist.facebook_url,
@@ -419,16 +433,17 @@ export default function ArtistPage({
                   </div>
                 </div>
 
-                {/* festivals */}
-                <div className="flex gap-2 text-right border-r border-white/15 pr-4">
-                  <div className="text-2xl font-bold text-cyan-300">
-                    {totalFestivals}
-                  </div>
-                  <div className="text-xs text-gray-300 flex items-center gap-1">
-                    <FaStar className="w-3 h-3 text-yellow-400" />
-                    <span>פסטיבלים</span>
-                  </div>
-                </div>
+              {/* albums from Spotify */}
+<div className="flex gap-2 text-right border-r border-white/15 pr-4">
+  <div className="text-2xl font-bold text-cyan-300">
+    {totalAlbums}
+  </div>
+  <div className="text-xs text-gray-300 flex items-center gap-1">
+    <FaStar className="w-3 h-3 text-yellow-400" />
+    <span>אלבומים</span>
+  </div>
+</div>
+
 
                 {/* since */}
                 <div className="flex gap-2 text-right">
@@ -499,15 +514,17 @@ export default function ArtistPage({
                             ? ` • ${mainFestivalSet.year}`
                             : ""}
                         </span>
-                        <span>
-                          {formatLocation(mainFestivalSet.location)}
-                          {mainFestivalSet.duration_min
-                            ? ` • ${mainFestivalSet.duration_min} דק׳`
-                            : ""}
-                          {typeof mainFestivalSet.views === "number"
-                            ? ` • ${mainFestivalSet.views.toLocaleString()} צפיות`
-                            : ""}
-                        </span>
+                      <span>
+  {mainFestivalSet.duration_min
+    ? `${mainFestivalSet.duration_min} דק׳`
+    : ""}
+  {typeof mainFestivalSet.views === "number"
+    ? `${
+        mainFestivalSet.duration_min ? " • " : ""
+      }${mainFestivalSet.views.toLocaleString()} צפיות`
+    : ""}
+</span>
+
                       </div>
                     </div>
                   )}
