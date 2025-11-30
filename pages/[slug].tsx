@@ -273,13 +273,18 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
 
       {/* 3D ring */}
       <div
-        className="relative w-full h-[320px] md:h-[380px] overflow-visible"
-        style={{ perspective: "1600px" }}
-      >
+  style={{ perspective: "1600px" }}
+  className="relative w-full h-[320px] md:h-[380px] overflow-visible flex justify-center"
+>
+
         <div
-          className="absolute inset-0 mx-auto"
-          style={{ transformStyle: "preserve-3d" }}
-        >
+  className="absolute inset-0 mx-auto"
+  style={{
+    transformStyle: "preserve-3d",
+    transform: "translateX(-140px)" // ← shifts whole carousel left
+  }}
+>
+
           {visibleItems.map((release, index) => {
             const angle = (index - activeIndex) * stepAngle;
             const isActive = index === activeIndex;
