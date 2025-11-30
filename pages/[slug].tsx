@@ -527,7 +527,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       return { notFound: true };
     }
 
-    // 2. Fetch episode (most recent)
+    // 2. Fetch episode (most recent) - FIXED TYPE CASTING
     const { data: episodesData } = await supabase
       .from('artist_episodes')
       .select(`episodes (*)`)
@@ -536,7 +536,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       .limit(1)
       .single();
 
-    const episode = (episodesData?.episodes as Episode) || null;
+    // FIX 1: Treat episodesData.episodes as an array and extract the first element.
+    const episode = (episodesData?.episodes as Episode[])?.[0] || null; 
 
     // 3. Fetch Spotify data (All required data)
     let spotifyTopTracks: SpotifyTrack[] = [];
@@ -567,13 +568,13 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
           spotifyTopTracks = topTracks as unknown as SpotifyTrack[];
         }
 
-        if (discography && ArrayArray(discography)) {
-            const uniqueDiscography = discography.filter((item, index, self) => 
+        if (discography && Array.isArray(discography)) { // FIX 2: Corrected Array check typo
+            const uniqueDiscography = (discography as SpotifyDiscographyItem[]).filter((item, index, self) => 
                 index === self.findIndex((t) => (
                     t.name === item.name && t.releaseDate === item.releaseDate
                 ))
             );
-            spotifyDiscography = uniqueDiscography as SpotifyDiscographyItem[];
+            spotifyDiscography = uniqueDiscography;
         }
 
       } catch (error) {
