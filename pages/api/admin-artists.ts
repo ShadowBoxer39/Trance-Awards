@@ -100,6 +100,12 @@ export default async function handler(
       .select()
       .single();
 
+      const payload: any = { ...artist };
+
+  // ❗ remove relation field that is not a column
+  delete payload.artist_episodes;
+
+
     if (error) {
       console.error(error);
       return res.status(500).json({ ok: false, error: error.message });
