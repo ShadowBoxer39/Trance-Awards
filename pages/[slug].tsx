@@ -1,6 +1,6 @@
-// pages/[slug].tsx - THE NEW IMMERSIVE ARTIST HUB
+// pages/[slug].tsx - THE NEW PREMIUM ARTIST HUB
 
-import React from "react";
+import React, { useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { GetServerSideProps } from "next";
@@ -15,14 +15,14 @@ import {
   FaYoutube, 
   FaGlobe,
   FaPlay,
-  FaExternalLinkAlt,
   FaMusic,
   FaCompactDisc,
   FaStar,
+  FaBroadcastTower
 } from 'react-icons/fa';
 
 // ==========================================
-// TYPES
+// TYPES (Reusing existing structures)
 // ==========================================
 
 interface FestivalSet {
@@ -91,13 +91,12 @@ interface SpotifyDiscographyItem {
     totalTracks: number;
 }
 
-
 interface ArtistPageProps {
   artist: Artist;
   episode: Episode | null;
   spotifyTopTracks: SpotifyTrack[];
   spotifyDiscography: SpotifyDiscographyItem[];
-  spotifyProfile: { followers: number; popularity: number; } | null;
+  spotifyProfile: { followers: number, popularity: number } | null;
 }
 
 // ==========================================
@@ -113,12 +112,11 @@ export default function ArtistPage({
 }: ArtistPageProps) {
   
   const displayName = artist.stage_name || artist.name;
-  const accentColor = artist.primary_color || '#8b5cf6';
+  const accentColor = artist.primary_color || '#8b5cf6'; // Default Purple
   
-  // Set the CSS variable dynamically for custom components
+  // Custom CSS variable for dynamic styling
   const dynamicStyle = { 
     '--accent-color': accentColor,
-    // Define fallback for Tailwind-like utilities if needed, but primary is enough.
   } as React.CSSProperties;
 
   const socialLinks = [
@@ -129,37 +127,42 @@ export default function ArtistPage({
     { icon: FaFacebook, url: artist.facebook_url, label: 'Facebook', color: 'text-blue-400', hover: 'hover:text-blue-300' },
     { icon: FaGlobe, url: artist.website_url, label: 'Website', color: 'text-purple-400', hover: 'hover:text-purple-300' },
   ].filter(link => link.url);
+
+  // Use the global useEffect for RTL from _app.tsx or local if needed
+  useEffect(() => {
+    document.documentElement.setAttribute("dir", "rtl");
+  }, []);
   
   // --- Custom Style Block for Dynamic Accent ---
   const customStyles = `
+    .trance-backdrop {
+      background: radial-gradient(circle at top right, color-mix(in srgb, var(--accent-color) 15%, transparent) 40%),
+                  radial-gradient(circle at bottom left, rgba(17, 24, 39, 0.8), transparent 60%),
+                  #0f0f1a;
+      transition: all 0.5s ease-out;
+    }
+    .hero-glow {
+      box-shadow: 0 0 40px 10px color-mix(in srgb, var(--accent-color) 40%, transparent);
+      border-color: var(--accent-color);
+    }
     .card-glass-accent {
-      border-left: 6px solid var(--accent-color, #8b5cf6);
-      box-shadow: 0 4px 15px -5px color-mix(in srgb, var(--accent-color, #8b5cf6) 20%, transparent);
+      border-left: 5px solid var(--accent-color);
+      box-shadow: 0 4px 15px -5px color-mix(in srgb, var(--accent-color) 20%, transparent);
+      transition: all 0.3s ease;
     }
     .card-glass-accent:hover {
-      border-color: color-mix(in srgb, var(--accent-color, #8b5cf6) 80%, #ffffff);
-      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--accent-color) 80%, #ffffff);
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 15px 30px -5px color-mix(in srgb, var(--accent-color) 30%, transparent);
     }
-    .text-accent {
-        color: var(--accent-color, #8b5cf6);
+    .text-accent-dynamic {
+        color: var(--accent-color);
     }
-    .border-accent {
-        border-color: var(--accent-color, #8b5cf6);
+    .border-accent-dynamic {
+        border-color: var(--accent-color);
     }
-    .ring-accent {
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-color, #8b5cf6) 50%, transparent);
-    }
-    .hover-shadow:hover {
-        box-shadow: 0 0 30px 0px color-mix(in srgb, var(--accent-color, #8b5cf6) 20%, transparent);
-    }
-    .bg-accent-light {
-        background-color: color-mix(in srgb, var(--accent-color, #8b5cf6) 10%, transparent);
-    }
-    .gradient-hero-text {
-      background: linear-gradient(90deg, var(--accent-color, #8b5cf6), #ec4899, #06b6d4);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .btn-live-set:hover {
+        box-shadow: 0 0 15px 0px rgba(255, 0, 0, 0.5);
     }
   `;
   // --- End Custom Style Block ---
@@ -169,30 +172,31 @@ export default function ArtistPage({
     <>
       <Head>
         <title>{displayName} - יוצאים לטראק</title>
-        <meta name="description" content={artist.short_bio || `${displayName} - Israeli Trance Artist`} />
+        <meta name="description" content={artist.short_bio || `${displayName} - אמן טראנס ישראלי`} />
       </Head>
       
+      {/* Dynamic Style injection */}
       <style jsx global>{customStyles}</style>
 
       <div className="min-h-screen trance-backdrop text-white" style={dynamicStyle}>
-        {/* Navigation */}
+        
         <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
           <Navigation currentPage="episodes" />
         </div>
 
-        {/* HERO SECTION - HIGH IMPACT */}
+        {/* HERO SECTION - HIGH IMPACT & STATS */}
         <section className="relative py-16 px-6 overflow-hidden">
           <div className="max-w-7xl mx-auto z-10 relative">
-            <div className="flex flex-col md:flex-row items-center md:items-end gap-10">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-10">
               
               {/* Profile Photo */}
-              <div className="relative flex-shrink-0 order-1 md:order-2">
-                <div className="w-56 h-56 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-accent ring-accent shadow-2xl hover-shadow transition-all duration-500">
+              <div className="relative flex-shrink-0 order-1">
+                <div className="w-56 h-56 md:w-64 md:h-64 rounded-full overflow-hidden border-4 hero-glow transition-all duration-500">
                   {artist.profile_photo_url ? (
                     <img
                       src={artist.profile_photo_url}
                       alt={displayName}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
@@ -203,162 +207,90 @@ export default function ArtistPage({
               </div>
 
               {/* Info & Title */}
-              <div className="flex-1 text-center md:text-right order-2 md:order-1">
-                {artist.genre && (
-                    <span className="inline-block px-4 py-1.5 bg-accent-light border border-accent rounded-full text-accent text-sm font-semibold mb-3">
-                      {artist.genre}
-                    </span>
-                )}
+              <div className="flex-1 text-center md:text-right order-2">
+                <span className="inline-block px-4 py-1.5 bg-white/10 border border-white/20 rounded-full text-white/70 text-sm font-semibold mb-3">
+                  {artist.genre || 'Psytrance'}
+                </span>
                 
                 <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black mb-3 gradient-hero-text">
                   {displayName}
                 </h1>
                 
-                <p className="text-gray-300 text-xl lg:text-2xl mb-6 max-w-2xl mx-auto md:mx-0 font-light">
-                  {artist.short_bio || "אמן טראנס ישראלי פורץ דרך."}
+                <p className="text-gray-300 text-xl lg:text-2xl mb-6 max-w-2xl mx-auto md:mx-0 font-light leading-relaxed">
+                  {artist.short_bio || "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק מלודי."}
                 </p>
 
                 {/* Spotify Stats & Socials */}
                 <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10">
-                    {/* Spotify Stats (if available) */}
-                    {spotifyProfile && (
-                        <div className="flex gap-4 text-left order-2 md:order-1">
-                            <div>
-                                <div className="text-2xl font-bold text-accent tabular-nums">{spotifyProfile.followers.toLocaleString()}</div>
-                                <div className="text-xs text-gray-400">עוקבים (Spotify)</div>
-                            </div>
-                            <div>
-                                <div className="text-2xl font-bold text-accent tabular-nums">{spotifyProfile.popularity}</div>
-                                <div className="text-xs text-gray-400">פופולריות (100)</div>
-                            </div>
-                        </div>
-                    )}
                     
                     {/* Social Links */}
-                    <div className="flex flex-wrap justify-center md:justify-end gap-4 order-1 md:order-2">
+                    <div className="flex flex-wrap justify-center md:justify-end gap-4">
                         {socialLinks.map((link, index) => (
                         <a
                             key={index}
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`text-2xl transition-colors ${link.color} ${link.hover}`}
+                            className={`text-3xl transition-colors ${link.color} ${link.hover}`}
                             title={link.label}
                         >
                             <link.icon />
                         </a>
                         ))}
                     </div>
+
+                    {/* Spotify Stats (if available) */}
+                    {spotifyProfile && (
+                        <div className="flex gap-6 text-right border-r border-white/10 pr-6">
+                            <div>
+                                <div className="text-3xl font-bold text-cyan-400 tabular-nums">{spotifyProfile.followers.toLocaleString()}</div>
+                                <div className="text-xs text-gray-400">עוקבים (Spotify)</div>
+                            </div>
+                            <div>
+                                <div className="text-3xl font-bold text-cyan-400 tabular-nums">{spotifyProfile.popularity}</div>
+                                <div className="text-xs text-gray-400">פופולריות (100)</div>
+                            </div>
+                        </div>
+                    )}
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* MAIN CONTENT - 3 COLUMN GRID */}
+        {/* MAIN CONTENT - 2 COLUMN GRID */}
         <section className="py-8 px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               
-              {/* COLUMN 1: TOP TRACKS & DISCOGRAPHY */}
+              {/* COLUMN 1: VIDEO MEDIA CENTER (Sets & Episodes) */}
               <div className="lg:col-span-1 space-y-8">
                 
-                {/* Spotify Top Tracks */}
-                {spotifyTopTracks.length > 0 && (
-                  <div className="glass-card p-6 rounded-2xl card-glass-accent">
-                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-accent">
-                      <FaMusic className="text-3xl" />
-                      <span className="text-white">5 הטראקים הפופולריים</span>
-                    </h2>
-                    <div className="space-y-4">
-                      {spotifyTopTracks.map((track, index) => (
-                        <a
-                          key={track.id}
-                          href={track.external_urls.spotify}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-4 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all group"
-                        >
-                            <span className="text-xl font-bold text-accent">{index + 1}.</span>
-                          <img
-                            src={track.album.images[0]?.url}
-                            alt={track.album.name}
-                            className="w-12 h-12 rounded-md flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-white truncate group-hover:text-accent transition-colors">
-                              {track.name}
-                            </div>
-                            <div className="text-xs text-gray-400 truncate">
-                              {track.album.name}
-                            </div>
-                          </div>
-                          <FaSpotify className="text-green-500 flex-shrink-0" />
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Full Discography */}
-                {spotifyDiscography.length > 0 && (
-                  <div className="glass-card p-6 rounded-2xl">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-300">
-                      <FaCompactDisc className="text-2xl" />
-                      קטלוג מלא ({spotifyDiscography.length})
-                    </h2>
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                        {spotifyDiscography.slice(0, 10).map((album, index) => (
-                            <a
-                                key={index}
-                                href={album.spotifyUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition"
-                            >
-                                <img
-                                    src={album.coverImage}
-                                    alt={album.name}
-                                    className="w-10 h-10 rounded-sm flex-shrink-0"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-medium text-white truncate">{album.name}</div>
-                                    <div className="text-xs text-gray-400">{album.type === 'album' ? 'אלבום' : 'סינגל'} • {new Date(album.releaseDate).getFullYear()}</div>
-                                </div>
-                                <span className="text-xs text-gray-500">{album.totalTracks} טרקים</span>
-                            </a>
-                        ))}
-                    </div>
-                    <a href={artist.spotify_url || "#"} target="_blank" rel="noopener noreferrer" className="text-accent text-sm mt-4 block text-center font-medium hover:underline">
-                        צפה בכל הקטלוג ב-Spotify
-                    </a>
-                  </div>
-                )}
-              </div>
+                <h2 className="text-3xl font-black mb-6 flex items-center gap-3 text-red-500">
+                    <FaBroadcastTower className="text-4xl" />
+                    <span className="text-white">Media Center</span>
+                </h2>
 
-              {/* COLUMN 2: FESTIVAL SETS & TRACK TRIP EPISODE */}
-              <div className="lg:col-span-2 space-y-8">
-                
-                {/* Festival Sets */}
+                {/* Festival Sets - HIGHLIGHTED */}
                 {artist.festival_sets && artist.festival_sets.length > 0 && (
                   <div className="glass-card p-6 rounded-2xl">
-                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-red-500">
-                      <FaPlay className="text-3xl" />
-                      <span className="text-white">פסטיבלים והופעות</span>
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      {artist.festival_sets.map((set, index) => (
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
+                        <FaStar className="text-2xl" />
+                        הסטים הכי חזקים מיוטיוב
+                    </h3>
+                    <div className="space-y-4">
+                      {artist.festival_sets.slice(0, 3).map((set, index) => (
                         <a
                           key={index}
                           href={`https://www.youtube.com/watch?v=${set.youtube_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block relative rounded-xl overflow-hidden group transition-all hover-shadow"
+                          className="block relative rounded-xl overflow-hidden group transition-all hover-shadow btn-live-set"
                         >
                           <img
                             src={set.thumbnail}
                             alt={set.title}
-                            className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-110"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-4">
                             <div>
@@ -377,10 +309,11 @@ export default function ArtistPage({
                 
                 {/* Track Trip Episode */}
                 {episode && (
-                  <div className="glass-card p-6 rounded-2xl">
-                    <h2 className="text-2xl font-bold mb-4 text-purple-400">
-                      פרק ב-Track Trip
-                    </h2>
+                  <div className="glass-card p-6 rounded-2xl card-glass-accent">
+                    <h3 className="text-xl font-bold mb-4 text-purple-400 flex items-center gap-2">
+                        <FaYoutube className="text-2xl" />
+                        ראיון מלא ב-Track Trip
+                    </h3>
                     <a
                       href={`https://www.youtube.com/watch?v=${episode.youtube_video_id}`}
                       target="_blank"
@@ -398,9 +331,9 @@ export default function ArtistPage({
                         </div>
                         <FaPlay className="absolute inset-0 m-auto w-16 h-16 text-white bg-black/50 rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                      <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors mb-2">
+                      <h4 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors mb-2">
                         {episode.clean_title || episode.title}
-                      </h3>
+                      </h4>
                       <div className="text-gray-400 text-sm">
                         {new Date(episode.published_at).toLocaleDateString('he-IL')}
                         {episode.view_count && ` • ${episode.view_count.toLocaleString()} צפיות`}
@@ -408,29 +341,117 @@ export default function ArtistPage({
                     </a>
                   </div>
                 )}
+              </div>
 
-                {/* SoundCloud Player Embed */}
+              {/* COLUMN 2: MUSIC HUB (Spotify & SoundCloud) */}
+              <div className="lg:col-span-1 space-y-8">
+                  
+                <h2 className="text-3xl font-black mb-6 flex items-center gap-3 text-green-500">
+                    <FaMusic className="text-4xl" />
+                    <span className="text-white">Music Hub</span>
+                </h2>
+
+                {/* Spotify Top Tracks */}
+                {spotifyTopTracks.length > 0 && (
+                  <div className="glass-card p-6 rounded-2xl">
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-green-400">
+                        <FaSpotify className="text-2xl" />
+                        הכי מושמעים ב-Spotify
+                    </h3>
+                    <div className="space-y-4">
+                      {spotifyTopTracks.map((track, index) => (
+                        <a
+                          key={track.id}
+                          href={track.external_urls.spotify}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-4 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all group card-glass-accent"
+                        >
+                            <span className="text-2xl font-bold text-accent-dynamic">{index + 1}.</span>
+                          <img
+                            src={track.album.images[0]?.url}
+                            alt={track.album.name}
+                            className="w-12 h-12 rounded-md flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-white truncate group-hover:text-green-400 transition-colors">
+                              {track.name}
+                            </div>
+                            <div className="text-xs text-gray-400 truncate">
+                              {track.album.name}
+                            </div>
+                          </div>
+                          <FaPlay className="text-green-400 flex-shrink-0" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* SoundCloud Player Embed (Highlight) */}
                 {artist.soundcloud_profile_url && (
                     <div className="glass-card p-6 rounded-2xl">
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-orange-400">
                             <FaSoundcloud className="text-2xl" />
-                            האזנה מהירה (SoundCloud)
+                            השמעה מהירה
                         </h3>
-                        <div className="rounded-xl overflow-hidden">
+                        <div className="rounded-xl overflow-hidden border border-orange-400/30 shadow-lg shadow-orange-500/10">
                             <iframe
                                 width="100%"
-                                height="300" // Adjusted height for a more compact player
+                                height="250"
                                 scrolling="no"
                                 frameBorder="no"
                                 allow="autoplay"
-                                src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloud_profile_url)}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`}
+                                src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloud_profile_url)}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true`}
                             />
                         </div>
                     </div>
                 )}
                 
+                {/* Full Discography List */}
+                {spotifyDiscography.length > 0 && (
+                  <div className="glass-card p-6 rounded-2xl">
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white/80">
+                      <FaCompactDisc className="text-2xl text-cyan-400" />
+                      דיסקוגרפיה
+                    </h3>
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                        {spotifyDiscography.slice(0, 10).map((album, index) => (
+                            <a
+                                key={index}
+                                href={album.spotifyUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition border border-white/5 hover:border-cyan-400/30"
+                            >
+                                <img
+                                    src={album.coverImage}
+                                    alt={album.name}
+                                    className="w-12 h-12 rounded-sm flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-white truncate">{album.name}</div>
+                                    <div className="text-xs text-gray-400">{album.type === 'album' ? 'אלבום' : 'סינגל'} • {new Date(album.releaseDate).getFullYear()}</div>
+                                </div>
+                                <span className="text-xs text-cyan-400 font-semibold">{album.totalTracks} טרקים</span>
+                            </a>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Back Link */}
+        <section className="py-12 px-6">
+          <div className="max-w-7xl mx-auto text-center">
+            <Link href="/episodes">
+              <span className="inline-block px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-accent-dynamic rounded-full transition-all cursor-pointer">
+                ← חזרה לכל הפרקים
+              </span>
+            </Link>
           </div>
         </section>
 
@@ -453,7 +474,7 @@ export default function ArtistPage({
 }
 
 // ==========================================
-// SERVER-SIDE DATA FETCHING
+// SERVER-SIDE DATA FETCHING (Updated to fetch all Spotify data)
 // ==========================================
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
@@ -501,11 +522,11 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
     const episode = episodesData?.episodes || null;
 
-    // 3. Fetch Spotify data
+    // 3. Fetch Spotify data (All required data)
     let spotifyTopTracks: SpotifyTrack[] = [];
     let spotifyDiscography: SpotifyDiscographyItem[] = [];
     let spotifyProfile: { followers: number, popularity: number } | null = null;
-    let spotifyProfileImage = artist.profile_photo_url; // Start with current image
+    let spotifyProfileImage = artist.profile_photo_url; 
 
     if (artist.spotify_artist_id) {
       try {
@@ -520,7 +541,6 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
             followers: profile.followers,
             popularity: profile.popularity,
           };
-          // Use Spotify's high-res image if available
           if (profile.image) {
               spotifyProfileImage = profile.image;
           }
@@ -531,7 +551,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         }
 
         if (discography && Array.isArray(discography)) {
-            // Filter out duplicates and ensure data integrity
+            // Deduplicate logic for cleaner display
             const uniqueDiscography = discography.filter((item, index, self) => 
                 index === self.findIndex((t) => (
                     t.name === item.name && t.releaseDate === item.releaseDate
@@ -548,7 +568,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     // 4. Finalize artist data
     const artistWithData = {
       ...artist,
-      profile_photo_url: spotifyProfileImage, // Update with Spotify image if fetched
+      profile_photo_url: spotifyProfileImage,
       festival_sets: artist.festival_sets || [],
       instagram_reels: artist.instagram_reels || [],
     };
