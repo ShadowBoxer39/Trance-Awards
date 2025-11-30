@@ -252,39 +252,57 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
     <div className="relative w-full flex flex-col items-center py-4">
       {/* Controls + current title */}
       <div className="flex items-center justify-between w-full mb-3">
-        <button
-          onClick={handlePrev}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/20 hover:bg-white/10 transition"
-        >
-          <FaChevronRight className="text-cyan-300" />
-        </button>
+    
 
         <div className="text-sm text-white/80 text-center px-2 truncate">
           {current?.name}
         </div>
 
-        <button
-          onClick={handleNext}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/20 hover:bg-white/10 transition"
-        >
-          <FaChevronLeft className="text-cyan-300" />
-        </button>
+      
       </div>
 
       {/* 3D ring */}
       <div
-  style={{ perspective: "1600px" }}
-  className="relative w-full h-[320px] md:h-[380px] overflow-visible flex justify-center"
->
+        style={{ perspective: "1600px" }}
+        className="relative w-full h-[320px] md:h-[380px] overflow-visible flex justify-center"
+      >
+        {/* חץ שמאל (הולך אחורה) – יושב על הקרוסלה */}
+        <button
+          onClick={handlePrev}
+          className="
+            absolute left-4 top-1/2 -translate-y-1/2 z-20
+            flex items-center justify-center
+            w-9 h-9 rounded-full
+            bg-black/40 border border-white/20
+            hover:bg-white/10 hover:border-cyan-400
+            transition
+          "
+        >
+          <FaChevronRight className="text-cyan-300" />
+        </button>
+
+        {/* חץ ימין (קדימה) */}
+        <button
+          onClick={handleNext}
+          className="
+            absolute right-4 top-1/2 -translate-y-1/2 z-20
+            flex items-center justify-center
+            w-9 h-9 rounded-full
+            bg-black/40 border border-white/20
+            hover:bg-white/10 hover:border-cyan-400
+            transition
+          "
+        >
+          <FaChevronLeft className="text-cyan-300" />
+        </button>
 
         <div
-  className="absolute inset-0 mx-auto"
-  style={{
-    transformStyle: "preserve-3d",
-    transform: "translateX(-90px)" // ← shifts whole carousel left
-  }}
->
-
+          className="absolute inset-0 mx-auto"
+          style={{
+            transformStyle: "preserve-3d",
+            transform: "translateX(-90px)", // תשאיר כמו שהוא – מרכז טוב
+          }}
+        >
           {visibleItems.map((release, index) => {
             const angle = (index - activeIndex) * stepAngle;
             const isActive = index === activeIndex;
