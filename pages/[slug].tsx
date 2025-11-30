@@ -292,7 +292,12 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
             return (
               <div
                 key={release.id}
-                className="absolute left-1/2 top-1/2"
+                className="
+  absolute left-1/2 top-1/2
+  transition-all duration-300
+  hover:scale-[1.08]
+  hover:drop-shadow-[0_0_25px_var(--accent-color)]
+"
                 style={{
                   transformStyle: "preserve-3d",
                   transform: `
