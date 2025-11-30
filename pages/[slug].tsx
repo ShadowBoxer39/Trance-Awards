@@ -281,7 +281,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
   className="absolute inset-0 mx-auto"
   style={{
     transformStyle: "preserve-3d",
-    transform: "translateX(-140px)" // ← shifts whole carousel left
+    transform: "translateX(-120px)" // ← shifts whole carousel left
   }}
 >
 
