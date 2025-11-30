@@ -246,12 +246,6 @@ export default function ArtistPage({
       0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
     }
-    @keyframes wave {
-        0%, 100% { height: 100%; }
-        25% { height: 20%; }
-        50% { height: 60%; }
-        75% { height: 40%; }
-    }
     @keyframes orbit {
         0% { transform: translate(0, 0) rotate(0deg); opacity: 0.15; }
         50% { transform: translate(120px, 60px) rotate(180deg); opacity: 0.08; }
@@ -260,6 +254,24 @@ export default function ArtistPage({
     @keyframes spin-slow {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
+    }
+    @keyframes spin-very-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    @keyframes spin-reverse-slow {
+        from { transform: rotate(360deg); }
+        to { transform: rotate(0deg); }
+    }
+    @keyframes particle-float {
+        0%, 100% {
+            transform: translate(0, 0) scale(1);
+            opacity: 0.3;
+        }
+        50% {
+            transform: translate(var(--tx), var(--ty)) scale(1.5);
+            opacity: 0.8;
+        }
     }
     @keyframes pulse-ring {
         0%, 100% { opacity: 1; transform: scale(1); }
@@ -295,10 +307,6 @@ export default function ArtistPage({
     .spotify-track-item:hover {
         background-color: rgba(29, 185, 84, 0.12);
         border-color: rgba(29, 185, 84, 0.3);
-    }
-    .waveform-bar {
-        background: var(--spotify-color);
-        animation: wave 1s ease-in-out infinite alternate;
     }
     .insta-gradient-border {
         border-image: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888, #8c26ab) 1;
@@ -369,8 +377,26 @@ export default function ArtistPage({
     .animate-spin-slow {
         animation: spin-slow 3s linear infinite;
     }
+    .animate-spin-very-slow {
+        animation: spin-very-slow 20s linear infinite;
+    }
+    .animate-spin-reverse-slow {
+        animation: spin-reverse-slow 25s linear infinite;
+    }
     .pulsing-dot {
         animation: pulse-ring 2s ease-in-out infinite;
+    }
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        opacity: 0.3;
+        --tx: calc(Math.random() * 100px - 50px);
+        --ty: calc(Math.random() * 100px - 50px);
+        animation: particle-float linear infinite;
+        box-shadow: 0 0 10px var(--accent-color);
     }
   `;
 
@@ -394,16 +420,40 @@ export default function ArtistPage({
 
         {/* ENHANCED HERO */}
         <section className="relative py-20 px-6 overflow-hidden z-10 hero-bg-gradient">
+          {/* Animated particles */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div
+                key={i}
+                className="particle"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 5}s`,
+                  animationDuration: `${15 + Math.random() * 10}s`
+                }}
+              />
+            ))}
+          </div>
+
           <div className="max-w-7xl mx-auto z-10 relative">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-12">
               
-              <div className="relative flex-shrink-0 order-1">
-                <div className="w-60 h-60 md:w-72 md:h-72 rounded-full overflow-hidden border-4 hero-glow transition-all duration-500">
+              <div className="relative flex-shrink-0 order-1 group">
+                {/* Rotating rings behind photo */}
+                <div className="absolute inset-0 animate-spin-very-slow">
+                  <div className="absolute inset-0 rounded-full border-2 border-dashed border-purple-500/30" style={{ transform: 'scale(1.15)' }} />
+                </div>
+                <div className="absolute inset-0 animate-spin-reverse-slow">
+                  <div className="absolute inset-0 rounded-full border-2 border-dotted border-cyan-500/30" style={{ transform: 'scale(1.25)' }} />
+                </div>
+
+                <div className="w-60 h-60 md:w-72 md:h-72 rounded-full overflow-hidden border-4 hero-glow transition-all duration-500 group-hover:scale-105">
                   {artist.profile_photo_url ? (
                     <img
                       src={artist.profile_photo_url}
                       alt={displayName}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
@@ -411,6 +461,10 @@ export default function ArtistPage({
                     </div>
                   )}
                 </div>
+
+                {/* Pulsing dots around photo */}
+                <div className="absolute top-0 right-0 w-4 h-4 bg-cyan-400 rounded-full pulsing-dot" />
+                <div className="absolute bottom-0 left-0 w-4 h-4 bg-purple-400 rounded-full pulsing-dot" style={{ animationDelay: '1s' }} />
               </div>
 
               <div className="flex-1 text-center md:text-right order-2">
@@ -482,32 +536,47 @@ export default function ArtistPage({
                     <span className="text-white">Music Hub</span>
                 </h2>
                 
-                {/* BOOKING CARD - ENHANCED */}
+                {/* BOOKING CARD - WITH LOGOS */}
                 <div className="glass-card-deep p-7 rounded-2xl glass-card-hover border-l-4 border-green-400">
                     <h3 className="text-2xl font-bold mb-5 flex items-center gap-3 text-white">
                         <FaBriefcase className="text-3xl text-cyan-400" />
                         ייצוג מקצועי
                     </h3>
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center text-gray-200">
-                            <span className="text-base font-medium">בוקינג:</span>
-                            <a href={`mailto:booking@${artist.slug}.com`} className="text-xl font-bold text-cyan-300 hover:text-white transition flex items-center gap-2">
-                                {artist.booking_company || 'Sonic Booking'} <FaExternalLinkAlt className="w-4 h-4 opacity-70" />
+                    <div className="space-y-5">
+                        {/* Booking Company */}
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 hover:border-cyan-500/50 transition-all">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-400">Booking Agency</span>
+                                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
+                                    <FaBriefcase className="text-2xl text-cyan-400" />
+                                </div>
+                            </div>
+                            <a href={`mailto:booking@${artist.slug}.com`} className="text-2xl font-black text-cyan-300 hover:text-white transition flex items-center gap-2">
+                                {artist.booking_company || 'Sonic Booking'}
                             </a>
                         </div>
-                        <div className="flex justify-between items-center text-gray-200 border-t border-white/10 pt-4">
-                            <span className="text-base font-medium">לייבל:</span>
-                            <a href="#" className="text-xl font-bold text-cyan-300 hover:text-white transition flex items-center gap-2">
-                                {artist.record_label || 'Shamanic Tales'} <FaExternalLinkAlt className="w-4 h-4 opacity-70" />
+
+                        {/* Record Label */}
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 hover:border-purple-500/50 transition-all">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-400">Record Label</span>
+                                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
+                                    <FaCompactDisc className="text-2xl text-purple-400" />
+                                </div>
+                            </div>
+                            <a href="#" className="text-2xl font-black text-purple-300 hover:text-white transition flex items-center gap-2">
+                                {artist.record_label || 'Shamanic Tales'}
                             </a>
                         </div>
-                        <a href={`mailto:booking@${artist.slug}.com`} className="w-full mt-5 rounded-xl px-5 py-3 flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-400 hover:to-cyan-400 transition-all font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105">
-                             <FaEnvelope /> Book Performance
+
+                        {/* CTA Button */}
+                        <a href={`mailto:booking@${artist.slug}.com`} className="w-full mt-3 rounded-xl px-5 py-4 flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-400 hover:to-cyan-400 transition-all font-black text-xl shadow-xl hover:shadow-2xl hover:scale-105">
+                             <FaEnvelope className="text-2xl" /> Book Performance
                         </a>
                     </div>
                 </div>
 
-                {/* SPOTIFY TOP TRACKS - ENHANCED WITH PREVIEW PLAY */}
+                {/* SPOTIFY TOP TRACKS - SIMPLIFIED HOVER */}
                 {spotifyTopTracks.length > 0 ? (
                   <div className="glass-card-deep p-7 rounded-2xl glass-card-hover border-l-4 border-spotify">
                     <h3 className="text-2xl font-bold mb-5 flex items-center gap-3 text-spotify">
@@ -518,22 +587,8 @@ export default function ArtistPage({
                       {spotifyTopTracks.map((track, index) => (
                         <div
                           key={track.id}
-                          className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 transition-all group spotify-track-item relative overflow-hidden"
+                          className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-spotify/10 hover:border-spotify/30 transition-all group relative"
                         >
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-0">
-                                {Array.from({ length: 12 }).map((_, i) => (
-                                    <div 
-                                        key={i} 
-                                        className="waveform-bar w-1 h-full mx-[1px] rounded-sm absolute bottom-0"
-                                        style={{ 
-                                            left: `${(i * 8)}%`,
-                                            animationDelay: `${i * 0.1}s`,
-                                            opacity: 0.7 
-                                        }}
-                                    />
-                                ))}
-                            </div>
-
                             <span className="text-3xl font-black text-spotify relative z-10">{index + 1}</span>
                           <img
                             src={track.album.images[0]?.url}
@@ -669,8 +724,9 @@ export default function ArtistPage({
                     <span className="text-white">Media Center</span>
                 </h2>
 
-                {/* VIDEO GRID - FESTIVAL SET + EPISODE */}
+                {/* VIDEO GRID - ALWAYS SHOW BOTH IF AVAILABLE */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* FEATURED LIVE SET */}
                     {artist.festival_sets && artist.festival_sets.length > 0 && (
                         <div className="glass-card-deep p-7 rounded-2xl glass-card-hover">
                             <h3 className="text-2xl font-bold mb-5 flex items-center gap-3 text-yellow-400">
@@ -681,6 +737,7 @@ export default function ArtistPage({
                         </div>
                     )}
 
+                    {/* TRACK TRIP EPISODE - ALWAYS SHOW IF EXISTS */}
                     {episode && (
                         <div className="glass-card-deep p-7 rounded-2xl glass-card-hover">
                             <h3 className="text-2xl font-bold mb-5 flex items-center gap-3 text-purple-400">
@@ -705,7 +762,8 @@ export default function ArtistPage({
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end p-5">
                                         <div className="font-bold text-xl text-white mb-2">{episode.clean_title || episode.title}</div>
                                         <div className="text-sm text-gray-200">
-                                            {new Date(episode.published_at).toLocaleDateString('he-IL')} • {episode.view_count?.toLocaleString()} צפיות
+                                            {new Date(episode.published_at).toLocaleDateString('he-IL')}
+                                            {episode.view_count && ` • ${episode.view_count.toLocaleString()} צפיות`}
                                         </div>
                                     </div>
                                     <FaPlay className="absolute inset-0 m-auto w-20 h-20 text-white bg-purple-600/90 rounded-full p-4 opacity-0 group-hover:opacity-100 transition-opacity shadow-2xl" />
@@ -714,6 +772,14 @@ export default function ArtistPage({
                         </div>
                     )}
                 </div>
+
+                {/* NO MEDIA MESSAGE - Only if neither exists */}
+                {!episode && (!artist.festival_sets || artist.festival_sets.length === 0) && (
+                    <div className="glass-card-deep p-10 rounded-2xl text-center text-gray-400">
+                        <FaExclamationTriangle className="text-6xl mx-auto mb-4 text-red-500" />
+                        <p className="text-xl">אין תוכן וידאו זמין</p>
+                    </div>
+                )}
 
                 {/* MORE FESTIVAL SETS */}
                 {artist.festival_sets && artist.festival_sets.length > 1 && (
