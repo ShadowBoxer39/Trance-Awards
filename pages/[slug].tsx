@@ -749,9 +749,9 @@ const totalAlbums = spotifyDiscography.filter(
                   </div>
 
                   {/* Desktop / tablet: 3D ring */}
-                  <div className="hidden md:block">
-                    <DiscographyCarousel3D items={spotifyDiscography} />
-                  </div>
+                 <div className="hidden md:flex justify-center items-center ml-[-20px]">
+  <DiscographyCarousel3D items={spotifyDiscography} />
+</div>
 
                   {/* Mobile fallback: simple horizontal scroll (old design) */}
                   <div className="block md:hidden">
