@@ -74,6 +74,12 @@ interface Artist {
   instagram_reels: string[];
   festival_sets: FestivalSet[];
   primary_color: string;
+  booking_agency_name?: string | null;
+  booking_agency_email?: string | null;
+  booking_agency_url?: string | null;
+  record_label_name?: string | null;
+  record_label_url?: string | null;
+  management_email?: string | null;
 
   booking_name: string | null;
   booking_email: string | null;
