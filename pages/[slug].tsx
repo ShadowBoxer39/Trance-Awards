@@ -1,6 +1,6 @@
 // pages/[slug].tsx – Artist page (festival YT data + fixed IG embeds)
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,6 +30,8 @@ import {
   FaEnvelope,
   FaExternalLinkAlt,
   FaVolumeUp,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 
 // ---------- Types ----------
@@ -214,6 +216,139 @@ const fetchYouTubeVideoInfo = async (
 };
 
 // ---------- Component ----------
+
+// 3D Discography Carousel
+interface DiscographyCarousel3DProps {
+  items: SpotifyDiscographyItem[];
+}
+
+const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
+  items,
+}) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Limit total items so the ring doesn't get too crowded
+  const visibleItems = useMemo(
+    () => items.slice(0, 12),
+    [items]
+  );
+
+  if (!visibleItems.length) return null;
+
+  const stepAngle = 360 / visibleItems.length;
+  const radius = 380; // distance from center – tweak if needed
+
+  const handleNext = () =>
+    setActiveIndex((prev) => (prev + 1) % visibleItems.length);
+
+  const handlePrev = () =>
+    setActiveIndex((prev) =>
+      (prev - 1 + visibleItems.length) % visibleItems.length
+    );
+
+  const current = visibleItems[activeIndex];
+
+  return (
+    <div className="relative w-full flex flex-col items-center py-4">
+      {/* Controls + current title */}
+      <div className="flex items-center justify-between w-full mb-3">
+        <button
+          onClick={handlePrev}
+          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/20 hover:bg-white/10 transition"
+        >
+          <FaChevronRight className="text-cyan-300" />
+        </button>
+
+        <div className="text-sm text-white/80 text-center px-2 truncate">
+          {current?.name}
+        </div>
+
+        <button
+          onClick={handleNext}
+          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/20 hover:bg-white/10 transition"
+        >
+          <FaChevronLeft className="text-cyan-300" />
+        </button>
+      </div>
+
+      {/* 3D ring */}
+      <div
+        className="relative w-full h-[320px] md:h-[380px] overflow-visible"
+        style={{ perspective: "1600px" }}
+      >
+        <div
+          className="absolute inset-0 mx-auto"
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          {visibleItems.map((release, index) => {
+            const angle = (index - activeIndex) * stepAngle;
+            const isActive = index === activeIndex;
+
+            return (
+              <div
+                key={release.id}
+                className="absolute left-1/2 top-1/2"
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: `
+                    rotateY(${angle}deg)
+                    translateZ(${radius}px)
+                    translateX(-50%)
+                    translateY(-50%)
+                  `,
+                  transition:
+                    "transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+                }}
+              >
+                <a
+                  href={release.spotifyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`rounded-3xl overflow-hidden border bg-black/70 backdrop-blur-sm w-[180px] md:w-[210px] block cursor-pointer transition ${
+                    isActive
+                      ? "border-cyan-400 shadow-[0_0_40px_rgba(34,211,238,0.6)] scale-105"
+                      : "border-white/10 opacity-70 scale-95"
+                  }`}
+                >
+                  <div className="relative w-full aspect-square">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={release.coverImage}
+                      alt={release.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* year badge */}
+                    <div className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[11px] bg-yellow-400 text-black font-bold">
+                      {new Date(release.releaseDate).getFullYear()}
+                    </div>
+                  </div>
+                  <div className="px-3 py-2 text-right">
+                    <div className="text-sm font-semibold leading-tight truncate">
+                      {release.name}
+                    </div>
+                    <div className="text-[11px] text-white/60">
+                      {getReleaseTypeLabel(release)}
+                    </div>
+                    <div className="mt-1 text-[10px] text-emerald-300 flex items-center gap-1 justify-end">
+                      <FaSpotify className="w-3 h-3" />
+                      <span>נגן בספוטיפיי</span>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-3 text-xs text-white/50 flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+        <span>השתמש בחצים כדי לסובב את הדיסקוגרפיה</span>
+      </div>
+    </div>
+  );
+};
+
 
 export default function ArtistPage({
   artist,
@@ -601,7 +736,7 @@ const totalAlbums = spotifyDiscography.filter(
                 </div>
               </div>
 
-              {/* DISCOGRAPHY */}
+                           {/* DISCOGRAPHY */}
               {spotifyDiscography.length > 0 && (
                 <div className="glass-card p-4">
                   <div className="flex items-center justify-between mb-3">
@@ -611,39 +746,42 @@ const totalAlbums = spotifyDiscography.filter(
                     </h2>
                   </div>
 
-                  <div className="overflow-x-auto discography-scroll pb-2">
-                    <div className="flex gap-3 min-w-max">
-                      {spotifyDiscography.slice(0, 8).map((album) => (
-                        <a
-                          key={album.id}
-                          href={album.spotifyUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-44 flex-shrink-0 bg-black/40 border border-white/10 rounded-lg p-2 hover:bg-black/70 hover:border-[var(--accent-color)] transition group"
-                        >
-                          <div className="relative h-40 rounded-md overflow-hidden mb-2 shadow-lg">
-                            <img
-                              src={album.coverImage}
-                              alt={album.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute top-1 left-1 px-2 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-bold">
-                              {new Date(album.releaseDate).getFullYear()}
-                            </div>
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                              <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-                                <FaPlay className="text-white text-xs ml-0.5" />
+                  {/* Desktop / tablet: 3D ring */}
+                  <div className="hidden md:block">
+                    <DiscographyCarousel3D items={spotifyDiscography} />
+                  </div>
+
+                  {/* Mobile fallback: simple horizontal scroll (old design) */}
+                  <div className="block md:hidden">
+                    <div className="overflow-x-auto discography-scroll pb-2">
+                      <div className="flex gap-3 min-w-max">
+                        {spotifyDiscography.slice(0, 8).map((album) => (
+                          <a
+                            key={album.id}
+                            href={album.spotifyUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-40 flex-shrink-0 bg-black/40 border border-white/10 rounded-lg p-2 hover:bg-black/70 hover:border-[var(--accent-color)] transition group"
+                          >
+                            <div className="relative h-36 rounded-md overflow-hidden mb-2 shadow-lg">
+                              <img
+                                src={album.coverImage}
+                                alt={album.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute top-1 left-1 px-2 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-bold">
+                                {new Date(album.releaseDate).getFullYear()}
                               </div>
                             </div>
-                          </div>
-                          <div className="text-xs font-semibold truncate">
-                            {album.name}
-                          </div>
-                          <div className="text-[11px] text-gray-400 mt-0.5">
-                            {getReleaseTypeLabel(album)}
-                          </div>
-                        </a>
-                      ))}
+                            <div className="text-xs font-semibold truncate">
+                              {album.name}
+                            </div>
+                            <div className="text-[11px] text-gray-400 mt-0.5">
+                              {getReleaseTypeLabel(album)}
+                            </div>
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -661,6 +799,7 @@ const totalAlbums = spotifyDiscography.filter(
                   )}
                 </div>
               )}
+
 
               {/* INSTAGRAM REELS */}
            {artist.instagram_reels && artist.instagram_reels.length > 0 && (
