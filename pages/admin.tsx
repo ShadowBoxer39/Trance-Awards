@@ -56,6 +56,32 @@ interface VisitData {
   is_israel: boolean | null;
 }
 
+interface AdminArtist {
+  id: number;
+  slug: string;
+  name: string;
+  stage_name: string;
+  short_bio: string | null;
+  profile_photo_url: string | null;
+  started_year: number | null;
+  spotify_artist_id: string | null;
+  spotify_url: string | null;
+  youtube_url: string | null;
+  soundcloud_profile_url: string | null;
+  instagram_url: string | null;
+  tiktok_url: string | null;
+  website_url: string | null;
+  primary_color: string | null;
+  festival_sets: {
+    youtube_id?: string;
+    festival?: string | null;
+    year?: number | null;
+    location?: string | null;
+  }[] | null;
+  instagram_reels: string[] | null;
+  artist_episodes?: { episode_id: number; is_primary: boolean }[];
+}
+
 function formatDuration(seconds: number | null): string {
   if (!seconds || seconds < 0) return '00:00:00';
   const h = Math.floor(seconds / 3600);
@@ -104,6 +130,13 @@ export default function Admin() {
   const [dateRange, setDateRange] = React.useState<"today" | "7d" | "30d" | "all">("30d");
   
   const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics" | "track-submissions">("votes");
+
+  // 🎧 Artists admin
+  const [adminArtists, setAdminArtists] = React.useState<AdminArtist[]>([]);
+  const [artistsLoading, setArtistsLoading] = React.useState(false);
+  const [currentArtist, setCurrentArtist] = React.useState<AdminArtist | null>(null);
+  const [primaryEpisodeId, setPrimaryEpisodeId] = React.useState<string>("");
+  const [savingArtist, setSavingArtist] = React.useState(false);
 
   // ============================================
   // Analytics calculation
@@ -254,6 +287,21 @@ export default function Admin() {
     }
   }, [tally, activeTab]);
 
+    React.useEffect(() => {
+    if (tally) {
+      if (activeTab === "signups") {
+        fetchSignups();
+      } else if (activeTab === "analytics") {
+        fetchAnalytics();
+      } else if (activeTab === "track-submissions") {
+        fetchTrackSubmissions();
+      } else if (activeTab === "artists") {
+        fetchArtists();
+      }
+    }
+  }, [tally, activeTab]);
+
+
   // ============================================
   // ALL FUNCTIONS
   // ============================================
@@ -297,6 +345,82 @@ export default function Admin() {
       setTrackSubsLoading(false);
     }
   };
+
+    const fetchArtists = async () => {
+    if (!key) return;
+    setArtistsLoading(true);
+    try {
+      const r = await fetch(
+        `/api/admin-artists?key=${encodeURIComponent(key)}&_t=${Date.now()}`
+      );
+      const j = await r.json();
+      if (!r.ok || !j?.ok) throw new Error(j?.error || "Failed to fetch artists");
+
+      const artists = (j.artists as AdminArtist[]) || [];
+      setAdminArtists(artists);
+
+      if (artists.length && !currentArtist) {
+        const first = artists[0];
+        setCurrentArtist(first);
+        const primary = first.artist_episodes?.find((e) => e.is_primary);
+        setPrimaryEpisodeId(primary ? String(primary.episode_id) : "");
+      }
+    } catch (err: any) {
+      console.error("Error fetching artists", err);
+      alert("שגיאה בטעינת דפי אמנים: " + err.message);
+    } finally {
+      setArtistsLoading(false);
+    }
+  };
+
+  const saveArtist = async () => {
+    if (!key || !currentArtist) return;
+
+    const artistPayload: any = { ...currentArtist };
+
+    // avoid sending id=0 for new
+    if (!artistPayload.id || artistPayload.id === 0) {
+      delete artistPayload.id;
+    }
+
+    // normalize festival + reels
+    if (!Array.isArray(artistPayload.festival_sets)) {
+      artistPayload.festival_sets = [];
+    }
+    if (!Array.isArray(artistPayload.instagram_reels)) {
+      artistPayload.instagram_reels = [];
+    }
+
+    const body = {
+      artist: artistPayload,
+      primaryEpisodeId: primaryEpisodeId ? Number(primaryEpisodeId) : null,
+    };
+
+    setSavingArtist(true);
+    try {
+      const r = await fetch(
+        `/api/admin-artists?key=${encodeURIComponent(key)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+      const j = await r.json();
+      if (!r.ok || !j?.ok) throw new Error(j?.error || "Failed to save artist");
+
+      await fetchArtists();
+      alert("האמן נשמר בהצלחה");
+    } catch (err: any) {
+      console.error("Error saving artist", err);
+      alert("שגיאה בשמירת האמן: " + err.message);
+    } finally {
+      setSavingArtist(false);
+    }
+  };
+
+
+  
 
   const approveTrack = async (trackId: string) => {
     if (!confirm("לאשר טרק זה כ'טרק השבועי'?")) return;
@@ -505,22 +629,39 @@ export default function Admin() {
               >
                 🌟 הרשמות אמנים ({signups.length})
               </button>
-              <button
-                onClick={() => setActiveTab("track-submissions")}
-                className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
-                  activeTab === "track-submissions" ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                💬 טרקים להמלצה ({trackSubs.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("analytics")}
-                className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
-                  activeTab === "analytics" ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                📊 סטטיסטיקות ({visits.length})
-              </button>
+             <button
+  onClick={() => setActiveTab("track-submissions")}
+  className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
+    activeTab === "track-submissions"
+      ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
+      : "text-white/60 hover:text-white"
+  }`}
+>
+  💬 טרקים להמלצה ({trackSubs.length})
+</button>
+
+<button
+  onClick={() => setActiveTab("artists")}
+  className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
+    activeTab === "artists"
+      ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
+      : "text-white/60 hover:text-white"
+  }`}
+>
+  🎧 דפי אמנים ({adminArtists.length})
+</button>
+
+<button
+  onClick={() => setActiveTab("analytics")}
+  className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
+    activeTab === "analytics"
+      ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
+      : "text-white/60 hover:text-white"
+  }`}
+>
+  📊 סטטיסטיקות ({visits.length})
+</button>
+
             </div>
 
             {/* VOTES TAB */}
@@ -829,7 +970,324 @@ export default function Admin() {
                 )}
               </>
             )}
+{activeTab === "artists" && (
+  <div className="space-y-6">
+    <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
+      <h2 className="text-2xl font-semibold">ניהול דפי אמנים</h2>
+      <div className="flex gap-2">
+        <button
+          onClick={fetchArtists}
+          className="btn-secondary rounded-xl px-4 py-2 text-sm"
+          disabled={artistsLoading}
+        >
+          {artistsLoading ? "טוען..." : "🔄 רענן"}
+        </button>
+        <button
+          onClick={() => {
+            const blank: AdminArtist = {
+              id: 0,
+              slug: "",
+              name: "",
+              stage_name: "",
+              short_bio: "",
+              profile_photo_url: "",
+              started_year: null,
+              spotify_artist_id: "",
+              spotify_url: "",
+              youtube_url: "",
+              soundcloud_profile_url: "",
+              instagram_url: "",
+              tiktok_url: "",
+              website_url: "",
+              primary_color: "#00e0ff",
+              festival_sets: [],
+              instagram_reels: [],
+              artist_episodes: [],
+            };
+            setCurrentArtist(blank);
+            setPrimaryEpisodeId("");
+          }}
+          className="btn-primary rounded-xl px-4 py-2 text-sm"
+        >
+          ➕ אמן חדש
+        </button>
+      </div>
+    </div>
 
+    {artistsLoading ? (
+      <div className="p-8 text-center text-white/60">טוען נתונים…</div>
+    ) : (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* left: list */}
+        <div className="glass rounded-2xl p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+          {adminArtists.map((a) => {
+            const primary = a.artist_episodes?.find((e) => e.is_primary);
+            const hasFestival = !!(a.festival_sets && a.festival_sets.length);
+            const hasReels = !!(a.instagram_reels && a.instagram_reels.length);
+
+            return (
+              <button
+                key={a.id}
+                className={`w-full text-right p-3 rounded-xl border text-sm transition ${
+                  currentArtist?.id === a.id
+                    ? "border-cyan-400 bg-cyan-500/10"
+                    : "border-white/10 hover:border-cyan-400/60"
+                }`}
+                onClick={() => {
+                  setCurrentArtist(a);
+                  setPrimaryEpisodeId(
+                    primary ? String(primary.episode_id) : ""
+                  );
+                }}
+              >
+                <div className="font-semibold text-cyan-300">
+                  {a.stage_name || a.name}
+                </div>
+                <div className="text-xs text-white/50">/{a.slug}</div>
+                <div className="flex flex-wrap gap-1 mt-2 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                    🎙️ פרק {primary ? primary.episode_id : "—"}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full ${
+                      hasFestival
+                        ? "bg-green-500/15 text-green-300"
+                        : "bg-red-500/15 text-red-300"
+                    }`}
+                  >
+                    🎪 פסטיבל {hasFestival ? "✓" : "חסר"}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full ${
+                      hasReels
+                        ? "bg-green-500/15 text-green-300"
+                        : "bg-red-500/15 text-red-300"
+                    }`}
+                  >
+                    🎥 רילז {hasReels ? "✓" : "חסר"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* right: edit form */}
+        <div className="glass rounded-2xl p-4 lg:col-span-2">
+          {!currentArtist ? (
+            <div className="text-white/60 text-sm">
+              בחר אמן מהרשימה או לחץ על "אמן חדש"
+            </div>
+          ) : (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-white/60 mb-1">Slug (כתובת)</label>
+                  <input
+                    className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                    value={currentArtist.slug || ""}
+                    onChange={(e) =>
+                      setCurrentArtist({
+                        ...currentArtist,
+                        slug: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/60 mb-1">שם אמן</label>
+                  <input
+                    className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                    value={currentArtist.stage_name || ""}
+                    onChange={(e) =>
+                      setCurrentArtist({
+                        ...currentArtist,
+                        stage_name: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/60 mb-1">שנה "יוצר מאז"</label>
+                  <input
+                    type="number"
+                    className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                    value={currentArtist.started_year ?? ""}
+                    onChange={(e) =>
+                      setCurrentArtist({
+                        ...currentArtist,
+                        started_year: e.target.value
+                          ? Number(e.target.value)
+                          : null,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/60 mb-1">
+                    מזהה אמן בספוטיפיי
+                  </label>
+                  <input
+                    className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                    value={currentArtist.spotify_artist_id || ""}
+                    onChange={(e) =>
+                      setCurrentArtist({
+                        ...currentArtist,
+                        spotify_artist_id: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-white/60 mb-1">ביוגרפיה קצרה</label>
+                <textarea
+                  className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2 min-h-[80px]"
+                  value={currentArtist.short_bio || ""}
+                  onChange={(e) =>
+                    setCurrentArtist({
+                      ...currentArtist,
+                      short_bio: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  ["youtube_url", "קישור ליוטיוב"],
+                  ["spotify_url", "קישור לספוטיפיי"],
+                  ["soundcloud_profile_url", "קישור לסאונדקלאוד"],
+                  ["instagram_url", "קישור לאינסטגרם"],
+                  ["tiktok_url", "קישור לטיקטוק"],
+                  ["website_url", "אתר רשמי"],
+                ].map(([field, label]) => (
+                  <div key={field}>
+                    <label className="block text-white/60 mb-1">{label}</label>
+                    <input
+                      className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                      value={(currentArtist as any)[field] || ""}
+                      onChange={(e) =>
+                        setCurrentArtist({
+                          ...currentArtist,
+                          [field]: e.target.value,
+                        } as any)
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-white/60 mb-1">
+                    תמונת פרופיל (URL)
+                  </label>
+                  <input
+                    className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                    value={currentArtist.profile_photo_url || ""}
+                    onChange={(e) =>
+                      setCurrentArtist({
+                        ...currentArtist,
+                        profile_photo_url: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/60 mb-1">
+                    צבע הדגשה (hex)
+                  </label>
+                  <input
+                    className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                    value={currentArtist.primary_color || ""}
+                    onChange={(e) =>
+                      setCurrentArtist({
+                        ...currentArtist,
+                        primary_color: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-white/60 mb-1">
+                    מזהה פרק ראשי (ID מטבלת episodes)
+                  </label>
+                  <input
+                    className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                    value={primaryEpisodeId}
+                    onChange={(e) => setPrimaryEpisodeId(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-white/60 mb-1">
+                    מזהה וידאו לפסטיבל (YouTube ID)
+                  </label>
+                  <input
+                    className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                    value={
+                      currentArtist.festival_sets?.[0]?.youtube_id || ""
+                    }
+                    onChange={(e) =>
+                      setCurrentArtist({
+                        ...currentArtist,
+                        festival_sets: [
+                          {
+                            ...(currentArtist.festival_sets?.[0] || {}),
+                            youtube_id: e.target.value,
+                          },
+                        ],
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[0, 1, 2].map((idx) => (
+                  <div key={idx}>
+                    <label className="block text-white/60 mb-1">
+                      ריל #{idx + 1} (קישור אינסטגרם)
+                    </label>
+                    <input
+                      className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
+                      value={currentArtist.instagram_reels?.[idx] || ""}
+                      onChange={(e) => {
+                        const reels = [...(currentArtist.instagram_reels || [])];
+                        reels[idx] = e.target.value;
+                        setCurrentArtist({
+                          ...currentArtist,
+                          instagram_reels: reels,
+                        });
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  onClick={saveArtist}
+                  className="btn-primary rounded-xl px-6 py-2"
+                  disabled={savingArtist}
+                >
+                  {savingArtist ? "שומר…" : "💾 שמור אמן"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
+
+            
             {/* ANALYTICS TAB */}
             {activeTab === "analytics" && (
               analyticsLoading ? (
