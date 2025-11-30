@@ -1,9 +1,9 @@
-// pages/[slug].tsx - V12: ALL IMPROVEMENTS + FIXES (Logo & Episode Integration)
+// pages/[slug].tsx - V13: EPISODE FIX + PREMIUM REPRESENTATION DESIGN
 
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
-import Link from "next/link"; 
-import Image from "next/image"; // Added Image import for logos 
+import Link from "next/link";
+import Image from "next/image"; // Image component for logos
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Navigation from "../components/Navigation";
@@ -343,30 +343,6 @@ export default function ArtistPage({
     }
     #orb-1 { top: 10%; right: 5%; animation-delay: 0s; }
     #orb-2 { bottom: 5%; left: 10%; animation-delay: -17s; }
-    .animate-spin-slow {
-        animation: spin-slow 3s linear infinite;
-    }
-    .animate-spin-very-slow {
-        animation: spin-very-slow 20s linear infinite;
-    }
-    .animate-spin-reverse-slow {
-        animation: spin-reverse-slow 25s linear infinite;
-    }
-    .pulsing-dot {
-        animation: pulse-ring 2s ease-in-out infinite;
-    }
-    .particle {
-        position: absolute;
-        width: 4px;
-        height: 4px;
-        background: var(--accent-color);
-        border-radius: 50%;
-        opacity: 0.3;
-        --tx: calc(Math.random() * 100px - 50px);
-        --ty: calc(Math.random() * 100px - 50px);
-        animation: particle-float linear infinite;
-        box-shadow: 0 0 10px var(--accent-color);
-    }
   `;
 
   return (
@@ -376,6 +352,7 @@ export default function ArtistPage({
         <meta name="description" content={artist.short_bio || `${displayName} - אמן טראנס ישראלי`} />
       </Head>
       
+      {/* Dynamic Style injection */}
       <style jsx global>{customStyles}</style>
 
       <div className="min-h-screen trance-backdrop text-white relative" style={dynamicStyle}>
@@ -511,7 +488,7 @@ export default function ArtistPage({
                     <span className="text-white">Music Hub</span>
                 </h2>
                 
-                {/* --- BOOKING / LABEL CARD (Clickable & Logos) --- */}
+                {/* --- BOOKING / LABEL CARD (Premium Redesign) --- */}
                 <div className="glass-card-deep p-7 rounded-2xl glass-card-hover border-l-4 border-green-400">
                     <h3 className="text-2xl font-bold mb-5 flex items-center gap-3 text-white">
                         <FaBriefcase className="text-3xl text-cyan-400" />
@@ -522,8 +499,9 @@ export default function ArtistPage({
                         <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 hover:border-cyan-500/50 transition-all">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-medium text-gray-400">Booking Agency</span>
-                                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
-                                    <Image src="/images/sonic.jpg" alt="Sonic Booking" width={40} height={40} className="rounded-full" />
+                                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
+                                    {/* Using Image component for provided logo */}
+                                    <Image src="/images/sonic.jpg" alt="Sonic Booking" width={48} height={48} className="rounded-full object-cover" />
                                 </div>
                             </div>
                             <a href={`https://${artist.booking_company || 'sonic-booking.co'}.com`} target="_blank" className="text-2xl font-black text-cyan-300 hover:text-white transition flex items-center gap-2">
@@ -535,8 +513,9 @@ export default function ArtistPage({
                         <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 hover:border-purple-500/50 transition-all">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-medium text-gray-400">Record Label</span>
-                                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
-                                    <Image src="/images/shamanic.jpg" alt="Shamanic Tales" width={40} height={40} className="rounded-full" />
+                                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
+                                    {/* Using Image component for provided logo */}
+                                    <Image src="/images/shamanic.jpg" alt="Shamanic Tales" width={48} height={48} className="rounded-full object-cover" />
                                 </div>
                             </div>
                             <a href={`https://${artist.record_label || 'shamanictales'}.com`} target="_blank" className="text-2xl font-black text-purple-300 hover:text-white transition flex items-center gap-2">
@@ -565,7 +544,7 @@ export default function ArtistPage({
                           href={track.external_urls.spotify}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-spotify/10 hover:border-spotify/30 transition-all group relative overflow-hidden"
+                          className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-spotify/10 hover:border-spotify/30 transition-all group spotify-track-item relative overflow-hidden"
                         >
                             {/* Waveform Mock (CSS Animation) - Hidden by default */}
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-0">
@@ -631,7 +610,6 @@ export default function ArtistPage({
                 {hasSoundCloudContent ? (
                     <div className="glass-card-deep p-7 rounded-2xl glass-card-hover border-l-4 border-soundcloud">
                         <h3 className="text-2xl font-bold mb-5 flex items-center gap-3 text-soundcloud">
-                            {/* <VinylRecord isPlaying={true} /> */}
                             <FaSoundcloud className="text-3xl" />
                             <span className="relative flex items-center gap-2">
                                 Now Playing
@@ -662,10 +640,10 @@ export default function ArtistPage({
                 
               </div>
 
-              {/* COLUMN 2: MEDIA CENTER & DISCOGRAPHY - 2/3 WIDTH */}
+              {/* MEDIA CENTER COLUMN */}
               <div className="lg:col-span-2 space-y-10">
                 
-                {/* --- DISCOGRAPHY (Horizontal Scroll - Fixes Ugly Scroll) --- */}
+                {/* --- DISCOGRAPHY (Horizontal Scroll - Fixed) --- */}
                 {spotifyDiscography.length > 0 && (
                     <div className="glass-card-deep p-7 rounded-2xl">
                         <h2 className="text-4xl font-black mb-8 flex items-center gap-4 text-cyan-400">
@@ -812,12 +790,12 @@ export default function ArtistPage({
                             <FaInstagram className="text-3xl" />
                             Instagram Highlights
                         </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-5"> {/* Increased gap for better look */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                             {artist.instagram_reels.slice(0, 6).map((reelUrl, index) => (
                                 <div key={index} className="rounded-xl overflow-hidden shadow-2xl insta-gradient-border hover:scale-105 transition-transform">
                                     <iframe
                                         src={`${reelUrl.replace(/\/$/, '')}/embed`}
-                                        className="w-full h-[400px]" /* Increased height for better visibility */
+                                        className="w-full h-[400px]"
                                         frameBorder="0"
                                         scrolling="no"
                                         allowTransparency={true}
