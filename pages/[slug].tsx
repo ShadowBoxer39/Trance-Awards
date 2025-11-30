@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
-import Link from "next/link";
+import Link from "next/link"; 
 import Image from "next/image"; // Added Image import for logos 
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
