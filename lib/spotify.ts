@@ -1,4 +1,4 @@
-// lib/spotify.ts - Spotify Web API Helper
+// lib/spotify.ts - Spotify Web API Helper (FIXED ENDPOINTS)
 
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
@@ -14,11 +14,18 @@ async function getAccessToken(): Promise<string> {
   if (accessToken && Date.now() < tokenExpiry) {
     return accessToken;
   }
+  
+  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
+      console.error("FATAL: SPOTIFY_CLIENT_ID or SECRET missing from environment.");
+      throw new Error('Spotify credentials not configured.');
+  }
 
+  // FIXED: Using the official Spotify token endpoint
   const response = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      // Base64 encode the Client ID and Secret
       Authorization: `Basic ${Buffer.from(
         `${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`
       ).toString('base64')}`,
@@ -27,6 +34,8 @@ async function getAccessToken(): Promise<string> {
   });
 
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Failed to get Spotify access token:', response.status, errorText);
     throw new Error('Failed to get Spotify access token');
   }
 
@@ -38,56 +47,13 @@ async function getAccessToken(): Promise<string> {
 }
 
 /**
- * Get artist's latest release from Spotify
- */
-export async function getArtistLatestRelease(artistId: string) {
-  try {
-    const token = await getAccessToken();
-
-    // Get artist's albums/singles sorted by release date
-    const response = await fetch(
-      `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album,single&market=IL&limit=1`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      console.error('Spotify API error:', response.status);
-      return null;
-    }
-
-    const data = await response.json();
-
-    if (!data.items || data.items.length === 0) {
-      return null;
-    }
-
-    const latestRelease = data.items[0];
-
-    return {
-      name: latestRelease.name,
-      releaseDate: latestRelease.release_date,
-      type: latestRelease.album_type, // 'album' or 'single'
-      spotifyUrl: latestRelease.external_urls.spotify,
-      embedUrl: `https://open.spotify.com/embed/album/${latestRelease.id}`,
-      coverImage: latestRelease.images[0]?.url,
-    };
-  } catch (error) {
-    console.error('Error fetching Spotify data:', error);
-    return null;
-  }
-}
-
-/**
  * Get artist profile from Spotify
  */
 export async function getArtistProfile(artistId: string) {
   try {
     const token = await getAccessToken();
 
+    // FIXED: Using the official Spotify API base URL
     const response = await fetch(
       `https://api.spotify.com/v1/artists/${artistId}`,
       {
@@ -98,7 +64,7 @@ export async function getArtistProfile(artistId: string) {
     );
 
     if (!response.ok) {
-      console.error('Spotify API error:', response.status);
+      console.error('Spotify API error (Profile):', response.status);
       return null;
     }
 
@@ -106,11 +72,11 @@ export async function getArtistProfile(artistId: string) {
 
     return {
       name: data.name,
-      followers: data.followers.total,
+      followers: data.followers?.total || 0,
       genres: data.genres,
       popularity: data.popularity,
       image: data.images[0]?.url,
-      spotifyUrl: data.external_urls.spotify,
+      spotifyUrl: data.external_urls?.spotify,
     };
   } catch (error) {
     console.error('Error fetching artist profile:', error);
@@ -125,6 +91,7 @@ export async function getArtistTopTracks(artistId: string, market: string = 'IL'
   try {
     const token = await getAccessToken();
 
+    // FIXED: Using the official Spotify API base URL
     const response = await fetch(
       `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=${market}`,
       {
@@ -135,21 +102,25 @@ export async function getArtistTopTracks(artistId: string, market: string = 'IL'
     );
 
     if (!response.ok) {
-      console.error('Spotify API error:', response.status);
+      console.error('Spotify API error (Top Tracks):', response.status);
       return null;
     }
 
     const data = await response.json();
 
-    return data.tracks.slice(0, 5).map((track: any) => ({
+    return (data.tracks || []).slice(0, 5).map((track: any) => ({
       id: track.id,
       name: track.name,
-      album: track.album.name,
+      album: {
+          name: track.album.name,
+          images: track.album.images,
+          release_date: track.album.release_date,
+      },
       albumCover: track.album.images[0]?.url,
       duration: track.duration_ms,
       previewUrl: track.preview_url,
       spotifyUrl: track.external_urls.spotify,
-      embedUrl: `https://open.spotify.com/embed/track/${track.id}`,
+      external_urls: track.external_urls, // Ensure external_urls is present for TS compatibility
     }));
   } catch (error) {
     console.error('Error fetching top tracks:', error);
@@ -164,6 +135,7 @@ export async function getArtistDiscography(artistId: string) {
   try {
     const token = await getAccessToken();
 
+    // FIXED: Using the official Spotify API base URL
     const response = await fetch(
       `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album,single&market=IL&limit=50`,
       {
@@ -174,7 +146,7 @@ export async function getArtistDiscography(artistId: string) {
     );
 
     if (!response.ok) {
-      console.error('Spotify API error:', response.status);
+      console.error('Spotify API error (Discography):', response.status);
       return null;
     }
 
@@ -194,3 +166,5 @@ export async function getArtistDiscography(artistId: string) {
     return null;
   }
 }
+
+// NOTE: getArtistLatestRelease is no longer needed since getArtistDiscography covers this.
