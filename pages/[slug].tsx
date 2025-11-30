@@ -386,6 +386,13 @@ export default function ArtistPage({
   spotifyTopTracks,
   spotifyDiscography,
 }: ArtistPageProps) {
+  const totalTracksOut = spotifyDiscography.reduce(
+    (sum, release) =>
+      sum +
+      // adjust these property names to match your SpotifyDiscographyItem
+      (release.totalTracks ?? (release as any).total_tracks ?? 0),
+    0
+  );
   const displayName = artist.stage_name || artist.name;
   const accentColor = artist.primary_color || "#00e0ff";
     const bioText =
@@ -562,6 +569,19 @@ const totalAlbums = spotifyDiscography.filter(
             `${displayName} - אמן טראנס ישראלי פורץ דרך, סאונד חם ואנרגטי עם עומק מלודי.`
           }
         />
+         {/* --- Social Share Preview (OG + Twitter) --- */}
+  <meta property="og:title" content={`${displayName} | יוצאים לטראק`} />
+  <meta property="og:description" content={artist.short_bio || displayName} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={`https://www.tracktrip.co.il/${artist.slug}`} />
+  <meta property="og:image" content={artist.profile_photo_url} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="1200" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={`${displayName} | יוצאים לטראק`} />
+  <meta name="twitter:description" content={artist.short_bio || displayName} />
+  <meta name="twitter:image" content={artist.profile_photo_url} />
       </Head>
 
       <style jsx global>{customStyles}</style>
