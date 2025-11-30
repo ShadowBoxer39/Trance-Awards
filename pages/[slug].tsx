@@ -1185,39 +1185,46 @@ try {
     }
 
     // Spotify data
-    let spotifyTopTracks: SpotifyTrack[] = [];
-    let spotifyDiscography: SpotifyDiscographyItem[] = [];
-    let spotifyProfileImage = artist.profile_photo_url;
+   let spotifyTopTracks: SpotifyTrack[] = [];
+let spotifyDiscography: SpotifyDiscographyItem[] = [];
 
-    if (artist.spotify_artist_id) {
-      try {
-        const [profile, topTracks, discography] = await Promise.all([
-          getArtistProfile(artist.spotify_artist_id),
-          getArtistTopTracks(artist.spotify_artist_id),
-          getArtistDiscography(artist.spotify_artist_id),
-        ]);
+// Start with the image from the DB
+let spotifyProfileImage = artist.profile_photo_url || null;
 
-        if (profile?.image) {
-          spotifyProfileImage = profile.image;
-        }
-        if (Array.isArray(topTracks)) {
-          spotifyTopTracks = topTracks as unknown as SpotifyTrack[];
-        }
-        if (Array.isArray(discography)) {
-          const unique = (discography as SpotifyDiscographyItem[]).filter(
-            (item, index, self) =>
-              index ===
-              self.findIndex(
-                (t) =>
-                  t.name === item.name && t.releaseDate === item.releaseDate
-              )
-          );
-          spotifyDiscography = unique;
-        }
-      } catch (err) {
-        console.error("Spotify API error:", err);
-      }
+if (artist.spotify_artist_id) {
+  try {
+    const [profile, topTracks, discography] = await Promise.all([
+      getArtistProfile(artist.spotify_artist_id),
+      getArtistTopTracks(artist.spotify_artist_id),
+      getArtistDiscography(artist.spotify_artist_id),
+    ]);
+
+    // --- FIXED: Use Spotify image only if DB image is missing ---
+    if (!spotifyProfileImage && profile?.image) {
+      spotifyProfileImage = profile.image;
     }
+
+    if (Array.isArray(topTracks)) {
+      spotifyTopTracks = topTracks as unknown as SpotifyTrack[];
+    }
+
+    if (Array.isArray(discography)) {
+      const unique = (discography as SpotifyDiscographyItem[]).filter(
+        (item, index, self) =>
+          index ===
+          self.findIndex(
+            (t) =>
+              t.name === item.name && t.releaseDate === item.releaseDate
+          )
+      );
+
+      spotifyDiscography = unique;
+    }
+  } catch (err) {
+    console.error("Spotify API error:", err);
+  }
+}
+
 
     // Enrich festival sets with YouTube data
     let festivalSets: FestivalSet[] =
