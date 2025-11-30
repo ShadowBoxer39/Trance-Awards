@@ -1,4 +1,4 @@
-// pages/[slug].tsx – Artist page, reset + balanced sizing (Hebrew)
+// pages/[slug].tsx – Artist page (final polished version, Hebrew, balanced)
 
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
@@ -135,8 +135,13 @@ const formatLocation = (loc?: string) => {
 
 const getReleaseTypeLabel = (item: SpotifyDiscographyItem) => {
   const nameLower = item.name.toLowerCase();
+
+  // Explicit EP hints in the name
   if (nameLower.includes(" ep") || nameLower.endsWith("ep")) return "EP";
-  if (item.type === "single" && item.totalTracks >= 4) return "EP";
+
+  // Treat 3+ tracks on a "single" as EP for this page
+  if (item.type === "single" && item.totalTracks >= 3) return "EP";
+
   if (item.type === "album") return "אלבום";
   return "סינגל";
 };
@@ -260,6 +265,26 @@ export default function ArtistPage({
       background: linear-gradient(90deg, var(--accent-color), #0ea5e9);
       border-radius: 999px;
     }
+
+    /* HERO AREA */
+    .hero-header-bg {
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.25), transparent 60%),
+        radial-gradient(circle at 10% 120%, rgba(236,72,153,0.18), transparent 55%);
+    }
+    .hero-photo {
+      box-shadow: 0 0 0 0 rgba(56,189,248,0.5);
+      animation: heroPulse 4.5s ease-in-out infinite;
+      transition: transform 0.25s ease;
+    }
+    .hero-photo:hover {
+      transform: scale(1.03);
+    }
+    @keyframes heroPulse {
+      0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
+      50% { box-shadow: 0 0 30px 10px rgba(236,72,153,0.6); }
+      100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
+    }
   `;
 
   return (
@@ -287,11 +312,11 @@ export default function ArtistPage({
         </div>
 
         {/* HERO */}
-        <section className="py-10 px-6">
+        <section className="py-12 px-6 hero-header-bg">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8">
             {/* Photo */}
             <div className="order-1 md:order-2">
-              <div className="w-44 h-44 md:w-52 md:h-52 rounded-full overflow-hidden border-4 border-[var(--accent-color)] shadow-xl">
+              <div className="w-52 h-52 md:w-60 md:h-60 rounded-full overflow-hidden border-4 border-[var(--accent-color)] hero-photo">
                 {artist.profile_photo_url ? (
                   <img
                     src={artist.profile_photo_url}
@@ -324,33 +349,36 @@ export default function ArtistPage({
               </p>
 
               <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10 text-xs">
+                {/* total releases -> 'טראקים בחוץ' */}
                 <div className="flex gap-2 text-right border-r border-white/15 pr-4">
                   <div className="text-2xl font-bold text-cyan-300">
                     {totalReleases}
                   </div>
-                  <div className="text-gray-300">
-                    <FaMusic className="inline w-3 h-3 text-cyan-300 mb-0.5" />{" "}
-                    ריליזים
+                  <div className="text-xs text-gray-300 flex items-center gap-1">
+                    <FaMusic className="w-3 h-3 text-cyan-300" />
+                    <span>טראקים בחוץ</span>
                   </div>
                 </div>
 
+                {/* festivals */}
                 <div className="flex gap-2 text-right border-r border-white/15 pr-4">
                   <div className="text-2xl font-bold text-cyan-300">
                     {totalFestivals}
                   </div>
-                  <div className="text-gray-300">
-                    <FaStar className="inline w-3 h-3 text-yellow-400 mb-0.5" />{" "}
-                    פסטיבלים
+                  <div className="text-xs text-gray-300 flex items-center gap-1">
+                    <FaStar className="w-3 h-3 text-yellow-400" />
+                    <span>פסטיבלים</span>
                   </div>
                 </div>
 
+                {/* since */}
                 <div className="flex gap-2 text-right">
                   <div className="text-2xl font-bold text-cyan-300">
                     {firstMusicYear}
                   </div>
-                  <div className="text-gray-300">
-                    <FaCalendarAlt className="inline w-3 h-3 text-cyan-300 mb-0.5" />{" "}
-                    יוצר מאז
+                  <div className="text-xs text-gray-300 flex items-center gap-1">
+                    <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
+                    <span>יוצר מאז</span>
                   </div>
                 </div>
               </div>
@@ -734,13 +762,13 @@ export default function ArtistPage({
                   <div className="rounded-lg overflow-hidden border border-[var(--soundcloud-color)]/40">
                     <iframe
                       width="100%"
-                      height="200"
+                      height="320"
                       scrolling="no"
                       frameBorder="no"
                       allow="autoplay"
                       src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(
                         artist.soundcloud_profile_url || ""
-                      )}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true`}
+                      )}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=true&show_user=true&show_reposts=false&show_teaser=false&visual=false`}
                     />
                   </div>
                   <div className="mt-2 flex items-center justify-center gap-2 text-[var(--soundcloud-color)] text-xs">
