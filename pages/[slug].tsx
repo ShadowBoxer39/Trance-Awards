@@ -19,7 +19,6 @@ import {
   FaSoundcloud,
   FaSpotify,
   FaYoutube,
-  FaGlobe,
   FaPlay,
   FaMusic,
   FaCompactDisc,
@@ -218,6 +217,27 @@ export default function ArtistPage({
 }: ArtistPageProps) {
   const displayName = artist.stage_name || artist.name;
   const accentColor = artist.primary_color || "#00e0ff";
+    const bioText =
+    artist.short_bio ||
+    (artist as any).bio ||
+    "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק מלודי.";
+const getInstagramEmbedUrl = (url: string) => {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split("/").filter(Boolean);
+
+    if (
+      parts.length >= 2 &&
+      (parts[0] === "reel" || parts[0] === "p" || parts[0] === "tv")
+    ) {
+      return `https://www.instagram.com/${parts[0]}/${parts[1]}/embed`;
+    }
+
+    return `${url.replace(/\/$/, "")}/embed`;
+  } catch {
+    return `${url.replace(/\/$/, "")}/embed`;
+  }
+};
 
   const [activeTrackId, setActiveTrackId] = useState<string | null>(
     spotifyTopTracks[0]?.id ?? null
@@ -293,13 +313,6 @@ const totalAlbums = spotifyDiscography.filter(
       label: "פייסבוק",
       color: "text-blue-400",
       hover: "hover:text-blue-300",
-    },
-    {
-      icon: FaGlobe,
-      url: artist.website_url,
-      label: "אתר רשמי",
-      color: "text-purple-400",
-      hover: "hover:text-purple-300",
     },
   ].filter((link) => link.url);
 
@@ -424,8 +437,8 @@ const totalAlbums = spotifyDiscography.filter(
       </h1>
 
       <p className="text-gray-200 text-base md:text-lg mb-5 max-w-xl mx-auto md:mx-0 leading-relaxed">
-        {artist.short_bio ||
-          "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק ומלודיה."}
+        {bioText}
+
       </p>
 
       {/* Stats row */}
@@ -644,40 +657,33 @@ const totalAlbums = spotifyDiscography.filter(
               )}
 
               {/* INSTAGRAM REELS */}
-              {artist.instagram_reels &&
-                artist.instagram_reels.length > 0 && (
-                  <div className="glass-card p-4">
-                    <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-pink-400">
-                      <FaInstagram className="text-2xl" />
-                      היילייטס מאינסטגרם
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {artist.instagram_reels.slice(0, 6).map(
-                        (reelUrl, index) => {
-                          const cleaned = reelUrl
-                            .replace(/\?.*$/, "")
-                            .replace(/\/$/, "");
-                          const embedUrl = `${cleaned}/embed`;
-                          return (
-                            <div
-                              key={index}
-                              className="rounded-lg overflow-hidden border border-pink-400/40 hover:scale-105 transition-transform"
-                            >
-                              <iframe
-                                src={embedUrl}
-                                className="w-full h-[360px]"
-                                frameBorder="0"
-                                scrolling="no"
-                                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                                allowFullScreen
-                              />
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-                  </div>
-                )}
+           {artist.instagram_reels && artist.instagram_reels.length > 0 && (
+  <div className="glass-card p-4">
+    <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-pink-400">
+      <FaInstagram className="text-2xl" />
+      היילייטס מאינסטגרם
+    </h3>
+
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {artist.instagram_reels.slice(0, 6).map((reelUrl, index) => (
+        <div
+          key={index}
+          className="rounded-lg overflow-hidden border border-pink-400/40 hover:scale-105 transition-transform"
+        >
+          <iframe
+            src={getInstagramEmbedUrl(reelUrl)}
+            className="w-full h-[360px]"
+            frameBorder="0"
+            scrolling="no"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
             </div>
 
             {/* RIGHT: Representation + Spotify + SC + Contact */}
@@ -943,6 +949,14 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     if (artistError || !artist) {
       return { notFound: true };
     }
+
+     const artist = {
+      ...artistRow,
+      short_bio:
+        (artistRow as any).short_bio ??
+        (artistRow as any).bio ??
+        null,
+    };
 
     // Episodes for this artist
     const { data: episodeRows, error: episodeError } = await supabase
