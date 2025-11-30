@@ -1,4 +1,4 @@
-// pages/[slug].tsx - Hebrew Artist Page, balanced sizing
+// pages/[slug].tsx – Artist page, reset + balanced sizing (Hebrew)
 
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
@@ -171,8 +171,7 @@ export default function ArtistPage({
     artist.achievements?.find((a) => a.year)?.year || "2018";
   const totalReleases = spotifyDiscography.length;
   const totalFestivals = artist.festival_sets?.length || 0;
-
-  const hasSoundCloudContent = !!artist.soundcloud_profile_url;
+  const mainFestivalSet = artist.festival_sets?.[0];
 
   const socialLinks = [
     {
@@ -222,26 +221,25 @@ export default function ArtistPage({
   const primaryContactEmail =
     artist.booking_email || `booking@${artist.slug}.com`;
 
-  const mainFestivalSet = artist.festival_sets?.[0];
-
   const bookingLogo =
     artist.booking_name === "Sonic Booking" ? "/images/sonic.jpg" : null;
   const labelLogo =
     artist.label_name === "Shamanic Tales" ? "/images/shamanic.jpg" : null;
 
+  const hasSoundCloudContent = !!artist.soundcloud_profile_url;
+
   const customStyles = `
-    .glass-card-deep {
-      background: rgba(7,10,24,0.95);
-      backdrop-filter: blur(18px);
+    .glass-card {
+      background: rgba(7,10,24,0.96);
+      backdrop-filter: blur(16px);
       border: 1px solid rgba(255,255,255,0.07);
-      transition: all 0.25s ease;
+      border-radius: 0.75rem;
     }
-    .glass-card-hover:hover {
+    .glass-hover:hover {
       border-color: var(--accent-color);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.7);
-      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
     }
-    .gradient-hero-text {
+    .gradient-title {
       background: linear-gradient(90deg, var(--accent-color), #ec4899, #06b6d4);
       -webkit-background-clip: text;
       background-clip: text;
@@ -249,13 +247,13 @@ export default function ArtistPage({
     }
     .discography-scroll {
       scrollbar-width: thin;
-      scrollbar-color: rgba(148,163,184,0.7) transparent;
+      scrollbar-color: rgba(148,163,184,0.8) transparent;
     }
     .discography-scroll::-webkit-scrollbar {
       height: 6px;
     }
     .discography-scroll::-webkit-scrollbar-track {
-      background: rgba(15,23,42,0.7);
+      background: rgba(15,23,42,0.8);
       border-radius: 999px;
     }
     .discography-scroll::-webkit-scrollbar-thumb {
@@ -284,14 +282,14 @@ export default function ArtistPage({
         style={dynamicStyle}
       >
         {/* NAV */}
-        <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-2xl border-b border-white/10">
+        <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-lg border-b border-white/10">
           <Navigation currentPage="episodes" />
         </div>
 
         {/* HERO */}
         <section className="py-10 px-6">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8">
-            {/* photo */}
+            {/* Photo */}
             <div className="order-1 md:order-2">
               <div className="w-44 h-44 md:w-52 md:h-52 rounded-full overflow-hidden border-4 border-[var(--accent-color)] shadow-xl">
                 {artist.profile_photo_url ? (
@@ -302,7 +300,7 @@ export default function ArtistPage({
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
-                    <span className="text-6xl font-black">
+                    <span className="text-5xl font-black">
                       {displayName[0]}
                     </span>
                   </div>
@@ -310,13 +308,13 @@ export default function ArtistPage({
               </div>
             </div>
 
-            {/* text */}
+            {/* Text */}
             <div className="flex-1 text-center md:text-right order-2 md:order-1">
               <span className="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs mb-2">
                 {artist.genre || "Psytrance"}
               </span>
 
-              <h1 className="text-4xl sm:text-5xl font-extrabold mb-3 gradient-hero-text">
+              <h1 className="text-4xl md:text-5xl font-extrabold mb-3 gradient-title">
                 {displayName}
               </h1>
 
@@ -325,12 +323,12 @@ export default function ArtistPage({
                   "אמן טראנס ישראלי פורץ דרך, מפיק סאונד ייחודי המשלב אנרגיה גבוהה עם עומק ומלודיה."}
               </p>
 
-              <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10">
+              <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10 text-xs">
                 <div className="flex gap-2 text-right border-r border-white/15 pr-4">
                   <div className="text-2xl font-bold text-cyan-300">
                     {totalReleases}
                   </div>
-                  <div className="text-xs text-gray-300">
+                  <div className="text-gray-300">
                     <FaMusic className="inline w-3 h-3 text-cyan-300 mb-0.5" />{" "}
                     ריליזים
                   </div>
@@ -340,7 +338,7 @@ export default function ArtistPage({
                   <div className="text-2xl font-bold text-cyan-300">
                     {totalFestivals}
                   </div>
-                  <div className="text-xs text-gray-300">
+                  <div className="text-gray-300">
                     <FaStar className="inline w-3 h-3 text-yellow-400 mb-0.5" />{" "}
                     פסטיבלים
                   </div>
@@ -350,7 +348,7 @@ export default function ArtistPage({
                   <div className="text-2xl font-bold text-cyan-300">
                     {firstMusicYear}
                   </div>
-                  <div className="text-xs text-gray-300">
+                  <div className="text-gray-300">
                     <FaCalendarAlt className="inline w-3 h-3 text-cyan-300 mb-0.5" />{" "}
                     יוצר מאז
                   </div>
@@ -375,14 +373,14 @@ export default function ArtistPage({
           </div>
         </section>
 
-        {/* MAIN 2 COLUMN LAYOUT */}
+        {/* MAIN 2-COLUMN LAYOUT */}
         <section className="pb-10 px-6">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-8">
-            {/* LEFT COLUMN: MEDIA + DISCO + IG */}
-            <div className="space-y-6">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* LEFT: Media + Disco + IG */}
+            <div className="space-y-6 lg:col-span-2">
               {/* MEDIA CENTER */}
-              <div className="glass-card-deep rounded-2xl p-4">
-                <div className="flex items-center justify-between mb-4">
+              <div className="glass-card p-4">
+                <div className="flex items-center justify-between mb-3">
                   <h2 className="text-xl font-bold flex items-center gap-2">
                     <span>מרכז מדיה</span>
                     <FaBroadcastTower className="text-red-400" />
@@ -392,12 +390,12 @@ export default function ArtistPage({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Festival set */}
                   {mainFestivalSet && (
-                    <div className="rounded-xl bg-black/40 border border-white/10 p-3">
+                    <div className="bg-black/40 border border-white/10 rounded-lg p-3">
                       <h3 className="text-sm font-semibold mb-2 flex items-center gap-1 text-pink-200">
                         סט פסטיבל נבחר
                         <FaStar className="text-yellow-400 text-xs" />
                       </h3>
-                      <div className="aspect-video rounded-lg overflow-hidden border border-white/10 mb-2">
+                      <div className="aspect-video rounded-md overflow-hidden border border-white/10 mb-2">
                         <iframe
                           src={`https://www.youtube.com/embed/${mainFestivalSet.youtube_id}?rel=0&modestbranding=1`}
                           title={mainFestivalSet.title}
@@ -424,14 +422,14 @@ export default function ArtistPage({
                     </div>
                   )}
 
-                  {/* Episode */}
+                  {/* Track Trip episode */}
                   {episode && (
-                    <div className="rounded-xl bg-black/40 border border-white/10 p-3">
+                    <div className="bg-black/40 border border-white/10 rounded-lg p-3">
                       <h3 className="text-sm font-semibold mb-2 flex items-center gap-1 text-purple-200">
                         ראיון בתוכנית
                         <FaYoutube className="text-xs text-purple-300" />
                       </h3>
-                      <div className="aspect-video rounded-lg overflow-hidden border border-white/10 mb-2">
+                      <div className="aspect-video rounded-md overflow-hidden border border-white/10 mb-2">
                         <iframe
                           src={`https://www.youtube.com/embed/${episode.youtube_video_id}?rel=0&modestbranding=1`}
                           title={episode.title}
@@ -466,7 +464,7 @@ export default function ArtistPage({
 
               {/* DISCOGRAPHY */}
               {spotifyDiscography.length > 0 && (
-                <div className="glass-card-deep rounded-2xl p-4">
+                <div className="glass-card p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-xl font-bold flex items-center gap-2">
                       <span>דיסקוגרפיה</span>
@@ -482,24 +480,24 @@ export default function ArtistPage({
                           href={album.spotifyUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-44 flex-shrink-0 p-2 rounded-xl bg-black/40 border border-white/10 hover:border-cyan-400/70 hover:bg-black/70 transition group"
+                          className="w-44 flex-shrink-0 bg-black/40 border border-white/10 rounded-lg p-2 hover:bg-black/70 hover:border-[var(--accent-color)] transition group"
                         >
-                          <div className="relative rounded-lg overflow-hidden mb-2 shadow-lg h-40">
+                          <div className="relative h-40 rounded-md overflow-hidden mb-2 shadow-lg">
                             <img
                               src={album.coverImage}
                               alt={album.name}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
-                            <div className="absolute top-1 left-1 bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            <div className="absolute top-1 left-1 px-2 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-bold">
                               {new Date(album.releaseDate).getFullYear()}
                             </div>
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                              <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center">
-                                <FaPlay className="text-white text-sm ml-0.5" />
+                              <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                                <FaPlay className="text-white text-xs ml-0.5" />
                               </div>
                             </div>
                           </div>
-                          <div className="text-xs font-semibold text-white truncate">
+                          <div className="text-xs font-semibold truncate">
                             {album.name}
                           </div>
                           <div className="text-[11px] text-gray-400 mt-0.5">
@@ -525,10 +523,10 @@ export default function ArtistPage({
                 </div>
               )}
 
-              {/* INSTAGRAM */}
+              {/* INSTAGRAM REELS */}
               {artist.instagram_reels &&
                 artist.instagram_reels.length > 0 && (
-                  <div className="glass-card-deep rounded-2xl p-4">
+                  <div className="glass-card p-4">
                     <h3 className="text-xl font-bold mb-3 flex items-center gap-2 text-pink-400">
                       <FaInstagram className="text-2xl" />
                       היילייטס מאינסטגרם
@@ -538,11 +536,11 @@ export default function ArtistPage({
                         (reelUrl, index) => (
                           <div
                             key={index}
-                            className="rounded-xl overflow-hidden border border-pink-400/40 hover:scale-105 transition-transform"
+                            className="rounded-lg overflow-hidden border border-pink-400/40 hover:scale-105 transition-transform"
                           >
                             <iframe
                               src={`${reelUrl.replace(/\/$/, "")}/embed`}
-                              className="w-full h-72"
+                              className="w-full h-[320px]"
                               frameBorder="0"
                               scrolling="no"
                               allow="encrypted-media"
@@ -555,22 +553,22 @@ export default function ArtistPage({
                 )}
             </div>
 
-            {/* RIGHT COLUMN: REPRESENTATION + SPOTIFY + SC + CONTACT */}
-            <div className="space-y-6">
-              {/* Representation */}
+            {/* RIGHT: Representation + Spotify + SC + Contact */}
+            <div className="space-y-6 lg:col-span-1">
+              {/* REPRESENTATION */}
               <div>
                 <h2 className="text-xl font-bold mb-3 flex items-center gap-2 justify-center lg:justify-start">
                   <span>ייצוג</span>
                   <FaBriefcase className="text-cyan-400" />
                 </h2>
 
-                <div className="glass-card-deep rounded-2xl p-3 space-y-3">
+                <div className="glass-card p-3 space-y-3">
                   {/* Booking */}
                   {artist.booking_name || artist.booking_website ? (
-                    <div className="rounded-xl bg-black/60 border border-white/10 p-3 flex flex-col gap-2">
+                    <div className="bg-black/70 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
                       <div className="flex items-center gap-3">
                         {bookingLogo && (
-                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
                             <Image
                               src={bookingLogo}
                               alt={artist.booking_name || "Booking"}
@@ -599,7 +597,7 @@ export default function ArtistPage({
                           href={artist.booking_website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-cyan-400 hover:text-cyan-300 transition flex items-center justify-center gap-1"
+                          className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-cyan-400 hover:text-cyan-300 transition"
                         >
                           לאתר הסוכנות
                           <FaExternalLinkAlt className="w-3 h-3" />
@@ -610,10 +608,10 @@ export default function ArtistPage({
 
                   {/* Label */}
                   {artist.label_name || artist.label_website ? (
-                    <div className="rounded-xl bg-black/60 border border-white/10 p-3 flex flex-col gap-2">
+                    <div className="bg-black/70 border border-white/10 rounded-lg p-3 flex flex-col gap-2">
                       <div className="flex items-center gap-3">
                         {labelLogo && (
-                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
                             <Image
                               src={labelLogo}
                               alt={artist.label_name || "Label"}
@@ -637,7 +635,7 @@ export default function ArtistPage({
                           href={artist.label_website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-pink-400 hover:text-pink-300 transition flex items-center justify-center gap-1"
+                          className="w-full flex items-center justify-center gap-1 px-3 py-1.5 rounded-full border border-white/30 text-[11px] hover:border-pink-400 hover:text-pink-300 transition"
                         >
                           לאתר הלייבל
                           <FaExternalLinkAlt className="w-3 h-3" />
@@ -648,9 +646,9 @@ export default function ArtistPage({
                 </div>
               </div>
 
-              {/* Spotify Popular Tracks */}
+              {/* SPOTIFY TOP TRACKS */}
               {spotifyTopTracks.length > 0 && (
-                <div className="glass-card-deep rounded-2xl p-3 glass-card-hover border-l-4 border-[var(--spotify-color)]">
+                <div className="glass-card p-3 glass-hover border-l-4 border-[var(--spotify-color)]">
                   <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-[var(--spotify-color)]">
                     <FaSpotify className="text-xl" />
                     טראקים פופולריים
@@ -664,7 +662,7 @@ export default function ArtistPage({
                           key={track.id}
                           type="button"
                           onClick={() => setActiveTrackId(track.id)}
-                          className={`w-full flex items-center gap-3 p-2 rounded-lg border text-right spotify-track-item transition ${
+                          className={`w-full flex items-center gap-3 p-2 rounded-lg border text-right transition ${
                             isActive
                               ? "bg-spotify/20 border-spotify/70"
                               : "bg-white/5 border-white/10"
@@ -726,9 +724,9 @@ export default function ArtistPage({
                 </div>
               )}
 
-              {/* SoundCloud */}
+              {/* SOUNDCLOUD */}
               {hasSoundCloudContent && (
-                <div className="glass-card-deep rounded-2xl p-3 glass-card-hover border-l-4 border-[var(--soundcloud-color)]">
+                <div className="glass-card p-3 glass-hover border-l-4 border-[var(--soundcloud-color)]">
                   <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-[var(--soundcloud-color)]">
                     <FaSoundcloud className="text-xl" />
                     סטים אחרונים בסאונדקלאוד
@@ -752,8 +750,8 @@ export default function ArtistPage({
                 </div>
               )}
 
-              {/* Contact */}
-              <div className="glass-card-deep rounded-2xl p-3">
+              {/* CONTACT */}
+              <div className="glass-card p-3">
                 <h3 className="text-base font-semibold text-center mb-2">
                   פרטי קשר
                 </h3>
@@ -819,7 +817,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       return { notFound: true };
     }
 
-    // All episodes for this artist
+    // Episodes for this artist
     const { data: episodeRows, error: episodeError } = await supabase
       .from("artist_episodes")
       .select("episodes (*)")
@@ -862,6 +860,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         null;
     }
 
+    // Spotify data
     let spotifyTopTracks: SpotifyTrack[] = [];
     let spotifyDiscography: SpotifyDiscographyItem[] = [];
     let spotifyProfileImage = artist.profile_photo_url;
