@@ -44,7 +44,7 @@ interface Artist {
   instagram_url: string | null;
   facebook_url: string | null;
   soundcloud_url: string | null;
-  soundcloud_profile_url: string | null;
+  soundcloud_profile_url: string | null; // THIS FIELD IS USED FOR THE PLAYER
   spotify_url: string | null;
   youtube_url: string | null;
   website_url: string | null;
@@ -161,19 +161,12 @@ export default function ArtistPage({
     .text-accent-dynamic {
         color: var(--accent-color);
     }
-    .gradient-hero-text {
-      background: linear-gradient(90deg, var(--accent-color), #ec4899, #06b6d4);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: gradient-x 3s ease infinite; /* Use existing global animation */
+    .border-accent-dynamic {
+        border-color: var(--accent-color);
     }
-    /* Spotify Accent Color */
     .text-spotify { color: var(--spotify-color); }
-    /* SoundCloud Accent Color */
     .text-soundcloud { color: var(--soundcloud-color); }
 
-    /* Custom hover effect for Spotify tracks */
     .spotify-track-item:hover {
         background-color: rgba(29, 185, 84, 0.1);
         border-color: var(--spotify-color);
@@ -341,7 +334,8 @@ export default function ArtistPage({
                                 scrolling="no"
                                 frameBorder="no"
                                 allow="autoplay"
-                                src={artist.soundcloud_track_url || `https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloud_profile_url || '')}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true`}
+                                // FIX: Use the existing and valid soundcloud_profile_url for the embed source
+                                src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloud_profile_url || '')}&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true`}
                             />
                         </div>
                     </div>
@@ -352,7 +346,7 @@ export default function ArtistPage({
                   <div className="glass-card p-6 rounded-2xl">
                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white/80">
                       <FaCompactDisc className="text-2xl text-cyan-400" />
-                      דיסקוגרפיה ({spotifyDiscography.length})
+                      דיסקוגרפיה
                     </h3>
                     <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                         {spotifyDiscography.slice(0, 10).map((album, index) => (
@@ -366,7 +360,7 @@ export default function ArtistPage({
                                 <img
                                     src={album.coverImage}
                                     alt={album.name}
-                                    className="w-10 h-10 rounded-sm flex-shrink-0"
+                                    className="w-12 h-12 rounded-sm flex-shrink-0"
                                 />
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm font-medium text-white truncate">{album.name}</div>
@@ -511,7 +505,7 @@ export default function ArtistPage({
 }
 
 // ==========================================
-// SERVER-SIDE DATA FETCHING (Ensuring comprehensive data is passed)
+// SERVER-SIDE DATA FETCHING 
 // ==========================================
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
@@ -521,6 +515,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
+    // 1. Fetch artist
     const { data: artist, error: artistError } = await supabase
       .from('artists')
       .select('*')
@@ -532,6 +527,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       return { notFound: true };
     }
 
+    // 2. Fetch episode (most recent)
     const { data: episodesData } = await supabase
       .from('artist_episodes')
       .select(`episodes (*)`)
@@ -542,6 +538,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
     const episode = (episodesData?.episodes as Episode) || null;
 
+    // 3. Fetch Spotify data (All required data)
     let spotifyTopTracks: SpotifyTrack[] = [];
     let spotifyDiscography: SpotifyDiscographyItem[] = [];
     let spotifyProfile: { followers: number, popularity: number } | null = null;
@@ -566,10 +563,11 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         }
 
         if (topTracks && Array.isArray(topTracks)) {
-          spotifyTopTracks = topTracks as SpotifyTrack[];
+          // The returned topTracks have the shape expected in the interface
+          spotifyTopTracks = topTracks as unknown as SpotifyTrack[];
         }
 
-        if (discography && Array.isArray(discography)) {
+        if (discography && ArrayArray(discography)) {
             const uniqueDiscography = discography.filter((item, index, self) => 
                 index === self.findIndex((t) => (
                     t.name === item.name && t.releaseDate === item.releaseDate
@@ -583,6 +581,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       }
     }
 
+    // 4. Finalize artist data
     const artistWithData = {
       ...artist,
       profile_photo_url: spotifyProfileImage,
