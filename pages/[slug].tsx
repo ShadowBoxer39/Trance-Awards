@@ -1,6 +1,6 @@
-// pages/[slug].tsx - V9: Hyper-Glow Experience & Final Polish
+// pages/[slug].tsx - V10: Final Polish, Aura & Episode Fix
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { GetServerSideProps } from "next";
@@ -22,9 +22,9 @@ import {
   FaArrowRight,
   FaCalendarAlt,
   FaBriefcase,
-  FaEnvelope, // NEW
-  FaWhatsapp, // NEW
-  FaExternalLinkAlt, // NEW
+  FaEnvelope, 
+  FaWhatsapp, 
+  FaExternalLinkAlt, 
   FaExclamationTriangle
 } from 'react-icons/fa';
 
@@ -39,8 +39,8 @@ interface FestivalSet {
   festival: string;
   year: string;
   location: string;
-  duration_min?: number; // Mock data for better display
-  views?: number; // Mock data for better display
+  duration_min?: number; 
+  views?: number; 
 }
 
 interface Achievement {
@@ -143,7 +143,7 @@ const LiveSetCard: React.FC<{ set: FestivalSet, isFeatured: boolean }> = ({ set,
                 {/* LIVE BADGE / FEATURED BADGE */}
                 <div className={`absolute top-0 left-0 p-3 ${isFeatured ? 'bg-red-600/90' : 'bg-black/70'} rounded-br-lg`}>
                     <span className={`text-xs font-bold uppercase ${isFeatured ? 'text-white' : 'text-yellow-400'}`}>
-                        {isFeatured ? '🌟 FEATURED LIVE' : '🎥 SET'}
+                        {isFeatured ? '🚨 LIVE SET' : '🎥 PERFORMANCE'}
                     </span>
                 </div>
                 
@@ -222,6 +222,11 @@ export default function ArtistPage({
         50% { height: 60%; }
         75% { height: 40%; }
     }
+    @keyframes orbit {
+        0% { transform: translate(0, 0) rotate(0deg); opacity: 0.8; }
+        50% { transform: translate(100px, 50px) rotate(180deg); opacity: 0.5; }
+        100% { transform: translate(0, 0) rotate(360deg); opacity: 0.8; }
+    }
     .hero-glow {
       box-shadow: 0 0 40px 10px color-mix(in srgb, var(--accent-color) 40%, transparent);
       border-color: var(--accent-color);
@@ -276,6 +281,25 @@ export default function ArtistPage({
         width: 13rem; /* ~208px */
         height: 13rem; /* ~208px */
     }
+    .album-cover-container {
+        width: 200px; /* New explicit width for Discography */
+        height: 200px;
+    }
+    /* Background Animation Orbs (New) */
+    .animated-orb {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, var(--accent-color) 3%, transparent 70%);
+        opacity: 0.1;
+        filter: blur(50px);
+        animation: orbit 30s linear infinite alternate;
+        z-index: 0;
+        pointer-events: none;
+    }
+    #orb-1 { top: 10%; right: 5%; animation-delay: 0s; }
+    #orb-2 { bottom: 5%; left: 10%; animation-delay: -15s; }
+
   `;
 
   return (
@@ -288,14 +312,18 @@ export default function ArtistPage({
       {/* Dynamic Style injection */}
       <style jsx global>{customStyles}</style>
 
-      <div className="min-h-screen trance-backdrop text-white" style={dynamicStyle}>
+      <div className="min-h-screen trance-backdrop text-white relative" style={dynamicStyle}>
         
+        {/* Animated Background Orbs */}
+        <div id="orb-1" className="animated-orb" />
+        <div id="orb-2" className="animated-orb" />
+
         <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
           <Navigation currentPage="episodes" />
         </div>
 
         {/* HERO SECTION - HIGH IMPACT & FLATERING STATS */}
-        <section className="relative py-16 px-6 overflow-hidden">
+        <section className="relative py-16 px-6 overflow-hidden z-10">
           <div className="max-w-7xl mx-auto z-10 relative">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-10">
               
@@ -373,7 +401,7 @@ export default function ArtistPage({
         {/* MAIN CONTENT - MUSIC HUB & MEDIA CENTER */}
         <section className="py-8 px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8"> {/* Increased gap */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8">
               
               {/* COLUMN 1: MUSIC HUB (Spotify & SoundCloud) - 1/3 WIDTH */}
               <div className="lg:col-span-1 space-y-8">
@@ -393,7 +421,7 @@ export default function ArtistPage({
                         {/* Booking Company */}
                         <div className="flex justify-between items-center text-gray-300">
                             <span className="text-sm font-medium">בוקינג (ניהול הופעות):</span>
-                            <a href={`mailto:booking@${artist.booking_company || 'sonic-booking.co'}.il`} target="_blank" className="text-lg font-bold text-cyan-400 hover:text-white transition flex items-center gap-2">
+                            <a href={`https://${artist.booking_company || 'sonic-booking.co'}.com`} target="_blank" className="text-lg font-bold text-cyan-400 hover:text-white transition flex items-center gap-2">
                                 {artist.booking_company || 'Sonic Booking'} <FaExternalLinkAlt className="w-3 h-3 opacity-70" />
                             </a>
                         </div>
@@ -510,7 +538,7 @@ export default function ArtistPage({
                         </h2>
                         
                         <div className="horizontal-scroll-container">
-                            {spotifyDiscography.slice(0, 10).map((album, index) => (
+                            {spotifyDiscography.slice(0, 8).map((album, index) => ( // Limited to 8 for cleaner scroll
                                 <a
                                     key={album.id}
                                     href={album.spotifyUrl}
@@ -519,7 +547,7 @@ export default function ArtistPage({
                                     className="inline-block w-52 h-auto p-2 m-2 rounded-lg hover:bg-white/5 transition border border-white/10 hover:border-cyan-400/50 group"
                                     style={{ whiteSpace: 'normal' }}
                                 >
-                                    <div className="relative album-cover-size w-full">
+                                    <div className="relative album-cover-container w-full">
                                         <img
                                             src={album.coverImage}
                                             alt={album.name}
@@ -530,7 +558,7 @@ export default function ArtistPage({
                                         </div>
                                     </div>
 
-                                    <div className="text-lg font-bold text-white truncate">{album.name}</div>
+                                    <div className="text-xl font-bold text-white truncate">{album.name}</div>
                                     <div className="text-sm text-gray-400">{album.type === 'album' ? 'אלבום' : 'סינגל'}</div>
                                 </a>
                             ))}
@@ -547,66 +575,83 @@ export default function ArtistPage({
                     <span className="text-white">Media Center</span>
                 </h2>
 
-                {/* --- VIDEO HIGHLIGHT (Best Set OR Episode) --- */}
-                {(artist.festival_sets && artist.festival_sets.length > 0) || episode ? (
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
-                        {/* 1. BEST LIVE SET CARD */}
-                        {artist.festival_sets && artist.festival_sets.length > 0 && (
-                            <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
-                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
-                                    <FaStar className="text-3xl text-yellow-400" />
-                                    הסט החי המומלץ
-                                </h3>
-                                <LiveSetCard set={artist.festival_sets[0]} isFeatured={true} />
-                                
-                                {artist.festival_sets.length > 1 && (
-                                    <Link href={artist.youtube_url || '#'} target="_blank" className="text-red-400 text-sm mt-3 flex items-center justify-end gap-1 hover:underline">
-                                        עוד סטים ביוטיוב <FaArrowRight className="w-3 h-3" />
-                                    </Link>
-                                )}
-                            </div>
-                        )}
-
-                        {/* 2. TRACK TRIP EPISODE CARD */}
-                        {episode && (
-                            <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
-                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-purple-400">
-                                    <FaYoutube className="text-2xl" />
-                                    ראיון מלא ב-Track Trip
-                                </h3>
-                                <a
-                                    href={`https://www.youtube.com/watch?v=${episode.youtube_video_id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block relative rounded-xl overflow-hidden group transition-all"
-                                >
-                                    <div className="aspect-video bg-black relative">
-                                        <img
-                                            src={episode.thumbnail_url}
-                                            alt={episode.title}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
-                                        <div className="absolute top-4 right-4 bg-purple-600 px-3 py-1 rounded-full font-bold">
-                                            #{episode.episode_number || 'N/A'}
-                                        </div>
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-4">
-                                            <div className="font-bold text-white mb-1">{episode.clean_title || episode.title}</div>
-                                            <div className="text-sm text-gray-300">
-                                                {new Date(episode.published_at).toLocaleDateString('he-IL')}
-                                            </div>
-                                        </div>
-                                        <FaPlay className="absolute inset-0 m-auto w-16 h-16 text-white bg-purple-600/80 rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                {/* --- VIDEO HIGHLIGHTS (Best Set AND Episode) --- */}
+                {/* 1. EPISODE CARD (ALWAYS SHOW IF AVAILABLE) */}
+                {episode && (
+                    <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-purple-400">
+                            <FaYoutube className="text-2xl" />
+                            ראיון מלא ב-Track Trip
+                        </h3>
+                        <a
+                            href={`https://www.youtube.com/watch?v=${episode.youtube_video_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block relative rounded-xl overflow-hidden group transition-all"
+                        >
+                            <div className="aspect-video bg-black relative">
+                                <img
+                                    src={episode.thumbnail_url}
+                                    alt={episode.title}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                                <div className="absolute top-4 right-4 bg-purple-600 px-3 py-1 rounded-full font-bold">
+                                    #{episode.episode_number || 'N/A'}
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-4">
+                                    <div className="font-bold text-white mb-1">{episode.clean_title || episode.title}</div>
+                                    <div className="text-sm text-gray-300">
+                                        {new Date(episode.published_at).toLocaleDateString('he-IL')}
                                     </div>
-                                </a>
+                                </div>
+                                <FaPlay className="absolute inset-0 m-auto w-16 h-16 text-white bg-purple-600/80 rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="glass-card-deep p-6 rounded-2xl text-center text-gray-400">
-                        <FaExclamationTriangle className="text-5xl mx-auto mb-3 text-red-500" />
-                        <p>אין נתוני וידאו זמינים כרגע ל-Media Center.</p>
+                        </a>
                     </div>
                 )}
+
+                {/* 2. BEST LIVE SET CARD (FIRST SET) */}
+                {artist.festival_sets && artist.festival_sets.length > 0 && (
+                    <div className="glass-card-deep p-6 rounded-2xl glass-card-hover">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
+                            <FaStar className="text-3xl text-yellow-400" />
+                            הסט החי המומלץ
+                        </h3>
+                        <LiveSetCard set={artist.festival_sets[0]} isFeatured={true} />
+                    </div>
+                )}
+
+                {/* 3. REMAINING SETS (LIST) */}
+                {artist.festival_sets && artist.festival_sets.length > 1 && (
+                    <div className="glass-card-deep p-6 rounded-2xl">
+                      <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-400">
+                          <FaPlay className="text-2xl" />
+                          הופעות נוספות
+                      </h3>
+                      <div className="space-y-3">
+                        {artist.festival_sets.slice(1).map((set, index) => (
+                          <a
+                            key={index}
+                            href={`https://www.youtube.com/watch?v=${set.youtube_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition border border-white/5 hover:border-red-400/30"
+                          >
+                              <img
+                                  src={set.thumbnail}
+                                  alt={set.title}
+                                  className="w-16 h-12 object-cover rounded-md flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                  <div className="font-semibold text-lg text-white truncate">{set.title}</div>
+                                  <div className="text-xs text-gray-400">{set.festival} • {set.year}</div>
+                              </div>
+                              <FaYoutube className="text-red-500 flex-shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* NEW: INSTAGRAM REELS SECTION */}
                   {artist.instagram_reels && artist.instagram_reels.length > 0 && (
@@ -615,12 +660,12 @@ export default function ArtistPage({
                             <FaInstagram className="text-2xl" />
                             רגעים נבחרים (Instagram Reels)
                         </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4"> {/* Changed to 3 columns on desktop */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {artist.instagram_reels.slice(0, 6).map((reelUrl, index) => (
                                 <div key={index} className="rounded-xl overflow-hidden shadow-lg insta-gradient-border">
                                     <iframe
                                         src={`${reelUrl.replace(/\/$/, '')}/embed`}
-                                        className="w-full h-[350px]" /* Reduced height for 3 columns */
+                                        className="w-full h-[350px]"
                                         frameBorder="0"
                                         scrolling="no"
                                         allowTransparency={true}
@@ -745,7 +790,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     const artistWithData = {
       ...artist,
       profile_photo_url: spotifyProfileImage,
-      festival_sets: (artist.festival_sets as FestivalSet[]) || [], // Ensure type is correct
+      festival_sets: (artist.festival_sets as FestivalSet[]) || [], 
       instagram_reels: artist.instagram_reels || [],
       booking_company: artist.booking_company || "Sonic Booking",
       record_label: artist.record_label || "Shamanic Tales",
