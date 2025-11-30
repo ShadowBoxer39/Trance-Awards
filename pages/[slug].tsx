@@ -617,7 +617,7 @@ const totalAlbums = spotifyDiscography.filter(
   {/* total releases -> 'טראקים בחוץ' */}
   <div className="flex gap-2 text-right border-r border-white/15 pr-4">
     <div className="text-2xl font-bold text-cyan-300">
-      {totalReleases}
+      {totalTracksOut}
     </div>
     <div className="text-xs text-gray-300 flex items-center gap-1">
       <FaMusic className="w-3 h-3 text-cyan-300" />
