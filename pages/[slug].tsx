@@ -441,29 +441,31 @@ const totalAlbums = spotifyDiscography.filter(
           </div>
         </div>
 
-        {/* albums */}
-        <div className="flex gap-2 text-right border-r border-white/15 pr-4">
-          <div className="text-2xl font-bold text-cyan-300">
-            {totalAlbums}
-          </div>
-          <div className="text-xs text-gray-300 flex items-center gap-1">
-            <FaStar className="w-3 h-3 text-yellow-400" />
-            <span>אלבומים</span>
-          </div>
-        </div>
+      {/* albums – only if > 0 */}
+{totalAlbums > 0 && (
+  <div className="flex gap-2 text-right border-r border-white/15 pr-4">
+    <div className="text-2xl font-bold text-cyan-300">
+      {totalAlbums}
+    </div>
+    <div className="text-xs text-gray-300 flex items-center gap-1">
+      <FaStar className="w-3 h-3 text-yellow-400" />
+      <span>אלבומים</span>
+    </div>
+  </div>
 
         {/* since (only if we have year in DB) */}
-        {firstMusicYear && (
-          <div className="flex gap-2 text-right">
-            <div className="text-2xl font-bold text-cyan-300">
-              {firstMusicYear}
-            </div>
-            <div className="text-xs text-gray-300 flex items-center gap-1">
-              <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
-              <span>יוצר מאז</span>
-            </div>
-          </div>
-        )}
+      {firstMusicYear && (
+  <div className="flex gap-2 text-right">
+    <div className="text-xs text-gray-300 flex items-center gap-1">
+      <span>יוצר מאז</span>
+      <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
+    </div>
+    <div className="text-2xl font-bold text-cyan-300">
+      {firstMusicYear}
+    </div>
+  </div>
+)}
+
       </div>
 
       {/* Social icons */}
