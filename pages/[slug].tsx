@@ -367,6 +367,38 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
   );
 };
 
+// ---------- SEO helpers ----------
+
+const buildMetaTitle = (artist: Artist) => {
+  const displayName = artist.stage_name || artist.name;
+  const genre = artist.genre || "Psytrance";
+  // keep it short but rich in keywords (≈ 55–60 chars)
+  return `${displayName} – ${genre} artist | TrackTrip`;
+};
+
+const buildMetaDescription = (
+  artist: Artist,
+  totalTracksOut: number,
+  totalAlbums: number,
+  firstMusicYear: number | null
+) => {
+  const displayName = artist.stage_name || artist.name;
+  const genre = artist.genre || "פסייטראנס";
+  const yearPart = firstMusicYear ? ` יוצר מאז ${firstMusicYear},` : "";
+  const albumsPart =
+    totalAlbums > 0 ? ` ${totalAlbums} אלבומים ו` : "";
+  const tracksPart =
+    totalTracksOut > 0 ? ` יותר מ-${totalTracksOut} טראקים בחוץ,` : "";
+
+  const baseBio =
+    artist.short_bio ||
+    (artist as any).bio ||
+    `${displayName} הוא אמן ${genre} ישראלי.`;
+
+  // keep under ~155 chars where possible
+  return `${displayName} – אמן ${genre} ישראלי.${yearPart}${tracksPart}${albumsPart} בדף זה: ביוגרפיה, סטים, דיסקוגרפיה וקישורים רשמיים. ${baseBio}`;
+};
+
 
 
 
@@ -437,6 +469,15 @@ const totalReleases = spotifyDiscography.length;
 const totalAlbums = spotifyDiscography.filter(
   (item) => item.type === "album"
 ).length;
+
+  const seoTitle = buildMetaTitle(artist);
+const seoDescription = buildMetaDescription(
+  artist,
+  totalTracksOut,
+  totalAlbums,
+  firstMusicYear
+);
+
 
 
   const socialLinks = [
@@ -580,29 +621,59 @@ const totalAlbums = spotifyDiscography.filter(
 
   return (
     <>
-      <Head>
-        <title>{displayName} | יוצאים לטראק</title>
-        <meta
-          name="description"
-          content={
-            artist.short_bio ||
-            `${displayName} - אמן טראנס ישראלי פורץ דרך, סאונד חם ואנרגטי עם עומק מלודי.`
-          }
-        />
-         {/* --- Social Share Preview (OG + Twitter) --- */}
-  <meta property="og:title" content={`${displayName} | יוצאים לטראק`} />
-  <meta property="og:description" content={artist.short_bio || displayName} />
+     <Head>
+  <title>{seoTitle}</title>
+  <meta name="description" content={seoDescription} />
+
+  {/* --- Canonical URL --- */}
+  <link
+    rel="canonical"
+    href={`https://www.tracktrip.co.il/${artist.slug}`}
+  />
+
+  {/* --- Social Share Preview (OG + Twitter) --- */}
+  <meta property="og:title" content={seoTitle} />
+  <meta property="og:description" content={seoDescription} />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content={`https://www.tracktrip.co.il/${artist.slug}`} />
-  <meta property="og:image" content={artist.profile_photo_url} />
+  <meta
+    property="og:url"
+    content={`https://www.tracktrip.co.il/${artist.slug}`}
+  />
+  <meta property="og:image" content={artist.profile_photo_url || ""} />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="1200" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content={`${displayName} | יוצאים לטראק`} />
-  <meta name="twitter:description" content={artist.short_bio || displayName} />
-  <meta name="twitter:image" content={artist.profile_photo_url} />
-      </Head>
+  <meta name="twitter:title" content={seoTitle} />
+  <meta name="twitter:description" content={seoDescription} />
+  <meta name="twitter:image" content={artist.profile_photo_url || ""} />
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "MusicGroup",
+      name: displayName,
+      genre: artist.genre || "Psytrance",
+      url: `https://www.tracktrip.co.il/${artist.slug}`,
+      image: artist.profile_photo_url || undefined,
+      foundingLocation: "Israel",
+      foundingDate: firstMusicYear ? `${firstMusicYear}-01-01` : undefined,
+      sameAs: [
+        artist.spotify_url,
+        artist.youtube_url,
+        artist.instagram_url,
+        artist.facebook_url,
+        artist.soundcloud_profile_url,
+        artist.website_url,
+      ].filter(Boolean),
+    }),
+  }}
+/>
+       
+</Head>
+
 
       <style jsx global>{customStyles}</style>
 
@@ -631,7 +702,7 @@ const totalAlbums = spotifyDiscography.filter(
           {artist.profile_photo_url ? (
             <img
               src={artist.profile_photo_url}
-              alt={displayName}
+              alt={`${displayName} artist photo`}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -661,7 +732,7 @@ const totalAlbums = spotifyDiscography.filter(
       </div>
 
       <h1 className="hero-tag-line text-4xl md:text-5xl lg:text-6xl font-extrabold mb-3 gradient-title">
-        {displayName}
+        {displayName} <span className="sr-only">Psytrance Artist</span>
       </h1>
 
       <p className="text-gray-200 text-base md:text-lg mb-6 max-w-xl mx-auto md:mx-0 leading-relaxed">
@@ -863,7 +934,7 @@ const totalAlbums = spotifyDiscography.filter(
                             <div className="relative h-36 rounded-md overflow-hidden mb-2 shadow-lg">
                               <img
                                 src={album.coverImage}
-                                alt={album.name}
+                               alt={`${album.name} – עטיפת אלבום של ${displayName}`}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
                               <div className="absolute top-1 left-1 px-2 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-bold">
