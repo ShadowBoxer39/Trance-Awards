@@ -12,7 +12,7 @@ export default function CountdownTimer() {
 
   useEffect(() => {
     // Set deadline to December 1st, 2025 at 23:59:59
-    const deadline = new Date("2025-12-01T23:59:59").getTime();
+    const deadline = new Date("2025-12-05T23:59:59").getTime();
 
     const updateTimer = () => {
       const now = new Date().getTime();
