@@ -527,26 +527,52 @@ const totalAlbums = spotifyDiscography.filter(
       border-radius: 999px;
     }
 
-    /* HERO AREA */
+       /* HERO AREA */
     .hero-header-bg {
       background:
-        radial-gradient(circle at top, rgba(56,189,248,0.25), transparent 60%),
-        radial-gradient(circle at 10% 120%, rgba(236,72,153,0.18), transparent 55%);
+        radial-gradient(circle at top left, rgba(56,189,248,0.28), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(236,72,153,0.22), transparent 60%),
+        radial-gradient(circle at top right, rgba(94,234,212,0.18), transparent 55%);
     }
+
     .hero-photo {
       box-shadow: 0 0 0 0 rgba(56,189,248,0.5);
       animation: heroPulse 4.5s ease-in-out infinite;
-      transition: transform 0.25s ease;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
     .hero-photo:hover {
-      transform: scale(1.03);
+      transform: scale(1.04);
+      box-shadow: 0 0 40px rgba(56,189,248,0.7);
     }
+
+    .hero-tag-line {
+      position: relative;
+    }
+    .hero-tag-line::after {
+      content: "";
+      position: absolute;
+      inset-inline-end: 0;
+      bottom: -6px;
+      width: 90px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent-color), #ec4899);
+      opacity: 0.9;
+    }
+
+    .hero-stat-card {
+      border-radius: 999px;
+      background: radial-gradient(circle at 0% 0%, rgba(15,23,42,0.9), rgba(15,23,42,0.6));
+      border: 1px solid rgba(148,163,184,0.4);
+      box-shadow: 0 10px 30px rgba(15,23,42,0.8);
+    }
+
     @keyframes heroPulse {
       0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
-      50% { box-shadow: 0 0 30px 10px rgba(236,72,153,0.6); }
+      50% { box-shadow: 0 0 32px 8px rgba(236,72,153,0.6); }
       100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
     }
-  `;
+
 
   return (
     <>
@@ -585,102 +611,129 @@ const totalAlbums = spotifyDiscography.filter(
           <Navigation currentPage="episodes" />
         </div>
 
-   {/* HERO */}
-<section className="py-12 px-6 hero-header-bg">
-  <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8">
+  {/* HERO */}
+<section className="relative py-12 px-6 hero-header-bg overflow-hidden">
+  {/* soft background orbs */}
+  <div className="pointer-events-none absolute -right-32 -top-32 w-72 h-72 rounded-full bg-cyan-500/20 blur-3xl" />
+  <div className="pointer-events-none absolute -left-32 bottom-0 w-80 h-80 rounded-full bg-pink-500/15 blur-3xl" />
+
+  <div className="relative max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-stretch gap-10">
     {/* Photo */}
-    <div className="order-1 md:order-2">
-      <div className="w-52 h-52 md:w-60 md:h-60 rounded-full overflow-hidden border-4 border-[var(--accent-color)] hero-photo">
-        {artist.profile_photo_url ? (
-          <img
-            src={artist.profile_photo_url}
-            alt={displayName}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
-            <span className="text-5xl font-black">
-              {displayName[0]}
-            </span>
-          </div>
-        )}
+    <div className="order-1 md:order-2 flex justify-center md:justify-end flex-1 md:flex-none">
+      <div className="relative">
+        {/* subtle glowing ring behind the avatar */}
+        <div className="absolute inset-[-14px] rounded-full bg-gradient-to-tr from-cyan-500/60 via-purple-500/60 to-pink-500/60 blur-xl opacity-80" />
+        <div className="w-52 h-52 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-[var(--accent-color)] hero-photo relative">
+          {artist.profile_photo_url ? (
+            <img
+              src={artist.profile_photo_url}
+              alt={displayName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center">
+              <span className="text-5xl font-black">
+                {displayName[0]}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
 
-    {/* Text */}
+    {/* Text + stats */}
     <div className="flex-1 text-center md:text-right order-2 md:order-1">
-      <span className="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs mb-2">
-        {artist.genre || "Psytrance"}
-      </span>
+      {/* genre pill + “Psytrance artist” */}
+      <div className="flex flex-wrap justify-center md:justify-end gap-2 mb-3">
+        <span className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[11px] uppercase tracking-wide">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          {artist.genre || "Psytrance"}
+        </span>
+        {firstMusicYear && (
+          <span className="inline-flex items-center gap-2 px-3 py-1 bg-black/40 border border-white/15 rounded-full text-[11px]">
+            יוצר מאז {firstMusicYear}
+          </span>
+        )}
+      </div>
 
-      <h1 className="text-4xl md:text-5xl font-extrabold mb-3 gradient-title">
+      <h1 className="hero-tag-line text-4xl md:text-5xl lg:text-6xl font-extrabold mb-3 gradient-title">
         {displayName}
       </h1>
 
-      <p className="text-gray-200 text-base md:text-lg mb-5 max-w-xl mx-auto md:mx-0 leading-relaxed">
+      <p className="text-gray-200 text-base md:text-lg mb-6 max-w-xl mx-auto md:mx-0 leading-relaxed">
         {bioText}
-
       </p>
 
-      {/* Stats row */}
-    <div className="flex flex-wrap justify-center md:justify-end gap-6 pt-4 border-t border-white/10 text-xs">
-  {/* total releases -> 'טראקים בחוץ' */}
-  <div className="flex gap-2 text-right border-r border-white/15 pr-4">
-    <div className="text-2xl font-bold text-cyan-300">
-      {totalTracksOut}
-    </div>
-    <div className="text-xs text-gray-300 flex items-center gap-1">
-      <FaMusic className="w-3 h-3 text-cyan-300" />
-      <span>טראקים בחוץ</span>
-    </div>
-  </div>
+      {/* Stats as chips */}
+      <div className="flex flex-wrap justify-center md:justify-end gap-4 mb-6">
+        <div className="hero-stat-card px-4 py-2 flex items-center gap-2 text-xs">
+          <div className="text-2xl font-bold text-cyan-300 leading-none">
+            {totalTracksOut}
+          </div>
+          <div className="text-[11px] text-gray-300 flex items-center gap-1">
+            <FaMusic className="w-3 h-3 text-cyan-300" />
+            <span>טראקים בחוץ</span>
+          </div>
+        </div>
 
-  {/* albums – only if > 0 */}
-  {totalAlbums > 0 && (
-    <div className="flex gap-2 text-right border-r border-white/15 pr-4">
-      <div className="text-2xl font-bold text-cyan-300">
-        {totalAlbums}
+        {totalAlbums > 0 && (
+          <div className="hero-stat-card px-4 py-2 flex items-center gap-2 text-xs">
+            <div className="text-2xl font-bold text-cyan-300 leading-none">
+              {totalAlbums}
+            </div>
+            <div className="text-[11px] text-gray-300 flex items-center gap-1">
+              <FaStar className="w-3 h-3 text-yellow-400" />
+              <span>אלבומים</span>
+            </div>
+          </div>
+        )}
       </div>
-      <div className="text-xs text-gray-300 flex items-center gap-1">
-        <FaStar className="w-3 h-3 text-yellow-400" />
-        <span>אלבומים</span>
-      </div>
-    </div>
-  )}
 
-  {/* since (only if we have year in DB) */}
-  {firstMusicYear && (
-    <div className="flex gap-2 text-right">
-      <div className="text-xs text-gray-300 flex items-center gap-1">
-        <span>יוצר מאז</span>
-        <FaCalendarAlt className="w-3 h-3 text-cyan-300" />
-      </div>
-      <div className="text-2xl font-bold text-cyan-300">
-        {firstMusicYear}
-      </div>
-    </div>
-  )}
-</div>
+      {/* CTAs & socials */}
+      <div className="flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-6 justify-center md:justify-end">
+        <div className="flex gap-3">
+          {artist.spotify_url && (
+            <a
+              href={artist.spotify_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/90 hover:bg-emerald-400 text-xs font-semibold text-black shadow-lg shadow-emerald-500/30 transition"
+            >
+              <FaSpotify className="w-4 h-4" />
+              האזנה בספוטיפיי
+            </a>
+          )}
+          {primaryContactEmail && (
+            <a
+              href={`mailto:${primaryContactEmail}`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/25 bg-black/40 hover:bg-white/10 text-xs font-semibold text-white transition"
+            >
+              <FaEnvelope className="w-4 h-4 text-cyan-300" />
+              יצירת קשר
+            </a>
+          )}
+        </div>
 
-
-      {/* Social icons */}
-      <div className="flex flex-wrap justify-center md:justify-end gap-3 mt-5">
-        {socialLinks.map((link, index) => (
-          <a
-            key={index}
-            href={link.url!}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`text-2xl ${link.color} ${link.hover} transition-transform hover:scale-110`}
-            title={link.label}
-          >
-            <link.icon className="w-5 h-5" />
-          </a>
-        ))}
+        {/* Social icons */}
+        <div className="flex flex-wrap justify-center md:justify-end gap-3">
+          {socialLinks.map((link, index) => (
+            <a
+              key={index}
+              href={link.url!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`text-2xl ${link.color} ${link.hover} transition-transform hover:scale-110`}
+              title={link.label}
+            >
+              <link.icon className="w-5 h-5" />
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   </div>
 </section>
+
 
         {/* MAIN 2-COLUMN LAYOUT */}
         <section className="pb-10 px-6">
