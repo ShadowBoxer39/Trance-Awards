@@ -485,7 +485,10 @@ const totalAlbums = spotifyDiscography.filter(
   ].filter((link) => link.url);
 
   const primaryContactEmail =
-    artist.booking_email || `booking@${artist.slug}.com`;
+  artist.booking_agency_email ||
+  artist.booking_email ||
+  artist.management_email ||
+  `booking@${artist.slug}.com`;
 
   const bookingLogo =
     artist.booking_name === "Sonic Booking" ? "/images/sonic.jpg" : null;
