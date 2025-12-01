@@ -236,7 +236,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
   if (!visibleItems.length) return null;
 
   const stepAngle = 360 / visibleItems.length;
-  const radius = 300; // balanced radius so cards stay inside the card
+  const radius = 240; // balanced radius so cards stay inside the card
 
   const handleNext = () =>
     setActiveIndex((prev) => (prev + 1) % visibleItems.length);
@@ -278,7 +278,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
             transition
           "
         >
-          <FaChevronRight className="text-cyan-300" />
+          <FaChevronLeft className="text-cyan-300" />
         </button>
 
         {/* חץ ימין (קדימה) */}
@@ -293,14 +293,14 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
             transition
           "
         >
-          <FaChevronLeft className="text-cyan-300" />
+          <FaChevronRight className="text-cyan-300" />
         </button>
 
         <div
           className="absolute inset-0 mx-auto"
           style={{
             transformStyle: "preserve-3d",
-            transform: "translateX(-90px)", // תשאיר כמו שהוא – מרכז טוב
+            // תשאיר כמו שהוא – מרכז טוב
           }}
         >
           {visibleItems.map((release, index) => {
@@ -310,11 +310,10 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
             return (
               <div
                 key={release.id}
-                className="
+               className="
   absolute left-1/2 top-1/2
-  transition-all duration-300
-  hover:scale-[1.08]
-  hover:drop-shadow-[0_0_25px_var(--accent-color)]
+  transition-transform duration-500
+  hover:scale-[1.03]
 "
                 style={{
                   transformStyle: "preserve-3d",
@@ -325,18 +324,18 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
                     translateY(-50%)
                   `,
                   transition:
-                    "transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+                    transition: "transform 800ms cubic-bezier(0.33, 1, 0.68, 1)",
                 }}
               >
                 <a
                   href={release.spotifyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`rounded-3xl overflow-hidden border bg-black/70 backdrop-blur-sm w-[170px] md:w-[200px] block cursor-pointer transition ${
-                    isActive
-                      ? "border-cyan-400 shadow-[0_0_40px_rgba(34,211,238,0.6)] scale-105"
-                      : "border-white/10 opacity-70 scale-95"
-                  }`}
+                 className={`rounded-3xl overflow-hidden border bg-black/70 backdrop-blur-sm w-[170px] md:w-[200px] block cursor-pointer transition-transform transition-shadow duration-500 ${
+  isActive
+    ? "border-cyan-400 shadow-[0_0_24px_rgba(34,211,238,0.45)] scale-[1.03]"
+    : "border-white/10 opacity-70 scale-[0.96]"
+}`}
                 >
                   <div className="relative w-full aspect-square">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
