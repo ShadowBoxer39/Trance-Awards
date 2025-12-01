@@ -228,23 +228,18 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
 
   // limit how many items we put on the ring
-  const visibleItems = useMemo(
-    () => items.slice(0, 12),
-    [items]
-  );
+  const visibleItems = useMemo(() => items.slice(0, 8), [items]);
 
   if (!visibleItems.length) return null;
 
   const stepAngle = 360 / visibleItems.length;
-  const radius = 240; // balanced radius so cards stay inside the card
+  const radius = 240; // slightly smaller radius – less warping
 
   const handleNext = () =>
     setActiveIndex((prev) => (prev + 1) % visibleItems.length);
 
   const handlePrev = () =>
-    setActiveIndex((prev) =>
-      (prev - 1 + visibleItems.length) % visibleItems.length
-    );
+    setActiveIndex((prev) => (prev - 1 + visibleItems.length) % visibleItems.length);
 
   const current = visibleItems[activeIndex];
 
@@ -252,13 +247,9 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
     <div className="relative w-full flex flex-col items-center py-4">
       {/* Controls + current title */}
       <div className="flex items-center justify-between w-full mb-3">
-    
-
         <div className="text-sm text-white/80 text-center px-2 truncate">
           {current?.name}
         </div>
-
-      
       </div>
 
       {/* 3D ring */}
@@ -266,7 +257,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
         style={{ perspective: "1600px" }}
         className="relative w-full h-[320px] md:h-[380px] overflow-visible flex justify-center"
       >
-        {/* חץ שמאל (הולך אחורה) – יושב על הקרוסלה */}
+        {/* Left arrow – previous */}
         <button
           onClick={handlePrev}
           className="
@@ -281,7 +272,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
           <FaChevronLeft className="text-cyan-300" />
         </button>
 
-        {/* חץ ימין (קדימה) */}
+        {/* Right arrow – next */}
         <button
           onClick={handleNext}
           className="
@@ -300,7 +291,6 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
           className="absolute inset-0 mx-auto"
           style={{
             transformStyle: "preserve-3d",
-            // תשאיר כמו שהוא – מרכז טוב
           }}
         >
           {visibleItems.map((release, index) => {
@@ -310,11 +300,11 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
             return (
               <div
                 key={release.id}
-               className="
-  absolute left-1/2 top-1/2
-  transition-transform duration-500
-  hover:scale-[1.03]
-"
+                className="
+                  absolute left-1/2 top-1/2
+                  transition-transform duration-500
+                  hover:scale-[1.03]
+                "
                 style={{
                   transformStyle: "preserve-3d",
                   transform: `
@@ -324,18 +314,18 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
                     translateY(-50%)
                   `,
                   transition:
-                    transition: "transform 800ms cubic-bezier(0.33, 1, 0.68, 1)",
+                    "transform 800ms cubic-bezier(0.33, 1, 0.68, 1)",
                 }}
               >
                 <a
                   href={release.spotifyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                 className={`rounded-3xl overflow-hidden border bg-black/70 backdrop-blur-sm w-[170px] md:w-[200px] block cursor-pointer transition-transform transition-shadow duration-500 ${
-  isActive
-    ? "border-cyan-400 shadow-[0_0_24px_rgba(34,211,238,0.45)] scale-[1.03]"
-    : "border-white/10 opacity-70 scale-[0.96]"
-}`}
+                  className={`rounded-3xl overflow-hidden border bg-black/70 backdrop-blur-sm w-[170px] md:w-[200px] block cursor-pointer transition-transform transition-shadow duration-500 ${
+                    isActive
+                      ? "border-cyan-400 shadow-[0_0_24px_rgba(34,211,238,0.45)] scale-[1.03]"
+                      : "border-white/10 opacity-70 scale-[0.96]"
+                  }`}
                 >
                   <div className="relative w-full aspect-square">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
