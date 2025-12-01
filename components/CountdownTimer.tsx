@@ -67,7 +67,7 @@ export default function CountdownTimer() {
               <span className="text-xs sm:text-sm text-white/70">⏰ זמן נותר להצבעה</span>
             </div>
             <div className="text-sm sm:text-base font-bold text-pink-400">
-              יום אחרון: 1 בדצמבר
+              יום אחרון: 5 בדצמבר
             </div>
           </div>
 
