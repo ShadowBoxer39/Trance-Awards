@@ -732,7 +732,7 @@ const seoDescription = buildMetaDescription(
       </div>
 
       <h1 className="hero-tag-line text-4xl md:text-5xl lg:text-6xl font-extrabold mb-3 gradient-title">
-        {displayName} <span className="sr-only">Psytrance Artist</span>
+        {displayName} <span className="sr-only">Israeli Trance Artist</span>
       </h1>
 
       <p className="text-gray-200 text-base md:text-lg mb-6 max-w-xl mx-auto md:mx-0 leading-relaxed">
