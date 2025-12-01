@@ -527,7 +527,7 @@ const totalAlbums = spotifyDiscography.filter(
       border-radius: 999px;
     }
 
-       /* HERO AREA */
+    /* HERO AREA */
     .hero-header-bg {
       background:
         radial-gradient(circle at top left, rgba(56,189,248,0.28), transparent 55%),
@@ -572,6 +572,7 @@ const totalAlbums = spotifyDiscography.filter(
       50% { box-shadow: 0 0 32px 8px rgba(236,72,153,0.6); }
       100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
     }
+  `;
 
 
   return (
