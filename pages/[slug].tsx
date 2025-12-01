@@ -291,6 +291,7 @@ const DiscographyCarousel3D: React.FC<DiscographyCarousel3DProps> = ({
           className="absolute inset-0 mx-auto"
           style={{
             transformStyle: "preserve-3d",
+            transform: "translateX(-90px)",
           }}
         >
           {visibleItems.map((release, index) => {
