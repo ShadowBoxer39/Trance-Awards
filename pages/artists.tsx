@@ -20,7 +20,7 @@ interface Artist {
   slug: string;
   name: string;
   stage_name: string;
-  short_bio: string | null;
+  bio: string | null;
   profile_photo_url: string | null;
   genre: string | null;
   started_year: number | null;
@@ -202,10 +202,10 @@ function ArtistCard({ artist }: { artist: Artist }) {
   ].filter((link) => link.url);
 
   // Truncate bio for preview
-  const bioPreview = artist.short_bio
-    ? artist.short_bio.length > 100
-      ? artist.short_bio.substring(0, 100) + "..."
-      : artist.short_bio
+  const bioPreview = artist.bio
+    ? artist.bio.length > 100
+      ? artist.bio.substring(0, 100) + "..."
+      : artist.bio
     : null;
 
   return (
@@ -329,7 +329,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
         slug,
         name,
         stage_name,
-        short_bio,
+        bio,
         profile_photo_url,
         genre,
         started_year,
