@@ -86,7 +86,7 @@ export default function ArtistsPage({ artists }: ArtistsPageProps) {
             </h1>
 
             <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-              הכירו את אמני הטראנס והפסייטראנס הישראליים שהתארחו בתוכנית.
+              הכירו את אמני הטראנס הישראליים שהתארחו בתוכנית.
               <br />
               פרופילים מלאים, דיסקוגרפיה, סטים וראיונות בלעדיים.
             </p>
