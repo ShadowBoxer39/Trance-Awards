@@ -1,6 +1,9 @@
+// pages/featured-artist.tsx - Updated with All Artists Grid
 import { GetServerSideProps } from 'next';
 import { createClient } from "@supabase/supabase-js";
 import { useState, useEffect } from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { FaInstagram, FaSoundcloud, FaSpotify, FaFire, FaHeart, FaPlay } from 'react-icons/fa';
@@ -37,7 +40,7 @@ interface Comment {
 
 interface PageProps {
   artist: FeaturedArtist | null;
-  previousArtists: FeaturedArtist[];
+  allArtists: FeaturedArtist[];
 }
 
 const supabase = createClient(
@@ -45,7 +48,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function FeaturedArtistPage({ artist, previousArtists }: PageProps) {
+export default function FeaturedArtistPage({ artist, allArtists }: PageProps) {
   const [user, setUser] = useState<any>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -61,6 +64,9 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
   const [isPlaying, setIsPlaying] = useState(false);
   const [userName, setUserName] = useState('');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
+
+  // Previous artists = all except the current one
+  const previousArtists = allArtists.filter(a => a.artist_id !== artist?.artist_id);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -313,397 +319,452 @@ export default function FeaturedArtistPage({ artist, previousArtists }: PageProp
   }
 
   return (
-    <div className="min-h-screen bg-black text-white relative">
-      {/* Animated Background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-cyan-900/20" />
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
+    <>
+      <Head>
+        <title>האמנים של יוצאים לטראק</title>
+        <meta name="description" content="הכירו את האמנים המוכשרים שהוצגו בפודקאסט יוצאים לטראק" />
+      </Head>
 
-      {/* Navigation */}
-    <Navigation currentPage="featured-artist" />
+      <div className="min-h-screen bg-black text-white relative">
+        {/* Animated Background */}
+        <div className="fixed inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-cyan-900/20" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
 
-      {/* Hero Section - Parallax Effect */}
-      <div className="relative min-h-screen flex items-center justify-center px-4" style={{ transform: `translateY(${scrollY * 0.5}px)` }}>
-        <div className="relative z-10 text-center max-w-5xl mx-auto">
-          
-          {/* Animated Badge */}
-          <div className="mb-8 inline-block animate-bounce">
-            <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 text-white text-sm font-bold px-8 py-3 rounded-full shadow-lg shadow-purple-500/50 animate-gradient-x">
-              ⭐ האמן המומלץ של יוצאים לטראק ⭐
-            </div>
-          </div>
+        {/* Navigation */}
+        <Navigation currentPage="featured-artist" />
 
-          {/* Spinning Vinyl Record Effect */}
-          <div className="relative w-80 h-80 mx-auto mb-8 group">
-            {/* Outer glow ring */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" />
+        {/* Hero Section - Current Featured Artist */}
+        <div className="relative min-h-screen flex items-center justify-center px-4" style={{ transform: `translateY(${scrollY * 0.5}px)` }}>
+          <div className="relative z-10 text-center max-w-5xl mx-auto">
             
-            {/* Vinyl Record Background */}
-            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-gray-900 to-black border-4 border-gray-700 group-hover:animate-spin-slow" />
-            
-            {/* Record grooves */}
-            <div className="absolute inset-8 rounded-full border-2 border-gray-800 opacity-30" />
-            <div className="absolute inset-12 rounded-full border-2 border-gray-800 opacity-30" />
-            <div className="absolute inset-16 rounded-full border-2 border-gray-800 opacity-30" />
-            
-            {/* Artist Photo - Center Label */}
-            <div className="absolute inset-20 rounded-full overflow-hidden border-4 border-purple-600 shadow-2xl shadow-purple-500/50 group-hover:scale-110 transition-transform duration-500">
-              <img
-  src={artist.profile_photo_url}
-  alt={artist.stage_name}
-  className="w-full h-full object-cover"
-/>
-            </div>
-
-            {/* Play Button Overlay */}
-            <div 
-              onClick={() => {
-                setIsPlaying(true);
-                // Scroll to music player
-                const musicPlayer = document.getElementById('music-player');
-                if (musicPlayer) {
-                  musicPlayer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-              }}
-              className="absolute inset-0 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            >
-              <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center shadow-2xl backdrop-blur-sm transform hover:scale-110 transition-transform">
-                <FaPlay className="text-black text-2xl ml-1" />
+            {/* Animated Badge */}
+            <div className="mb-8 inline-block animate-bounce">
+              <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 text-white text-sm font-bold px-8 py-3 rounded-full shadow-lg shadow-purple-500/50 animate-gradient-x">
+                ⭐ האמן המומלץ של יוצאים לטראק ⭐
               </div>
             </div>
-          </div>
 
-          {/* Artist Name - Glitch Effect */}
-          <h1 className="text-7xl md:text-8xl font-black mb-4 relative">
-            <span className="absolute inset-0 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent blur-sm opacity-50">
-              {artist.stage_name}
-            </span>
-            <span className="relative bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient-x">
-              {artist.stage_name}
-            </span>
-          </h1>
-          
-          <p className="text-2xl text-gray-400 mb-12 font-light tracking-wide">{artist.name}</p>
+            {/* Spinning Vinyl Record Effect */}
+            <div className="relative w-80 h-80 mx-auto mb-8 group">
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" />
+              
+              {/* Vinyl Record Background */}
+              <div className="absolute inset-4 rounded-full bg-gradient-to-br from-gray-900 to-black border-4 border-gray-700 group-hover:animate-spin-slow" />
+              
+              {/* Record grooves */}
+              <div className="absolute inset-8 rounded-full border-2 border-gray-800 opacity-30" />
+              <div className="absolute inset-12 rounded-full border-2 border-gray-800 opacity-30" />
+              <div className="absolute inset-16 rounded-full border-2 border-gray-800 opacity-30" />
+              
+              {/* Artist Photo - Center Label */}
+              <Link href={`/artist/${artist.artist_id}`} className="absolute inset-20 rounded-full overflow-hidden border-4 border-purple-600 shadow-2xl shadow-purple-500/50 group-hover:scale-110 transition-transform duration-500">
+                <img
+                  src={artist.profile_photo_url}
+                  alt={artist.stage_name}
+                  className="w-full h-full object-cover"
+                />
+              </Link>
 
-          {/* Social Links - Card Flip Style */}
-          <div className="flex justify-center gap-6 mb-16">
-            {artist.instagram_url && (
-              <a
-                href={artist.instagram_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative w-16 h-16"
+              {/* Play Button Overlay */}
+              <div 
+                onClick={() => {
+                  setIsPlaying(true);
+                  const musicPlayer = document.getElementById('music-player');
+                  if (musicPlayer) {
+                    musicPlayer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }}
+                className="absolute inset-0 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl transform group-hover:rotate-180 transition-transform duration-500 shadow-lg shadow-purple-500/50" />
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <FaInstagram className="text-white text-2xl relative z-10" />
-                </div>
-              </a>
-            )}
-            {artist.soundcloud_profile_url && (
-              <a
-                href={artist.soundcloud_profile_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative w-16 h-16"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl transform group-hover:rotate-180 transition-transform duration-500 shadow-lg shadow-orange-500/50" />
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <FaSoundcloud className="text-white text-2xl relative z-10" />
-                </div>
-              </a>
-            )}
-            {artist.spotify_url && (
-              <a
-                href={artist.spotify_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative w-16 h-16"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl transform group-hover:rotate-180 transition-transform duration-500 shadow-lg shadow-green-500/50" />
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <FaSpotify className="text-white text-2xl relative z-10" />
-                </div>
-              </a>
-            )}
-          </div>
-
-          {/* Scroll Indicator */}
-          <div className="animate-bounce">
-            <svg className="w-8 h-8 mx-auto text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 pb-20">
-        
-        {/* About Section - Story Card */}
-        <div className="mb-16">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500" />
-            <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl p-12 border border-gray-800">
-              <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                הכירו את {artist.stage_name}
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed">{artist.bio}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Music Player - Floating Card */}
-        <div id="music-player" className="mb-16">
-          <div className="relative group">
-            <div className={`absolute -inset-1 bg-gradient-to-r from-orange-600 to-pink-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500 ${isPlaying ? 'animate-pulse' : ''}`} />
-            <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl p-8 border border-gray-800">
-              <div className="flex items-center gap-4 mb-6">
-                <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center ${isPlaying ? 'animate-pulse' : ''}`}>
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white">שמעו את המוזיקה</h3>
-                  <p className="text-gray-400">הטראק המומלץ {isPlaying && '🎵'}</p>
+                <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center shadow-2xl backdrop-blur-sm transform hover:scale-110 transition-transform">
+                  <FaPlay className="text-black text-2xl ml-1" />
                 </div>
               </div>
-              <iframe
-                width="100%"
-                height="166"
-                scrolling="no"
-                frameBorder="no"
-                allow="autoplay"
-                src={artist.soundcloud_track_url}
-                className="rounded-xl"
-                onLoad={() => setIsPlaying(false)}
-              />
             </div>
-          </div>
-        </div>
 
-        {/* Reactions - Neon Style */}
-        <div className="mb-16">
-          <h2 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-            מה אתם חושבים?
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {reactionButtons.map(({ type, icon: Icon, emoji, label, color, glow }) => (
-              <button
-                key={type}
-                onClick={() => handleReaction(type)}
-                className={`relative group ${
-                  userReaction === type ? 'scale-110' : 'hover:scale-105'
-                } transition-all duration-300`}
-              >
-                <div className={`absolute -inset-2 bg-gradient-to-br ${color} rounded-2xl blur-xl opacity-0 ${
-                  userReaction === type ? 'opacity-75' : 'group-hover:opacity-50'
-                } transition duration-300`} />
-                <div className={`relative bg-gradient-to-br from-gray-900 to-black backdrop-blur-xl rounded-2xl p-8 border-2 ${
-                  userReaction === type
-                    ? `border-white ${glow} shadow-2xl`
-                    : 'border-gray-800'
-                }`}>
-                  <div className="text-5xl mb-3">{emoji}</div>
-                  <div className="text-3xl font-black text-white mb-1">{reactions[type as keyof typeof reactions]}</div>
-                  <div className="text-sm text-gray-400">{label}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+            {/* Artist Name - Glitch Effect */}
+            <Link href={`/artist/${artist.artist_id}`}>
+              <h1 className="text-7xl md:text-8xl font-black mb-4 relative cursor-pointer hover:scale-105 transition-transform">
+                <span className="absolute inset-0 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent blur-sm opacity-50">
+                  {artist.stage_name}
+                </span>
+                <span className="relative bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient-x">
+                  {artist.stage_name}
+                </span>
+              </h1>
+            </Link>
+            
+            <p className="text-2xl text-gray-400 mb-12 font-light tracking-wide">{artist.name}</p>
 
-        {/* Comments */}
-        <div id="comments-section" className="max-w-4xl mx-auto">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500" />
-            <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl p-8 border border-gray-800">
-              <h3 className="text-3xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                תגובות ({comments.length})
-              </h3>
-
-              {!user ? (
-                <div className="mb-8 text-center bg-gradient-to-br from-purple-500/20 to-cyan-500/20 rounded-2xl p-8 border-2 border-purple-500/30">
-                  <div className="text-5xl mb-4">🔐</div>
-                  <p className="text-white text-lg mb-6 font-medium">התחברו כדי להוסיף תגובה</p>
-                  <div className="flex justify-center">
-                    <GoogleLoginButton />
+            {/* Social Links - Card Flip Style */}
+            <div className="flex justify-center gap-6 mb-16">
+              {artist.instagram_url && (
+                <a
+                  href={artist.instagram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative w-16 h-16"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl transform group-hover:rotate-180 transition-transform duration-500 shadow-lg shadow-purple-500/50" />
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <FaInstagram className="text-white text-2xl relative z-10" />
                   </div>
-                </div>
-              ) : (
-                <div className="mb-8">
-                  {/* User Info & Logout */}
-                  <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-2xl p-4 border-2 border-purple-500/30">
-                    <div className="flex items-center gap-4">
-                      {userPhoto && (
-                        <div className="relative">
-                          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full blur-sm" />
-                          <img 
-                            src={userPhoto} 
-                            alt={userName}
-                            className="relative w-12 h-12 rounded-full border-2 border-white"
-                          />
-                        </div>
-                      )}
-                      <span className="text-white font-bold text-lg">{userName}</span>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="text-white hover:text-gray-200 text-sm font-medium transition px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/50"
-                    >
-                      התנתק
-                    </button>
-                  </div>
-
-                  {/* Comment Form */}
-                  <form onSubmit={handleCommentSubmit} className="space-y-4">
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="שתפו את המחשבות שלכם..."
-                      rows={4}
-                      maxLength={500}
-                      className="w-full px-6 py-4 bg-black/50 border-2 border-gray-800 focus:border-purple-500 rounded-2xl focus:outline-none resize-none text-white placeholder-gray-500 transition-colors"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newComment.trim() || submitting}
-                      className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-purple-500/50"
-                    >
-                      {submitting ? 'שולח...' : 'שלח תגובה'}
-                    </button>
-                  </form>
-                </div>
+                </a>
               )}
+              {artist.soundcloud_profile_url && (
+                <a
+                  href={artist.soundcloud_profile_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative w-16 h-16"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl transform group-hover:rotate-180 transition-transform duration-500 shadow-lg shadow-orange-500/50" />
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <FaSoundcloud className="text-white text-2xl relative z-10" />
+                  </div>
+                </a>
+              )}
+              {artist.spotify_url && (
+                <a
+                  href={artist.spotify_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative w-16 h-16"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl transform group-hover:rotate-180 transition-transform duration-500 shadow-lg shadow-green-500/50" />
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <FaSpotify className="text-white text-2xl relative z-10" />
+                  </div>
+                </a>
+              )}
+            </div>
 
-              <div className="space-y-4">
-                {comments.length === 0 ? (
-                  <p className="text-gray-500 text-center py-12">אין תגובות עדיין. היו הראשונים!</p>
+            {/* View Full Profile CTA */}
+            <Link 
+              href={`/artist/${artist.artist_id}`}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-10 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 hover:scale-105 mb-8"
+            >
+              לעמוד האמן המלא
+              <svg className="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+
+            {/* Scroll Indicator */}
+            <div className="animate-bounce">
+              <svg className="w-8 h-8 mx-auto text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 pb-20">
+          
+          {/* About Section - Story Card */}
+          <div className="mb-16">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500" />
+              <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl p-12 border border-gray-800">
+                <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                  הכירו את {artist.stage_name}
+                </h2>
+                <p className="text-xl text-gray-300 leading-relaxed">{artist.bio}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Music Player - Floating Card */}
+          <div id="music-player" className="mb-16">
+            <div className="relative group">
+              <div className={`absolute -inset-1 bg-gradient-to-r from-orange-600 to-pink-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500 ${isPlaying ? 'animate-pulse' : ''}`} />
+              <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl p-8 border border-gray-800">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center ${isPlaying ? 'animate-pulse' : ''}`}>
+                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">שמעו את המוזיקה</h3>
+                    <p className="text-gray-400">הטראק המומלץ {isPlaying && '🎵'}</p>
+                  </div>
+                </div>
+                <iframe
+                  width="100%"
+                  height="166"
+                  scrolling="no"
+                  frameBorder="no"
+                  allow="autoplay"
+                  src={artist.soundcloud_track_url}
+                  className="rounded-xl"
+                  onLoad={() => setIsPlaying(false)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Reactions - Neon Style */}
+          <div className="mb-16">
+            <h2 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              מה אתם חושבים?
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+              {reactionButtons.map(({ type, icon: Icon, emoji, label, color, glow }) => (
+                <button
+                  key={type}
+                  onClick={() => handleReaction(type)}
+                  className={`relative group ${
+                    userReaction === type ? 'scale-110' : 'hover:scale-105'
+                  } transition-all duration-300`}
+                >
+                  <div className={`absolute -inset-2 bg-gradient-to-br ${color} rounded-2xl blur-xl opacity-0 ${
+                    userReaction === type ? 'opacity-75' : 'group-hover:opacity-50'
+                  } transition duration-300`} />
+                  <div className={`relative bg-gradient-to-br from-gray-900 to-black backdrop-blur-xl rounded-2xl p-8 border-2 ${
+                    userReaction === type
+                      ? `border-white ${glow} shadow-2xl`
+                      : 'border-gray-800'
+                  }`}>
+                    <div className="text-5xl mb-3">{emoji}</div>
+                    <div className="text-3xl font-black text-white mb-1">{reactions[type as keyof typeof reactions]}</div>
+                    <div className="text-sm text-gray-400">{label}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Comments */}
+          <div id="comments-section" className="max-w-4xl mx-auto mb-20">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-3xl blur-lg opacity-25 group-hover:opacity-50 transition duration-500" />
+              <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl p-8 border border-gray-800">
+                <h3 className="text-3xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                  תגובות ({comments.length})
+                </h3>
+
+                {!user ? (
+                  <div className="mb-8 text-center bg-gradient-to-br from-purple-500/20 to-cyan-500/20 rounded-2xl p-8 border-2 border-purple-500/30">
+                    <div className="text-5xl mb-4">🔐</div>
+                    <p className="text-white text-lg mb-6 font-medium">התחברו כדי להוסיף תגובה</p>
+                    <div className="flex justify-center">
+                      <GoogleLoginButton />
+                    </div>
+                  </div>
                 ) : (
-                  comments.map((comment) => (
-                    <div key={comment.id} className="bg-black/30 border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-colors">
-                      <div className="flex items-start gap-3">
-                        {comment.user_photo_url && (
-                          <img 
-                            src={comment.user_photo_url} 
-                            alt={comment.name}
-                            className="w-10 h-10 rounded-full border-2 border-purple-500 flex-shrink-0"
-                          />
+                  <div className="mb-8">
+                    {/* User Info & Logout */}
+                    <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-2xl p-4 border-2 border-purple-500/30">
+                      <div className="flex items-center gap-4">
+                        {userPhoto && (
+                          <div className="relative">
+                            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full blur-sm" />
+                            <img 
+                              src={userPhoto} 
+                              alt={userName}
+                              className="relative w-12 h-12 rounded-full border-2 border-white"
+                            />
+                          </div>
                         )}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-3">
-                            <span className="font-bold text-purple-400">
-                              {comment.name || 'משתמש'}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-500">
-                                {new Date(comment.timestamp || comment.created_at).toLocaleDateString('he-IL')}
+                        <span className="text-white font-bold text-lg">{userName}</span>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="text-white hover:text-gray-200 text-sm font-medium transition px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/50"
+                      >
+                        התנתק
+                      </button>
+                    </div>
+
+                    {/* Comment Form */}
+                    <form onSubmit={handleCommentSubmit} className="space-y-4">
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="שתפו את המחשבות שלכם..."
+                        rows={4}
+                        maxLength={500}
+                        className="w-full px-6 py-4 bg-black/50 border-2 border-gray-800 focus:border-purple-500 rounded-2xl focus:outline-none resize-none text-white placeholder-gray-500 transition-colors"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newComment.trim() || submitting}
+                        className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-purple-500/50"
+                      >
+                        {submitting ? 'שולח...' : 'שלח תגובה'}
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  {comments.length === 0 ? (
+                    <p className="text-gray-500 text-center py-12">אין תגובות עדיין. היו הראשונים!</p>
+                  ) : (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="bg-black/30 border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-colors">
+                        <div className="flex items-start gap-3">
+                          {comment.user_photo_url && (
+                            <img 
+                              src={comment.user_photo_url} 
+                              alt={comment.name}
+                              className="w-10 h-10 rounded-full border-2 border-purple-500 flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-3">
+                              <span className="font-bold text-purple-400">
+                                {comment.name || 'משתמש'}
                               </span>
-                              <button
-                                onClick={() => handleDeleteComment(comment.id.toString())}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
-                                title="מחק תגובה (דרוש מפתח אדמין)"
-                              >
-                                🗑️
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">
+                                  {new Date(comment.timestamp || comment.created_at || '').toLocaleDateString('he-IL')}
+                                </span>
+                                <button
+                                  onClick={() => handleDeleteComment(comment.id.toString())}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
+                                  title="מחק תגובה (דרוש מפתח אדמין)"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                            <p className="text-gray-300 leading-relaxed">{comment.text || comment.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ALL ARTISTS GRID - New Section */}
+          <div className="relative z-10 py-20">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                כל האמנים שלנו
+              </h2>
+              <p className="text-gray-400 text-lg">
+                הכירו את כל האמנים המוכשרים שהוצגו ביוצאים לטראק
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {allArtists.map((artistItem, index) => {
+                const isCurrentArtist = artistItem.artist_id === artist.artist_id;
+                
+                return (
+                  <Link
+                    key={artistItem.id}
+                    href={`/artist/${artistItem.artist_id}`}
+                    className="group relative"
+                  >
+                    <div className="relative">
+                      {/* Glow effect */}
+                      <div className={`absolute -inset-1 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition duration-300 ${isCurrentArtist ? 'opacity-30' : ''}`} />
+                      
+                      {/* Card */}
+                      <div className={`relative bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden border transition-colors ${
+                        isCurrentArtist 
+                          ? 'border-purple-500 ring-2 ring-purple-500/50' 
+                          : 'border-gray-800 group-hover:border-gray-600'
+                      }`}>
+                        {/* Current Badge */}
+                        {isCurrentArtist && (
+                          <div className="absolute top-3 right-3 z-10 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                            ⭐ נוכחי
+                          </div>
+                        )}
+                        
+                        {/* Image */}
+                        <div className="relative aspect-square overflow-hidden">
+                          <img
+                            src={artistItem.profile_photo_url}
+                            alt={artistItem.stage_name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                          
+                          {/* Overlay gradient */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60" />
+                          
+                          {/* Play indicator on hover */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-2xl backdrop-blur-sm transform group-hover:scale-110 transition-transform">
+                              <FaPlay className="text-black text-lg ml-1" />
                             </div>
                           </div>
-                          <p className="text-gray-300 leading-relaxed">{comment.text || comment.content}</p>
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="p-4">
+                          <h3 className="font-bold text-xl text-white mb-1 group-hover:text-purple-400 transition-colors">
+                            {artistItem.stage_name}
+                          </h3>
+                          <p className="text-sm text-gray-400 mb-2">{artistItem.name}</p>
+                          <p className="text-xs text-purple-400">
+                            {new Date(artistItem.featured_at).toLocaleDateString('he-IL', {
+                              year: 'numeric',
+                              month: 'short'
+                            })}
+                          </p>
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>
+
+        <style jsx>{`
+          @keyframes gradient-x {
+            0%, 100% {
+              background-size: 200% 200%;
+              background-position: left center;
+            }
+            50% {
+              background-size: 200% 200%;
+              background-position: right center;
+            }
+          }
+
+          .animate-gradient-x {
+            animation: gradient-x 3s ease infinite;
+          }
+
+          .animate-spin-slow {
+            animation: spin 8s linear infinite;
+          }
+
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
       </div>
-
-      {/* Previous Artists - Horizontal Scroll */}
-      {previousArtists.length > 0 && (
-        <div className="relative z-10 py-20 px-4">
-          <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-            אמנים מוצגים קודמים
-          </h2>
-          
-          <div className="flex gap-6 overflow-x-auto pb-8 px-4 scrollbar-hide max-w-7xl mx-auto">
-            {previousArtists.map((prevArtist) => (
-              <div
-                key={prevArtist.id}
-                className="flex-shrink-0 w-64 group cursor-pointer"
-              >
-                <div className="relative">
-                  <div className="absolute -inset-1 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition duration-300" />
-                  <div className="relative bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden border border-gray-800 group-hover:border-gray-600 transition-colors">
-                    <div className="relative w-full aspect-square">
-                      <img
-                        src={prevArtist.profile_photo_url}
-                        alt={prevArtist.stage_name}
-                  
-                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="p-4 bg-gradient-to-t from-black/90 to-transparent absolute bottom-0 left-0 right-0">
-                      <h3 className="font-bold text-xl mb-1 text-white">{prevArtist.stage_name}</h3>
-                      <p className="text-sm text-gray-400 mb-2">{prevArtist.name}</p>
-                      <p className="text-xs text-purple-400">
-                        {new Date(prevArtist.featured_at).toLocaleDateString('he-IL', {
-                          year: 'numeric',
-                          month: 'short'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <style jsx>{`
-        @keyframes gradient-x {
-          0%, 100% {
-            background-size: 200% 200%;
-            background-position: left center;
-          }
-          50% {
-            background-size: 200% 200%;
-            background-position: right center;
-          }
-        }
-
-        .animate-gradient-x {
-          animation: gradient-x 3s ease infinite;
-        }
-
-        .animate-spin-slow {
-          animation: spin 8s linear infinite;
-        }
-
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
 
@@ -713,6 +774,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // Get current featured artist (most recent)
   const { data: artist } = await supabaseServer
     .from('featured_artists')
     .select('*')
@@ -720,16 +782,16 @@ export const getServerSideProps: GetServerSideProps = async () => {
     .limit(1)
     .single();
 
-  const { data: previousArtists } = await supabaseServer
+  // Get ALL artists for the grid
+  const { data: allArtists } = await supabaseServer
     .from('featured_artists')
     .select('*')
-    .order('featured_at', { ascending: false })
-    .range(1, 8);
+    .order('featured_at', { ascending: false });
 
   return {
     props: {
       artist: artist || null,
-      previousArtists: previousArtists || []
+      allArtists: allArtists || []
     }
   };
 };
