@@ -132,9 +132,15 @@ function LegendsPage({ legends }: LegendsPageProps) {
 
 // --- Legend Card (RTL, <img>, flags, hover bio) ---
 
+// --- Legend Card (RTL, <img>, IMAGE FLAGS, hover bio) ---
+
 function LegendCard({ legend }: { legend: Legend }) {
   const accentColor = "#a855f7";
-  const flag = getFlagEmoji(legend.country_code);
+
+  // Build URL to a small PNG flag icon using the country_code (IL, GB, FR...)
+  const flagUrl = legend.country_code
+    ? `https://flagcdn.com/24x18/${legend.country_code.toLowerCase()}.png`
+    : null;
 
   // Target URL:
   // 1) If youtube_video_id exists → open YouTube
@@ -177,9 +183,15 @@ function LegendCard({ legend }: { legend: Legend }) {
         {/* Base gradient overlay */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-        {/* Country + flag pill */}
+        {/* Country + flag pill (IMAGE FLAG) */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-2 px-3 py-1 rounded-full bg-black/70 backdrop-blur text-xs">
-          <span className="text-lg leading-none">{flag}</span>
+          {flagUrl && (
+            <img
+              src={flagUrl}
+              alt={legend.country}
+              className="w-5 h-[14px] rounded-[2px] object-cover"
+            />
+          )}
           <span className="text-white/85">{legend.country}</span>
         </div>
 
