@@ -1,4 +1,4 @@
-// pages/legends.tsx – Legends page (RTL)
+// pages/legends.tsx
 import React from "react";
 import Head from "next/head";
 import Link from "next/link";
@@ -14,16 +14,26 @@ interface Legend {
   country_code: string;
   short_bio: string | null;
   photo_url: string | null;
-  episode_id: string | number;
+  episode_id: number | null;
+
+  // enriched from episodes table:
+  episode_slug?: string | null;
+  youtube_video_id?: string | null;
 }
 
 interface LegendsPageProps {
   legends: Legend[];
 }
 
-const getFlagEmoji = (countryCode: string) => {
+/**
+ * Convert country code (IL, GB, FR...) to flag emoji.
+ * If something goes wrong – show a white flag.
+ */
+const getFlagEmoji = (countryCode: string | null | undefined) => {
   if (!countryCode) return "🏳️";
-  const code = countryCode.toUpperCase();
+  const code = countryCode.trim().toUpperCase();
+  if (!code || code.length !== 2) return "🏳️";
+
   return code
     .split("")
     .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
@@ -52,21 +62,16 @@ function LegendsPage({ legends }: LegendsPageProps) {
           property="og:url"
           content="https://www.tracktrip.co.il/legends"
         />
-        <link
-          rel="canonical"
-          href="https://www.tracktrip.co.il/legends"
-        />
+        <link rel="canonical" href="https://www.tracktrip.co.il/legends" />
       </Head>
 
-      {/* Navigation */}
+      {/* Navigation (same as artists) */}
       <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-lg border-b border-white/10">
-        {/* אם ה-Navigation שלך מקבל currentPage, אפשר להעביר "legends" */}
         <Navigation currentPage="legends" />
       </div>
 
       {/* Hero Section */}
       <section className="relative py-16 px-6 overflow-hidden">
-        {/* אפשר להוסיף פה אפקטים כמו בדף האמנים אם תרצה */}
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex items-center justify-end gap-3 text-sm text-purple-200/80 mb-6">
             <Link
@@ -114,9 +119,7 @@ function LegendsPage({ legends }: LegendsPageProps) {
       {/* Footer */}
       <footer className="border-t border-white/10 bg-black/80">
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-gray-400 text-sm">
-          <div>
-            © {new Date().getFullYear()} יוצאים לטראק · כל הזכויות שמורות
-          </div>
+          <div>© {new Date().getFullYear()} יוצאים לטראק · כל הזכויות שמורות</div>
           <div className="text-xs text-gray-500">
             דף האגדות · מופעל על ידי Supabase
           </div>
@@ -126,26 +129,28 @@ function LegendsPage({ legends }: LegendsPageProps) {
   );
 }
 
-// Legend Card – using the same <img src="..."> approach as artists.tsx
+// Card – uses <img> just like artists.tsx
 function LegendCard({ legend }: { legend: Legend }) {
-  const flag = getFlagEmoji(legend.country_code);
   const accentColor = "#a855f7";
+  const flag = getFlagEmoji(legend.country_code);
 
-  // אם בעתיד תשמור ב-episode_id URL מלא ליוטיוב – זה יתמוך גם בזה
-  const episodeIdStr = String(legend.episode_id);
-  const targetUrl = episodeIdStr.startsWith("http")
-    ? episodeIdStr
-    : `/episodes/${episodeIdStr}`;
+  // Build target URL:
+  // 1) If we have youtube_video_id → go straight to YouTube
+  // 2) Else if we have episode_slug → go to /episodes/[slug]
+  // 3) Else, as a fallback, /episodes/[id]
+  let href = "#";
+  if (legend.youtube_video_id) {
+    href = `https://www.youtube.com/watch?v=${legend.youtube_video_id}`;
+  } else if (legend.episode_slug) {
+    href = `/episodes/${legend.episode_slug}`;
+  } else if (legend.episode_id) {
+    href = `/episodes/${legend.episode_id}`;
+  }
 
   return (
-    <a
-      href={targetUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block"
-    >
+    <a href={href} target="_blank" rel="noopener noreferrer" className="block">
       <div className="artist-card group aspect-[3/4] relative">
-        {/* Image (like artists.tsx) */}
+        {/* Image */}
         <div className="absolute inset-0 overflow-hidden rounded-2xl">
           {legend.photo_url ? (
             <img
@@ -167,24 +172,24 @@ function LegendCard({ legend }: { legend: Legend }) {
           )}
         </div>
 
-        {/* Dark overlay base */}
-        <div className="overlay absolute inset-0 rounded-2xl bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+        {/* Base overlay */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-        {/* Country pill */}
+        {/* Country + flag pill */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-2 px-3 py-1 rounded-full bg-black/70 backdrop-blur text-xs">
           <span className="text-lg leading-none">{flag}</span>
           <span className="text-white/85">{legend.country}</span>
         </div>
 
-        {/* Hover bio overlay */}
+        {/* Hover bio overlay (name + bottom row fade out on hover) */}
         <div className="absolute inset-0 rounded-2xl bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 pointer-events-none">
           <p className="text-xs md:text-sm text-gray-100 leading-snug line-clamp-6 text-right">
             {legend.short_bio}
           </p>
         </div>
 
-        {/* Bottom content */}
-        <div className="absolute inset-x-0 bottom-0 z-10 p-4 flex items-center justify-between gap-3">
+        {/* Bottom content – hidden on hover so it doesn’t clash with the bio */}
+        <div className="absolute inset-x-0 bottom-0 z-10 p-4 flex items-center justify-between gap-3 transition-opacity duration-300 group-hover:opacity-0">
           <div className="min-w-0 text-right">
             <h3 className="text-sm md:text-base font-semibold truncate">
               {legend.stage_name}
@@ -193,7 +198,7 @@ function LegendCard({ legend }: { legend: Legend }) {
               לצפייה בפרק המלא
             </p>
           </div>
-          <span className="text-[11px] md:text-xs text-purple-300 group-hover:-translate-x-0.5 transition-transform">
+          <span className="text-[11px] md:text-xs text-purple-300">
             לצפייה →
           </span>
         </div>
@@ -239,23 +244,64 @@ export const getServerSideProps: GetServerSideProps<LegendsPageProps> = async ()
   );
 
   try {
-    const { data, error } = await supabase
+    // 1) Get all legends
+    const { data: legendsRaw, error: legendsError } = await supabase
       .from("legends")
       .select(
         "id, stage_name, country, country_code, short_bio, photo_url, episode_id"
       )
       .order("stage_name", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching legends:", error);
+    if (legendsError || !legendsRaw) {
+      console.error("Error fetching legends:", legendsError);
       return { props: { legends: [] } };
     }
 
-    return {
-      props: {
-        legends: (data as Legend[]) || [],
-      },
-    };
+    // 2) Fetch the matching episodes for their episode_id
+    const episodeIds = legendsRaw
+      .map((l) => l.episode_id)
+      .filter((id): id is number => typeof id === "number");
+
+    let episodesById = new Map<
+      number,
+      { slug: string | null; youtube_video_id: string | null }
+    >();
+
+    if (episodeIds.length > 0) {
+      const { data: episodes, error: episodesError } = await supabase
+        .from("episodes")
+        .select("id, slug, youtube_video_id")
+        .in("id", episodeIds);
+
+      if (episodesError) {
+        console.error("Error fetching episodes for legends:", episodesError);
+      } else if (episodes) {
+        episodesById = new Map(
+          episodes.map((ep: any) => [
+            ep.id,
+            {
+              slug: ep.slug ?? null,
+              youtube_video_id: ep.youtube_video_id ?? null,
+            },
+          ])
+        );
+      }
+    }
+
+    // 3) Enrich legends with episode slug + youtube id
+    const legends: Legend[] = legendsRaw.map((legend: any) => {
+      const epInfo = legend.episode_id
+        ? episodesById.get(legend.episode_id)
+        : undefined;
+
+      return {
+        ...legend,
+        episode_slug: epInfo?.slug ?? null,
+        youtube_video_id: epInfo?.youtube_video_id ?? null,
+      };
+    });
+
+    return { props: { legends } };
   } catch (err) {
     console.error("getServerSideProps legends error:", err);
     return { props: { legends: [] } };
