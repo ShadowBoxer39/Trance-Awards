@@ -318,7 +318,7 @@ export default function ArtistPage({ artist, otherArtists, isCurrentFeatured }: 
         <meta property="og:image" content={artist.profile_photo_url} />
       </Head>
 
-      <div className="min-h-screen bg-black text-white relative">
+     <div dir="rtl" className="min-h-screen bg-black text-white relative">
         {/* Animated Background */}
         <div className="fixed inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-cyan-900/20" />
