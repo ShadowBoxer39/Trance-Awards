@@ -1,11 +1,12 @@
-// pages/index.tsx - UPDATED WITH PREVIOUS ARTISTS ROW
+// pages/index.tsx - UPDATED WITH ARTISTS & LEGENDS SECTIONS
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SEO from "@/components/SEO";
 import Navigation from "../components/Navigation";
 import { default as episodeApiHandler } from "./api/episodes";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 interface Episode {
   id: number;
@@ -41,6 +42,26 @@ interface FeaturedArtist {
   soundcloud_profile_url?: string;
   spotify_url?: string;
   featured_at: string;
+}
+
+// Artist interface (from artists table)
+interface Artist {
+  id: number;
+  slug: string;
+  stage_name: string;
+  profile_photo_url: string | null;
+  genre: string | null;
+  primary_color: string | null;
+}
+
+// Legend interface
+interface Legend {
+  id: number;
+  stage_name: string;
+  country: string;
+  country_code: string;
+  photo_url: string | null;
+  youtube_video_id?: string | null;
 }
 
 // Helper to extract YouTube video ID
@@ -85,6 +106,75 @@ function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: 
         {count.toLocaleString('en-US')}{suffix}
       </div>
       <div className="text-sm text-gray-500">{label}</div>
+    </div>
+  );
+}
+
+// Horizontal Scroll Container with Arrows
+function HorizontalScroll({ children, className = "" }: { children: React.ReactNode, className?: string }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 10);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const ref = scrollRef.current;
+    if (ref) {
+      ref.addEventListener('scroll', checkScroll);
+      return () => ref.removeEventListener('scroll', checkScroll);
+    }
+  }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 300;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  return (
+    <div className="relative group">
+      {/* Left Arrow */}
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll('left')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white hover:bg-purple-600 hover:border-purple-500 transition-all opacity-0 group-hover:opacity-100 -mr-4"
+          aria-label="Scroll right"
+        >
+          <FaChevronRight className="w-4 h-4" />
+        </button>
+      )}
+      
+      {/* Right Arrow */}
+      {canScrollRight && (
+        <button
+          onClick={() => scroll('right')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white hover:bg-purple-600 hover:border-purple-500 transition-all opacity-0 group-hover:opacity-100 -ml-4"
+          aria-label="Scroll left"
+        >
+          <FaChevronLeft className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* Scroll Container */}
+      <div
+        ref={scrollRef}
+        className={`flex gap-4 overflow-x-auto scroll-smooth scrollbar-hide ${className}`}
+        style={{ scrollSnapType: 'x mandatory' }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -303,18 +393,141 @@ function TrackOfWeekComments({ trackId }: { trackId: number }) {
   );
 }
 
+// Artist Card for Homepage
+function ArtistHomeCard({ artist }: { artist: Artist }) {
+  const accentColor = artist.primary_color || "#a855f7";
+  
+  return (
+    <Link 
+      href={`/${artist.slug}`} 
+      className="flex-shrink-0 group"
+      style={{ scrollSnapAlign: 'start' }}
+    >
+      <div className="w-40 md:w-48 relative">
+        <div className="aspect-[3/4] rounded-xl overflow-hidden border-2 border-transparent group-hover:border-purple-500/50 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-purple-500/20">
+          {artist.profile_photo_url ? (
+            <img
+              src={artist.profile_photo_url}
+              alt={artist.stage_name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div 
+              className="w-full h-full flex items-center justify-center"
+              style={{ background: `linear-gradient(135deg, ${accentColor}40, ${accentColor}10)` }}
+            >
+              <span className="text-4xl font-black text-white/30">{artist.stage_name[0]}</span>
+            </div>
+          )}
+          
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          
+          {/* Genre badge */}
+          {artist.genre && (
+            <div className="absolute top-2 right-2">
+              <span 
+                className="px-2 py-0.5 text-[9px] font-semibold rounded-full bg-black/60 backdrop-blur-sm border border-white/20"
+                style={{ color: accentColor }}
+              >
+                {artist.genre}
+              </span>
+            </div>
+          )}
+          
+          {/* Name */}
+          <div className="absolute bottom-0 inset-x-0 p-3">
+            <h4 className="text-sm md:text-base font-bold text-white truncate group-hover:text-purple-300 transition-colors">
+              {artist.stage_name}
+            </h4>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// Legend Card for Homepage
+function LegendHomeCard({ legend }: { legend: Legend }) {
+  const flagUrl = legend.country_code
+    ? `https://flagcdn.com/24x18/${legend.country_code.toLowerCase()}.png`
+    : null;
+
+  const href = legend.youtube_video_id
+    ? `https://www.youtube.com/watch?v=${legend.youtube_video_id}`
+    : '/legends';
+
+  return (
+    <a 
+      href={href}
+      target={legend.youtube_video_id ? "_blank" : "_self"}
+      rel="noopener noreferrer"
+      className="flex-shrink-0 group"
+      style={{ scrollSnapAlign: 'start' }}
+    >
+      <div className="w-40 md:w-48 relative">
+        <div className="aspect-[3/4] rounded-xl overflow-hidden border-2 border-transparent group-hover:border-orange-500/50 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-orange-500/20">
+          {legend.photo_url ? (
+            <img
+              src={legend.photo_url}
+              alt={legend.stage_name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-orange-900/40 to-purple-900/40 flex items-center justify-center">
+              <span className="text-4xl font-black text-white/30">{legend.stage_name[0]}</span>
+            </div>
+          )}
+          
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          
+          {/* Country flag */}
+          {flagUrl && (
+            <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
+              <img src={flagUrl} alt={legend.country} className="w-4 h-3 rounded-sm object-cover" />
+              <span className="text-[10px] text-white/80">{legend.country}</span>
+            </div>
+          )}
+          
+          {/* Play icon */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="w-12 h-12 rounded-full bg-orange-500/90 flex items-center justify-center">
+              <svg className="w-5 h-5 text-white mr-[-2px]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
+          
+          {/* Name */}
+          <div className="absolute bottom-0 inset-x-0 p-3">
+            <h4 className="text-sm md:text-base font-bold text-white truncate group-hover:text-orange-300 transition-colors">
+              {legend.stage_name}
+            </h4>
+            <p className="text-[10px] text-gray-400">לצפייה בפרק</p>
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
 export default function Home({ 
   episodes, 
   episodesError,
   trackOfWeek,
   featuredArtist,
-  previousArtists
+  previousArtists,
+  artists,
+  legends
 }: { 
   episodes: Episode[], 
   episodesError: string | null,
   trackOfWeek: TrackOfWeek | null,
   featuredArtist: FeaturedArtist | null,
-  previousArtists: FeaturedArtist[]
+  previousArtists: FeaturedArtist[],
+  artists: Artist[],
+  legends: Legend[]
 }) {
   
   React.useEffect(() => {
@@ -391,11 +604,11 @@ export default function Home({
                 </Link>
                 
                 <Link 
-                  href="/young-artists" 
+                  href="/artists" 
                   className="px-10 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2 justify-center min-w-[200px]"
                 >
-                  <span className="text-2xl">🌟</span>
-                  אמנים צעירים
+                  <span className="text-2xl">🎤</span>
+                  האמנים שלנו
                 </Link>
               </div>
 
@@ -523,7 +736,7 @@ export default function Home({
           )}
         </section>
 
-        {/* Featured Young Artist - UPDATED WITH PREVIOUS ARTISTS ROW */}
+        {/* Featured Young Artist */}
         <section className="max-w-7xl mx-auto px-6 py-16">
           <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-purple-500/30">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
@@ -600,7 +813,7 @@ export default function Home({
                   </div>
                 </div>
 
-                {/* Previous Artists Row - NEW */}
+                {/* Previous Artists Row */}
                 {previousArtists && previousArtists.length > 0 && (
                   <div className="mt-10 pt-8 border-t border-purple-500/20">
                     <div className="flex items-center justify-between mb-5">
@@ -674,6 +887,51 @@ export default function Home({
             )}
           </div>
         </section>
+
+        {/* Artists Section - NEW */}
+        {artists && artists.length > 0 && (
+          <section className="max-w-7xl mx-auto px-6 py-16">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">🎤</span>
+                <h2 className="text-2xl md:text-3xl font-semibold">האמנים שלנו</h2>
+              </div>
+              <Link 
+                href="/artists" 
+                className="text-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+              >
+                לכל האמנים ({artists.length})
+                <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+
+            <HorizontalScroll className="pb-4">
+              {artists.map((artist) => (
+                <ArtistHomeCard key={artist.id} artist={artist} />
+              ))}
+              
+              {/* See All Card */}
+              <Link 
+                href="/artists" 
+                className="flex-shrink-0 group"
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                <div className="w-40 md:w-48 aspect-[3/4] rounded-xl border-2 border-dashed border-gray-600 hover:border-purple-500 transition-all flex flex-col items-center justify-center gap-3 bg-gray-900/30 hover:bg-purple-900/20">
+                  <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-400 group-hover:text-purple-400 transition-colors">
+                    לכל האמנים
+                  </span>
+                </div>
+              </Link>
+            </HorizontalScroll>
+          </section>
+        )}
 
         {/* Track of the Week Section */}
         <section className="max-w-7xl mx-auto px-6 pb-16">
@@ -773,6 +1031,51 @@ export default function Home({
             )}
           </div>
         </section>
+
+        {/* Legends Section - NEW */}
+        {legends && legends.length > 0 && (
+          <section className="max-w-7xl mx-auto px-6 py-16">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">👑</span>
+                <h2 className="text-2xl md:text-3xl font-semibold">אגדות הטראנס</h2>
+              </div>
+              <Link 
+                href="/legends" 
+                className="text-sm text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1"
+              >
+                לכל האגדות ({legends.length})
+                <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+
+            <HorizontalScroll className="pb-4">
+              {legends.map((legend) => (
+                <LegendHomeCard key={legend.id} legend={legend} />
+              ))}
+              
+              {/* See All Card */}
+              <Link 
+                href="/legends" 
+                className="flex-shrink-0 group"
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                <div className="w-40 md:w-48 aspect-[3/4] rounded-xl border-2 border-dashed border-gray-600 hover:border-orange-500 transition-all flex flex-col items-center justify-center gap-3 bg-gray-900/30 hover:bg-orange-900/20">
+                  <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-400 group-hover:text-orange-400 transition-colors">
+                    לכל האגדות
+                  </span>
+                </div>
+              </Link>
+            </HorizontalScroll>
+          </section>
+        )}
 
         {/* Previous Episodes */}
         <section className="max-w-7xl mx-auto px-6 pb-16">
@@ -880,7 +1183,8 @@ export default function Home({
 
               <div className="flex flex-wrap justify-center gap-6 text-sm">
                 <Link href="/episodes" className="text-gray-400 hover:text-gray-300 transition">פרקים</Link>
-                <Link href="/young-artists" className="text-gray-400 hover:text-gray-300 transition">אמנים צעירים</Link>
+                <Link href="/artists" className="text-gray-400 hover:text-gray-300 transition">האמנים</Link>
+                <Link href="/legends" className="text-gray-400 hover:text-gray-300 transition">אגדות</Link>
                 <Link href="/featured-artist" className="text-gray-400 hover:text-gray-300 transition">אמנים מוצגים</Link>
                 <Link href="/about" className="text-gray-400 hover:text-gray-300 transition">אודות</Link>
               </div>
@@ -904,7 +1208,7 @@ export default function Home({
   );
 }
 
-// Server-side data fetching with Track of the Week, Featured Artist AND Previous Artists
+// Server-side data fetching with Track of the Week, Featured Artist, Previous Artists, Artists AND Legends
 export async function getServerSideProps() {
   const mockReq = {} as any;
   let episodesData: any;
@@ -925,6 +1229,8 @@ export async function getServerSideProps() {
   let trackOfWeek: TrackOfWeek | null = null;
   let featuredArtist: FeaturedArtist | null = null;
   let previousArtists: FeaturedArtist[] = [];
+  let artists: Artist[] = [];
+  let legends: Legend[] = [];
 
   // Fetch episodes
   try {
@@ -992,6 +1298,68 @@ export async function getServerSideProps() {
     console.error("SSR Featured Artist fetch failed:", err.message);
   }
 
+  // Fetch Artists (from artists table)
+  try {
+    const supabase = require('../lib/supabaseServer').default;
+    const { data: artistsData, error: artistsError } = await supabase
+      .from('artists')
+      .select('id, slug, stage_name, profile_photo_url, genre, primary_color')
+      .eq('is_published', true)
+      .order('stage_name', { ascending: true })
+      .limit(12); // Show first 12 on homepage
+
+    if (artistsError) {
+      console.error('Artists fetch error:', artistsError);
+    } else if (artistsData) {
+      artists = artistsData;
+    }
+  } catch (err: any) {
+    console.error("SSR Artists fetch failed:", err.message);
+  }
+
+  // Fetch Legends
+  try {
+    const supabase = require('../lib/supabaseServer').default;
+    
+    // Get legends with episode info
+    const { data: legendsRaw, error: legendsError } = await supabase
+      .from('legends')
+      .select('id, stage_name, country, country_code, photo_url, episode_id')
+      .order('stage_name', { ascending: true })
+      .limit(12); // Show first 12 on homepage
+
+    if (legendsError) {
+      console.error('Legends fetch error:', legendsError);
+    } else if (legendsRaw) {
+      // Get episode youtube IDs
+      const episodeIds = legendsRaw
+        .map((l: any) => l.episode_id)
+        .filter((id: any): id is number => typeof id === 'number');
+
+      let episodesById = new Map<number, string | null>();
+
+      if (episodeIds.length > 0) {
+        const { data: episodesData } = await supabase
+          .from('episodes')
+          .select('id, youtube_video_id')
+          .in('id', episodeIds);
+
+        if (episodesData) {
+          episodesById = new Map(
+            episodesData.map((ep: any) => [ep.id, ep.youtube_video_id])
+          );
+        }
+      }
+
+      legends = legendsRaw.map((legend: any) => ({
+        ...legend,
+        youtube_video_id: legend.episode_id ? episodesById.get(legend.episode_id) : null,
+      }));
+    }
+  } catch (err: any) {
+    console.error("SSR Legends fetch failed:", err.message);
+  }
+
   return {
     props: {
       episodes,
@@ -999,6 +1367,8 @@ export async function getServerSideProps() {
       trackOfWeek,
       featuredArtist,
       previousArtists,
+      artists,
+      legends,
     },
   };
 }
