@@ -26,18 +26,22 @@ interface LegendsPageProps {
 }
 
 /**
- * Convert country code (IL, GB, FR...) to flag emoji.
- * If something goes wrong – show a white flag.
+ * Convert a country code (IL, GB, FR...) to a flag emoji.
+ * Falls back to a white flag if something is off.
  */
 const getFlagEmoji = (countryCode: string | null | undefined) => {
   if (!countryCode) return "🏳️";
   const code = countryCode.trim().toUpperCase();
-  if (!code || code.length !== 2) return "🏳️";
+  if (code.length !== 2) return "🏳️";
 
-  return code
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
+  try {
+    return code
+      .split("")
+      .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+      .join("");
+  } catch {
+    return "🏳️";
+  }
 };
 
 function LegendsPage({ legends }: LegendsPageProps) {
@@ -47,25 +51,22 @@ function LegendsPage({ legends }: LegendsPageProps) {
       className="min-h-screen bg-gradient-to-b from-[#050814] via-[#0a0a1f] to-black text-white"
     >
       <Head>
-        <title>האגדות שלנו | יוצאים לטראק</title>
+        <title>האגדות | יוצאים לטראק</title>
         <meta
           name="description"
-          content="חלוצי הטראנס והפסייטראנס שהקדשנו להם פרקים מיוחדים."
+          content="חלוצי הטראנס שהקדשנו להם פרקים מיוחדים."
         />
-        <meta property="og:title" content="האגדות שלנו | יוצאים לטראק" />
+        <meta property="og:title" content="האגדות | יוצאים לטראק" />
         <meta
           property="og:description"
           content="חלוצי הטראנס והפסייטראנס שהקדשנו להם פרקים מיוחדים."
         />
         <meta property="og:type" content="website" />
-        <meta
-          property="og:url"
-          content="https://www.tracktrip.co.il/legends"
-        />
+        <meta property="og:url" content="https://www.tracktrip.co.il/legends" />
         <link rel="canonical" href="https://www.tracktrip.co.il/legends" />
       </Head>
 
-      {/* Navigation (same as artists) */}
+      {/* Navigation */}
       <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-lg border-b border-white/10">
         <Navigation currentPage="legends" />
       </div>
@@ -129,15 +130,16 @@ function LegendsPage({ legends }: LegendsPageProps) {
   );
 }
 
-// Card – uses <img> just like artists.tsx
+// --- Legend Card (RTL, <img>, flags, hover bio) ---
+
 function LegendCard({ legend }: { legend: Legend }) {
   const accentColor = "#a855f7";
   const flag = getFlagEmoji(legend.country_code);
 
-  // Build target URL:
-  // 1) If we have youtube_video_id → go straight to YouTube
-  // 2) Else if we have episode_slug → go to /episodes/[slug]
-  // 3) Else, as a fallback, /episodes/[id]
+  // Target URL:
+  // 1) If youtube_video_id exists → open YouTube
+  // 2) Else if episode_slug exists → internal /episodes/[slug]
+  // 3) Else fallback to /episodes/[id] (if id exists)
   let href = "#";
   if (legend.youtube_video_id) {
     href = `https://www.youtube.com/watch?v=${legend.youtube_video_id}`;
@@ -150,7 +152,7 @@ function LegendCard({ legend }: { legend: Legend }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="block">
       <div className="artist-card group aspect-[3/4] relative">
-        {/* Image */}
+        {/* Image (same idea as artists.tsx) */}
         <div className="absolute inset-0 overflow-hidden rounded-2xl">
           {legend.photo_url ? (
             <img
@@ -172,7 +174,7 @@ function LegendCard({ legend }: { legend: Legend }) {
           )}
         </div>
 
-        {/* Base overlay */}
+        {/* Base gradient overlay */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
         {/* Country + flag pill */}
@@ -181,14 +183,14 @@ function LegendCard({ legend }: { legend: Legend }) {
           <span className="text-white/85">{legend.country}</span>
         </div>
 
-        {/* Hover bio overlay (name + bottom row fade out on hover) */}
+        {/* Hover bio overlay */}
         <div className="absolute inset-0 rounded-2xl bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 pointer-events-none">
           <p className="text-xs md:text-sm text-gray-100 leading-snug line-clamp-6 text-right">
             {legend.short_bio}
           </p>
         </div>
 
-        {/* Bottom content – hidden on hover so it doesn’t clash with the bio */}
+        {/* Bottom info – fades out on hover so it doesn't clash with bio */}
         <div className="absolute inset-x-0 bottom-0 z-10 p-4 flex items-center justify-between gap-3 transition-opacity duration-300 group-hover:opacity-0">
           <div className="min-w-0 text-right">
             <h3 className="text-sm md:text-base font-semibold truncate">
@@ -237,6 +239,8 @@ function LegendCard({ legend }: { legend: Legend }) {
   );
 }
 
+// --- getServerSideProps: legends + episodes join ---
+
 export const getServerSideProps: GetServerSideProps<LegendsPageProps> = async () => {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -257,7 +261,7 @@ export const getServerSideProps: GetServerSideProps<LegendsPageProps> = async ()
       return { props: { legends: [] } };
     }
 
-    // 2) Fetch the matching episodes for their episode_id
+    // 2) Collect episode IDs
     const episodeIds = legendsRaw
       .map((l) => l.episode_id)
       .filter((id): id is number => typeof id === "number");
@@ -288,7 +292,7 @@ export const getServerSideProps: GetServerSideProps<LegendsPageProps> = async ()
       }
     }
 
-    // 3) Enrich legends with episode slug + youtube id
+    // 3) Enrich legends with episode info
     const legends: Legend[] = legendsRaw.map((legend: any) => {
       const epInfo = legend.episode_id
         ? episodesById.get(legend.episode_id)
