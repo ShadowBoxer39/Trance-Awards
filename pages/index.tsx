@@ -119,8 +119,10 @@ function HorizontalScroll({ children, className = "", accentColor = "purple" }: 
   const checkScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 10);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+      // In RTL, scrollLeft is negative
+      const absScrollLeft = Math.abs(scrollLeft);
+      setCanScrollRight(absScrollLeft > 10);
+      setCanScrollLeft(absScrollLeft < scrollWidth - clientWidth - 10);
     }
   };
 
@@ -142,57 +144,59 @@ function HorizontalScroll({ children, className = "", accentColor = "purple" }: 
       const cardWidth = 192; // w-48 = 12rem = 192px
       const gap = 16; // gap-4 = 1rem = 16px
       const scrollAmount = (cardWidth + gap) * 2; // Scroll 2 cards at a time
+      // In RTL, we need to invert the scroll direction
       scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        left: direction === 'right' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
       });
     }
   };
 
-  const gradientColor = accentColor === 'orange' ? 'from-orange-500' : 'from-purple-500';
   const buttonHoverBg = accentColor === 'orange' ? 'hover:bg-orange-600' : 'hover:bg-purple-600';
   const buttonHoverBorder = accentColor === 'orange' ? 'hover:border-orange-500' : 'hover:border-purple-500';
 
   return (
     <div className="relative">
-      {/* Left Arrow (appears on right side in RTL) */}
+      {/* Right Arrow - scrolls content right (shows more from the start in RTL) */}
       <button
-        onClick={() => scroll('left')}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollLeft ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
+        onClick={() => scroll('right')}
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollRight ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
         aria-label="Scroll right"
         style={{ marginRight: '-24px' }}
       >
         <FaChevronRight className="w-4 h-4" />
       </button>
       
-      {/* Right Arrow (appears on left side in RTL) */}
+      {/* Left Arrow - scrolls content left (shows more towards the end in RTL) */}
       <button
-        onClick={() => scroll('right')}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollRight ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
+        onClick={() => scroll('left')}
+        className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollLeft ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
         aria-label="Scroll left"
         style={{ marginLeft: '-24px' }}
       >
         <FaChevronLeft className="w-4 h-4" />
       </button>
 
-      {/* Gradient Fade - Right side (start in RTL) */}
+      {/* Gradient Fade - Right side */}
       <div 
-        className={`absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#0a0a1f] to-transparent z-10 pointer-events-none transition-opacity duration-300 ${canScrollLeft ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute right-0 top-0 bottom-4 w-20 bg-gradient-to-l from-[#0a0a1f] to-transparent z-10 pointer-events-none transition-opacity duration-300 ${canScrollRight ? 'opacity-100' : 'opacity-0'}`}
       />
       
-      {/* Gradient Fade - Left side (end in RTL) */}
+      {/* Gradient Fade - Left side */}
       <div 
-        className={`absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#0a0a1f] to-transparent z-10 pointer-events-none transition-opacity duration-300 ${canScrollRight ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute left-0 top-0 bottom-4 w-20 bg-gradient-to-r from-[#0a0a1f] to-transparent z-10 pointer-events-none transition-opacity duration-300 ${canScrollLeft ? 'opacity-100' : 'opacity-0'}`}
       />
 
-      {/* Scroll Container */}
+      {/* Scroll Container - completely hide scrollbar */}
       <div
         ref={scrollRef}
-        className={`flex gap-4 overflow-x-auto scroll-smooth px-1 py-2 ${className}`}
+        className={`flex gap-4 overflow-x-auto px-1 py-2 scrollbar-hide ${className}`}
         style={{ 
           scrollSnapType: 'x mandatory',
           scrollPaddingInline: '16px',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
+          msOverflowStyle: 'none',
+          scrollbarWidth: 'none'
         }}
       >
         {children}
@@ -630,7 +634,7 @@ export default function Home({
                   className="px-10 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2 justify-center min-w-[200px]"
                 >
                   <span className="text-2xl">🌟</span>
-                  אנחנו ממליצים על אמנים
+                אמנים צעירים
                 </Link>
               </div>
 
@@ -1217,29 +1221,15 @@ export default function Home({
         </footer>
       </div>
 
-      <style jsx>{`
+      <style jsx global>{`
         .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
         }
         .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        
-        /* Custom scrollbar for horizontal scroll areas */
-        .horizontal-scroll::-webkit-scrollbar {
-          height: 6px;
-        }
-        .horizontal-scroll::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 3px;
-        }
-        .horizontal-scroll::-webkit-scrollbar-thumb {
-          background: rgba(168, 85, 247, 0.3);
-          border-radius: 3px;
-        }
-        .horizontal-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(168, 85, 247, 0.5);
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
         }
       `}</style>
     </>
