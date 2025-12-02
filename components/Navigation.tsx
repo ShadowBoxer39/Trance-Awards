@@ -1,21 +1,21 @@
-// components/Navigation.tsx - REDESIGNED for Better UX
+// components/Navigation.tsx - Updated with Artists and Legends pages
 
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 
 interface NavigationProps {
-  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist"; 
+  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist" | "artists" | "legends"; 
 }
 
 export default function Navigation({ currentPage }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [communityOpen, setCommunityOpen] = React.useState(false);
+  const [moreOpen, setMoreOpen] = React.useState(false);
 
   const isActive = (page: string) => currentPage === page;
   
   // Check if any "More" menu page is active
-  const isCommunityActive = ["episodes", "young-artists", "about", "advertisers"].includes(currentPage || "");
+  const isMoreActive = ["episodes", "young-artists", "track-of-the-week", "submit-track", "about", "advertisers"].includes(currentPage || "");
 
   return (
     <nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
@@ -48,12 +48,21 @@ export default function Navigation({ currentPage }: NavigationProps) {
             </Link>
 
             <Link
-              href="/track-of-the-week"
+              href="/artists"
               className={`text-base font-medium transition ${
-                isActive("track-of-the-week") ? "text-white" : "text-gray-300 hover:text-white"
+                isActive("artists") ? "text-white" : "text-gray-300 hover:text-white"
               }`}
             >
-              הטראק השבועי
+              האמנים
+            </Link>
+
+            <Link
+              href="/legends"
+              className={`text-base font-medium transition ${
+                isActive("legends") ? "text-white" : "text-gray-300 hover:text-white"
+              }`}
+            >
+              אגדות
             </Link>
 
             <Link
@@ -68,17 +77,17 @@ export default function Navigation({ currentPage }: NavigationProps) {
             {/* More Dropdown */}
             <div 
               className="relative"
-              onMouseEnter={() => setCommunityOpen(true)}
-              onMouseLeave={() => setCommunityOpen(false)}
+              onMouseEnter={() => setMoreOpen(true)}
+              onMouseLeave={() => setMoreOpen(false)}
             >
               <button
                 className={`text-base font-medium transition flex items-center gap-1 ${
-                  isCommunityActive ? "text-white" : "text-gray-300 hover:text-white"
+                  isMoreActive ? "text-white" : "text-gray-300 hover:text-white"
                 }`}
               >
                 עוד
                 <svg 
-                  className={`w-4 h-4 transition-transform ${communityOpen ? 'rotate-180' : ''}`} 
+                  className={`w-4 h-4 transition-transform ${moreOpen ? 'rotate-180' : ''}`} 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -87,7 +96,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                 </svg>
               </button>
 
-              {communityOpen && (
+              {moreOpen && (
                 <div className="absolute right-0 top-full pt-1 w-64 z-50">
                   <div className="rounded-xl shadow-xl bg-gray-900 border border-gray-800 py-2">
                     <Link
@@ -110,7 +119,27 @@ export default function Navigation({ currentPage }: NavigationProps) {
                     >
                       🌟 אמנים צעירים
                     </Link>
+                    <Link
+                      href="/track-of-the-week"
+                      className={`block px-4 py-3 text-sm transition ${
+                        isActive("track-of-the-week")
+                          ? "text-purple-400 bg-gray-800"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }`}
+                    >
+                      🎵 הטראק השבועי
+                    </Link>
                     <div className="border-t border-gray-800 my-1"></div>
+                    <Link
+                      href="/submit-track"
+                      className={`block px-4 py-3 text-sm transition ${
+                        isActive("submit-track")
+                          ? "text-purple-400 bg-gray-800"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }`}
+                    >
+                      הגישו טראק
+                    </Link>
                     <Link
                       href="/about"
                       className={`block px-4 py-3 text-sm transition ${
@@ -136,14 +165,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
               )}
             </div>
 
-            {/* Action Buttons */}
-            <Link
-              href="/submit-track"
-              className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              הגישו טראק
-            </Link>
-
+            {/* CTA Button */}
             <Link
               href="/vote"
               className="btn-primary px-5 py-2 rounded-lg text-sm font-semibold"
@@ -186,15 +208,27 @@ export default function Navigation({ currentPage }: NavigationProps) {
             </Link>
 
             <Link
-              href="/track-of-the-week"
+              href="/artists"
               className={`block px-4 py-3 rounded-lg transition ${
-                isActive("track-of-the-week") 
+                isActive("artists") 
                   ? "text-white bg-gray-800" 
                   : "text-gray-300 hover:bg-gray-800 hover:text-white"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              הטראק השבועי
+              🎤 האמנים
+            </Link>
+
+            <Link
+              href="/legends"
+              className={`block px-4 py-3 rounded-lg transition ${
+                isActive("legends") 
+                  ? "text-white bg-gray-800" 
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              👑 אגדות
             </Link>
 
             <Link
@@ -240,6 +274,30 @@ export default function Navigation({ currentPage }: NavigationProps) {
               </Link>
 
               <Link
+                href="/track-of-the-week"
+                className={`block px-4 py-3 rounded-lg transition ${
+                  isActive("track-of-the-week") 
+                    ? "text-white bg-gray-800" 
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                🎵 הטראק השבועי
+              </Link>
+
+              <Link
+                href="/submit-track"
+                className={`block px-4 py-3 rounded-lg transition ${
+                  isActive("submit-track") 
+                    ? "text-white bg-gray-800" 
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                הגישו טראק
+              </Link>
+
+              <Link
                 href="/about"
                 className={`block px-4 py-3 rounded-lg transition ${
                   isActive("about") 
@@ -264,16 +322,8 @@ export default function Navigation({ currentPage }: NavigationProps) {
               </Link>
             </div>
 
-            {/* CTA Buttons */}
-            <div className="pt-3 mt-3 border-t border-gray-800 space-y-2">
-              <Link
-                href="/submit-track"
-                className="block btn-secondary px-4 py-3 rounded-lg text-center font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                הגישו טראק
-              </Link>
-
+            {/* CTA Button */}
+            <div className="pt-3 mt-3 border-t border-gray-800">
               <Link
                 href="/vote"
                 className="block btn-primary px-4 py-3 rounded-lg text-center font-semibold"
