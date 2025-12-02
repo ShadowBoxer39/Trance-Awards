@@ -110,8 +110,8 @@ function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: 
   );
 }
 
-// Horizontal Scroll Container with Arrows
-function HorizontalScroll({ children, className = "" }: { children: React.ReactNode, className?: string }) {
+// Horizontal Scroll Container with Smooth Gradient Edges
+function HorizontalScroll({ children, className = "", accentColor = "purple" }: { children: React.ReactNode, className?: string, accentColor?: "purple" | "orange" }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -129,13 +129,19 @@ function HorizontalScroll({ children, className = "" }: { children: React.ReactN
     const ref = scrollRef.current;
     if (ref) {
       ref.addEventListener('scroll', checkScroll);
-      return () => ref.removeEventListener('scroll', checkScroll);
+      window.addEventListener('resize', checkScroll);
+      return () => {
+        ref.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+      };
     }
   }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = 300;
+      const cardWidth = 192; // w-48 = 12rem = 192px
+      const gap = 16; // gap-4 = 1rem = 16px
+      const scrollAmount = (cardWidth + gap) * 2; // Scroll 2 cards at a time
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -143,35 +149,51 @@ function HorizontalScroll({ children, className = "" }: { children: React.ReactN
     }
   };
 
+  const gradientColor = accentColor === 'orange' ? 'from-orange-500' : 'from-purple-500';
+  const buttonHoverBg = accentColor === 'orange' ? 'hover:bg-orange-600' : 'hover:bg-purple-600';
+  const buttonHoverBorder = accentColor === 'orange' ? 'hover:border-orange-500' : 'hover:border-purple-500';
+
   return (
-    <div className="relative group">
-      {/* Left Arrow */}
-      {canScrollLeft && (
-        <button
-          onClick={() => scroll('left')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white hover:bg-purple-600 hover:border-purple-500 transition-all opacity-0 group-hover:opacity-100 -mr-4"
-          aria-label="Scroll right"
-        >
-          <FaChevronRight className="w-4 h-4" />
-        </button>
-      )}
+    <div className="relative">
+      {/* Left Arrow (appears on right side in RTL) */}
+      <button
+        onClick={() => scroll('left')}
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollLeft ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
+        aria-label="Scroll right"
+        style={{ marginRight: '-24px' }}
+      >
+        <FaChevronRight className="w-4 h-4" />
+      </button>
       
-      {/* Right Arrow */}
-      {canScrollRight && (
-        <button
-          onClick={() => scroll('right')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white hover:bg-purple-600 hover:border-purple-500 transition-all opacity-0 group-hover:opacity-100 -ml-4"
-          aria-label="Scroll left"
-        >
-          <FaChevronLeft className="w-4 h-4" />
-        </button>
-      )}
+      {/* Right Arrow (appears on left side in RTL) */}
+      <button
+        onClick={() => scroll('right')}
+        className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollRight ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
+        aria-label="Scroll left"
+        style={{ marginLeft: '-24px' }}
+      >
+        <FaChevronLeft className="w-4 h-4" />
+      </button>
+
+      {/* Gradient Fade - Right side (start in RTL) */}
+      <div 
+        className={`absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#0a0a1f] to-transparent z-10 pointer-events-none transition-opacity duration-300 ${canScrollLeft ? 'opacity-100' : 'opacity-0'}`}
+      />
+      
+      {/* Gradient Fade - Left side (end in RTL) */}
+      <div 
+        className={`absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#0a0a1f] to-transparent z-10 pointer-events-none transition-opacity duration-300 ${canScrollRight ? 'opacity-100' : 'opacity-0'}`}
+      />
 
       {/* Scroll Container */}
       <div
         ref={scrollRef}
-        className={`flex gap-4 overflow-x-auto scroll-smooth scrollbar-hide ${className}`}
-        style={{ scrollSnapType: 'x mandatory' }}
+        className={`flex gap-4 overflow-x-auto scroll-smooth px-1 py-2 ${className}`}
+        style={{ 
+          scrollSnapType: 'x mandatory',
+          scrollPaddingInline: '16px',
+          WebkitOverflowScrolling: 'touch'
+        }}
       >
         {children}
       </div>
@@ -604,11 +626,11 @@ export default function Home({
                 </Link>
                 
                 <Link 
-                  href="/artists" 
+                  href="/young-artists" 
                   className="px-10 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2 justify-center min-w-[200px]"
                 >
-                  <span className="text-2xl">🎤</span>
-                  האמנים שלנו
+                  <span className="text-2xl">🌟</span>
+                  אנחנו ממליצים על אמנים
                 </Link>
               </div>
 
@@ -888,52 +910,7 @@ export default function Home({
           </div>
         </section>
 
-        {/* Artists Section - NEW */}
-        {artists && artists.length > 0 && (
-          <section className="max-w-7xl mx-auto px-6 py-16">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">🎤</span>
-                <h2 className="text-2xl md:text-3xl font-semibold">האמנים שלנו</h2>
-              </div>
-              <Link 
-                href="/artists" 
-                className="text-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
-              >
-                לכל האמנים ({artists.length})
-                <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </div>
-
-            <HorizontalScroll className="pb-4">
-              {artists.map((artist) => (
-                <ArtistHomeCard key={artist.id} artist={artist} />
-              ))}
-              
-              {/* See All Card */}
-              <Link 
-                href="/artists" 
-                className="flex-shrink-0 group"
-                style={{ scrollSnapAlign: 'start' }}
-              >
-                <div className="w-40 md:w-48 aspect-[3/4] rounded-xl border-2 border-dashed border-gray-600 hover:border-purple-500 transition-all flex flex-col items-center justify-center gap-3 bg-gray-900/30 hover:bg-purple-900/20">
-                  <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-medium text-gray-400 group-hover:text-purple-400 transition-colors">
-                    לכל האמנים
-                  </span>
-                </div>
-              </Link>
-            </HorizontalScroll>
-          </section>
-        )}
-
-        {/* Track of the Week Section */}
+        {/* Track of the Week Section - MOVED UP */}
         <section className="max-w-7xl mx-auto px-6 pb-16">
           <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-green-500/30">
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -1032,7 +1009,52 @@ export default function Home({
           </div>
         </section>
 
-        {/* Legends Section - NEW */}
+        {/* Artists Section */}
+        {artists && artists.length > 0 && (
+          <section className="max-w-7xl mx-auto px-6 py-16">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">🎤</span>
+                <h2 className="text-2xl md:text-3xl font-semibold">האמנים שלנו</h2>
+              </div>
+              <Link 
+                href="/artists" 
+                className="text-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+              >
+                לכל האמנים ({artists.length})
+                <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+
+            <HorizontalScroll className="pb-4" accentColor="purple">
+              {artists.map((artist) => (
+                <ArtistHomeCard key={artist.id} artist={artist} />
+              ))}
+              
+              {/* See All Card */}
+              <Link 
+                href="/artists" 
+                className="flex-shrink-0 group"
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                <div className="w-40 md:w-48 aspect-[3/4] rounded-xl border-2 border-dashed border-gray-600 hover:border-purple-500 transition-all flex flex-col items-center justify-center gap-3 bg-gray-900/30 hover:bg-purple-900/20">
+                  <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-400 group-hover:text-purple-400 transition-colors">
+                    לכל האמנים
+                  </span>
+                </div>
+              </Link>
+            </HorizontalScroll>
+          </section>
+        )}
+
+        {/* Legends Section */}
         {legends && legends.length > 0 && (
           <section className="max-w-7xl mx-auto px-6 py-16">
             <div className="flex items-center justify-between mb-8">
@@ -1051,7 +1073,7 @@ export default function Home({
               </Link>
             </div>
 
-            <HorizontalScroll className="pb-4">
+            <HorizontalScroll className="pb-4" accentColor="orange">
               {legends.map((legend) => (
                 <LegendHomeCard key={legend.id} legend={legend} />
               ))}
@@ -1202,6 +1224,22 @@ export default function Home({
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
+        }
+        
+        /* Custom scrollbar for horizontal scroll areas */
+        .horizontal-scroll::-webkit-scrollbar {
+          height: 6px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 3px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-thumb {
+          background: rgba(168, 85, 247, 0.3);
+          border-radius: 3px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(168, 85, 247, 0.5);
         }
       `}</style>
     </>
