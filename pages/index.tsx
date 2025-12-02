@@ -155,27 +155,27 @@ function HorizontalScroll({ children, className = "", accentColor = "purple" }: 
   const buttonHoverBg = accentColor === 'orange' ? 'hover:bg-orange-600' : 'hover:bg-purple-600';
   const buttonHoverBorder = accentColor === 'orange' ? 'hover:border-orange-500' : 'hover:border-purple-500';
 
-  return (
-    <div className="relative">
-      {/* Right Arrow - scrolls content right (shows more from the start in RTL) */}
-      <button
-        onClick={() => scroll('right')}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollRight ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
-        aria-label="Scroll right"
-        style={{ marginRight: '-24px' }}
-      >
-        <FaChevronRight className="w-4 h-4" />
-      </button>
-      
-      {/* Left Arrow - scrolls content left (shows more towards the end in RTL) */}
-      <button
-        onClick={() => scroll('left')}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollLeft ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
-        aria-label="Scroll left"
-        style={{ marginLeft: '-24px' }}
-      >
-        <FaChevronLeft className="w-4 h-4" />
-      </button>
+ return (
+  <div className="relative">
+    {/* Right Arrow - הצד הימני במסך */}
+    <button
+      onClick={() => scroll('left')}              // ⬅️ במקום 'right'
+      className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollRight ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
+      aria-label="Scroll left"                    // ⬅️ היה "Scroll right"
+      style={{ marginRight: '-24px' }}
+    >
+      <FaChevronRight className="w-4 h-4" />
+    </button>
+    
+    {/* Left Arrow - הצד השמאלי במסך */}
+    <button
+      onClick={() => scroll('right')}             // ⬅️ במקום 'left'
+      className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-gray-900/90 border border-white/20 flex items-center justify-center text-white ${buttonHoverBg} ${buttonHoverBorder} transition-all duration-300 shadow-xl backdrop-blur-sm ${canScrollLeft ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}
+      aria-label="Scroll right"                   // ⬅️ היה "Scroll left"
+      style={{ marginLeft: '-24px' }}
+    >
+      <FaChevronLeft className="w-4 h-4" />
+    </button>
 
       {/* Gradient Fade - Right side */}
       <div 
