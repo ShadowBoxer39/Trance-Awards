@@ -59,7 +59,7 @@ function LegendsPage({ legends }: LegendsPageProps) {
         <meta property="og:title" content="האגדות | יוצאים לטראק" />
         <meta
           property="og:description"
-          content="חלוצי הטראנס והפסייטראנס שהקדשנו להם פרקים מיוחדים."
+          content="חלוצי הטראנס שהקדשנו להם פרקים מיוחדים."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.tracktrip.co.il/legends" />
