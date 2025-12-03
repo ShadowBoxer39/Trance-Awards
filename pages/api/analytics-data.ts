@@ -19,6 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let from = 0;
     const allVisits: any[] = [];
 
+    // Fetch all visits in batches
     while (true) {
       const { data, error } = await supabase
         .from("site_visits")
@@ -39,10 +40,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const uniqueVisitorIds = new Set<string>();
     const visitorFrequency: Record<string, number> = {};
     
-    // --- NEW: Artist Page Stats ---
+    // --- NEW: Artist Page Stats Logic ---
     const artistPageVisits: Record<string, { visits: number; page: string; slug: string }> = {};
     
-    // Known pages to exclude from /[slug] detection
+    // Pages to exclude from being counted as an "artist"
     const staticPages = new Set([
         "", "home", "episodes", "young-artists", "about", "advertisers", 
         "vote", "awards", "track-of-the-week", "submit-track", 
@@ -51,31 +52,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ]);
 
     allVisits.forEach(visit => {
-      // Existing Visitor Logic
+      // 1. Track Unique Visitors
       if (visit.visitor_id) {
         uniqueVisitorIds.add(visit.visitor_id);
         visitorFrequency[visit.visitor_id] = (visitorFrequency[visit.visitor_id] || 0) + 1;
       }
 
-      // New Artist Page Logic
+      // 2. Track Artist Page Visits
       if (visit.page) {
-        // Remove query params and leading slash
+        // Clean URL: remove query params and leading slash
         const path = visit.page.split('?')[0].replace(/^\//, ''); 
         const parts = path.split('/');
 
         let slug = "";
 
-        // Case 1: /artist/kanok
+        // Case A: /artist/kanok
         if (parts.length === 2 && parts[0] === "artist") {
           slug = parts[1];
         } 
-        // Case 2: /kanok (but not /about, /vote, etc)
+        // Case B: /kanok (Dynamic root page, excluding static pages)
         else if (parts.length === 1 && parts[0] && !staticPages.has(parts[0])) {
           slug = parts[0];
         }
 
         if (slug) {
-          // Clean slug (remove encoded URI characters if any)
           try { slug = decodeURIComponent(slug); } catch {}
           
           if (!artistPageVisits[slug]) {
@@ -95,11 +95,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       ok: true,
-      visits: allVisits || [],
+      visits: allVisits || [], // Return clean array of visits
       uniqueVisitors: uniqueVisitorIds.size,
       returningVisitors,
       newVisitors,
-      artistPageVisits // Sending the new data
+      artistPageVisits // Return the aggregated artist stats
     });
   } catch (e) {
     console.error("analytics-data fetch error:", e);
