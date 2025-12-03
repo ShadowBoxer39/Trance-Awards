@@ -568,7 +568,7 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
                 placeholder="קישור YouTube"
                 className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
               />
-              <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-2 gap-4">
   <div>
     <label className="block text-sm text-white/60 mb-1">שנייה התחלה</label>
     <input
@@ -578,10 +578,10 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
       placeholder="0"
       className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
     />
-    <p className="text-xs text-white/40 mt-1">מאיזו שנייה להתחיל (למשל: 45)</p>
+    <p className="text-xs text-cyan-400 mt-1">💡 1:45 = כתוב 105 (60+45)</p>
   </div>
   <div>
-    <label className="block text-sm text-white/60 mb-1">אורך (שניות)</label>
+    <label className="block text-sm text-white/60 mb-1">אורך הקטע (שניות)</label>
     <input
       type="number"
       value={duration}
@@ -589,7 +589,7 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
       placeholder="10"
       className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
     />
-    <p className="text-xs text-white/40 mt-1">5-15 שניות מומלץ</p>
+    <p className="text-xs text-cyan-400 mt-1">💡 מ-1:45 עד 1:52 = אורך 7</p>
   </div>
 </div>
               <textarea
