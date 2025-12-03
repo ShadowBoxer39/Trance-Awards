@@ -1,20 +1,26 @@
-// pages/admin.tsx - COMPLETE WORKING VERSION WITH UNIQUE VISITORS
-// ✅ All React hooks at top level (no IIFE errors)
-// ✅ Full signups tab with grid
-// ✅ Full tracks tab with YouTube previews
-// ✅ Enhanced analytics with all metrics + UNIQUE VISITORS
-// ✅ Added "today" date range filter for analytics
+// pages/admin.tsx - ENHANCED VERSION WITH ADVANCED ANALYTICS
+// ✅ Returning vs New Visitors
+// ✅ Device Breakdown (Mobile/Desktop/Tablet)  
+// ✅ Daily/Weekly Trends Chart
+// ✅ Top Landing Pages
+// ✅ Comparison Mode (This Period vs Previous Period)
 
 import React from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
-import { createClient } from "@supabase/supabase-js"; 
 
-// Helper function to extract YouTube video ID
 const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   const match = url.match(regex);
   return match ? match[1] : null;
+};
+
+const getDeviceType = (userAgent: string | null): 'mobile' | 'tablet' | 'desktop' => {
+  if (!userAgent) return 'desktop';
+  const ua = userAgent.toLowerCase();
+  if (/ipad|tablet|playbook|silk|(android(?!.*mobile))/i.test(ua)) return 'tablet';
+  if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile|wpdesktop/i.test(ua)) return 'mobile';
+  return 'desktop';
 };
 
 type Tally = Record<string, Record<string, number>>;
@@ -47,11 +53,8 @@ interface VisitData {
   timestamp: string;
   page: string;
   referrer: string | null;
-  userAgent: string | null;
-  entry_time: number | null;
-  exit_time: number | null;
+  user_agent: string | null;
   duration: number | null;
-  client_ip: string | null;
   country_code: string | null;
   is_israel: boolean | null;
   visitor_id: string | null;
@@ -79,12 +82,7 @@ interface AdminArtist {
   record_label_name: string | null;
   record_label_url: string | null;
   management_email: string | null;
-  festival_sets: {
-    youtube_id?: string;
-    festival?: string | null;
-    year?: number | null;
-    location?: string | null;
-  }[] | null;
+  festival_sets: { youtube_id?: string; festival?: string | null; year?: number | null; location?: string | null; }[] | null;
   instagram_reels: string[] | null;
   artist_episodes?: { episode_id: number; is_primary: boolean }[];
 }
@@ -97,29 +95,30 @@ function formatDuration(seconds: number | null): string {
   return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
 }
 
+const DEVICE_COLORS = { mobile: '#06b6d4', desktop: '#8b5cf6', tablet: '#10b981' };
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="glass p-3 rounded-lg text-sm" style={{ border: '1px solid #4f46e5' }}>
-        <p className="font-semibold text-cyan-400">{label}</p>
-        <p>{`${payload[0].value} ביקורים`}</p>
+      <div className="glass p-3 rounded-lg text-sm border border-purple-500/50">
+        <p className="font-semibold text-cyan-400 mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} style={{ color: entry.color }}>{entry.name}: {entry.value}</p>
+        ))}
       </div>
     );
   }
   return null;
 };
 
-const COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
-
 export default function Admin() {
   // ============================================
-  // ALL STATE AT TOP LEVEL - NEVER MOVE THESE
+  // ALL STATE
   // ============================================
   const [key, setKey] = React.useState<string>("");
   const [loading, setLoading] = React.useState(false);
   const [tally, setTally] = React.useState<Tally | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [totalVotes, setTotalVotes] = React.useState<number>(0);
   
   const [signups, setSignups] = React.useState<Signup[]>([]);
@@ -132,16 +131,12 @@ export default function Admin() {
 
   const [visits, setVisits] = React.useState<VisitData[]>([]);
   const [analyticsLoading, setAnalyticsLoading] = React.useState(false);
-  const [totalUniqueVisitors, setTotalUniqueVisitors] = React.useState<number>(0);
   
-  // ⭐ Analytics date range state – now includes "today"
   const [dateRange, setDateRange] = React.useState<"today" | "7d" | "30d" | "all">("today");
+  const [showComparison, setShowComparison] = React.useState(false);
   
-  const [activeTab, setActiveTab] = React.useState<
-    "votes" | "signups" | "analytics" | "track-submissions" | "artists"
-  >("analytics");
+  const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics" | "track-submissions" | "artists">("analytics");
 
-  // 🎧 Artists admin
   const [adminArtists, setAdminArtists] = React.useState<AdminArtist[]>([]);
   const [artistsLoading, setArtistsLoading] = React.useState(false);
   const [currentArtist, setCurrentArtist] = React.useState<AdminArtist | null>(null);
@@ -149,136 +144,209 @@ export default function Admin() {
   const [savingArtist, setSavingArtist] = React.useState(false);
 
   // ============================================
-  // Analytics calculation with UNIQUE VISITORS
+  // ANALYTICS CALCULATION
   // ============================================
   const analytics = React.useMemo(() => {
     if (!visits || visits.length === 0) return null;
     
     const now = new Date();
-    const filtered = visits.filter(v => {
-      const visitDate = new Date(v.timestamp);
-
-      if (dateRange === "today") {
-        const startOfDay = new Date(now);
-        startOfDay.setHours(0, 0, 0, 0);
-        return visitDate >= startOfDay;
-      }
-
-      if (dateRange === "7d") {
-        return visitDate >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      }
-
-      if (dateRange === "30d") {
-        return visitDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      }
-
-      // "all"
-      return true;
-    });
-
-    // Calculate unique visitors for filtered period
-    const uniqueVisitorIds = new Set<string>();
-    filtered.forEach(v => {
-      if (v.visitor_id) {
-        uniqueVisitorIds.add(v.visitor_id);
-      }
-    });
-    const filteredUniqueVisitors = uniqueVisitorIds.size;
-
-    const pageVisits: Record<string, number> = {};
-    const pageNames: Record<string, string> = {
-      '/': '🏠 דף הבית',
-      '/episodes': '🎧 פרקים',
-      '/track-of-the-week': '🎵 הטראק השבועי',
-      '/featured-artist': '⭐ האמן המומלץ',
-      '/young-artists': '🌟 אמנים צעירים',
-      '/vote': '🗳️ הצבעה',
-      '/awards': '🏆 פרסים'
+    
+    const filterByRange = (rangeType: "today" | "7d" | "30d" | "all", offset: number = 0) => {
+      return visits.filter(v => {
+        const visitDate = new Date(v.timestamp);
+        if (rangeType === "today") {
+          const targetDay = new Date(now);
+          targetDay.setDate(targetDay.getDate() - offset);
+          targetDay.setHours(0, 0, 0, 0);
+          const nextDay = new Date(targetDay);
+          nextDay.setDate(nextDay.getDate() + 1);
+          return visitDate >= targetDay && visitDate < nextDay;
+        }
+        if (rangeType === "7d") {
+          const startDate = new Date(now.getTime() - (7 + offset * 7) * 24 * 60 * 60 * 1000);
+          const endDate = new Date(now.getTime() - offset * 7 * 24 * 60 * 60 * 1000);
+          return visitDate >= startDate && visitDate < endDate;
+        }
+        if (rangeType === "30d") {
+          const startDate = new Date(now.getTime() - (30 + offset * 30) * 24 * 60 * 60 * 1000);
+          const endDate = new Date(now.getTime() - offset * 30 * 24 * 60 * 60 * 1000);
+          return visitDate >= startDate && visitDate < endDate;
+        }
+        return true;
+      });
     };
 
+    const filtered = filterByRange(dateRange, 0);
+    const previousPeriod = filterByRange(dateRange, 1);
+
+    // Unique visitors
+    const uniqueVisitorIds = new Set<string>();
+    filtered.forEach(v => { if (v.visitor_id) uniqueVisitorIds.add(v.visitor_id); });
+    
+    const prevUniqueVisitorIds = new Set<string>();
+    previousPeriod.forEach(v => { if (v.visitor_id) prevUniqueVisitorIds.add(v.visitor_id); });
+
+    // Returning vs New
+    const visitorFirstSeen: Record<string, Date> = {};
+    visits.forEach(v => {
+      if (v.visitor_id) {
+        const visitDate = new Date(v.timestamp);
+        if (!visitorFirstSeen[v.visitor_id] || visitDate < visitorFirstSeen[v.visitor_id]) {
+          visitorFirstSeen[v.visitor_id] = visitDate;
+        }
+      }
+    });
+
+    const periodStart = dateRange === "today" 
+      ? (() => { const d = new Date(now); d.setHours(0,0,0,0); return d; })()
+      : dateRange === "7d" ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      : dateRange === "30d" ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      : new Date(0);
+
+    let returningInPeriod = 0, newInPeriod = 0;
+    uniqueVisitorIds.forEach(visitorId => {
+      const firstSeen = visitorFirstSeen[visitorId];
+      if (firstSeen && firstSeen < periodStart) returningInPeriod++;
+      else newInPeriod++;
+    });
+
+    // Device breakdown
+    const devices = { mobile: 0, desktop: 0, tablet: 0 };
+    filtered.forEach(v => { devices[getDeviceType(v.user_agent)]++; });
+    const deviceData = [
+      { name: '📱 מובייל', value: devices.mobile, color: DEVICE_COLORS.mobile },
+      { name: '💻 דסקטופ', value: devices.desktop, color: DEVICE_COLORS.desktop },
+      { name: '📟 טאבלט', value: devices.tablet, color: DEVICE_COLORS.tablet },
+    ].filter(d => d.value > 0);
+
+    // Daily trends
+    const dailyData: Record<string, number> = {};
+    const prevDailyData: Record<string, number> = {};
+    const daysToShow = dateRange === "today" ? 1 : dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 30;
+    
+    for (let i = daysToShow - 1; i >= 0; i--) {
+      const date = new Date(now); date.setDate(date.getDate() - i);
+      dailyData[date.toISOString().split('T')[0]] = 0;
+      if (showComparison) {
+        const prevDate = new Date(now); prevDate.setDate(prevDate.getDate() - i - daysToShow);
+        prevDailyData[prevDate.toISOString().split('T')[0]] = 0;
+      }
+    }
+    filtered.forEach(v => {
+      const dateKey = new Date(v.timestamp).toISOString().split('T')[0];
+      if (dailyData.hasOwnProperty(dateKey)) dailyData[dateKey]++;
+    });
+    if (showComparison) {
+      previousPeriod.forEach(v => {
+        const dateKey = new Date(v.timestamp).toISOString().split('T')[0];
+        if (prevDailyData.hasOwnProperty(dateKey)) prevDailyData[dateKey]++;
+      });
+    }
+
+    const trendData = Object.entries(dailyData).map(([date, count], idx) => ({
+      date: new Date(date).toLocaleDateString('he-IL', { day: 'numeric', month: 'short' }),
+      visits: count,
+      previousVisits: showComparison ? Object.values(prevDailyData)[idx] || 0 : undefined,
+    }));
+
+    // Landing pages
+    const visitorLandingPage: Record<string, { page: string; time: Date }> = {};
+    filtered.forEach(v => {
+      if (v.visitor_id) {
+        const visitTime = new Date(v.timestamp);
+        if (!visitorLandingPage[v.visitor_id] || visitTime < visitorLandingPage[v.visitor_id].time) {
+          visitorLandingPage[v.visitor_id] = { page: v.page, time: visitTime };
+        }
+      }
+    });
+    const landingPages: Record<string, number> = {};
+    Object.values(visitorLandingPage).forEach(({ page }) => {
+      landingPages[page] = (landingPages[page] || 0) + 1;
+    });
+
+    const pageNames: Record<string, string> = {
+      '/': '🏠 דף הבית', '/episodes': '🎧 פרקים', '/track-of-the-week': '🎵 הטראק השבועי',
+      '/featured-artist': '⭐ האמן המומלץ', '/young-artists': '🌟 אמנים צעירים',
+      '/vote': '🗳️ הצבעה', '/awards': '🏆 פרסים', '/artists': '🎤 אמנים', '/legends': '👑 אגדות',
+    };
+
+    const topLandingPages = Object.entries(landingPages)
+      .sort(([,a], [,b]) => b - a).slice(0, 5)
+      .map(([page, count]) => ({
+        page: pageNames[page] || page, count,
+        percentage: uniqueVisitorIds.size ? ((count / uniqueVisitorIds.size) * 100).toFixed(1) : "0.0"
+      }));
+
+    // Regular metrics
+    const pageVisits: Record<string, number> = {};
     const sources: Record<string, number> = {};
     const hourlyTraffic: Record<number, number> = {};
-    let totalDuration = 0;
-    let validDurations = 0;
-    let bounces = 0;
-    let israelVisits = 0;
+    let totalDuration = 0, validDurations = 0, bounces = 0, israelVisits = 0;
     const countries: Record<string, number> = {};
 
     filtered.forEach(v => {
       pageVisits[v.page] = (pageVisits[v.page] || 0) + 1;
-      const hour = new Date(v.timestamp).getHours();
-      hourlyTraffic[hour] = (hourlyTraffic[hour] || 0) + 1;
-      
-      if (v.duration && v.duration > 0) {
-        totalDuration += v.duration;
-        validDurations++;
-        if (v.duration < 5) bounces++;
-      }
-      
+      hourlyTraffic[new Date(v.timestamp).getHours()] = (hourlyTraffic[new Date(v.timestamp).getHours()] || 0) + 1;
+      if (v.duration && v.duration > 0) { totalDuration += v.duration; validDurations++; if (v.duration < 5) bounces++; }
       if (v.is_israel) israelVisits++;
-      if (v.country_code) {
-        countries[v.country_code] = (countries[v.country_code] || 0) + 1;
-      }
+      if (v.country_code) countries[v.country_code] = (countries[v.country_code] || 0) + 1;
       
       if (v.referrer) {
         try {
-          const url = new URL(v.referrer);
-          const host = url.hostname.replace('www.', '');
+          const host = new URL(v.referrer).hostname.replace('www.', '');
           if (host.includes('instagram')) sources['📸 Instagram'] = (sources['📸 Instagram'] || 0) + 1;
           else if (host.includes('facebook')) sources['👥 Facebook'] = (sources['👥 Facebook'] || 0) + 1;
           else if (host.includes('google')) sources['🔍 Google'] = (sources['🔍 Google'] || 0) + 1;
           else if (host.includes('youtube')) sources['📺 YouTube'] = (sources['📺 YouTube'] || 0) + 1;
-          else sources[`🔗 ${host}`] = (sources[`🔗 ${host}`] || 0) + 1;
-        } catch {
-          sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1;
-        }
-      } else {
-        sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1;
-      }
+          else sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1;
+        } catch { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
+      } else { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
     });
 
     const avgDuration = validDurations > 0 ? totalDuration / validDurations : 0;
     const bounceRate = validDurations > 0 ? (bounces / validDurations) * 100 : 0;
 
-    const topPages = Object.entries(pageVisits)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([page, count]) => ({
-        page: pageNames[page] || page,
-        count,
-        percentage: filtered.length ? ((count / filtered.length) * 100).toFixed(1) : "0.0"
-      }));
+    // Previous period for comparison
+    let prevTotalDuration = 0, prevValidDurations = 0;
+    previousPeriod.forEach(v => { if (v.duration && v.duration > 0) { prevTotalDuration += v.duration; prevValidDurations++; }});
+    const prevAvgDuration = prevValidDurations > 0 ? prevTotalDuration / prevValidDurations : 0;
 
-    const topSources = Object.entries(sources)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([source, count]) => ({
-        source,
-        count,
-        percentage: filtered.length ? ((count / filtered.length) * 100).toFixed(1) : "0.0"
-      }));
+    const calcChange = (current: number, previous: number): number => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    };
 
-    const peakHours = Object.entries(hourlyTraffic)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([hour, count]) => ({
-        hour: `${hour}:00`,
-        count
-      }));
+    const topPages = Object.entries(pageVisits).sort(([,a], [,b]) => b - a).slice(0, 5)
+      .map(([page, count]) => ({ page: pageNames[page] || page, count, percentage: filtered.length ? ((count / filtered.length) * 100).toFixed(1) : "0.0" }));
+
+    const topSources = Object.entries(sources).sort(([,a], [,b]) => b - a).slice(0, 5)
+      .map(([source, count]) => ({ source, count, percentage: filtered.length ? ((count / filtered.length) * 100).toFixed(1) : "0.0" }));
+
+    const peakHours = Object.entries(hourlyTraffic).sort(([,a], [,b]) => b - a).slice(0, 5)
+      .map(([hour, count]) => ({ hour: `${hour}:00`, count }));
 
     return {
       totalVisits: filtered.length,
-      uniqueVisitors: filteredUniqueVisitors,
+      uniqueVisitors: uniqueVisitorIds.size,
+      returningVisitors: returningInPeriod,
+      newVisitors: newInPeriod,
       avgDuration: Math.round(avgDuration),
       bounceRate: bounceRate.toFixed(1),
       israelVisits,
       israelPercentage: filtered.length ? ((israelVisits / filtered.length) * 100).toFixed(1) : "0.0",
-      topPages,
-      topSources,
-      peakHours,
-      countriesCount: Object.keys(countries).length
+      topPages, topSources, topLandingPages, peakHours,
+      countriesCount: Object.keys(countries).length,
+      deviceData, trendData,
+      comparison: {
+        prevTotalVisits: previousPeriod.length,
+        prevUniqueVisitors: prevUniqueVisitorIds.size,
+        prevAvgDuration: Math.round(prevAvgDuration),
+        visitsChange: calcChange(filtered.length, previousPeriod.length),
+        uniqueChange: calcChange(uniqueVisitorIds.size, prevUniqueVisitorIds.size),
+        durationChange: calcChange(avgDuration, prevAvgDuration),
+      }
     };
-  }, [visits, dateRange]);
+  }, [visits, dateRange, showComparison]);
 
   // ============================================
   // useEffect HOOKS
@@ -290,176 +358,33 @@ export default function Admin() {
   }, []);
 
   React.useEffect(() => {
-    if (key && !tally && !loading && !error) {
-      fetchStats();
-    }
+    if (key && !tally && !loading && !error) fetchStats();
   }, [key]);
 
   React.useEffect(() => {
     if (tally) {
-      if (activeTab === "signups") {
-        fetchSignups();
-      } else if (activeTab === "analytics") {
-        fetchAnalytics();
-      } else if (activeTab === "track-submissions") {
-        fetchTrackSubmissions();
-      } else if (activeTab === "artists") {
-        fetchArtists();
-      }
+      if (activeTab === "signups") fetchSignups();
+      else if (activeTab === "analytics") fetchAnalytics();
+      else if (activeTab === "track-submissions") fetchTrackSubmissions();
+      else if (activeTab === "artists") fetchArtists();
     }
   }, [tally, activeTab]);
 
   // ============================================
-  // ALL FUNCTIONS
+  // FETCH FUNCTIONS
   // ============================================
   const fetchStats = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!key) return;
-
-    setLoading(true);
-    setError(null);
-
+    setLoading(true); setError(null);
     try {
       const r = await fetch(`/api/stats?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
       const j = await r.json();
-
-      if (!r.ok || !j?.ok) {
-        throw new Error(j?.error || "שגיאה בטעינת הנתונים");
-      }
-
-      setTally(j.tally as Tally);
-      setTotalVotes(j.totalVotes || 0);
+      if (!r.ok || !j?.ok) throw new Error(j?.error || "שגיאה");
+      setTally(j.tally); setTotalVotes(j.totalVotes || 0);
       localStorage.setItem("ADMIN_KEY", key);
-    } catch (err: any) {
-      setError(err.message || "שגיאה לא ידועה");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTrackSubmissions = async () => {
-    if (!key) return;
-    setTrackSubsLoading(true);
-    try {
-      const r = await fetch(`/api/track-submissions?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
-      const j = await r.json();
-      if (!r.ok || !j?.ok) throw new Error(j?.error || "Failed to fetch");
-      setTrackSubs(j.submissions as TrackSubmission[]);
-    } catch (err: any) {
-      console.error("Error:", err);
-      alert("שגיאה בטעינת טרקים: " + err.message);
-    } finally {
-      setTrackSubsLoading(false);
-    }
-  };
-
-  const fetchArtists = async () => {
-    if (!key) return;
-    setArtistsLoading(true);
-    try {
-      const r = await fetch(
-        `/api/admin-artists?key=${encodeURIComponent(key)}&_t=${Date.now()}`
-      );
-      const j = await r.json();
-      if (!r.ok || !j?.ok) throw new Error(j?.error || "Failed to fetch artists");
-
-      const artists = (j.artists as AdminArtist[]) || [];
-      setAdminArtists(artists);
-
-      if (artists.length && !currentArtist) {
-        const first = artists[0];
-        setCurrentArtist(first);
-        const primary = first.artist_episodes?.find((e) => e.is_primary);
-        setPrimaryEpisodeId(primary ? String(primary.episode_id) : "");
-      }
-    } catch (err: any) {
-      console.error("Error fetching artists", err);
-      alert("שגיאה בטעינת דפי אמנים: " + err.message);
-    } finally {
-      setArtistsLoading(false);
-    }
-  };
-
-  const saveArtist = async () => {
-    if (!key || !currentArtist) return;
-
-    const artistPayload: any = { ...currentArtist };
-
-    // avoid sending id=0 for new
-    if (!artistPayload.id || artistPayload.id === 0) {
-      delete artistPayload.id;
-    }
-
-    // normalize festival + reels
-    if (!Array.isArray(artistPayload.festival_sets)) {
-      artistPayload.festival_sets = [];
-    }
-    if (!Array.isArray(artistPayload.instagram_reels)) {
-      artistPayload.instagram_reels = [];
-    }
-
-    const body = {
-      artist: artistPayload,
-      primaryEpisodeId: primaryEpisodeId ? Number(primaryEpisodeId) : null,
-    };
-
-    setSavingArtist(true);
-    try {
-      const r = await fetch(
-        `/api/admin-artists?key=${encodeURIComponent(key)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
-      const j = await r.json();
-      if (!r.ok || !j?.ok) throw new Error(j?.error || "Failed to save artist");
-
-      await fetchArtists();
-      alert("האמן נשמר בהצלחה");
-    } catch (err: any) {
-      console.error("Error saving artist", err);
-      alert("שגיאה בשמירת האמן: " + err.message);
-    } finally {
-      setSavingArtist(false);
-    }
-  };
-
-  const approveTrack = async (trackId: string) => {
-    if (!confirm("לאשר טרק זה כ'טרק השבועי'?")) return;
-    setLoading(true);
-    try {
-      const response = await fetch('/api/approve-track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, trackId }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result.ok) throw new Error(result.error);
-      alert("✅ הטרק אושר בהצלחה!");
-      setSelectedTrackSub(null);
-      fetchTrackSubmissions();
-    } catch (error: any) {
-      alert(`שגיאה: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchSignups = async () => {
-    if (!key) return;
-    setSignupsLoading(true);
-    try {
-      const r = await fetch(`/api/artist-signups?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
-      const j = await r.json();
-      if (!r.ok || !j?.ok) throw new Error(j?.error);
-      setSignups(j.signups as Signup[]);
-    } catch (err: any) {
-      alert("שגיאה בטעינת הרשמות");
-    } finally {
-      setSignupsLoading(false);
-    }
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   const fetchAnalytics = async () => {
@@ -469,121 +394,152 @@ export default function Admin() {
       const r = await fetch(`/api/analytics-data?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
       const j = await r.json();
       if (!r.ok || !j?.ok) throw new Error(j?.error);
-      setVisits(j.visits as VisitData[]);
-      setTotalUniqueVisitors(j.uniqueVisitors || 0);
-    } catch (err: any) {
-      alert("שגיאה בטעינת סטטיסטיקות");
-    } finally {
-      setAnalyticsLoading(false);
-    }
+      setVisits(j.visits);
+    } catch { alert("שגיאה בטעינת סטטיסטיקות"); }
+    finally { setAnalyticsLoading(false); }
+  };
+
+  const fetchSignups = async () => {
+    if (!key) return;
+    setSignupsLoading(true);
+    try {
+      const r = await fetch(`/api/artist-signups?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
+      const j = await r.json();
+      if (!r.ok || !j?.ok) throw new Error(j?.error);
+      setSignups(j.signups);
+    } catch { alert("שגיאה בטעינת הרשמות"); }
+    finally { setSignupsLoading(false); }
+  };
+
+  const fetchTrackSubmissions = async () => {
+    if (!key) return;
+    setTrackSubsLoading(true);
+    try {
+      const r = await fetch(`/api/track-submissions?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
+      const j = await r.json();
+      if (!r.ok || !j?.ok) throw new Error(j?.error);
+      setTrackSubs(j.submissions);
+    } catch (err: any) { alert("שגיאה: " + err.message); }
+    finally { setTrackSubsLoading(false); }
+  };
+
+  const fetchArtists = async () => {
+    if (!key) return;
+    setArtistsLoading(true);
+    try {
+      const r = await fetch(`/api/admin-artists?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
+      const j = await r.json();
+      if (!r.ok || !j?.ok) throw new Error(j?.error);
+      setAdminArtists(j.artists || []);
+      if (j.artists?.length && !currentArtist) {
+        setCurrentArtist(j.artists[0]);
+        const primary = j.artists[0].artist_episodes?.find((e: any) => e.is_primary);
+        setPrimaryEpisodeId(primary ? String(primary.episode_id) : "");
+      }
+    } catch (err: any) { alert("שגיאה: " + err.message); }
+    finally { setArtistsLoading(false); }
+  };
+
+  const saveArtist = async () => {
+    if (!key || !currentArtist) return;
+    const payload: any = { ...currentArtist };
+    if (!payload.id) delete payload.id;
+    if (!Array.isArray(payload.festival_sets)) payload.festival_sets = [];
+    if (!Array.isArray(payload.instagram_reels)) payload.instagram_reels = [];
+    setSavingArtist(true);
+    try {
+      const r = await fetch(`/api/admin-artists?key=${encodeURIComponent(key)}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artist: payload, primaryEpisodeId: primaryEpisodeId ? Number(primaryEpisodeId) : null }),
+      });
+      const j = await r.json();
+      if (!r.ok || !j?.ok) throw new Error(j?.error);
+      await fetchArtists();
+      alert("האמן נשמר בהצלחה");
+    } catch (err: any) { alert("שגיאה: " + err.message); }
+    finally { setSavingArtist(false); }
+  };
+
+  const approveTrack = async (trackId: string) => {
+    if (!confirm("לאשר טרק זה?")) return;
+    setLoading(true);
+    try {
+      const r = await fetch('/api/approve-track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, trackId }) });
+      const j = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j.error);
+      alert("✅ הטרק אושר!");
+      setSelectedTrackSub(null);
+      fetchTrackSubmissions();
+    } catch (err: any) { alert("שגיאה: " + err.message); }
+    finally { setLoading(false); }
   };
 
   const deleteTrack = async (trackId: string) => {
-    if (!confirm("האם למחוק המלצה זו?")) return;
+    if (!confirm("למחוק?")) return;
     setLoading(true);
     try {
-      const response = await fetch('/api/track-submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, trackId, action: 'delete' }),
-      });
-      
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("תשובה לא תקינה מהשרת");
-      }
-      
-      const result = await response.json();
-      
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'שגיאה במחיקת המלצה');
-      }
-      
-      alert("✅ ההמלצה נמחקה בהצלחה");
+      const r = await fetch('/api/track-submissions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, trackId, action: 'delete' }) });
+      const j = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j.error);
+      alert("✅ נמחק!");
       setSelectedTrackSub(null);
       fetchTrackSubmissions();
-    } catch (error: any) {
-      console.error('Delete error:', error);
-      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { alert("שגיאה: " + err.message); }
+    finally { setLoading(false); }
   };
 
   const deleteSignup = async (signupId: string) => {
-    if (!confirm("האם למחוק הרשמה זו?")) return;
+    if (!confirm("למחוק?")) return;
     setLoading(true);
     try {
-      const response = await fetch('/api/artist-signups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, signupId, action: 'delete' }),
-      });
-      
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("תשובה לא תקינה מהשרת");
-      }
-      
-      const result = await response.json();
-      
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'שגיאה במחיקת הרשמה');
-      }
-      
-      alert("✅ ההרשמה נמחקה בהצלחה");
+      const r = await fetch('/api/artist-signups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, signupId, action: 'delete' }) });
+      const j = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j.error);
+      alert("✅ נמחק!");
       setSelectedSignup(null);
       fetchSignups();
-    } catch (error: any) {
-      console.error('Delete error:', error);
-      alert(`שגיאה: ${error.message || 'שגיאה לא ידועה'}`);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { alert("שגיאה: " + err.message); }
+    finally { setLoading(false); }
   };
 
   const downloadCSV = () => {
     const headers = ["שם מלא", "שם במה", "גיל", "טלפון", "ניסיון", "השראות", "לינק", "תאריך"];
-    const rows = signups.map((s) => [
-      s.full_name, s.stage_name, s.age, s.phone, s.experience_years, 
-      s.inspirations, s.track_link, new Date(s.submitted_at).toLocaleString('he-IL')
-    ]);
-    const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+    const rows = signups.map(s => [s.full_name, s.stage_name, s.age, s.phone, s.experience_years, s.inspirations, s.track_link, new Date(s.submitted_at).toLocaleString('he-IL')]);
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
-    link.href = url;
-    link.download = `artist-signups-${new Date().toISOString().split('T')[0]}.csv`;
+    link.href = URL.createObjectURL(blob);
+    link.download = `signups-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    URL.revokeObjectURL(url);
   };
 
-  const getCategoryTitle = (catId: string) => {
-    const cat = CATEGORIES.find((c) => c.id === catId);
-    return cat ? cat.title : catId;
-  };
-
+  const getCategoryTitle = (catId: string) => CATEGORIES.find(c => c.id === catId)?.title || catId;
   const getNomineeName = (catId: string, nomineeId: string) => {
-    const cat = CATEGORIES.find((c) => c.id === catId);
-    if (!cat) return nomineeId;
-    const nominee = cat.nominees.find((n) => n.id === nomineeId);
-    return nominee ? nominee.name : nomineeId;
+    const cat = CATEGORIES.find(c => c.id === catId);
+    return cat?.nominees.find(n => n.id === nomineeId)?.name || nomineeId;
   };
 
-  if (!tally && key && !loading && !error) {
+  const ChangeIndicator = ({ value }: { value: number }) => {
+    if (!showComparison) return null;
+    const isPositive = value > 0;
     return (
-      <main className="min-h-screen neon-backdrop text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4 animate-pulse">⏳</div>
-          <div className="text-xl text-white/70">טוען נתונים...</div>
-        </div>
-      </main>
+      <div className={`text-xs mt-1 font-medium ${value === 0 ? 'text-gray-400' : isPositive ? 'text-green-400' : 'text-red-400'}`}>
+        {value === 0 ? '=' : isPositive ? '↑' : '↓'} {Math.abs(value).toFixed(1)}%
+      </div>
     );
+  };
+
+  // ============================================
+  // RENDER
+  // ============================================
+  if (!tally && key && !loading && !error) {
+    return <main className="min-h-screen neon-backdrop text-white flex items-center justify-center"><div className="text-6xl animate-pulse">⏳</div></main>;
   }
 
   return (
     <main className="min-h-screen text-white neon-backdrop">
       <div className="max-w-7xl mx-auto p-4 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-3xl sm:text-4xl font-bold gradient-title">Admin Dashboard</h1>
           {totalVotes > 0 && (
@@ -594,325 +550,316 @@ export default function Admin() {
           )}
         </div>
 
+        {/* Login Form */}
         {!tally && (
           <form onSubmit={fetchStats} className="glass p-6 rounded-2xl max-w-md mx-auto space-y-4">
-            <label className="text-sm text-white/80">Admin Key</label>
-            <input
-              className="w-full rounded-xl bg-black/50 border border-white/15 px-4 py-3"
-              type="password"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder="Paste ADMIN_KEY"
-            />
-            <button
-              className="w-full btn-primary rounded-2xl px-4 py-3 disabled:opacity-50 font-semibold"
-              disabled={!key || loading}
-              type="submit"
-            >
-              {loading ? "טוען…" : "טען נתונים"}
-            </button>
+            <input className="w-full rounded-xl bg-black/50 border border-white/15 px-4 py-3" type="password" value={key} onChange={e => setKey(e.target.value)} placeholder="Admin Key" />
+            <button className="w-full btn-primary rounded-2xl px-4 py-3 font-semibold disabled:opacity-50" disabled={!key || loading}>{loading ? "טוען…" : "התחבר"}</button>
             {error && <div className="text-red-400 text-sm text-center">{error}</div>}
           </form>
         )}
 
         {tally && (
           <>
+            {/* Tabs */}
             <div className="glass rounded-2xl p-1 flex gap-2 overflow-x-auto">
-              <button
-                onClick={() => setActiveTab("votes")}
-                className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
-                  activeTab === "votes" ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                🗳️ תוצאות הצבעה ({totalVotes})
-              </button>
-              <button
-                onClick={() => setActiveTab("signups")}
-                className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
-                  activeTab === "signups" ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"
-                }`}
-              >
-                🌟 הרשמות אמנים ({signups.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("track-submissions")}
-                className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
-                  activeTab === "track-submissions"
-                    ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                💬 טרקים להמלצה ({trackSubs.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("artists")}
-                className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
-                  activeTab === "artists" 
-                    ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                🎧 דפי אמנים ({adminArtists.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("analytics")}
-                className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${
-                  activeTab === "analytics"
-                    ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                📊 סטטיסטיקות ({visits.length})
-              </button>
+              {[
+                { id: "votes", label: `🗳️ הצבעות (${totalVotes})` },
+                { id: "signups", label: `🌟 הרשמות (${signups.length})` },
+                { id: "track-submissions", label: `💬 טרקים (${trackSubs.length})` },
+                { id: "artists", label: `🎧 אמנים (${adminArtists.length})` },
+                { id: "analytics", label: `📊 סטטיסטיקות (${visits.length})` },
+              ].map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${activeTab === tab.id ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"}`}>
+                  {tab.label}
+                </button>
+              ))}
             </div>
+
+            {/* ANALYTICS TAB */}
+            {activeTab === "analytics" && (
+              analyticsLoading ? (
+                <div className="p-12 text-center"><div className="text-4xl animate-spin">⏳</div></div>
+              ) : !analytics ? (
+                <div className="p-12 text-center text-white/50">📊 אין נתונים</div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Filters */}
+                  <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center">
+                    <h2 className="text-2xl font-semibold">סטטיסטיקות אתר</h2>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {(["today", "7d", "30d", "all"] as const).map(range => (
+                        <button key={range} onClick={() => setDateRange(range)}
+                          className={`px-4 py-2 rounded-xl font-medium transition ${dateRange === range ? "bg-gradient-to-r from-cyan-500 to-purple-500" : "bg-white/5 text-white/60 hover:text-white"}`}>
+                          {range === "today" ? "היום" : range === "7d" ? "7 ימים" : range === "30d" ? "30 ימים" : "הכל"}
+                        </button>
+                      ))}
+                      <div className="h-6 w-px bg-white/20 mx-2" />
+                      <button onClick={() => setShowComparison(!showComparison)}
+                        className={`px-4 py-2 rounded-xl font-medium transition ${showComparison ? "bg-gradient-to-r from-yellow-500 to-orange-500" : "bg-white/5 text-white/60"}`}>
+                        📊 השוואה
+                      </button>
+                      <button onClick={fetchAnalytics} className="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl">🔄</button>
+                    </div>
+                  </div>
+
+                  {/* Key Metrics */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="glass rounded-2xl p-5 border-r-4 border-cyan-500">
+                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">סה״כ ביקורים</span><span className="text-2xl">👥</span></div>
+                      <div className="text-3xl font-bold text-cyan-400">{analytics.totalVisits}</div>
+                      <ChangeIndicator value={analytics.comparison.visitsChange} />
+                    </div>
+                    <div className="glass rounded-2xl p-5 border-r-4 border-emerald-500">
+                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">מבקרים ייחודיים</span><span className="text-2xl">🧑‍💻</span></div>
+                      <div className="text-3xl font-bold text-emerald-400">{analytics.uniqueVisitors}</div>
+                      <ChangeIndicator value={analytics.comparison.uniqueChange} />
+                    </div>
+                    <div className="glass rounded-2xl p-5 border-r-4 border-purple-500">
+                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">זמן שהייה</span><span className="text-2xl">⏱️</span></div>
+                      <div className="text-3xl font-bold text-purple-400">{formatDuration(analytics.avgDuration)}</div>
+                      <ChangeIndicator value={analytics.comparison.durationChange} />
+                    </div>
+                    <div className="glass rounded-2xl p-5 border-r-4 border-green-500">
+                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">מישראל</span><span className="text-2xl">🇮🇱</span></div>
+                      <div className="text-3xl font-bold text-green-400">{analytics.israelPercentage}%</div>
+                    </div>
+                    <div className="glass rounded-2xl p-5 border-r-4 border-orange-500">
+                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">נטישה</span><span className="text-2xl">📉</span></div>
+                      <div className="text-3xl font-bold text-orange-400">{analytics.bounceRate}%</div>
+                    </div>
+                  </div>
+
+                  {/* Returning vs New + Devices */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔄 חוזרים מול חדשים</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-blue-500/20 rounded-xl p-4 text-center">
+                          <div className="text-4xl mb-2">🔁</div>
+                          <div className="text-3xl font-bold text-blue-400">{analytics.returningVisitors}</div>
+                          <div className="text-sm text-white/60">חוזרים</div>
+                          <div className="text-xs text-blue-300">{analytics.uniqueVisitors > 0 ? ((analytics.returningVisitors / analytics.uniqueVisitors) * 100).toFixed(0) : 0}%</div>
+                        </div>
+                        <div className="bg-green-500/20 rounded-xl p-4 text-center">
+                          <div className="text-4xl mb-2">✨</div>
+                          <div className="text-3xl font-bold text-green-400">{analytics.newVisitors}</div>
+                          <div className="text-sm text-white/60">חדשים</div>
+                          <div className="text-xs text-green-300">{analytics.uniqueVisitors > 0 ? ((analytics.newVisitors / analytics.uniqueVisitors) * 100).toFixed(0) : 0}%</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📱 מכשירים</h3>
+                      <div className="flex items-center justify-around">
+                        <div className="w-32 h-32">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart><Pie data={analytics.deviceData} cx="50%" cy="50%" innerRadius={35} outerRadius={50} dataKey="value">
+                              {analytics.deviceData.map((entry: any, i: number) => <Cell key={i} fill={entry.color} />)}
+                            </Pie></PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="space-y-2">
+                          {analytics.deviceData.map((d: any, i: number) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
+                              <span className="text-sm">{d.name}: {d.value} ({analytics.totalVisits > 0 ? ((d.value / analytics.totalVisits) * 100).toFixed(0) : 0}%)</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Trends Chart */}
+                  {dateRange !== "today" && (
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📈 מגמת ביקורים</h3>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={analytics.trendData}>
+                            <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+                            <YAxis stroke="#6b7280" fontSize={12} />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Line type="monotone" dataKey="visits" stroke="#06b6d4" strokeWidth={3} dot={{ fill: '#06b6d4', r: 4 }} name="ביקורים" />
+                            {showComparison && <Line type="monotone" dataKey="previousVisits" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} name="תקופה קודמת" />}
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                      {showComparison && (
+                        <div className="flex justify-center gap-6 mt-4 text-sm">
+                          <div className="flex items-center gap-2"><div className="w-4 h-1 bg-cyan-500 rounded" /><span>תקופה נוכחית</span></div>
+                          <div className="flex items-center gap-2"><div className="w-4 h-1 bg-yellow-500 rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f59e0b 0, #f59e0b 5px, transparent 5px, transparent 10px)' }} /><span>תקופה קודמת</span></div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Landing Pages + Top Pages */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🚪 דפי נחיתה</h3>
+                      <div className="space-y-3">
+                        {analytics.topLandingPages.map((p: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-cyan-500/20 text-cyan-400'}`}>{i + 1}</span>
+                                <span className="font-medium">{p.page}</span>
+                              </div>
+                              <div className="text-left"><div className="font-bold text-cyan-400">{p.count}</div><div className="text-xs text-white/50">{p.percentage}%</div></div>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-cyan-500 to-purple-500 h-full rounded-full" style={{ width: `${p.percentage}%` }} /></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📄 דפים פופולריים</h3>
+                      <div className="space-y-3">
+                        {analytics.topPages.map((p: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-purple-500/20 text-purple-400'}`}>{i + 1}</span>
+                                <span className="font-medium">{p.page}</span>
+                              </div>
+                              <div className="text-left"><div className="font-bold text-purple-400">{p.count}</div><div className="text-xs text-white/50">{p.percentage}%</div></div>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full" style={{ width: `${p.percentage}%` }} /></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sources + Peak Hours */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔗 מקורות תנועה</h3>
+                      <div className="space-y-3">
+                        {analytics.topSources.map((s: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-pink-500/20 text-pink-400'}`}>{i + 1}</span>
+                                <span className="font-medium">{s.source}</span>
+                              </div>
+                              <div className="text-left"><div className="font-bold text-pink-400">{s.count}</div><div className="text-xs text-white/50">{s.percentage}%</div></div>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-pink-500 to-orange-500 h-full rounded-full" style={{ width: `${s.percentage}%` }} /></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🕐 שעות שיא</h3>
+                      <div className="grid grid-cols-5 gap-3">
+                        {analytics.peakHours.map((h: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-xl p-3 text-center">
+                            <div className="text-2xl mb-1">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📊"}</div>
+                            <div className="text-lg font-bold text-cyan-400">{h.hour}</div>
+                            <div className="text-xs text-white/60">{h.count}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
 
             {/* VOTES TAB */}
             {activeTab === "votes" && (
-              <>
-                <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold">תוצאות הצבעה מפורטות</h2>
-                  <div className="flex gap-4 text-sm">
-                    <div className="glass px-4 py-2 rounded-lg">
-                      <span className="text-white/60">סה״כ הצבעות: </span>
-                      <span className="font-bold text-cyan-400">{totalVotes}</span>
-                    </div>
-                    <div className="glass px-4 py-2 rounded-lg">
-                      <span className="text-white/60">קטגוריות: </span>
-                      <span className="font-bold text-purple-400">{Object.keys(tally).length}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-8">
-                  {Object.entries(tally).map(([catId, nominees]) => {
-                    const totalCat = Object.values(nominees).reduce((s, c) => s + c, 0);
-                    const sortedNominees = Object.entries(nominees).sort(([, a], [, b]) => b - a);
-                    
-                    return (
-                      <div key={catId} className="glass rounded-2xl p-6">
-                        <div className="border-b border-white/10 pb-3 mb-4">
-                          <h3 className="text-2xl font-bold text-cyan-400">{getCategoryTitle(catId)}</h3>
-                          <p className="text-sm text-white/60 mt-1">סה״כ הצבעות בקטגוריה: <span className="font-medium text-white">{totalCat}</span></p>
-                        </div>
-
-                        <div className="space-y-2">
-                          {sortedNominees.map(([nomineeId, count], index) => {
-                            const percentage = totalCat > 0 ? ((count / totalCat) * 100).toFixed(1) : "0";
-                            const isGold = index === 0;
-                            const isSilver = index === 1;
-                            const isBronze = index === 2;
-                            
-                            const rankClasses = isGold ? 
-                                'bg-yellow-500/10' :
-                                isSilver ?
-                                'bg-gray-500/10' :
-                                isBronze ?
-                                'bg-orange-500/10' :
-                                'hover:bg-white/5';
-
-                            return (
-                              <div
-                                key={nomineeId}
-                                className={`grid grid-cols-[50px,1fr,100px] items-center gap-4 p-3 rounded-lg transition-all text-sm ${rankClasses}`}
-                              >
-                                <div className="flex-shrink-0 text-center">
-                                  {isGold ? (
-                                    <span className="text-2xl">🥇</span>
-                                  ) : isSilver ? (
-                                    <span className="text-2xl">🥈</span>
-                                  ) : isBronze ? (
-                                    <span className="text-2xl">🥉</span>
-                                  ) : (
-                                    <span className="text-white/60 font-medium">#{index + 1}</span>
-                                  )}
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                  <div className={`font-semibold ${isGold ? 'text-yellow-300' : 'text-white'} truncate mb-1`}>
-                                    {getNomineeName(catId, nomineeId)}
-                                  </div>
-                                  
-                                  <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full transition-all duration-500 ${
-                                        isGold 
-                                          ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                                          : 'bg-gradient-to-r from-cyan-500 to-purple-500'
-                                      }`}
-                                      style={{ width: `${percentage}%` }}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="text-right flex-shrink-0 w-20">
-                                  <div className={`text-base font-bold ${isGold ? 'text-yellow-300' : 'text-cyan-400'}`}>
-                                    {count}
-                                  </div>
-                                  <div className="text-xs text-white/50">
-                                    {percentage}%
-                                  </div>
-                                </div>
+              <div className="space-y-6">
+                {Object.entries(tally).map(([catId, nominees]) => {
+                  const total = Object.values(nominees).reduce((s, c) => s + c, 0);
+                  return (
+                    <div key={catId} className="glass rounded-2xl p-6">
+                      <h3 className="text-2xl font-bold text-cyan-400 border-b border-white/10 pb-3 mb-4">{getCategoryTitle(catId)}</h3>
+                      <div className="space-y-2">
+                        {Object.entries(nominees).sort(([,a], [,b]) => b - a).map(([nId, count], i) => (
+                          <div key={nId} className={`grid grid-cols-[40px,1fr,80px] items-center gap-4 p-3 rounded-lg ${i === 0 ? 'bg-yellow-500/10' : i < 3 ? 'bg-white/5' : ''}`}>
+                            <span className="text-center">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}</span>
+                            <div>
+                              <div className={`font-semibold ${i === 0 ? 'text-yellow-300' : ''}`}>{getNomineeName(catId, nId)}</div>
+                              <div className="w-full bg-gray-800 rounded-full h-2 mt-1">
+                                <div className={`h-full rounded-full ${i === 0 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-cyan-500 to-purple-500'}`} style={{ width: `${total > 0 ? (count / total) * 100 : 0}%` }} />
                               </div>
-                            );
-                          })}
-                        </div>
+                            </div>
+                            <div className="text-left"><div className={`font-bold ${i === 0 ? 'text-yellow-300' : 'text-cyan-400'}`}>{count}</div><div className="text-xs text-white/50">{total > 0 ? ((count / total) * 100).toFixed(1) : 0}%</div></div>
+                          </div>
+                        ))}
                       </div>
-                    );
-                  })}
-                </div>
-              </>
+                    </div>
+                  );
+                })}
+              </div>
             )}
 
-            {/* SIGNUPS TAB - FULL VERSION */}
+            {/* SIGNUPS TAB */}
             {activeTab === "signups" && (
-              <>
-                <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
-                  <h2 className="text-2xl font-semibold">הרשמות אמנים צעירים</h2>
+              <div className="space-y-4">
+                <div className="glass rounded-2xl p-4 flex justify-between items-center">
+                  <h2 className="text-2xl font-semibold">הרשמות אמנים</h2>
                   <div className="flex gap-2">
-                    <button onClick={downloadCSV} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={signups.length === 0}>
-                      📥 הורד CSV
-                    </button>
-                    <button onClick={fetchSignups} className="btn-secondary rounded-xl px-4 py-2 text-sm" disabled={signupsLoading}>
-                      {signupsLoading ? "טוען..." : `🔄 רענן (${signups.length})`}
-                    </button>
+                    <button onClick={downloadCSV} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={!signups.length}>📥 CSV</button>
+                    <button onClick={fetchSignups} className="btn-secondary rounded-xl px-4 py-2 text-sm">{signupsLoading ? "..." : "🔄"}</button>
                   </div>
                 </div>
-                {signupsLoading ? (
-                  <div className="p-12 text-center text-white/50">
-                    <div className="text-4xl mb-4 animate-spin">⏳</div>
-                    <p>טוען הרשמות...</p>
-                  </div>
-                ) : signups.length === 0 ? (
-                  <div className="p-12 text-center text-white/50">
-                    <div className="text-4xl mb-4">🌟</div>
-                    <p>אין הרשמות חדשות</p>
-                  </div>
-                ) : (
+                {signupsLoading ? <div className="text-center p-12">⏳</div> : !signups.length ? <div className="text-center p-12 text-white/50">אין הרשמות</div> : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {signups.map((s) => (
+                    {signups.map(s => (
                       <div key={s.id} className="glass rounded-2xl p-4">
-                        <h3 className="text-lg font-bold text-cyan-400 mb-1">{s.stage_name}</h3>
+                        <h3 className="text-lg font-bold text-cyan-400">{s.stage_name}</h3>
                         <p className="text-sm text-white/70 mb-3">{s.full_name}</p>
-                        <div className="space-y-1 text-sm mb-3">
-                          <p><span className="text-white/60">גיל:</span> {s.age}</p>
-                          <p><span className="text-white/60">ניסיון:</span> {s.experience_years}</p>
-                        </div>
+                        <p className="text-sm"><span className="text-white/60">גיל:</span> {s.age}</p>
+                        <p className="text-sm mb-3"><span className="text-white/60">ניסיון:</span> {s.experience_years}</p>
                         <div className="flex gap-2">
-                          <button onClick={() => setSelectedSignup(s)} className="btn-primary px-3 py-2 rounded-xl text-sm flex-1">
-                            צפה בפרטים
-                          </button>
-                          <button 
-                            onClick={() => deleteSignup(s.id)} 
-                            className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-sm transition"
-                            disabled={loading}
-                          >
-                            🗑️
-                          </button>
+                          <button onClick={() => setSelectedSignup(s)} className="btn-primary px-3 py-2 rounded-xl text-sm flex-1">צפה</button>
+                          <button onClick={() => deleteSignup(s.id)} className="bg-red-500/20 px-3 py-2 rounded-xl text-sm">🗑️</button>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
                 {selectedSignup && (
-                  <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-6">
-                    <div className="glass rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                      <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                        <h3 className="text-xl font-semibold">פרטי אמן</h3>
-                        <button onClick={() => setSelectedSignup(null)} className="text-white/60 hover:text-white text-2xl">✕</button>
-                      </div>
-                      <div className="p-6 space-y-4">
-                        <div>
-                          <div className="text-sm text-white/60 mb-1">שם במה</div>
-                          <div className="text-2xl font-bold text-cyan-400">{selectedSignup.stage_name}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-white/60 mb-1">שם מלא</div>
-                          <div className="text-lg">{selectedSignup.full_name}</div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="text-sm text-white/60 mb-1">גיל</div>
-                            <div>{selectedSignup.age}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-white/60 mb-1">טלפון</div>
-                            <div dir="ltr" className="text-left">{selectedSignup.phone}</div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-white/60 mb-1">ניסיון</div>
-                          <div>{selectedSignup.experience_years}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-white/60 mb-1">השראות</div>
-                          <div className="text-white/80">{selectedSignup.inspirations}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-white/60 mb-1">טרק לדוגמה</div>
-                          <a href={selectedSignup.track_link} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline break-all">
-                            {selectedSignup.track_link}
-                          </a>
-                        </div>
-                        <div className="pt-4 border-t border-white/10">
-                          <button 
-                            onClick={() => deleteSignup(selectedSignup.id)} 
-                            className="w-full bg-red-500/20 hover:bg-red-500/30 px-4 py-3 rounded-xl font-semibold transition"
-                            disabled={loading}
-                          >
-                            {loading ? 'מוחק...' : '🗑️ מחק הרשמה'}
-                          </button>
-                        </div>
-                      </div>
+                  <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-6" onClick={() => setSelectedSignup(null)}>
+                    <div className="glass rounded-xl max-w-2xl w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                      <div className="flex justify-between"><h3 className="text-xl font-bold text-cyan-400">{selectedSignup.stage_name}</h3><button onClick={() => setSelectedSignup(null)} className="text-2xl">✕</button></div>
+                      <p><b>שם מלא:</b> {selectedSignup.full_name}</p>
+                      <p><b>גיל:</b> {selectedSignup.age} | <b>טלפון:</b> {selectedSignup.phone}</p>
+                      <p><b>ניסיון:</b> {selectedSignup.experience_years}</p>
+                      <p><b>השראות:</b> {selectedSignup.inspirations}</p>
+                      <a href={selectedSignup.track_link} target="_blank" className="text-cyan-400 hover:underline block">🎵 {selectedSignup.track_link}</a>
+                      <button onClick={() => deleteSignup(selectedSignup.id)} className="w-full bg-red-500/20 py-3 rounded-xl">🗑️ מחק</button>
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
 
-            {/* TRACK SUBMISSIONS TAB - FULL VERSION */}
+            {/* TRACK SUBMISSIONS TAB */}
             {activeTab === "track-submissions" && (
-              <>
-                <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
+              <div className="space-y-4">
+                <div className="glass rounded-2xl p-4 flex justify-between items-center">
                   <h2 className="text-2xl font-semibold">טרקים להמלצה</h2>
-                  <button onClick={fetchTrackSubmissions} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={trackSubsLoading}>
-                    {trackSubsLoading ? "טוען..." : `🔄 רענן (${trackSubs.length})`}
-                  </button>
+                  <button onClick={fetchTrackSubmissions} className="btn-primary rounded-xl px-4 py-2 text-sm">{trackSubsLoading ? "..." : "🔄"}</button>
                 </div>
-                {trackSubsLoading ? (
-                  <div className="p-12 text-center text-white/50">
-                    <div className="text-4xl mb-4 animate-spin">⏳</div>
-                    <p>טוען טרקים...</p>
-                  </div>
-                ) : trackSubs.length === 0 ? (
-                  <div className="p-12 text-center text-white/50">
-                    <div className="text-4xl mb-4">🎵</div>
-                    <p>אין המלצות טרקים</p>
-                  </div>
-                ) : (
+                {trackSubsLoading ? <div className="text-center p-12">⏳</div> : !trackSubs.length ? <div className="text-center p-12 text-white/50">אין טרקים</div> : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {trackSubs.map((track) => (
-                      <div key={track.id} className={`glass rounded-2xl p-4 ${track.is_approved ? 'bg-green-900/20 border-2 border-green-500/50' : 'border border-purple-500/30'}`}>
-                        <p className="text-sm text-cyan-400 mb-1">{new Date(track.created_at).toLocaleDateString('he-IL')}</p>
-                        <h3 className="text-lg font-bold mb-2">{track.track_title}</h3>
-                        <p className="text-white/80 text-sm mb-1">מגיש: {track.name}</p>
-                        <p className="text-white/60 text-xs line-clamp-2 mb-4">{track.description.substring(0, 80)}...</p>
-                        <div className="flex flex-col gap-2">
-                          {track.is_approved ? (
-                            <div className="bg-green-600/50 text-white text-sm py-2 rounded-xl text-center">✅ טרק שבועי פעיל</div>
-                          ) : (
-                            <button onClick={() => approveTrack(track.id)} className="btn-primary px-3 py-2 rounded-xl text-sm font-semibold" disabled={loading}>
-                              {loading ? 'מבצע...' : '⭐ אשר כטרק שבועי'}
-                            </button>
-                          )}
+                    {trackSubs.map(t => (
+                      <div key={t.id} className={`glass rounded-2xl p-4 ${t.is_approved ? 'border-2 border-green-500/50' : ''}`}>
+                        <p className="text-sm text-cyan-400">{new Date(t.created_at).toLocaleDateString('he-IL')}</p>
+                        <h3 className="text-lg font-bold">{t.track_title}</h3>
+                        <p className="text-sm text-white/70">מגיש: {t.name}</p>
+                        <p className="text-xs text-white/50 line-clamp-2 mb-4">{t.description}</p>
+                        <div className="space-y-2">
+                          {t.is_approved ? <div className="bg-green-600/50 py-2 rounded-xl text-center">✅ פעיל</div> : <button onClick={() => approveTrack(t.id)} className="w-full btn-primary py-2 rounded-xl">⭐ אשר</button>}
                           <div className="flex gap-2">
-                            <button onClick={() => setSelectedTrackSub(track)} className="btn-secondary px-3 py-2 rounded-xl text-sm flex-1">👁️ צפייה</button>
-                            <button 
-                              onClick={() => deleteTrack(track.id)} 
-                              className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-sm transition"
-                              disabled={loading}
-                            >
-                              🗑️
-                            </button>
+                            <button onClick={() => setSelectedTrackSub(t)} className="btn-secondary px-3 py-2 rounded-xl flex-1">👁️</button>
+                            <button onClick={() => deleteTrack(t.id)} className="bg-red-500/20 px-3 py-2 rounded-xl">🗑️</button>
                           </div>
                         </div>
                       </div>
@@ -920,460 +867,63 @@ export default function Admin() {
                   </div>
                 )}
                 {selectedTrackSub && (
-                  <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-6">
-                    <div className="glass rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                      <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                        <h3 className="text-xl font-semibold">פרטי טרק</h3>
-                        <button onClick={() => setSelectedTrackSub(null)} className="text-white/60 hover:text-white text-2xl">✕</button>
+                  <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-6" onClick={() => setSelectedTrackSub(null)}>
+                    <div className="glass rounded-xl max-w-3xl w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                      <div className="flex justify-between"><h3 className="text-xl font-bold">{selectedTrackSub.track_title}</h3><button onClick={() => setSelectedTrackSub(null)} className="text-2xl">✕</button></div>
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                        <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${getYouTubeVideoId(selectedTrackSub.youtube_url)}`} allowFullScreen />
                       </div>
-                      <div className="p-6 space-y-6">
-                        <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
-                          <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${getYouTubeVideoId(selectedTrackSub.youtube_url)}`} frameBorder="0" allowFullScreen />
-                        </div>
-                        <div>
-                          <div className="text-sm text-white/60 mb-1">שם הטרק</div>
-                          <div className="text-2xl font-bold">{selectedTrackSub.track_title}</div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          {selectedTrackSub.photo_url && (
-                            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-green-500/50">
-                              <img src={selectedTrackSub.photo_url} alt={selectedTrackSub.name} className="w-full h-full object-cover" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="text-sm text-white/60">מגיש</div>
-                            <div className="text-lg text-cyan-400 font-semibold">{selectedTrackSub.name}</div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-white/60 mb-1">הסיבה לבחירה</div>
-                          <div className="text-base leading-relaxed bg-black/30 rounded-lg p-4">{selectedTrackSub.description}</div>
-                        </div>
-                        <div className="flex gap-3 pt-4 border-t border-white/10">
-                          {!selectedTrackSub.is_approved && (
-                            <button onClick={() => approveTrack(selectedTrackSub.id)} className="btn-primary px-6 py-3 rounded-xl font-medium flex-1" disabled={loading}>
-                              {loading ? 'מאשר...' : '⭐ אשר כטרק שבועי'}
-                            </button>
-                          )}
-                          <a href={selectedTrackSub.youtube_url} target="_blank" rel="noopener noreferrer" className="btn-secondary px-6 py-3 rounded-xl font-medium flex-1 text-center">
-                            צפה ביוטיוב
-                          </a>
-                        </div>
-                        <button 
-                          onClick={() => deleteTrack(selectedTrackSub.id)} 
-                          className="w-full bg-red-500/20 hover:bg-red-500/30 px-6 py-3 rounded-xl font-semibold transition"
-                          disabled={loading}
-                        >
-                          {loading ? 'מוחק...' : '🗑️ מחק המלצה'}
-                        </button>
+                      <p><b>מגיש:</b> {selectedTrackSub.name}</p>
+                      <p className="bg-black/30 p-4 rounded-lg">{selectedTrackSub.description}</p>
+                      <div className="flex gap-3">
+                        {!selectedTrackSub.is_approved && <button onClick={() => approveTrack(selectedTrackSub.id)} className="btn-primary px-6 py-3 rounded-xl flex-1">⭐ אשר</button>}
+                        <a href={selectedTrackSub.youtube_url} target="_blank" className="btn-secondary px-6 py-3 rounded-xl flex-1 text-center">יוטיוב</a>
                       </div>
+                      <button onClick={() => deleteTrack(selectedTrackSub.id)} className="w-full bg-red-500/20 py-3 rounded-xl">🗑️ מחק</button>
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {/* ARTISTS TAB */}
             {activeTab === "artists" && (
-              <div className="space-y-6">
-                <div className="glass rounded-2xl p-4 flex flex-wrap gap-3 justify-between items-center">
-                  <h2 className="text-2xl font-semibold">ניהול דפי אמנים</h2>
+              <div className="space-y-4">
+                <div className="glass rounded-2xl p-4 flex justify-between items-center">
+                  <h2 className="text-2xl font-semibold">ניהול אמנים</h2>
                   <div className="flex gap-2">
-                    <button
-                      onClick={fetchArtists}
-                      className="btn-secondary rounded-xl px-4 py-2 text-sm"
-                      disabled={artistsLoading}
-                    >
-                      {artistsLoading ? "טוען..." : "🔄 רענן"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        const blank: AdminArtist = {
-                          id: 0,
-                          slug: "",
-                          name: "",
-                          stage_name: "",
-                          short_bio: "",
-                          profile_photo_url: "",
-                          started_year: null,
-                          spotify_artist_id: "",
-                          spotify_url: "",
-                          youtube_url: "",
-                          soundcloud_profile_url: "",
-                          instagram_url: "",
-                          tiktok_url: "",
-                          website_url: "",
-                          primary_color: "#00e0ff",
-                          festival_sets: [],
-                          instagram_reels: [],
-                          artist_episodes: [],
-                          booking_agency_name: "",
-                          booking_agency_email: "",
-                          booking_agency_url: "",
-                          record_label_name: "",
-                          record_label_url: "",
-                          management_email: "",
-                        };
-                        setCurrentArtist(blank);
-                        setPrimaryEpisodeId("");
-                      }}
-                      className="btn-primary rounded-xl px-4 py-2 text-sm"
-                    >
-                      ➕ אמן חדש
-                    </button>
+                    <button onClick={fetchArtists} className="btn-secondary rounded-xl px-4 py-2 text-sm">{artistsLoading ? "..." : "🔄"}</button>
+                    <button onClick={() => { setCurrentArtist({ id: 0, slug: "", name: "", stage_name: "", short_bio: "", profile_photo_url: "", started_year: null, spotify_artist_id: "", spotify_url: "", youtube_url: "", soundcloud_profile_url: "", instagram_url: "", tiktok_url: "", website_url: "", primary_color: "#00e0ff", festival_sets: [], instagram_reels: [], artist_episodes: [], booking_agency_name: "", booking_agency_email: "", booking_agency_url: "", record_label_name: "", record_label_url: "", management_email: "" }); setPrimaryEpisodeId(""); }} className="btn-primary rounded-xl px-4 py-2 text-sm">➕ חדש</button>
                   </div>
                 </div>
-
-                {artistsLoading ? (
-                  <div className="p-8 text-center text-white/60">טוען נתונים…</div>
-                ) : (
+                {artistsLoading ? <div className="text-center p-12">⏳</div> : (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* left: list */}
-                    <div className="glass rounded-2xl p-4 space-y-3 max-h-[70vh] overflow-y-auto">
-                      {adminArtists.map((a) => {
-                        const primary = a.artist_episodes?.find((e) => e.is_primary);
-                        const hasFestival = !!(a.festival_sets && a.festival_sets.length);
-                        const hasReels = !!(a.instagram_reels && a.instagram_reels.length);
-
-                        return (
-                          <button
-                            key={a.id}
-                            className={`w-full text-right p-3 rounded-xl border text-sm transition ${
-                              currentArtist?.id === a.id
-                                ? "border-cyan-400 bg-cyan-500/10"
-                                : "border-white/10 hover:border-cyan-400/60"
-                            }`}
-                            onClick={() => {
-                              setCurrentArtist(a);
-                              setPrimaryEpisodeId(
-                                primary ? String(primary.episode_id) : ""
-                              );
-                            }}
-                          >
-                            <div className="font-semibold text-cyan-300">
-                              {a.stage_name || a.name}
-                            </div>
-                            <div className="text-xs text-white/50">/{a.slug}</div>
-                            <div className="flex flex-wrap gap-1 mt-2 text-[11px]">
-                              <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/70">
-                                🎙️ פרק {primary ? primary.episode_id : "—"}
-                              </span>
-                              <span
-                                className={`px-2 py-0.5 rounded-full ${
-                                  hasFestival
-                                    ? "bg-green-500/15 text-green-300"
-                                    : "bg-red-500/15 text-red-300"
-                                }`}
-                              >
-                                🎪 פסטיבל {hasFestival ? "✓" : "חסר"}
-                              </span>
-                              <span
-                                className={`px-2 py-0.5 rounded-full ${
-                                  hasReels
-                                    ? "bg-green-500/15 text-green-300"
-                                    : "bg-red-500/15 text-red-300"
-                                }`}
-                              >
-                                🎥 רילז {hasReels ? "✓" : "חסר"}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
+                    <div className="glass rounded-2xl p-4 space-y-2 max-h-[70vh] overflow-y-auto">
+                      {adminArtists.map(a => (
+                        <button key={a.id} onClick={() => { setCurrentArtist(a); setPrimaryEpisodeId(a.artist_episodes?.find(e => e.is_primary)?.episode_id?.toString() || ""); }}
+                          className={`w-full text-right p-3 rounded-xl border text-sm ${currentArtist?.id === a.id ? "border-cyan-400 bg-cyan-500/10" : "border-white/10"}`}>
+                          <div className="font-semibold text-cyan-300">{a.stage_name || a.name}</div>
+                          <div className="text-xs text-white/50">/{a.slug}</div>
+                        </button>
+                      ))}
                     </div>
-
-                    {/* right: edit form */}
                     <div className="glass rounded-2xl p-4 lg:col-span-2">
-                      {!currentArtist ? (
-                        <div className="text-white/60 text-sm">
-                          בחר אמן מהרשימה או לחץ על "אמן חדש"
-                        </div>
-                      ) : (
+                      {!currentArtist ? <div className="text-white/50">בחר אמן</div> : (
                         <div className="space-y-4 text-sm">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-white/60 mb-1">Slug (כתובת)</label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.slug || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    slug: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-white/60 mb-1">שם אמן</label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.stage_name || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    stage_name: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-white/60 mb-1">שנה "יוצר מאז"</label>
-                              <input
-                                type="number"
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.started_year ?? ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    started_year: e.target.value
-                                      ? Number(e.target.value)
-                                      : null,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-white/60 mb-1">
-                                מזהה אמן בספוטיפיי
-                              </label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.spotify_artist_id || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    spotify_artist_id: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div><label className="text-white/60">Slug</label><input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.slug || ""} onChange={e => setCurrentArtist({ ...currentArtist, slug: e.target.value })} /></div>
+                            <div><label className="text-white/60">שם אמן</label><input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.stage_name || ""} onChange={e => setCurrentArtist({ ...currentArtist, stage_name: e.target.value })} /></div>
+                            <div><label className="text-white/60">שנה</label><input type="number" className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.started_year || ""} onChange={e => setCurrentArtist({ ...currentArtist, started_year: e.target.value ? Number(e.target.value) : null })} /></div>
+                            <div><label className="text-white/60">פרק ראשי</label><input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={primaryEpisodeId} onChange={e => setPrimaryEpisodeId(e.target.value)} /></div>
                           </div>
-
-                          <div>
-                            <label className="block text-white/60 mb-1">ביוגרפיה קצרה</label>
-                            <textarea
-                              className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2 min-h-[80px]"
-                              value={currentArtist.short_bio || ""}
-                              onChange={(e) =>
-                                setCurrentArtist({
-                                  ...currentArtist,
-                                  short_bio: e.target.value,
-                                })
-                              }
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {[
-                              ["youtube_url", "קישור ליוטיוב"],
-                              ["spotify_url", "קישור לספוטיפיי"],
-                              ["soundcloud_profile_url", "קישור לסאונדקלאוד"],
-                              ["instagram_url", "קישור לאינסטגרם"],
-                              ["tiktok_url", "קישור לטיקטוק"],
-                              ["website_url", "אתר רשמי"],
-                            ].map(([field, label]) => (
-                              <div key={field}>
-                                <label className="block text-white/60 mb-1">{label}</label>
-                                <input
-                                  className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                  value={(currentArtist as any)[field] || ""}
-                                  onChange={(e) =>
-                                    setCurrentArtist({
-                                      ...currentArtist,
-                                      [field]: e.target.value,
-                                    } as any)
-                                  }
-                                />
-                              </div>
+                          <div><label className="text-white/60">ביוגרפיה</label><textarea className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2 min-h-[80px]" value={currentArtist.short_bio || ""} onChange={e => setCurrentArtist({ ...currentArtist, short_bio: e.target.value })} /></div>
+                          <div className="grid grid-cols-2 gap-4">
+                            {["spotify_url", "youtube_url", "soundcloud_profile_url", "instagram_url"].map(f => (
+                              <div key={f}><label className="text-white/60">{f}</label><input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={(currentArtist as any)[f] || ""} onChange={e => setCurrentArtist({ ...currentArtist, [f]: e.target.value } as any)} /></div>
                             ))}
                           </div>
-
-                          {/* Booking / Label */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <label className="block text-white/60 mb-1">שם סוכן / בוקינג</label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.booking_agency_name || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    booking_agency_name: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-white/60 mb-1">אימייל בוקינג</label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.booking_agency_email || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    booking_agency_email: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-white/60 mb-1">קישור לאתר הבוקינג</label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.booking_agency_url || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    booking_agency_url: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-white/60 mb-1">שם לייבל</label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.record_label_name || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    record_label_name: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-white/60 mb-1">קישור ללייבל</label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.record_label_url || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    record_label_url: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-white/60 mb-1">אימייל לניהול / יצירת קשר</label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.management_email || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    management_email: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-white/60 mb-1">
-                                תמונת פרופיל (URL)
-                              </label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.profile_photo_url || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    profile_photo_url: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-white/60 mb-1">
-                                צבע הדגשה (hex)
-                              </label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={currentArtist.primary_color || ""}
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    primary_color: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-white/60 mb-1">
-                                מזהה פרק ראשי (ID מטבלת episodes)
-                              </label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={primaryEpisodeId}
-                                onChange={(e) => setPrimaryEpisodeId(e.target.value)}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-white/60 mb-1">
-                                מזהה וידאו לפסטיבל (YouTube ID)
-                              </label>
-                              <input
-                                className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                value={
-                                  currentArtist.festival_sets?.[0]?.youtube_id || ""
-                                }
-                                onChange={(e) =>
-                                  setCurrentArtist({
-                                    ...currentArtist,
-                                    festival_sets: [
-                                      {
-                                        ...(currentArtist.festival_sets?.[0] || {}),
-                                        youtube_id: e.target.value,
-                                      },
-                                    ],
-                                  })
-                                }
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {[0, 1, 2].map((idx) => (
-                              <div key={idx}>
-                                <label className="block text-white/60 mb-1">
-                                  ריל #{idx + 1} (קישור אינסטגרם)
-                                </label>
-                                <input
-                                  className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2"
-                                  value={currentArtist.instagram_reels?.[idx] || ""}
-                                  onChange={(e) => {
-                                    const reels = [...(currentArtist.instagram_reels || [])];
-                                    reels[idx] = e.target.value;
-                                    setCurrentArtist({
-                                      ...currentArtist,
-                                      instagram_reels: reels,
-                                    });
-                                  }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="flex justify-end gap-3 pt-4">
-                            <button
-                              onClick={saveArtist}
-                              className="btn-primary rounded-xl px-6 py-2"
-                              disabled={savingArtist}
-                            >
-                              {savingArtist ? "שומר…" : "💾 שמור אמן"}
-                            </button>
+                          <div className="flex justify-end">
+                            <button onClick={saveArtist} className="btn-primary rounded-xl px-6 py-2" disabled={savingArtist}>{savingArtist ? "שומר..." : "💾 שמור"}</button>
                           </div>
                         </div>
                       )}
@@ -1382,282 +932,6 @@ export default function Admin() {
                 )}
               </div>
             )}
-
-            {/* ANALYTICS TAB - WITH UNIQUE VISITORS */}
-            {activeTab === "analytics" && (
-              analyticsLoading ? (
-                <div className="p-12 text-center text-white/50">
-                  <div className="text-4xl mb-4 animate-spin">⏳</div>
-                  <p>טוען סטטיסטיקות...</p>
-                </div>
-              ) : !analytics || visits.length === 0 ? (
-                <div className="p-12 text-center text-white/50">
-                  <div className="text-4xl mb-4">📊</div>
-                  <p>אין נתונים</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Header with filters */}
-                  <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center">
-                    <h2 className="text-2xl font-semibold">סטטיסטיקות אתר</h2>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setDateRange("today")}
-                        className={`px-4 py-2 rounded-xl font-medium transition ${
-                          dateRange === "today" 
-                            ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" 
-                            : "bg-white/5 text-white/60 hover:text-white"
-                        }`}
-                      >
-                        היום
-                      </button>
-                      <button
-                        onClick={() => setDateRange("7d")}
-                        className={`px-4 py-2 rounded-xl font-medium transition ${
-                          dateRange === "7d" 
-                            ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" 
-                            : "bg-white/5 text-white/60 hover:text-white"
-                        }`}
-                      >
-                        7 ימים
-                      </button>
-                      <button
-                        onClick={() => setDateRange("30d")}
-                        className={`px-4 py-2 rounded-xl font-medium transition ${
-                          dateRange === "30d" 
-                            ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" 
-                            : "bg-white/5 text-white/60 hover:text-white"
-                        }`}
-                      >
-                        30 ימים
-                      </button>
-                      <button
-                        onClick={() => setDateRange("all")}
-                        className={`px-4 py-2 rounded-xl font-medium transition ${
-                          dateRange === "all" 
-                            ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" 
-                            : "bg-white/5 text-white/60 hover:text-white"
-                        }`}
-                      >
-                        הכל
-                      </button>
-                      <button 
-                        onClick={fetchAnalytics} 
-                        className="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl transition"
-                        disabled={analyticsLoading}
-                      >
-                        🔄 רענן
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Key Metrics - 5 columns with Unique Visitors */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {/* Total Visits */}
-                    <div className="glass rounded-2xl p-6 border-l-4 border-cyan-500">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/60 text-sm">סה״כ ביקורים</span>
-                        <span className="text-3xl">👥</span>
-                      </div>
-                      <div className="text-4xl font-bold text-cyan-400">{analytics.totalVisits}</div>
-                      <div className="text-xs text-white/40 mt-1">
-                        {dateRange === "today"
-                          ? "היום"
-                          : dateRange === "7d"
-                          ? "7 ימים אחרונים"
-                          : dateRange === "30d"
-                          ? "30 ימים אחרונים"
-                          : "כל הזמנים"}
-                      </div>
-                    </div>
-
-                    {/* Unique Visitors - NEW */}
-                    <div className="glass rounded-2xl p-6 border-l-4 border-emerald-500">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/60 text-sm">מבקרים ייחודיים</span>
-                        <span className="text-3xl">🧑‍💻</span>
-                      </div>
-                      <div className="text-4xl font-bold text-emerald-400">{analytics.uniqueVisitors}</div>
-                      <div className="text-xs text-white/40 mt-1">
-                        {analytics.totalVisits > 0 
-                          ? `${((analytics.uniqueVisitors / analytics.totalVisits) * 100).toFixed(0)}% מסה״כ הביקורים`
-                          : "אין נתונים"}
-                      </div>
-                    </div>
-
-                    {/* Average Time */}
-                    <div className="glass rounded-2xl p-6 border-l-4 border-purple-500">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/60 text-sm">זמן שהייה ממוצע</span>
-                        <span className="text-3xl">⏱️</span>
-                      </div>
-                      <div className="text-4xl font-bold text-purple-400">{formatDuration(analytics.avgDuration)}</div>
-                      <div className="text-xs text-white/40 mt-1">
-                        {analytics.avgDuration > 60 ? "💚 שהייה טובה" : "⚠️ שהייה קצרה"}
-                      </div>
-                    </div>
-
-                    {/* Israel Visitors */}
-                    <div className="glass rounded-2xl p-6 border-l-4 border-green-500">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/60 text-sm">מבקרים מישראל</span>
-                        <span className="text-3xl">🇮🇱</span>
-                      </div>
-                      <div className="text-4xl font-bold text-green-400">{analytics.israelPercentage}%</div>
-                      <div className="text-xs text-white/40 mt-1">
-                        {analytics.israelVisits} מתוך {analytics.totalVisits}
-                      </div>
-                    </div>
-
-                    {/* Bounce Rate */}
-                    <div className="glass rounded-2xl p-6 border-l-4 border-orange-500">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-white/60 text-sm">אחוז נטישה</span>
-                        <span className="text-3xl">📉</span>
-                      </div>
-                      <div className="text-4xl font-bold text-orange-400">{analytics.bounceRate}%</div>
-                      <div className="text-xs text-white/40 mt-1">
-                        {parseFloat(analytics.bounceRate) < 40 ? "💚 מצוין" : parseFloat(analytics.bounceRate) < 60 ? "⚠️ בינוני" : "❌ גבוה"}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Two Column Layout */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    
-                    {/* Top Pages */}
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3">
-                        <span>📄</span>
-                        <span>דפים פופולריים</span>
-                      </h3>
-                      <div className="space-y-3">
-                        {analytics.topPages.map((page: any, idx: number) => (
-                          <div key={idx} className="bg-white/5 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-3 flex-1">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
-                                  idx === 0 ? 'bg-yellow-500/20 text-yellow-400' :
-                                  idx === 1 ? 'bg-gray-400/20 text-gray-300' :
-                                  idx === 2 ? 'bg-orange-500/20 text-orange-400' :
-                                  'bg-cyan-500/20 text-cyan-400'
-                                }`}>
-                                  {idx + 1}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-white font-medium truncate">{page.page}</div>
-                                </div>
-                              </div>
-                              <div className="text-right flex-shrink-0 ml-3">
-                                <div className="text-lg font-bold text-cyan-400">{page.count}</div>
-                                <div className="text-xs text-white/50">{page.percentage}%</div>
-                              </div>
-                            </div>
-                            <div className="w-full bg-gray-800 rounded-full h-2">
-                              <div 
-                                className="bg-gradient-to-r from-cyan-500 to-purple-500 h-full rounded-full transition-all"
-                                style={{ width: `${page.percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Traffic Sources */}
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3">
-                        <span>🔗</span>
-                        <span>מקורות תנועה</span>
-                      </h3>
-                      <div className="space-y-3">
-                        {analytics.topSources.map((source: any, idx: number) => (
-                          <div key={idx} className="bg-white/5 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-3 flex-1">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
-                                  idx === 0 ? 'bg-yellow-500/20 text-yellow-400' :
-                                  idx === 1 ? 'bg-gray-400/20 text-gray-300' :
-                                  idx === 2 ? 'bg-orange-500/20 text-orange-400' :
-                                  'bg-purple-500/20 text-purple-400'
-                                }`}>
-                                  {idx + 1}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-white font-medium truncate">{source.source}</div>
-                                </div>
-                              </div>
-                              <div className="text-right flex-shrink-0 ml-3">
-                                <div className="text-lg font-bold text-purple-400">{source.count}</div>
-                                <div className="text-xs text-white/50">{source.percentage}%</div>
-                              </div>
-                            </div>
-                            <div className="w-full bg-gray-800 rounded-full h-2">
-                              <div 
-                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all"
-                                style={{ width: `${source.percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Peak Hours */}
-                  <div className="glass rounded-2xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3">
-                      <span>🕐</span>
-                      <span>שעות שיא</span>
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      {analytics.peakHours.map((hour: any, idx: number) => (
-                        <div key={idx} className="bg-white/5 rounded-xl p-4 text-center">
-                          <div className="text-3xl mb-2">
-                            {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : "📊"}
-                          </div>
-                          <div className="text-2xl font-bold text-cyan-400 mb-1">{hour.hour}</div>
-                          <div className="text-sm text-white/60">{hour.count} ביקורים</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 text-center text-sm text-white/50">
-                      💡 השעות עם התנועה הכי גבוהה באתר
-                    </div>
-                  </div>
-
-                  {/* Geographic Summary */}
-                  <div className="glass rounded-2xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-white/10 pb-3">
-                      <span>🌍</span>
-                      <span>תפוצה גאוגרפית</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="text-center bg-white/5 rounded-xl p-6">
-                        <div className="text-5xl mb-3">🇮🇱</div>
-                        <div className="text-3xl font-bold text-green-400 mb-2">{analytics.israelVisits}</div>
-                        <div className="text-white/60 text-sm">ביקורים מישראל</div>
-                        <div className="text-green-400 font-semibold mt-1">{analytics.israelPercentage}%</div>
-                      </div>
-                      <div className="text-center bg-white/5 rounded-xl p-6">
-                        <div className="text-5xl mb-3">🌎</div>
-                        <div className="text-3xl font-bold text-purple-400 mb-2">{analytics.totalVisits - analytics.israelVisits}</div>
-                        <div className="text-white/60 text-sm">ביקורים בינלאומיים</div>
-                        <div className="text-purple-400 font-semibold mt-1">{(100 - parseFloat(analytics.israelPercentage)).toFixed(1)}%</div>
-                      </div>
-                      <div className="text-center bg-white/5 rounded-xl p-6">
-                        <div className="text-5xl mb-3">🗺️</div>
-                        <div className="text-3xl font-bold text-cyan-400 mb-2">{analytics.countriesCount}</div>
-                        <div className="text-white/60 text-sm">מדינות שונות</div>
-                        <div className="text-cyan-400 font-semibold mt-1">טווח גלובלי</div>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              )
-            )}
-
           </>
         )}
       </div>
