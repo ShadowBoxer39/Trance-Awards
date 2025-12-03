@@ -2,6 +2,7 @@
 import React from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
+import AdminQuizTab from "../components/AdminQuizTab";
 
 const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -128,7 +129,7 @@ export default function Admin() {
   const [dateRange, setDateRange] = React.useState<"today" | "7d" | "30d" | "all">("today");
   const [showComparison, setShowComparison] = React.useState(false);
   
-  const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics" | "track-submissions" | "artists">("analytics");
+  const [activeTab, setActiveTab] = React.useState<"votes" | "signups" | "analytics" | "track-submissions" | "artists" | "quiz">("analytics");
 
   const [adminArtists, setAdminArtists] = React.useState<AdminArtist[]>([]);
   const [artistsLoading, setArtistsLoading] = React.useState(false);
@@ -551,11 +552,12 @@ export default function Admin() {
           <>
             <div className="glass rounded-2xl p-1 flex gap-2 overflow-x-auto">
               {[
-                { id: "votes", label: `🗳️ הצבעות (${totalVotes})` },
-                { id: "signups", label: `🌟 הרשמות (${signups.length})` },
-                { id: "track-submissions", label: `💬 טרקים (${trackSubs.length})` },
-                { id: "artists", label: `🎧 אמנים (${adminArtists.length})` },
-                { id: "analytics", label: `📊 סטטיסטיקות (${visits.length})` },
+                 { id: "votes", label: `🗳️ הצבעות (${totalVotes})` },
+  { id: "signups", label: `🌟 הרשמות (${signups.length})` },
+  { id: "track-submissions", label: `💬 טרקים (${trackSubs.length})` },
+  { id: "artists", label: `🎧 אמנים (${adminArtists.length})` },
+  { id: "quiz", label: `🎯 חידון` },
+  { id: "analytics", label: `📊 סטטיסטיקות (${visits.length})` },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                   className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${activeTab === tab.id ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"}`}>
@@ -930,6 +932,12 @@ export default function Admin() {
                 )}
               </div>
             )}
+            {/* QUIZ TAB */}
+            {activeTab === "quiz" && (
+              <AdminQuizTab adminKey={key} />
+            )}
+
+            </>
           </>
         )}
       </div>
