@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { createClient } from "@supabase/supabase-js";
+import GoogleLoginButton from "./GoogleLoginButton";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface QuizData {
   id: number;
@@ -30,7 +36,10 @@ interface PreviousAnswer {
 }
 
 export default function QuizWidget() {
-  const { data: session } = useSession();
+  const [user, setUser] = useState<any>(null);
+  const [userName, setUserName] = useState("");
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [quiz, setQuiz] = useState<QuizData | null>(null);
   const [attempts, setAttempts] = useState<AttemptData | null>(null);
@@ -52,9 +61,45 @@ export default function QuizWidget() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    checkUser();
     fetchQuiz();
     loadYouTubeAPI();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const { getGoogleUserInfo } = await import("../lib/googleAuthHelpers");
+        const userInfo = getGoogleUserInfo(session.user);
+        if (userInfo) {
+          setUserName(userInfo.name);
+          setUserPhoto(userInfo.photoUrl);
+        }
+      } else {
+        setUserName("");
+        setUserPhoto(null);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []);
+
+  const checkUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
+    setUser(user);
+
+    if (user) {
+      const { getGoogleUserInfo } = await import("../lib/googleAuthHelpers");
+      const userInfo = getGoogleUserInfo(user);
+      if (userInfo) {
+        setUserName(userInfo.name);
+        setUserPhoto(userInfo.photoUrl);
+      }
+    }
+  };
 
   const loadYouTubeAPI = () => {
     if (window.YT) return;
@@ -205,7 +250,7 @@ export default function QuizWidget() {
   };
 
   const saveScore = async () => {
-    if (!session?.user || !quiz) return;
+    if (!user || !quiz) return;
 
     try {
       const res = await fetch("/api/quiz/save-score", {
@@ -213,9 +258,9 @@ export default function QuizWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           questionId: quiz.id,
-          odau: (session as any).odau,
-          displayName: session.user.name,
-          photoUrl: session.user.image,
+          odau: user.id,
+          displayName: userName,
+          photoUrl: userPhoto,
           isArchive: false,
         }),
       });
@@ -259,8 +304,8 @@ export default function QuizWidget() {
           <span className="text-5xl mb-4 block">🎵</span>
           <h3 className="text-xl font-bold mb-2">אין חידון היום</h3>
           <p className="text-gray-400 mb-4">
-            {nextQuizDay === "Monday" 
-              ? "החידון הבא יום שני - נחשו את הטראק!" 
+            {nextQuizDay === "Monday"
+              ? "החידון הבא יום שני - נחשו את הטראק!"
               : nextQuizDay === "Thursday"
               ? "החידון הבא יום חמישי - טריוויה!"
               : "החידון הבא בקרוב!"}
@@ -288,33 +333,25 @@ export default function QuizWidget() {
           <span className="text-5xl mb-4 block">🎉</span>
           <h3 className="text-2xl font-bold text-green-400 mb-2">כל הכבוד!</h3>
           <p className="text-gray-300 mb-4">
-            ענית נכון ב-{attempts?.used || result?.pointsEarned === 3 ? 1 : result?.pointsEarned === 2 ? 2 : 3}{" "}
+            ענית נכון ב-{attempts?.used || (result?.pointsEarned === 3 ? 1 : result?.pointsEarned === 2 ? 2 : 3)}{" "}
             {(attempts?.used || 1) === 1 ? "ניסיון" : "ניסיונות"}
           </p>
           {result && (
             <p className="text-cyan-400 font-semibold mb-6">+{result.pointsEarned} נקודות!</p>
           )}
 
-          {!scoreSaved && session ? (
+          {!scoreSaved && user ? (
             <button
               onClick={saveScore}
               className="btn-primary px-6 py-3 rounded-xl font-medium mb-4"
             >
               💾 שמור ללידרבורד
             </button>
-          ) : !session && !scoreSaved ? (
-            <button
-              onClick={() => signIn("google")}
-              className="btn-primary px-6 py-3 rounded-xl font-medium mb-4 flex items-center gap-2 mx-auto"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              התחבר לשמירת הניקוד
-            </button>
+          ) : !user && !scoreSaved ? (
+            <div className="mb-4">
+              <p className="text-gray-400 mb-3">התחבר לשמירת הניקוד</p>
+              <GoogleLoginButton />
+            </div>
           ) : scoreSaved ? (
             <p className="text-green-400 mb-4">✓ הניקוד נשמר!</p>
           ) : null}
@@ -406,7 +443,7 @@ export default function QuizWidget() {
       {quiz.type === "snippet" && quiz.youtubeUrl && (
         <div className="mb-6">
           <div id="quiz-player" className="hidden" />
-          
+
           <div className="bg-black/40 rounded-xl p-6 border border-cyan-500/20">
             {/* Visualizer bars */}
             <div className="flex items-end justify-center gap-1 h-16 mb-4">
@@ -417,9 +454,7 @@ export default function QuizWidget() {
                     isPlaying ? "animate-pulse" : ""
                   }`}
                   style={{
-                    height: isPlaying
-                      ? `${Math.random() * 100}%`
-                      : "20%",
+                    height: isPlaying ? `${Math.random() * 100}%` : "20%",
                     animationDelay: `${i * 50}ms`,
                   }}
                 />
