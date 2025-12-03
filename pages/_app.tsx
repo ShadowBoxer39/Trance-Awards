@@ -1,4 +1,4 @@
-// /pages/_app.tsx
+// pages/_app.tsx
 import "../styles/globals.css";
 import "../styles/theme.css";
 import type { AppProps } from "next/app";
@@ -14,8 +14,12 @@ export default function App({ Component, pageProps }: AppProps) {
   const visitIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // 1. Track initial page load
-    visitIdRef.current = trackPageVisit(router.pathname);
+    // Ensure router fields (like asPath) are populated before tracking
+    if (!router.isReady) return;
+
+    // 1. Track initial page load (Corrected to use asPath)
+    // This fixes the issue where analytics showed "[slug]" instead of the artist name
+    visitIdRef.current = trackPageVisit(router.asPath);
 
     // 2. Track route changes
     const handleRouteChange = (url: string) => {
@@ -41,7 +45,10 @@ export default function App({ Component, pageProps }: AppProps) {
       router.events.off('routeChangeComplete', handleRouteChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [router]);
+    
+    // Only re-run this effect when the router readiness changes, 
+    // avoiding duplicate listeners on every navigation.
+  }, [router.isReady]);
 
   return (
     <>
