@@ -27,21 +27,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       userTotals[score.user_id].questionsAnswered += 1;
     });
 
-    // Get user details from auth (we need to get from profiles or store separately)
-    // For now, get from the Google auth user metadata
     const userIds = Object.keys(userTotals);
     
     if (userIds.length === 0) {
       return res.status(200).json({ ok: true, leaderboard: [] });
     }
 
-    // Get user profiles from auth.users via admin API or stored profiles
-    // Since we can't directly query auth.users, we'll get from quiz_scores joined with a profile
-    // For now, return user_id and let frontend handle display name from session
-    
+    // Get profiles for these users
+    const { data: profiles, error: profilesError } = await supabase
+      .from("quiz_profiles")
+      .select("user_id, display_name, photo_url")
+      .in("user_id", userIds);
+
+    if (profilesError) throw profilesError;
+
+    const profileMap = new Map(
+      profiles?.map((p) => [p.user_id, { displayName: p.display_name, photoUrl: p.photo_url }])
+    );
+
     const leaderboard = Object.entries(userTotals)
       .map(([userId, data]) => ({
         userId,
+        displayName: profileMap.get(userId)?.displayName || "אנונימי",
+        photoUrl: profileMap.get(userId)?.photoUrl || null,
         totalPoints: data.totalPoints,
         questionsAnswered: data.questionsAnswered,
       }))
