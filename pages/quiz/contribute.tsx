@@ -198,7 +198,7 @@ export default function ContributePage() {
       <>
         <Head><title>יוצאים לטראק - תורמי שאלות</title></Head>
         <div className="trance-backdrop min-h-screen text-gray-100">
-          <Navigation currentPage="quiz" />
+          <Navigation currentPage="home" />
           <div className="max-w-4xl mx-auto px-6 py-20 text-center">
             <div className="w-12 h-12 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto" />
             <p className="mt-4 text-gray-400">טוען...</p>
@@ -214,7 +214,7 @@ export default function ContributePage() {
       <>
         <Head><title>יוצאים לטראק - שגיאה</title></Head>
         <div className="trance-backdrop min-h-screen text-gray-100">
-          <Navigation currentPage="quiz" />
+          <Navigation currentPage="home" />
           <div className="max-w-4xl mx-auto px-6 py-20 text-center">
             <span className="text-6xl mb-6 block">❌</span>
             <h1 className="text-3xl font-bold text-red-400 mb-4">{error}</h1>
@@ -233,7 +233,7 @@ export default function ContributePage() {
       <>
         <Head><title>יוצאים לטראק - תורמי שאלות</title></Head>
         <div className="trance-backdrop min-h-screen text-gray-100">
-          <Navigation currentPage="quiz" />
+          <Navigation currentPage="home" />
           <div className="max-w-4xl mx-auto px-6 py-20 text-center">
             <span className="text-6xl mb-6 block">🎵</span>
             <h1 className="text-3xl font-bold mb-4">הצטרפות כתורם שאלות</h1>
@@ -252,7 +252,7 @@ export default function ContributePage() {
     <>
       <Head><title>יוצאים לטראק - תורמי שאלות</title></Head>
       <div className="trance-backdrop min-h-screen text-gray-100">
-        <Navigation currentPage="quiz" />
+        <Navigation currentPage="home" />
 
         <div className="max-w-4xl mx-auto px-6 py-12">
           {/* Header */}
