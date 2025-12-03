@@ -5,7 +5,7 @@
 export default function Admin() {
   // ... (omitting existing state declarations) ...
 
-  // NOTE: visits now stores the full response object { visits: [...], artistPageVisits: {...} }
+  // NOTE: visits now stores the full response object { visits: [...], artistPageVisits: {...} } 
   const [visits, setVisits] = React.useState<any>([]);
   const [analyticsLoading, setAnalyticsLoading] = React.useState(false);
   
