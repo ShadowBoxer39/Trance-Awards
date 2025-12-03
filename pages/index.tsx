@@ -5,6 +5,7 @@ import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
 import SEO from "@/components/SEO";
 import Navigation from "../components/Navigation";
+import QuizWidget from "../components/QuizWidget";
 import { default as episodeApiHandler } from "./api/episodes";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
@@ -1012,6 +1013,20 @@ export default function Home({
             )}
           </div>
         </section>
+
+{/* Quiz Section */}
+<section className="max-w-7xl mx-auto px-6 pb-16">
+  <div className="flex items-center justify-center gap-3 mb-6">
+    <span className="text-3xl">🎯</span>
+    <h2 className="text-2xl md:text-3xl font-semibold text-white">
+      חידון יוצאים לטראק
+    </h2>
+  </div>
+  <div className="max-w-2xl mx-auto">
+    <QuizWidget />
+  </div>
+</section>
+        
 
         {/* Artists Section */}
         {artists && artists.length > 0 && (
