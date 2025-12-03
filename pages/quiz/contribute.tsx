@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import Link from "next/link";
+import Link from "next/link"; 
 import Navigation from "../../components/Navigation";
 
 interface Contributor {
