@@ -569,21 +569,29 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
                 className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
               />
               <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="number"
-                  value={startSeconds}
-                  onChange={(e) => setStartSeconds(Number(e.target.value))}
-                  placeholder="שנייה התחלה"
-                  className="bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
-                />
-                <input
-                  type="number"
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  placeholder="אורך (שניות)"
-                  className="bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
-                />
-              </div>
+  <div>
+    <label className="block text-sm text-white/60 mb-1">שנייה התחלה</label>
+    <input
+      type="number"
+      value={startSeconds}
+      onChange={(e) => setStartSeconds(Number(e.target.value))}
+      placeholder="0"
+      className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
+    />
+    <p className="text-xs text-white/40 mt-1">מאיזו שנייה להתחיל (למשל: 45)</p>
+  </div>
+  <div>
+    <label className="block text-sm text-white/60 mb-1">אורך (שניות)</label>
+    <input
+      type="number"
+      value={duration}
+      onChange={(e) => setDuration(Number(e.target.value))}
+      placeholder="10"
+      className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
+    />
+    <p className="text-xs text-white/40 mt-1">5-15 שניות מומלץ</p>
+  </div>
+</div>
               <textarea
                 value={acceptedArtists}
                 onChange={(e) => setAcceptedArtists(e.target.value)}
