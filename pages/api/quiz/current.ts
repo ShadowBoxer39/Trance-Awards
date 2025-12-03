@@ -1,0 +1,126 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import supabase from "../../../lib/supabaseServer";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ ok: false, error: "method_not_allowed" });
+  }
+
+  try {
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
+    const dayOfWeek = new Date().toLocaleDateString("en-US", { timeZone: "Asia/Jerusalem", weekday: "long" });
+    
+    // Monday = snippet, Thursday = trivia
+    const expectedType = dayOfWeek === "Monday" ? "snippet" : dayOfWeek === "Thursday" ? "trivia" : null;
+
+    // Get active scheduled quiz for today
+    const { data: schedule, error: scheduleError } = await supabase
+      .from("quiz_schedule")
+      .select(`
+        id,
+        scheduled_for,
+        type,
+        is_active,
+        previous_answer_revealed,
+        question:quiz_questions(
+          id,
+          type,
+          question_text,
+          image_url,
+          youtube_url,
+          youtube_start_seconds,
+          youtube_duration_seconds,
+          contributor:quiz_contributors(
+            name,
+            photo_url
+          )
+        )
+      `)
+      .eq("scheduled_for", today)
+      .eq("is_active", true)
+      .single();
+
+    if (scheduleError || !schedule) {
+      return res.status(200).json({
+        ok: true,
+        quiz: null,
+        message: "no_quiz_today",
+        nextQuizDay: dayOfWeek === "Monday" || dayOfWeek === "Thursday" ? null : 
+                     ["Friday", "Saturday", "Sunday"].includes(dayOfWeek) ? "Monday" : "Thursday"
+      });
+    }
+
+    // Get previous quiz answer if revealed
+    let previousAnswer = null;
+    if (schedule.previous_answer_revealed) {
+      const { data: prevSchedule } = await supabase
+        .from("quiz_schedule")
+        .select(`
+          question:quiz_questions(
+            type,
+            question_text,
+            accepted_artists,
+            accepted_tracks,
+            accepted_answers,
+            contributor:quiz_contributors(name, photo_url)
+          )
+        `)
+        .lt("scheduled_for", today)
+        .order("scheduled_for", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (prevSchedule?.question) {
+        const q = prevSchedule.question as any;
+        previousAnswer = {
+          type: q.type,
+          question: q.question_text,
+          answer: q.type === "snippet" 
+            ? { artist: q.accepted_artists?.[0], track: q.accepted_tracks?.[0] }
+            : q.accepted_answers?.[0],
+          contributor: q.contributor
+        };
+      }
+    }
+
+    // Get attempts for this IP
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() 
+               || req.socket.remoteAddress 
+               || "unknown";
+
+    const { data: attempts } = await supabase
+      .from("quiz_attempts")
+      .select("attempt_number, is_correct, artist_answer, track_answer, answer")
+      .eq("question_id", (schedule.question as any).id)
+      .eq("ip_address", ip)
+      .order("attempt_number", { ascending: true });
+
+    const attemptsUsed = attempts?.length || 0;
+    const hasCorrectAnswer = attempts?.some(a => a.is_correct) || false;
+
+    return res.status(200).json({
+      ok: true,
+      quiz: {
+        id: (schedule.question as any).id,
+        type: schedule.type,
+        questionText: (schedule.question as any).question_text,
+        imageUrl: (schedule.question as any).image_url,
+        youtubeUrl: (schedule.question as any).youtube_url,
+        youtubeStart: (schedule.question as any).youtube_start_seconds,
+        youtubeDuration: (schedule.question as any).youtube_duration_seconds,
+        contributor: (schedule.question as any).contributor
+      },
+      attempts: {
+        used: attemptsUsed,
+        remaining: 3 - attemptsUsed,
+        hasCorrectAnswer,
+        history: attempts || []
+      },
+      previousAnswer
+    });
+
+  } catch (error) {
+    console.error("Quiz current error:", error);
+    return res.status(500).json({ ok: false, error: "server_error" });
+  }
+}
