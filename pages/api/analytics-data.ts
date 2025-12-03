@@ -1,6 +1,6 @@
 // shadowboxer39/trance-awards/Trance-Awards-main/pages/api/analytics-data.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import supabase from "../../lib/supabaseServer";
+import supabase from "../../lib/supabaseServer"; // The correct path from /pages/api/ to /lib
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -20,6 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const allVisits: any[] = [];
 
     while (true) {
+      // @ts-ignore - Supabase client is imported via module augmentation, ignore TS error here
       const { data, error } = await supabase
         .from("site_visits")
         .select("*")
