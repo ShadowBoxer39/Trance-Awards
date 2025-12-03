@@ -1019,7 +1019,7 @@ export default function Home({
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <span className="text-3xl">🎤</span>
-                <h2 className="text-2xl md:text-3xl font-semibold">האמנים שלנו</h2>
+                <h2 className="text-2xl md:text-3xl font-semibold">האמנים שאירחנו</h2>
               </div>
               <Link 
                 href="/artists" 
