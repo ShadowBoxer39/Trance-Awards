@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { questionId, odau, isArchive } = req.body;
+    const { questionId, odau, displayName, photoUrl, isArchive } = req.body;
 
     if (!questionId || !odau) {
       return res.status(400).json({ ok: false, error: "missing_data" });
@@ -47,6 +47,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (existingScore) {
       return res.status(400).json({ ok: false, error: "score_already_saved" });
+    }
+
+    // Upsert user profile (update if exists, insert if not)
+    if (displayName) {
+      const { error: profileError } = await supabase
+        .from("quiz_profiles")
+        .upsert({
+          user_id: odau,
+          display_name: displayName,
+          photo_url: photoUrl || null,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: "user_id",
+        });
+
+      if (profileError) {
+        console.error("Profile upsert error:", profileError);
+      }
     }
 
     // Save score
