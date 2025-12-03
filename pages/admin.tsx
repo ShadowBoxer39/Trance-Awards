@@ -676,3 +676,263 @@ export default function Admin() {
                         </div>
                       )}
                     </div>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🚪 דפי נחיתה</h3>
+                      <div className="space-y-3">
+                        {analytics.topLandingPages.map((p: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-cyan-500/20 text-cyan-400'}`}>{i + 1}</span>
+                                <span className="font-medium">{p.page}</span>
+                              </div>
+                              <div className="text-left"><div className="font-bold text-cyan-400">{p.count}</div><div className="text-xs text-white/50">{p.percentage}%</div></div>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-cyan-500 to-purple-500 h-full rounded-full" style={{ width: `${p.percentage}%` }} /></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📄 דפים פופולריים</h3>
+                      <div className="space-y-3">
+                        {analytics.topPages.map((p: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-purple-500/20 text-purple-400'}`}>{i + 1}</span>
+                                <span className="font-medium">{p.page}</span>
+                              </div>
+                              <div className="text-left"><div className="font-bold text-purple-400">{p.count}</div><div className="text-xs text-white/50">{p.percentage}%</div></div>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full" style={{ width: `${p.percentage}%` }} /></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔗 מקורות תנועה</h3>
+                      <div className="space-y-3">
+                        {analytics.topSources.map((s: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-pink-500/20 text-pink-400'}`}>{i + 1}</span>
+                                <span className="font-medium">{s.source}</span>
+                              </div>
+                              <div className="text-left"><div className="font-bold text-pink-400">{s.count}</div><div className="text-xs text-white/50">{s.percentage}%</div></div>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-pink-500 to-orange-500 h-full rounded-full" style={{ width: `${s.percentage}%` }} /></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="glass rounded-2xl p-6">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🕐 שעות שיא</h3>
+                      <div className="grid grid-cols-5 gap-3">
+                        {analytics.peakHours.map((h: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-xl p-3 text-center">
+                            <div className="text-2xl mb-1">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📊"}</div>
+                            <div className="text-lg font-bold text-cyan-400">{h.hour}</div>
+                            <div className="text-xs text-white/60">{h.count}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                   {/* NEW: Artist Page Visits */}
+                   {artistStats.length > 0 && (
+                    <div className="glass rounded-2xl p-6 mt-4">
+                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔥 עמודי האמנים החמים ביותר</h3>
+                      <div className="space-y-3">
+                        {artistStats.slice(0, 10).map((stat: any, i: number) => (
+                          <div key={i} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-purple-500/20 text-purple-400'}`}>{i + 1}</span>
+                                <span className="font-medium text-lg text-cyan-300">{stat.slug}</span>
+                              </div>
+                              <div className="text-left"><div className="font-bold text-purple-400">{stat.visits} ביקורים</div></div>
+                            </div>
+                            <div className="text-xs text-white/50 text-right pr-8">נתיב אחרון: {stat.page}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )
+            )}
+
+            {activeTab === "votes" && (
+              <div className="space-y-6">
+                {Object.entries(tally).map(([catId, nominees]) => {
+                  const total = Object.values(nominees).reduce((s, c) => s + c, 0);
+                  return (
+                    <div key={catId} className="glass rounded-2xl p-6">
+                      <h3 className="text-2xl font-bold text-cyan-400 border-b border-white/10 pb-3 mb-4">{getCategoryTitle(catId)}</h3>
+                      <div className="space-y-2">
+                        {Object.entries(nominees).sort(([,a], [,b]) => b - a).map(([nId, count], i) => (
+                          <div key={nId} className={`grid grid-cols-[40px,1fr,80px] items-center gap-4 p-3 rounded-lg ${i === 0 ? 'bg-yellow-500/10' : i < 3 ? 'bg-white/5' : ''}`}>
+                            <span className="text-center">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}</span>
+                            <div>
+                              <div className={`font-semibold ${i === 0 ? 'text-yellow-300' : ''}`}>{getNomineeName(catId, nId)}</div>
+                              <div className="w-full bg-gray-800 rounded-full h-2 mt-1">
+                                <div className={`h-full rounded-full ${i === 0 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-cyan-500 to-purple-500'}`} style={{ width: `${total > 0 ? (count / total) * 100 : 0}%` }} />
+                              </div>
+                            </div>
+                            <div className="text-left"><div className={`font-bold ${i === 0 ? 'text-yellow-300' : 'text-cyan-400'}`}>{count}</div><div className="text-xs text-white/50">{total > 0 ? ((count / total) * 100).toFixed(1) : 0}%</div></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {activeTab === "signups" && (
+              <div className="space-y-4">
+                <div className="glass rounded-2xl p-4 flex justify-between items-center">
+                  <h2 className="text-2xl font-semibold">הרשמות אמנים</h2>
+                  <div className="flex gap-2">
+                    <button onClick={downloadCSV} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={!signups.length}>📥 CSV</button>
+                    <button onClick={fetchSignups} className="btn-secondary rounded-xl px-4 py-2 text-sm">{signupsLoading ? "..." : "🔄"}</button>
+                  </div>
+                </div>
+                {signupsLoading ? <div className="text-center p-12">⏳</div> : !signups.length ? <div className="text-center p-12 text-white/50">אין הרשמות</div> : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {signups.map(s => (
+                      <div key={s.id} className="glass rounded-2xl p-4">
+                        <h3 className="text-lg font-bold text-cyan-400">{s.stage_name}</h3>
+                        <p className="text-sm text-white/70 mb-3">{s.full_name}</p>
+                        <p className="text-sm"><span className="text-white/60">גיל:</span> {s.age}</p>
+                        <p className="text-sm mb-3"><span className="text-white/60">ניסיון:</span> {s.experience_years}</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setSelectedSignup(s)} className="btn-primary px-3 py-2 rounded-xl text-sm flex-1">צפה</button>
+                          <button onClick={() => deleteSignup(s.id)} className="bg-red-500/20 px-3 py-2 rounded-xl text-sm">🗑️</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedSignup && (
+                  <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-6" onClick={() => setSelectedSignup(null)}>
+                    <div className="glass rounded-xl max-w-2xl w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                      <div className="flex justify-between"><h3 className="text-xl font-bold text-cyan-400">{selectedSignup.stage_name}</h3><button onClick={() => setSelectedSignup(null)} className="text-2xl">✕</button></div>
+                      <p><b>שם מלא:</b> {selectedSignup.full_name}</p>
+                      <p><b>גיל:</b> {selectedSignup.age} | <b>טלפון:</b> {selectedSignup.phone}</p>
+                      <p><b>ניסיון:</b> {selectedSignup.experience_years}</p>
+                      <p><b>השראות:</b> {selectedSignup.inspirations}</p>
+                      <a href={selectedSignup.track_link} target="_blank" className="text-cyan-400 hover:underline block">🎵 {selectedSignup.track_link}</a>
+                      <button onClick={() => deleteSignup(selectedSignup.id)} className="w-full bg-red-500/20 py-3 rounded-xl">🗑️ מחק</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "track-submissions" && (
+              <div className="space-y-4">
+                <div className="glass rounded-2xl p-4 flex justify-between items-center">
+                  <h2 className="text-2xl font-semibold">טרקים להמלצה</h2>
+                  <button onClick={fetchTrackSubmissions} className="btn-primary rounded-xl px-4 py-2 text-sm">{trackSubsLoading ? "..." : "🔄"}</button>
+                </div>
+                {trackSubsLoading ? <div className="text-center p-12">⏳</div> : !trackSubs.length ? <div className="text-center p-12 text-white/50">אין טרקים</div> : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {trackSubs.map(t => (
+                      <div key={t.id} className={`glass rounded-2xl p-4 ${t.is_approved ? 'border-2 border-green-500/50' : ''}`}>
+                        <p className="text-sm text-cyan-400">{new Date(t.created_at).toLocaleDateString('he-IL')}</p>
+                        <h3 className="text-lg font-bold">{t.track_title}</h3>
+                        <p className="text-sm text-white/70">מגיש: {t.name}</p>
+                        <p className="text-xs text-white/50 line-clamp-2 mb-4">{t.description}</p>
+                        <div className="space-y-2">
+                          {t.is_approved ? <div className="bg-green-600/50 py-2 rounded-xl text-center">✅ פעיל</div> : <button onClick={() => approveTrack(t.id)} className="w-full btn-primary py-2 rounded-xl">⭐ אשר</button>}
+                          <div className="flex gap-2">
+                            <button onClick={() => setSelectedTrackSub(t)} className="btn-secondary px-3 py-2 rounded-xl flex-1">👁️</button>
+                            <button onClick={() => deleteTrack(t.id)} className="bg-red-500/20 px-3 py-2 rounded-xl">🗑️</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedTrackSub && (
+                  <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-6" onClick={() => setSelectedTrackSub(null)}>
+                    <div className="glass rounded-xl max-w-3xl w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                      <div className="flex justify-between"><h3 className="text-xl font-bold">{selectedTrackSub.track_title}</h3><button onClick={() => setSelectedTrackSub(null)} className="text-2xl">✕</button></div>
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                        <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${getYouTubeVideoId(selectedTrackSub.youtube_url)}`} allowFullScreen />
+                      </div>
+                      <p><b>מגיש:</b> {selectedTrackSub.name}</p>
+                      <p className="bg-black/30 p-4 rounded-lg">{selectedTrackSub.description}</p>
+                      <div className="flex gap-3">
+                        {!selectedTrackSub.is_approved && <button onClick={() => approveTrack(selectedTrackSub.id)} className="btn-primary px-6 py-3 rounded-xl flex-1">⭐ אשר</button>}
+                        <a href={selectedTrackSub.youtube_url} target="_blank" className="btn-secondary px-6 py-3 rounded-xl flex-1 text-center">יוטיוב</a>
+                      </div>
+                      <button onClick={() => deleteTrack(selectedTrackSub.id)} className="w-full bg-red-500/20 py-3 rounded-xl">🗑️ מחק</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "artists" && (
+              <div className="space-y-4">
+                <div className="glass rounded-2xl p-4 flex justify-between items-center">
+                  <h2 className="text-2xl font-semibold">ניהול אמנים</h2>
+                  <div className="flex gap-2">
+                    <button onClick={fetchArtists} className="btn-secondary rounded-xl px-4 py-2 text-sm">{artistsLoading ? "..." : "🔄"}</button>
+                    <button onClick={() => { setCurrentArtist({ id: 0, slug: "", name: "", stage_name: "", short_bio: "", profile_photo_url: "", started_year: null, spotify_artist_id: "", spotify_url: "", youtube_url: "", soundcloud_profile_url: "", instagram_url: "", tiktok_url: "", website_url: "", primary_color: "#00e0ff", festival_sets: [], instagram_reels: [], artist_episodes: [], booking_agency_name: "", booking_agency_email: "", booking_agency_url: "", record_label_name: "", record_label_url: "", management_email: "" }); setPrimaryEpisodeId(""); }} className="btn-primary rounded-xl px-4 py-2 text-sm">➕ חדש</button>
+                  </div>
+                </div>
+                {artistsLoading ? <div className="text-center p-12">⏳</div> : (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="glass rounded-2xl p-4 space-y-2 max-h-[70vh] overflow-y-auto">
+                      {adminArtists.map(a => (
+                        <button key={a.id} onClick={() => { setCurrentArtist(a); setPrimaryEpisodeId(a.artist_episodes?.find(e => e.is_primary)?.episode_id?.toString() || ""); }}
+                          className={`w-full text-right p-3 rounded-xl border text-sm ${currentArtist?.id === a.id ? "border-cyan-400 bg-cyan-500/10" : "border-white/10"}`}>
+                          <div className="font-semibold text-cyan-300">{a.stage_name || a.name}</div>
+                          <div className="text-xs text-white/50">/{a.slug}</div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="glass rounded-2xl p-4 lg:col-span-2">
+                      {!currentArtist ? <div className="text-white/50">בחר אמן</div> : (
+                        <div className="space-y-4 text-sm">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div><label className="text-white/60">Slug</label><input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.slug || ""} onChange={e => setCurrentArtist({ ...currentArtist, slug: e.target.value })} /></div>
+                            <div><label className="text-white/60">שם אמן</label><input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.stage_name || ""} onChange={e => setCurrentArtist({ ...currentArtist, stage_name: e.target.value })} /></div>
+                            <div><label className="text-white/60">שנה</label><input type="number" className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.started_year || ""} onChange={e => setCurrentArtist({ ...currentArtist, started_year: e.target.value ? Number(e.target.value) : null })} /></div>
+                            <div><label className="text-white/60">פרק ראשי</label><input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={primaryEpisodeId} onChange={e => setPrimaryEpisodeId(e.target.value)} /></div>
+                          </div>
+                          <div><label className="text-white/60">ביוגרפיה</label><textarea className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2 min-h-[80px]" value={currentArtist.short_bio || ""} onChange={e => setCurrentArtist({ ...currentArtist, short_bio: e.target.value })} /></div>
+                          <div className="grid grid-cols-2 gap-4">
+                            {["spotify_url", "youtube_url", "soundcloud_profile_url", "instagram_url"].map(f => (
+                              <div key={f}><label className="text-white/60">{f}</label><input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={(currentArtist as any)[f] || ""} onChange={e => setCurrentArtist({ ...currentArtist, [f]: e.target.value } as any)} /></div>
+                            ))}
+                          </div>
+                          <div className="flex justify-end">
+                            <button onClick={saveArtist} className="btn-primary rounded-xl px-6 py-2" disabled={savingArtist}>{savingArtist ? "שומר..." : "💾 שמור"}</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </main>
+  );
+}
