@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let from = 0;
     const allVisits: any[] = [];
 
-    // Fetch all visits in batches
+    // Fetch all visits
     while (true) {
       const { data, error } = await supabase
         .from("site_visits")
@@ -40,15 +40,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const uniqueVisitorIds = new Set<string>();
     const visitorFrequency: Record<string, number> = {};
     
-    // --- NEW: Artist Page Stats Logic ---
+    // --- Artist Page Stats ---
     const artistPageVisits: Record<string, { visits: number; page: string; slug: string }> = {};
     
-    // Pages to exclude from being counted as an "artist"
+    // Pages to explicitly exclude from the "Artist" list
     const staticPages = new Set([
         "", "home", "episodes", "young-artists", "about", "advertisers", 
         "vote", "awards", "track-of-the-week", "submit-track", 
         "featured-artist", "artists", "legends", "admin", "results-instagram", 
-        "thanks", "favicon.ico"
+        "thanks", "favicon.ico", "_error", "404"
     ]);
 
     allVisits.forEach(visit => {
@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // 2. Track Artist Page Visits
       if (visit.page) {
-        // Clean URL: remove query params and leading slash
+        // Clean URL
         const path = visit.page.split('?')[0].replace(/^\//, ''); 
         const parts = path.split('/');
 
@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (parts.length === 2 && parts[0] === "artist") {
           slug = parts[1];
         } 
-        // Case B: /kanok (Dynamic root page, excluding static pages)
+        // Case B: /kanok (Dynamic root page)
         else if (parts.length === 1 && parts[0] && !staticPages.has(parts[0])) {
           slug = parts[0];
         }
@@ -78,6 +78,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (slug) {
           try { slug = decodeURIComponent(slug); } catch {}
           
+          // --- FILTERING LOGIC ---
+          const lowerSlug = slug.toLowerCase();
+          
+          // 1. Filter out the literal template string "[slug]" (Historical data)
+          // 2. Filter out error pages (error_, _error, etc.)
+          if (
+            lowerSlug === '[slug]' || 
+            lowerSlug.includes('error') || 
+            lowerSlug === '404' ||
+            lowerSlug === 'undefined'
+          ) {
+             // Skip this iteration, do not count it
+             return; 
+          }
+          // -----------------------
+
           if (!artistPageVisits[slug]) {
             artistPageVisits[slug] = { visits: 0, page: visit.page, slug: slug };
           }
@@ -95,11 +111,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       ok: true,
-      visits: allVisits || [], // Return clean array of visits
+      visits: allVisits || [],
       uniqueVisitors: uniqueVisitorIds.size,
       returningVisitors,
       newVisitors,
-      artistPageVisits // Return the aggregated artist stats
+      artistPageVisits 
     });
   } catch (e) {
     console.error("analytics-data fetch error:", e);
