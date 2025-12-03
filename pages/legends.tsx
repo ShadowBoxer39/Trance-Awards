@@ -5,7 +5,7 @@ import Link from "next/link";
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Navigation from "../components/Navigation";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaMusic } from "react-icons/fa";
 
 interface Legend {
   id: number;
@@ -73,36 +73,29 @@ function LegendsPage({ legends }: LegendsPageProps) {
 
       {/* Hero Section */}
       <section className="relative py-16 px-6 overflow-hidden">
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex items-center justify-end gap-3 text-sm text-purple-200/80 mb-6">
-            <Link
-              href="/artists"
-              className="inline-flex items-center gap-2 text-xs md:text-sm text-purple-300 hover:text-purple-100 transition-colors"
-            >
-              <span>חזרה לאמנים</span>
-              <FaArrowLeft className="text-xs" />
-            </Link>
-            <span className="h-4 w-px bg-purple-500/40" />
-            <span className="uppercase tracking-[0.25em] text-[10px] md:text-xs text-purple-300/80">
-              LEGENDS
-            </span>
+        {/* Background effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-cyan-500/15 rounded-full blur-[100px]" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-purple-300 mb-6">
+            <FaMusic className="text-purple-400" />
+            <span>{legends.length} אגדות</span>
           </div>
 
-          <div className="space-y-4 text-right">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight">
-              <span className="text-transparent bg-clip-text bg-gradient-to-l from-purple-400 via-pink-400 to-orange-300">
-                האגדות
-              </span>{" "}
-              שלנו
-            </h1>
-            <p className="max-w-2xl text-sm md:text-base text-gray-300 leading-relaxed ml-auto">
-              חלוצי הטראנס והפסייטראנס שהקדשנו להם פרקים מיוחדים. לחצו על כרטיס
-              כדי לעבור לפרק שלהם, וריחפו מעל הכרטיס כדי לקרוא תיאור קצר.
-            </p>
-            <p className="text-xs md:text-sm text-gray-400">
-              מציג {legends.length} אגדות.
-            </p>
-          </div>
+          <h1 className="text-4xl md:text-6xl font-black mb-4">
+            <span className="bg-gradient-to-l from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+              האגדות
+            </span>
+          </h1>
+
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+            חלוצי הטראנס והפסייטראנס שהקדשנו להם פרקים מיוחדים.
+            <br />
+            לחצו על כרטיס כדי לצפות בפרק המלא.
+          </p>
         </div>
       </section>
 
@@ -121,19 +114,80 @@ function LegendsPage({ legends }: LegendsPageProps) {
       <footer className="border-t border-white/10 bg-black/80">
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-gray-400 text-sm">
           <div>© {new Date().getFullYear()} יוצאים לטראק · כל הזכויות שמורות</div>
-          <div className="text-xs text-gray-500">
-            דף האגדות · מופעל על ידי Supabase
+          <div className="flex gap-6">
+            <Link href="/" className="hover:text-white transition">
+              בית
+            </Link>
+            <Link href="/episodes" className="hover:text-white transition">
+              פרקים
+            </Link>
+            <Link href="/artists" className="hover:text-white transition">
+              אמנים
+            </Link>
           </div>
         </div>
       </footer>
+
+      <style jsx global>{`
+        .legend-card {
+          position: relative;
+          border-radius: 1rem;
+          overflow: hidden;
+          background: rgba(15, 15, 35, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .legend-card:hover {
+          transform: translateY(-8px) scale(1.02);
+          border-color: rgba(168, 85, 247, 0.5);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
+            0 0 60px rgba(168, 85, 247, 0.15);
+        }
+
+        .legend-card .card-image {
+          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .legend-card:hover .card-image {
+          transform: scale(1.1);
+        }
+
+        .legend-card .hover-content {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .legend-card:hover .hover-content {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .legend-card .overlay {
+          background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.95) 0%,
+            rgba(0, 0, 0, 0.7) 50%,
+            transparent 100%
+          );
+          transition: all 0.4s ease;
+        }
+
+        .legend-card:hover .overlay {
+          background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.98) 0%,
+            rgba(0, 0, 0, 0.85) 60%,
+            rgba(0, 0, 0, 0.4) 100%
+          );
+        }
+      `}</style>
     </div>
   );
 }
 
-// --- Legend Card (RTL, <img>, flags, hover bio) ---
-
-// --- Legend Card (RTL, <img>, IMAGE FLAGS, hover bio) ---
-
+// Legend Card Component - matching the ArtistCard style
 function LegendCard({ legend }: { legend: Legend }) {
   const accentColor = "#a855f7";
 
@@ -155,10 +209,17 @@ function LegendCard({ legend }: { legend: Legend }) {
     href = `/episodes/${legend.episode_id}`;
   }
 
+  // Truncate bio for preview (same as artists page)
+  const bioPreview = legend.short_bio
+    ? legend.short_bio.length > 100
+      ? legend.short_bio.substring(0, 100) + "..."
+      : legend.short_bio
+    : null;
+
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="block">
-      <div className="artist-card group aspect-[3/4] relative">
-        {/* Image (same idea as artists.tsx) */}
+      <div className="legend-card group aspect-[3/4] relative">
+        {/* Image */}
         <div className="absolute inset-0 overflow-hidden rounded-2xl">
           {legend.photo_url ? (
             <img
@@ -180,72 +241,62 @@ function LegendCard({ legend }: { legend: Legend }) {
           )}
         </div>
 
-        {/* Base gradient overlay */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+        {/* Overlay */}
+        <div className="overlay absolute inset-0 rounded-2xl" />
 
-        {/* Country + flag pill (IMAGE FLAG) */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2 px-3 py-1 rounded-full bg-black/70 backdrop-blur text-xs">
-          {flagUrl && (
-            <img
-              src={flagUrl}
-              alt={legend.country}
-              className="w-5 h-[14px] rounded-[2px] object-cover"
-            />
-          )}
-          <span className="text-white/85">{legend.country}</span>
-        </div>
+        {/* Content */}
+        <div className="absolute inset-0 p-4 flex flex-col justify-end">
+          {/* Country + flag badge */}
+          <div className="absolute top-3 right-3">
+            <span className="flex items-center gap-2 px-2 py-1 text-[10px] font-semibold rounded-full bg-black/50 backdrop-blur-sm border border-white/20 text-white/85">
+              {flagUrl && (
+                <img
+                  src={flagUrl}
+                  alt={legend.country}
+                  className="w-4 h-3 rounded-[2px] object-cover"
+                />
+              )}
+              {legend.country}
+            </span>
+          </div>
 
-        {/* Hover bio overlay */}
-        <div className="absolute inset-0 rounded-2xl bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 pointer-events-none">
-          <p className="text-xs md:text-sm text-gray-100 leading-snug line-clamp-6 text-right">
-            {legend.short_bio}
-          </p>
-        </div>
-
-        {/* Bottom info – fades out on hover so it doesn't clash with bio */}
-        <div className="absolute inset-x-0 bottom-0 z-10 p-4 flex items-center justify-between gap-3 transition-opacity duration-300 group-hover:opacity-0">
-          <div className="min-w-0 text-right">
-            <h3 className="text-sm md:text-base font-semibold truncate">
+          {/* Main info (always visible) */}
+          <div className="mb-2">
+            <h3 className="text-xl md:text-2xl font-bold text-white leading-tight">
               {legend.stage_name}
             </h3>
-            <p className="text-[11px] md:text-xs text-gray-300 truncate">
+            <p className="text-xs text-gray-400 mt-1">
               לצפייה בפרק המלא
             </p>
           </div>
-          <span className="text-[11px] md:text-xs text-purple-300">
-            לצפייה →
-          </span>
+
+          {/* Hover content */}
+          <div className="hover-content">
+            {/* Bio preview */}
+            {bioPreview && (
+              <p className="text-xs text-gray-300 leading-relaxed mb-3 line-clamp-3">
+                {bioPreview}
+              </p>
+            )}
+
+            {/* View episode button */}
+            <div
+              className="flex items-center gap-2 text-sm font-medium transition-colors"
+              style={{ color: accentColor }}
+            >
+              <span>לצפייה בפרק</span>
+              <FaArrowLeft className="text-xs" />
+            </div>
+          </div>
         </div>
 
-        <style jsx>{`
-          .artist-card {
-            border-radius: 1rem;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background: radial-gradient(
-              circle at top,
-              rgba(148, 163, 253, 0.18),
-              rgba(15, 23, 42, 1)
-            );
-            transition: transform 0.25s ease, box-shadow 0.25s ease,
-              border-color 0.25s ease;
-          }
-
-          .artist-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
-            border-color: rgba(236, 72, 153, 0.6);
-          }
-
-          .card-image {
-            transform: scale(1.02);
-            transition: transform 0.5s ease;
-          }
-
-          .artist-card:hover .card-image {
-            transform: scale(1.08);
-          }
-        `}</style>
+        {/* Accent border on hover */}
+        <div
+          className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          style={{
+            boxShadow: `inset 0 0 0 2px ${accentColor}50`,
+          }}
+        />
       </div>
     </a>
   );
