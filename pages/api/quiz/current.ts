@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const dayOfWeek = new Date().toLocaleDateString("en-US", { timeZone: "Asia/Jerusalem", weekday: "long" });
     const userId = req.query.userId as string | undefined;
 
-    // 1. Fetch the latest active quiz (Includes audio_url)
+    // 1. Fetch Schedule
     const { data: schedule, error: scheduleError } = await supabase
       .from("quiz_schedule")
       .select(`
@@ -31,18 +31,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .single();
 
     if (scheduleError || !schedule) {
-      return res.status(200).json({ 
-        ok: true, 
-        quiz: null, 
-        message: "no_active_quiz", 
-        nextQuizDay: ["Monday", "Thursday"].includes(dayOfWeek) ? null : "Soon" 
-      });
+      return res.status(200).json({ ok: true, quiz: null, message: "no_active_quiz", nextQuizDay: ["Monday", "Thursday"].includes(dayOfWeek) ? null : "Soon" });
     }
 
-    // 2. Previous Answer Logic
+    // 2. Previous Answer
     let previousAnswer = null;
     if (schedule.previous_answer_revealed) {
-      const { data: prevSchedule } = await supabase
+      const { data: prev } = await supabase
         .from("quiz_schedule")
         .select(`question:quiz_questions(type, question_text, accepted_artists, accepted_tracks, accepted_answers, contributor:quiz_contributors(name, photo_url))`)
         .lt("scheduled_for", schedule.scheduled_for)
@@ -50,8 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .limit(1)
         .single();
         
-      if (prevSchedule?.question) {
-        const q = prevSchedule.question as any;
+      if (prev?.question) {
+        const q = prev.question as any;
         previousAnswer = {
           type: q.type,
           question: q.question_text,
@@ -61,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 3. Attempts Logic
+    // 3. Attempts
     const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const questionId = (schedule.question as any).id;
     const { data: attempts } = await supabase.from("quiz_attempts").select("attempt_number, is_correct, artist_answer, track_answer, answer").eq("question_id", questionId).eq("ip_address", ip).order("attempt_number", { ascending: true });
@@ -69,27 +64,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const attemptsUsed = attempts?.length || 0;
     const hasCorrectAnswer = attempts?.some(a => a.is_correct) || false;
 
-    // 4. Score Saved Logic
+    // 4. Score Saved
     let scoreSaved = false;
     if (userId) {
       const { data: existingScore } = await supabase.from("quiz_scores").select("id").eq("user_id", userId).eq("question_id", questionId).single();
       scoreSaved = !!existingScore;
     }
 
-    // 5. SECURE AUDIO LOGIC
-    // We prioritize: Manual MP3 > Secure Proxy > Nothing (never raw YouTube)
+    // 5. Encrypt ID (The Simple Security Layer)
     const rawUrl = (schedule.question as any).youtube_url;
-    let finalAudioUrl = (schedule.question as any).audio_url;
+    let encryptedVideoId = null;
 
-    if (!finalAudioUrl && rawUrl) {
+    if (rawUrl) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
         const match = rawUrl.match(regExp);
-        const videoId = (match && match[2].length === 11) ? match[2] : null;
-        
-        if (videoId) {
-            const encryptedVideoId = obfuscateId(videoId);
-            // This URL tells the frontend "Ask the stream API for the audio"
-            finalAudioUrl = `/api/quiz/stream?id=${encodeURIComponent(encryptedVideoId)}`;
+        if (match && match[2].length === 11) {
+            encryptedVideoId = obfuscateId(match[2]);
         }
     }
 
@@ -101,8 +91,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         questionText: (schedule.question as any).question_text,
         imageUrl: (schedule.question as any).image_url,
         
-        // The frontend only gets this secure URL
-        audioUrl: finalAudioUrl,
+        // Return BOTH: Direct Audio (if exists) OR Encrypted YouTube ID
+        audioUrl: (schedule.question as any).audio_url,
+        encryptedVideoId: encryptedVideoId, 
         
         youtubeStart: (schedule.question as any).youtube_start_seconds,
         youtubeDuration: (schedule.question as any).youtube_duration_seconds,
