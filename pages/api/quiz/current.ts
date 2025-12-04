@@ -10,8 +10,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
     const dayOfWeek = new Date().toLocaleDateString("en-US", { timeZone: "Asia/Jerusalem", weekday: "long" });
     
-    // Monday = snippet, Thursday = trivia
-    const expectedType = dayOfWeek === "Monday" ? "snippet" : dayOfWeek === "Thursday" ? "trivia" : null;
+    // Get user ID from query if provided
+    const userId = req.query.userId as string | undefined;
 
     // Get active scheduled quiz for today
     const { data: schedule, error: scheduleError } = await supabase
@@ -88,20 +88,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                || req.socket.remoteAddress 
                || "unknown";
 
+    const questionId = (schedule.question as any).id;
+
     const { data: attempts } = await supabase
       .from("quiz_attempts")
       .select("attempt_number, is_correct, artist_answer, track_answer, answer")
-      .eq("question_id", (schedule.question as any).id)
+      .eq("question_id", questionId)
       .eq("ip_address", ip)
       .order("attempt_number", { ascending: true });
 
     const attemptsUsed = attempts?.length || 0;
     const hasCorrectAnswer = attempts?.some(a => a.is_correct) || false;
 
+    // Check if user already saved score
+    let scoreSaved = false;
+    if (userId && hasCorrectAnswer) {
+      const { data: existingScore } = await supabase
+        .from("quiz_scores")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("question_id", questionId)
+        .single();
+      
+      scoreSaved = !!existingScore;
+    }
+
     return res.status(200).json({
       ok: true,
       quiz: {
-        id: (schedule.question as any).id,
+        id: questionId,
         type: schedule.type,
         questionText: (schedule.question as any).question_text,
         imageUrl: (schedule.question as any).image_url,
@@ -116,7 +131,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         hasCorrectAnswer,
         history: attempts || []
       },
-      previousAnswer
+      previousAnswer,
+      scoreSaved
     });
 
   } catch (error) {
