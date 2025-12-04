@@ -242,30 +242,25 @@ export default function QuizWidget() {
   };
 
   // --- UPDATED PLAY SNIPPET FUNCTION ---
-// ... inside QuizWidget ...
-
- const playSnippet = () => {
+  const playSnippet = () => {
     if (!quiz) return;
     const duration = quiz.youtubeDuration || 10;
-    const startTime = quiz.youtubeStart || 0; 
+    const startTime = quiz.youtubeStart || 0; // Grab the start time
 
     setIsPlaying(true); 
     setProgress(0);
     const startTs = Date.now();
 
-    // 1. Try Audio Player
+    // 1. Try Audio Player (Proxy/MP3) first
     if (quiz.audioUrl && audioPlayerRef.current) {
-        // CHECK: Is this coming from our secure Proxy?
-        // If yes, the server already cut the file to the start time.
-        const isProxy = quiz.audioUrl.includes("/api/quiz/stream");
+        // Force the player to jump to the start time (Client-Side Seeking)
+        // This is crucial because the server now sends the FULL file starting at 0:00
+        audioPlayerRef.current.currentTime = startTime; 
         
-        if (isProxy) {
-            audioPlayerRef.current.currentTime = 0; // Play from start of the STREAM
-        } else {
-            audioPlayerRef.current.currentTime = startTime; // Play from start of the FILE
-        }
-        
-        audioPlayerRef.current.play().catch(e => console.error("Audio Play Error:", e));
+        audioPlayerRef.current.play().catch(e => {
+            console.error("Audio play failed", e);
+            setIsPlaying(false);
+        });
     } 
     // 2. Fallback to YouTube Player
     else if (youtubePlayerRef.current) {
@@ -273,7 +268,7 @@ export default function QuizWidget() {
         youtubePlayerRef.current.playVideo();
     }
 
-    // Start Progress Timer
+    // Start Timer
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       const elapsed = (Date.now() - startTs) / 1000;
@@ -281,6 +276,7 @@ export default function QuizWidget() {
       if (elapsed >= duration) stopPlayback();
     }, 100);
   };
+
   const stopPlayback = () => {
     if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
