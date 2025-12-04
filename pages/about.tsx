@@ -2,7 +2,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
-import React from "react";
+import React from "react"; 
 import Navigation from "../components/Navigation";
 
 export default function About() {
