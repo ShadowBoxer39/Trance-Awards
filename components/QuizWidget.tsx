@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import GoogleLoginButton from "./GoogleLoginButton";
 
-const supabase = createClient( 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 interface QuizData {
@@ -15,6 +15,7 @@ interface QuizData {
   youtubeUrl: string | null;
   youtubeStart: number | null;
   youtubeDuration: number | null;
+  audioUrl: string | null; // Supports direct MP3 or Proxy URL
   contributor: {
     name: string;
     photo_url: string | null;
@@ -70,7 +71,10 @@ export default function QuizWidget() {
   // Audio player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const playerRef = useRef<YT.Player | null>(null);
+  
+  // Refs for Players
+  const youtubePlayerRef = useRef<YT.Player | null>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const authProcessed = useRef(false);
 
@@ -79,7 +83,6 @@ export default function QuizWidget() {
     loadYouTubeAPI();
 
     const initAuth = async () => {
-      // Handle OAuth callback
       const url = window.location.href;
       const hasCode = window.location.search && window.location.search.includes('code=');
       const hasHash = window.location.hash && window.location.hash.includes('access_token');
@@ -96,13 +99,11 @@ export default function QuizWidget() {
         } catch (e) { console.error(e); } 
         finally { setIsProcessingAuth(false); }
       } else {
-        // Check existing session
         const { data } = await supabase.auth.getSession();
         if (data.session?.user) {
           await updateUserState(data.session.user);
         }
       }
-      // Fetch initial quiz data
       fetchQuiz();
     };
 
@@ -115,17 +116,17 @@ export default function QuizWidget() {
         setUser(null);
         setUserName("");
         setUserPhoto(null);
-        setScoreSaved(false); // Reset score saved on logout
+        setScoreSaved(false);
       }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      stopPlayback(); // Ensure audio stops on unmount
     };
   }, []);
 
-  // 2. CRITICAL FIX: Re-fetch quiz when user state is finally loaded
+  // 2. Re-fetch quiz when user state is loaded
   useEffect(() => {
     if (user?.id) {
       fetchQuiz();
@@ -202,11 +203,16 @@ export default function QuizWidget() {
     }
   };
 
-  const initPlayer = () => {
-    if (!quiz?.youtubeUrl || playerRef.current) return;
+  // --- PLAYER LOGIC ---
+
+  const initYouTubePlayer = () => {
+    // Only init YouTube if we DON'T have an audioUrl
+    if (quiz?.audioUrl || !quiz?.youtubeUrl || youtubePlayerRef.current) return;
+    
     const videoId = extractVideoId(quiz.youtubeUrl);
     if (!videoId) return;
-    playerRef.current = new window.YT.Player("quiz-player", {
+
+    youtubePlayerRef.current = new window.YT.Player("quiz-player", {
       height: "0", width: "0", videoId,
       playerVars: { start: quiz.youtubeStart || 0, autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1 },
       events: {
@@ -218,10 +224,15 @@ export default function QuizWidget() {
     });
   };
 
+  // Initialize correct player when quiz loads
   useEffect(() => {
-    if (quiz?.youtubeUrl && window.YT) initPlayer();
-    else if (quiz?.youtubeUrl) (window as any).onYouTubeIframeAPIReady = initPlayer;
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    if (quiz?.audioUrl) {
+       // Audio player is handled via the <audio> tag ref
+    } else if (quiz?.youtubeUrl) {
+       if (window.YT) initYouTubePlayer();
+       else (window as any).onYouTubeIframeAPIReady = initYouTubePlayer;
+    }
+    return () => stopPlayback();
   }, [quiz]);
 
   const extractVideoId = (url: string): string | null => {
@@ -230,14 +241,29 @@ export default function QuizWidget() {
     return match ? match[1] : null;
   };
 
+  // --- UPDATED PLAY SNIPPET FUNCTION ---
   const playSnippet = () => {
-    if (!playerRef.current || !quiz) return;
-    const startTime = quiz.youtubeStart || 0;
+    if (!quiz) return;
     const duration = quiz.youtubeDuration || 10;
-    playerRef.current.seekTo(startTime, true);
-    playerRef.current.playVideo();
-    setIsPlaying(true); setProgress(0);
+    const startTime = quiz.youtubeStart || 0; // Grab the start time
+
+    setIsPlaying(true); 
+    setProgress(0);
     const startTs = Date.now();
+
+    // 1. Try Audio Player (Proxy/MP3) first
+    if (quiz.audioUrl && audioPlayerRef.current) {
+        audioPlayerRef.current.currentTime = startTime; // Seek to start
+        audioPlayerRef.current.play();
+    } 
+    // 2. Fallback to YouTube Player
+    else if (youtubePlayerRef.current) {
+        youtubePlayerRef.current.seekTo(startTime, true);
+        youtubePlayerRef.current.playVideo();
+    }
+
+    // Start Timer
+    if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       const elapsed = (Date.now() - startTs) / 1000;
       setProgress(Math.min((elapsed / duration) * 100, 100));
@@ -246,9 +272,17 @@ export default function QuizWidget() {
   };
 
   const stopPlayback = () => {
-    if (playerRef.current) playerRef.current.pauseVideo();
+    if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.currentTime = 0;
+    }
+    if (youtubePlayerRef.current && youtubePlayerRef.current.pauseVideo) {
+        youtubePlayerRef.current.pauseVideo();
+    }
+    
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsPlaying(false); setProgress(100);
+    setIsPlaying(false); 
+    setProgress(100);
   };
 
   const submitAnswer = async () => {
@@ -321,7 +355,7 @@ export default function QuizWidget() {
     );
   }
 
-  // UPDATED SUCCESS CONDITION: Check scoreSaved as well
+  // SUCCESS STATE
   if (attempts?.hasCorrectAnswer || result?.isCorrect || scoreSaved) {
     return (
       <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-green-500/30 bg-gradient-to-b from-green-500/5 to-transparent">
@@ -399,7 +433,7 @@ export default function QuizWidget() {
     );
   }
 
-  // (Remaining states: Out of attempts, and Active Quiz)
+  // OUT OF ATTEMPTS
   if (attempts && attempts.remaining === 0) {
     return (
       <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-red-500/30 bg-gradient-to-b from-red-500/5 to-transparent">
@@ -418,6 +452,7 @@ export default function QuizWidget() {
     );
   }
 
+  // ACTIVE QUIZ
   return (
     <div id="quiz-widget-section" className="glass-card rounded-xl overflow-hidden border-2 border-cyan-500/30">
       <div className={`p-4 ${quiz.type === "snippet" ? "bg-gradient-to-r from-cyan-500/20 to-purple-500/20" : "bg-gradient-to-r from-purple-500/20 to-pink-500/20"}`}>
@@ -444,9 +479,13 @@ export default function QuizWidget() {
           </div>
         )}
 
-        {quiz.type === "snippet" && quiz.youtubeUrl && (
+        {/* PLAYER UI (UPDATED for Audio Proxy) */}
+        {quiz.type === "snippet" && (quiz.youtubeUrl || quiz.audioUrl) && (
           <div className="mb-6">
+            {/* Hidden Player Elements */}
             <div id="quiz-player" className="hidden" />
+            {quiz.audioUrl && <audio ref={audioPlayerRef} src={quiz.audioUrl} preload="auto" />}
+
             <div className="bg-gradient-to-b from-black/60 to-black/40 rounded-2xl p-6 border border-cyan-500/20">
               <div className="flex items-end justify-center gap-1 h-20 mb-6">
                 {[...Array(24)].map((_, i) => (<div key={i} className={`w-2 rounded-full transition-all duration-150 ${isPlaying ? "bg-gradient-to-t from-cyan-500 to-purple-500" : "bg-white/20"}`} style={{ height: isPlaying ? `${20 + Math.random() * 80}%` : "30%", animationDelay: `${i * 50}ms` }}/>))}
