@@ -17,13 +17,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 2. Get Video Info
     const info = await ytdl.getInfo(videoId);
 
-    // 3. Find the best compatible format (AAC/MP4 is best for Safari/iOS)
+    // 3. Find the best compatible format (AAC/MP4 is best for browsers)
+    // We prioritize 'audio/mp4' because WebM audio often fails on iOS
     let format = ytdl.chooseFormat(info.formats, {
       quality: "lowestaudio",
       filter: (f) => f.container === 'mp4' && f.hasAudio && !f.hasVideo
     });
 
-    // Fallback: If no MP4 audio, take whatever audio is available (WebM/Opus)
+    // Fallback: If no MP4 audio, take whatever audio is available
     if (!format || !format.url) {
         format = ytdl.chooseFormat(info.formats, { 
             quality: "lowestaudio", 
@@ -35,15 +36,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).send("Audio not found");
     }
 
-    // 4. Set the CORRECT Content-Type
-    // This tells the browser exactly what format is coming
+    // 4. Set the CORRECT Content-Type (Essential for playback)
     res.setHeader("Content-Type", format.mimeType || "audio/mp4");
     
     // 5. Stream the FULL file (Start from 0 to keep headers intact)
-    // We do NOT use 'begin' here anymore, to prevent file corruption.
+    // CRITICAL: We do NOT use 'begin' here. We stream the valid file and seek on client.
     const stream = ytdl.downloadFromInfo(info, {
       format: format,
-      highWaterMark: 1 << 25, 
+      highWaterMark: 1 << 25, // Large buffer for smooth playback
     });
 
     stream.on("error", (err) => {
