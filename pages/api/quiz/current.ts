@@ -34,29 +34,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ ok: true, quiz: null, message: "no_active_quiz", nextQuizDay: ["Monday", "Thursday"].includes(dayOfWeek) ? null : "Soon" });
     }
 
-    // 2. Previous Answer
+    // 2. Previous Answer Logic (Standard)
     let previousAnswer = null;
     if (schedule.previous_answer_revealed) {
-      const { data: prev } = await supabase
-        .from("quiz_schedule")
-        .select(`question:quiz_questions(type, question_text, accepted_artists, accepted_tracks, accepted_answers, contributor:quiz_contributors(name, photo_url))`)
-        .lt("scheduled_for", schedule.scheduled_for)
-        .order("scheduled_for", { ascending: false })
-        .limit(1)
-        .single();
-        
+      const { data: prev } = await supabase.from("quiz_schedule").select(`question:quiz_questions(type, question_text, accepted_artists, accepted_tracks, accepted_answers, contributor:quiz_contributors(name, photo_url))`).lt("scheduled_for", schedule.scheduled_for).order("scheduled_for", { ascending: false }).limit(1).single();
       if (prev?.question) {
         const q = prev.question as any;
-        previousAnswer = {
-          type: q.type,
-          question: q.question_text,
-          answer: q.type === "snippet" ? { artist: q.accepted_artists?.[0], track: q.accepted_tracks?.[0] } : q.accepted_answers?.[0],
-          contributor: q.contributor
-        };
+        previousAnswer = { type: q.type, question: q.question_text, answer: q.type === "snippet" ? { artist: q.accepted_artists?.[0], track: q.accepted_tracks?.[0] } : q.accepted_answers?.[0], contributor: q.contributor };
       }
     }
 
-    // 3. Attempts
+    // 3. Attempts Logic (Standard)
     const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const questionId = (schedule.question as any).id;
     const { data: attempts } = await supabase.from("quiz_attempts").select("attempt_number, is_correct, artist_answer, track_answer, answer").eq("question_id", questionId).eq("ip_address", ip).order("attempt_number", { ascending: true });
@@ -64,14 +52,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const attemptsUsed = attempts?.length || 0;
     const hasCorrectAnswer = attempts?.some(a => a.is_correct) || false;
 
-    // 4. Score Saved
+    // 4. Score Saved Logic (Standard)
     let scoreSaved = false;
     if (userId) {
       const { data: existingScore } = await supabase.from("quiz_scores").select("id").eq("user_id", userId).eq("question_id", questionId).single();
       scoreSaved = !!existingScore;
     }
 
-    // 5. SECURE AUDIO LOGIC (With Fallback)
+    // 5. SECURE AUDIO LOGIC
+    // Generate the Proxy URL
     const rawUrl = (schedule.question as any).youtube_url;
     let finalAudioUrl = (schedule.question as any).audio_url;
 
@@ -94,11 +83,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         questionText: (schedule.question as any).question_text,
         imageUrl: (schedule.question as any).image_url,
         
-        // RESTORED: Send youtubeUrl as a fallback so the player never disappears
-        youtubeUrl: rawUrl, 
-        
-        // Secure URL (Widget prefers this if available)
-        audioUrl: finalAudioUrl,
+        // IMPORTANT: Only send audioUrl (Proxy), never the raw YouTube URL
+        audioUrl: finalAudioUrl, 
         
         youtubeStart: (schedule.question as any).youtube_start_seconds,
         youtubeDuration: (schedule.question as any).youtube_duration_seconds,
