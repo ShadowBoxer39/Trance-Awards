@@ -126,7 +126,6 @@ export default function QuizWidget() {
   }, []);
 
   // 2. CRITICAL FIX: Re-fetch quiz when user state is finally loaded
-  // This ensures we check for "scoreSaved" with the correct User ID
   useEffect(() => {
     if (user?.id) {
       fetchQuiz();
@@ -139,6 +138,23 @@ export default function QuizWidget() {
       fetchLeaderboard();
     }
   }, [attempts?.hasCorrectAnswer, result?.isCorrect, scoreSaved]);
+
+  // --- Helper Functions ---
+
+  const fetchLeaderboard = async () => {
+    setLoadingLeaderboard(true);
+    try {
+      const res = await fetch("/api/quiz/leaderboard?limit=10");
+      const data = await res.json();
+      if (data.ok) {
+        setLeaderboard(data.leaderboard || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch leaderboard", e);
+    } finally {
+      setLoadingLeaderboard(false);
+    }
+  };
 
   const updateUserState = async (currentUser: any) => {
     setUser(currentUser);
@@ -186,7 +202,6 @@ export default function QuizWidget() {
     }
   };
 
-  // ... (Player & Logic functions same as before)
   const initPlayer = () => {
     if (!quiz?.youtubeUrl || playerRef.current) return;
     const videoId = extractVideoId(quiz.youtubeUrl);
