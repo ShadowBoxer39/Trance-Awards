@@ -27,6 +27,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             question_text,
             youtube_url,
             status,
+            accepted_artists,
+            accepted_tracks,
             contributor:quiz_contributors(name)
           )
         `)
