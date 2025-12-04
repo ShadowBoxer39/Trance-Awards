@@ -10,18 +10,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // 1. Decrypt the ID
     const videoId = deobfuscateId(id);
     if (!videoId) return res.status(400).send("Invalid ID");
 
+    // 2. Get Video Info
     const info = await ytdl.getInfo(videoId);
 
-    // Filter for audio/mp4 (AAC) which is most compatible with browsers (Safari/iOS)
+    // 3. Find the best compatible format (AAC/MP4 is best for Safari/iOS)
     let format = ytdl.chooseFormat(info.formats, {
       quality: "lowestaudio",
       filter: (f) => f.container === 'mp4' && f.hasAudio && !f.hasVideo
     });
 
-    // Fallback if no MP4 found
+    // Fallback: If no MP4 audio, take whatever audio is available (WebM/Opus)
     if (!format || !format.url) {
         format = ytdl.chooseFormat(info.formats, { 
             quality: "lowestaudio", 
@@ -33,10 +35,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).send("Audio not found");
     }
 
-    // Set correct Content-Type (Essential for playback)
+    // 4. Set the CORRECT Content-Type
+    // This tells the browser exactly what format is coming
     res.setHeader("Content-Type", format.mimeType || "audio/mp4");
     
-    // Download the FULL file (No 'begin' param) to prevent corruption
+    // 5. Stream the FULL file (Start from 0 to keep headers intact)
+    // We do NOT use 'begin' here anymore, to prevent file corruption.
     const stream = ytdl.downloadFromInfo(info, {
       format: format,
       highWaterMark: 1 << 25, 
