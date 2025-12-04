@@ -39,9 +39,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Check if admin (auto-approve) or contributor (pending)
-    const isAdmin = adminKey && adminKey === process.env.ADMIN_KEY;
-    const status = isAdmin ? "approved" : "pending";
-
+   // Check if admin (auto-approve) or contributor (pending)
+const isAdmin = (adminKey === process.env.ADMIN_KEY);
+const status = isAdmin ? "approved" : "pending";
+console.log("Add question - adminKey received:", adminKey, "isAdmin:", isAdmin);
     // Insert question
     const { data: question, error: insertError } = await supabase
       .from("quiz_questions")
