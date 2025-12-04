@@ -71,15 +71,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       scoreSaved = !!existingScore;
     }
 
-    // 5. Encrypt ID (The Simple Security Layer)
+    // 5. SECURE AUDIO LOGIC (With Fallback)
     const rawUrl = (schedule.question as any).youtube_url;
-    let encryptedVideoId = null;
+    let finalAudioUrl = (schedule.question as any).audio_url;
 
-    if (rawUrl) {
+    if (!finalAudioUrl && rawUrl) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
         const match = rawUrl.match(regExp);
-        if (match && match[2].length === 11) {
-            encryptedVideoId = obfuscateId(match[2]);
+        const videoId = (match && match[2].length === 11) ? match[2] : null;
+        
+        if (videoId) {
+            const encryptedVideoId = obfuscateId(videoId);
+            finalAudioUrl = `/api/quiz/stream?id=${encodeURIComponent(encryptedVideoId)}`;
         }
     }
 
@@ -91,9 +94,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         questionText: (schedule.question as any).question_text,
         imageUrl: (schedule.question as any).image_url,
         
-        // Return BOTH: Direct Audio (if exists) OR Encrypted YouTube ID
-        audioUrl: (schedule.question as any).audio_url,
-        encryptedVideoId: encryptedVideoId, 
+        // RESTORED: Send youtubeUrl as a fallback so the player never disappears
+        youtubeUrl: rawUrl, 
+        
+        // Secure URL (Widget prefers this if available)
+        audioUrl: finalAudioUrl,
         
         youtubeStart: (schedule.question as any).youtube_start_seconds,
         youtubeDuration: (schedule.question as any).youtube_duration_seconds,
