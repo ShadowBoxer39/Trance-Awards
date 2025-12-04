@@ -66,9 +66,9 @@ export default function QuizWidget() {
     loadYouTubeAPI();
 
    // Re-fetch quiz when user changes to check if score was saved
+// Re-fetch quiz when user changes to check if score was saved
   useEffect(() => {
-    if (user && quiz) {
-      // Re-fetch to check scoreSaved status with user ID
+    if (user && quiz && !scoreSaved) {
       const checkScoreSaved = async () => {
         try {
           const res = await fetch(`/api/quiz/current?userId=${user.id}`);
@@ -82,7 +82,7 @@ export default function QuizWidget() {
       };
       checkScoreSaved();
     }
-  }, [user, quiz?.id]);
+  }, [user?.id, quiz]);
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
