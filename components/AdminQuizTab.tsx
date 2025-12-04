@@ -41,11 +41,33 @@ interface LeaderboardEntry {
   questionsAnswered: number;
 }
 
-// Helper to extract ID
+// --- HELPERS ---
+
 const getYouTubeID = (url: string) => {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
+};
+
+const getYouTubeTimestamp = (url: string) => {
+  try {
+    const urlObj = new URL(url);
+    const params = new URLSearchParams(urlObj.search);
+    const t = params.get('t');
+    if (t) {
+      const seconds = t.replace('s', ''); 
+      return parseInt(seconds, 10);
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const formatTime = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
 export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
@@ -82,7 +104,6 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
   const playerRef = useRef<any>(null);
 
   useEffect(() => {
-    // Load YouTube API if needed for preview
     if (!window.YT) {
       const tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
@@ -95,6 +116,15 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
     else if (subTab === "contributors") fetchContributors();
     else if (subTab === "leaderboard") fetchLeaderboard();
   }, [subTab, questionsFilter]);
+
+  // Smart URL Handler
+  const handleUrlChange = (val: string) => {
+    setYoutubeUrl(val);
+    const t = getYouTubeTimestamp(val);
+    if (t && !isNaN(t)) {
+      setStartSeconds(t);
+    }
+  };
 
   const loadPreview = () => {
     const videoId = getYouTubeID(youtubeUrl);
@@ -487,11 +517,9 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
         </div>
       )}
 
-      {/* CONTRIBUTORS TAB - Same as before */}
+      {/* CONTRIBUTORS TAB */}
       {subTab === "contributors" && !loading && (
         <div className="space-y-4">
-           {/* ... (Existing Contributor UI) ... */}
-           {/* Keeping it short for clarity, use existing code block for this part */}
            <div className="glass rounded-xl p-4">
             <p className="font-medium mb-3">➕ יצירת הזמנה חדשה</p>
             <div className="flex gap-3">
@@ -510,7 +538,12 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
                     </div>
                     <div className="flex gap-2">
                          <button onClick={() => {navigator.clipboard.writeText(`${window.location.origin}/quiz/contribute?code=${c.invite_code}`); alert("הועתק");}} className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-lg text-sm">העתק</button>
-                        {/* Manage buttons */}
+                         {c.is_active ? (
+                          <button onClick={() => manageContributor(c.id, "deactivate")} className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm">השבת</button>
+                        ) : (
+                          <button onClick={() => manageContributor(c.id, "activate")} className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm">הפעל</button>
+                        )}
+                        <button onClick={() => manageContributor(c.id, "delete")} className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm">🗑️</button>
                     </div>
                   </div>
                 </div>
@@ -548,7 +581,8 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
 
           {formType === "snippet" ? (
             <div className="space-y-4">
-              <input type="url" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="קישור YouTube" className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white dir-ltr"/>
+              <input type="url" value={youtubeUrl} onChange={(e) => handleUrlChange(e.target.value)} placeholder="קישור YouTube" className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white dir-ltr"/>
+              <p className="text-xs text-gray-500 mt-1">💡 טיפ: ניתן להדביק לינק עם זמן (t=120) וזה יתמלא אוטומטית</p>
        
               <div className="bg-black/30 rounded-xl p-4 border border-cyan-500/20 mb-4">
                 <p className="text-cyan-400 font-medium mb-3">⏱️ בחירת קטע</p>
@@ -561,6 +595,20 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
                     <label className="block text-sm text-white/60 mb-1">משך (שניות)</label>
                     <input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"/>
                     </div>
+                </div>
+
+                {/* VISUAL CALCULATOR / EXPLANATION BOX */}
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4 mt-4">
+                     <p className="text-sm text-cyan-200 font-medium mb-1">⏱️ חישוב זמנים:</p>
+                     <p className="text-gray-200 text-sm">
+                        הקטע יתנגן מ-
+                        <span className="text-cyan-400 font-bold mx-1">{formatTime(Number(startSeconds))}</span>
+                        ועד
+                        <span className="text-cyan-400 font-bold mx-1">{formatTime(Number(startSeconds) + Number(duration))}</span>
+                     </p>
+                     <p className="text-xs text-gray-500 mt-2">
+                        משך הקטע הוא <strong>{duration} שניות</strong> (ולא נקודת סיום).
+                     </p>
                 </div>
 
                 {/* PREVIEW BUTTON */}
