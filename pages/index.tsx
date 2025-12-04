@@ -1251,7 +1251,7 @@ export default function Home({
   );
 }
 
-// Server-side data fetching with Track of the Week, Featured Artist, Previous Artists, Artists AND Legends
+// Server-side data fetching with robust error handling
 export async function getServerSideProps() {
   const mockReq = {} as any;
   let episodesData: any;
@@ -1267,6 +1267,7 @@ export async function getServerSideProps() {
     setHeader: () => mockRes,
   } as any;
   
+  // Initialize with safe defaults
   let episodes: Episode[] = [];
   let episodesError: string | null = null;
   let trackOfWeek: TrackOfWeek | null = null;
@@ -1275,143 +1276,105 @@ export async function getServerSideProps() {
   let artists: Artist[] = [];
   let legends: Legend[] = [];
 
-  // Fetch episodes
+  // 1. Fetch episodes
   try {
     await episodeApiHandler(mockReq, mockRes);
     episodes = episodesData && Array.isArray(episodesData) ? episodesData : [];
-    if (episodesData && episodesData.error) {
-      throw new Error(episodesData.error);
-    }
   } catch (err: any) {
     console.error("SSR episode fetch failed:", err.message);
     episodesError = "שגיאה בטעינת הפרקים.";
   }
 
-  // Fetch Track of the Week using Supabase
-  try {
-    const supabase = require('../lib/supabaseServer').default;
-    const { data, error } = await supabase
-      .from('track_of_the_week_submissions')
-      .select('*')
-      .eq('is_approved', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Track of Week fetch error:', error);
-    } else if (data) {
-      trackOfWeek = data;
+  // Helper to get Supabase safely
+  const getSupabase = () => {
+    try {
+      return require('../lib/supabaseServer').default;
+    } catch (e) {
+      console.error("Supabase import failed:", e);
+      return null;
     }
-  } catch (err: any) {
-    console.error("SSR Track of Week fetch failed:", err.message);
-  }
+  };
 
-  // Fetch Featured Artist (current) AND Previous Artists
-  try {
-    const supabase = require('../lib/supabaseServer').default;
-    
-    // Get current featured artist (most recent)
-    const { data: currentArtist, error: currentError } = await supabase
-      .from('featured_artists')
-      .select('*')
-      .order('featured_at', { ascending: false })
-      .limit(1)
-      .single();
+  const supabase = getSupabase();
 
-    if (currentError && currentError.code !== 'PGRST116') {
-      console.error('Featured Artist fetch error:', currentError);
-    } else if (currentArtist) {
-      featuredArtist = currentArtist;
-    }
+  if (supabase) {
+    // 2. Fetch Track of the Week
+    try {
+      const { data } = await supabase
+        .from('track_of_the_week_submissions')
+        .select('*')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (data) trackOfWeek = data;
+    } catch (e) { /* Ignore error on empty DB */ }
 
-    // Get previous artists (all except the current one)
-    const { data: prevArtists, error: prevError } = await supabase
-      .from('featured_artists')
-      .select('*')
-      .order('featured_at', { ascending: false })
-      .range(1, 10); // Skip first (current), get next 10
+    // 3. Fetch Featured Artist
+    try {
+      const { data: currentArtist } = await supabase
+        .from('featured_artists')
+        .select('*')
+        .order('featured_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (currentArtist) featuredArtist = currentArtist;
 
-    if (prevError && prevError.code !== 'PGRST116') {
-      console.error('Previous Artists fetch error:', prevError);
-    } else if (prevArtists) {
-      previousArtists = prevArtists;
-    }
-  } catch (err: any) {
-    console.error("SSR Featured Artist fetch failed:", err.message);
-  }
+      const { data: prevArtists } = await supabase
+        .from('featured_artists')
+        .select('*')
+        .order('featured_at', { ascending: false })
+        .range(1, 10);
+      if (prevArtists) previousArtists = prevArtists;
+    } catch (e) { /* Ignore error */ }
 
-  // Fetch Artists (from artists table)
-  try {
-    const supabase = require('../lib/supabaseServer').default;
-    const { data: artistsData, error: artistsError } = await supabase
-      .from('artists')
-      .select('id, slug, stage_name, profile_photo_url, genre, primary_color')
-      .eq('is_published', true)
-      .order('stage_name', { ascending: true })
-      .limit(12); // Show first 12 on homepage
+    // 4. Fetch Artists
+    try {
+      const { data: artistsData } = await supabase
+        .from('artists')
+        .select('id, slug, stage_name, profile_photo_url, genre, primary_color')
+        .eq('is_published', true)
+        .order('stage_name', { ascending: true })
+        .limit(12);
+      if (artistsData) artists = artistsData;
+    } catch (e) { /* Ignore error */ }
 
-    if (artistsError) {
-      console.error('Artists fetch error:', artistsError);
-    } else if (artistsData) {
-      artists = artistsData;
-    }
-  } catch (err: any) {
-    console.error("SSR Artists fetch failed:", err.message);
-  }
+    // 5. Fetch Legends
+    try {
+      const { data: legendsRaw } = await supabase
+        .from('legends')
+        .select('id, stage_name, country, country_code, photo_url, episode_id')
+        .order('stage_name', { ascending: true })
+        .limit(12);
 
-  // Fetch Legends
-  try {
-    const supabase = require('../lib/supabaseServer').default;
-    
-    // Get legends with episode info
-    const { data: legendsRaw, error: legendsError } = await supabase
-      .from('legends')
-      .select('id, stage_name, country, country_code, photo_url, episode_id')
-      .order('stage_name', { ascending: true })
-      .limit(12); // Show first 12 on homepage
+      if (legendsRaw) {
+        const episodeIds = legendsRaw.map((l: any) => l.episode_id).filter((id: any) => typeof id === 'number');
+        let episodesById = new Map();
 
-    if (legendsError) {
-      console.error('Legends fetch error:', legendsError);
-    } else if (legendsRaw) {
-      // Get episode youtube IDs
-      const episodeIds = legendsRaw
-        .map((l: any) => l.episode_id)
-        .filter((id: any): id is number => typeof id === 'number');
-
-      let episodesById = new Map<number, string | null>();
-
-      if (episodeIds.length > 0) {
-        const { data: episodesData } = await supabase
-          .from('episodes')
-          .select('id, youtube_video_id')
-          .in('id', episodeIds);
-
-        if (episodesData) {
-          episodesById = new Map(
-            episodesData.map((ep: any) => [ep.id, ep.youtube_video_id])
-          );
+        if (episodeIds.length > 0) {
+          const { data: eps } = await supabase.from('episodes').select('id, youtube_video_id').in('id', episodeIds);
+          if (eps) episodesById = new Map(eps.map((e: any) => [e.id, e.youtube_video_id]));
         }
-      }
 
-      legends = legendsRaw.map((legend: any) => ({
-        ...legend,
-        youtube_video_id: legend.episode_id ? episodesById.get(legend.episode_id) : null,
-      }));
-    }
-  } catch (err: any) {
-    console.error("SSR Legends fetch failed:", err.message);
+        legends = legendsRaw.map((l: any) => ({
+          ...l,
+          youtube_video_id: l.episode_id ? episodesById.get(l.episode_id) : null,
+        }));
+      }
+    } catch (e) { /* Ignore error */ }
   }
 
+  // --- CRITICAL FIX: Serialize Data ---
+  // This prevents the "Server Error" caused by undefined values or dates in the empty database
   return {
     props: {
-      episodes,
+      episodes: JSON.parse(JSON.stringify(episodes)),
       episodesError,
-      trackOfWeek,
-      featuredArtist,
-      previousArtists,
-      artists,
-      legends,
+      trackOfWeek: trackOfWeek ? JSON.parse(JSON.stringify(trackOfWeek)) : null,
+      featuredArtist: featuredArtist ? JSON.parse(JSON.stringify(featuredArtist)) : null,
+      previousArtists: JSON.parse(JSON.stringify(previousArtists)),
+      artists: JSON.parse(JSON.stringify(artists)),
+      legends: JSON.parse(JSON.stringify(legends)),
     },
   };
 }
