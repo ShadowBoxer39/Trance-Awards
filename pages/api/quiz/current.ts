@@ -111,11 +111,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       scoreSaved = !!existingScore;
     }
 
+   // ... inside the handler ...
+
     // --- 3. LOGIC: Generate Audio Proxy URL ---
     const rawUrl = (schedule.question as any).youtube_url;
-    let finalAudioUrl = (schedule.question as any).audio_url; // Use direct MP3 if available
+    let finalAudioUrl = (schedule.question as any).audio_url; 
 
-    // If no MP3, but we have YouTube, generate a secure Proxy Link
     if (!finalAudioUrl && rawUrl) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
         const match = rawUrl.match(regExp);
@@ -123,9 +124,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         if (videoId) {
             const encryptedVideoId = obfuscateId(videoId);
-            finalAudioUrl = `/api/quiz/stream?id=${encodeURIComponent(encryptedVideoId)}`;
+            const startSec = (schedule.question as any).youtube_start_seconds || 0;
+            
+            // Pass the start time to the proxy!
+            finalAudioUrl = `/api/quiz/stream?id=${encodeURIComponent(encryptedVideoId)}&start=${startSec}`;
         }
     }
+    
+    // ... rest of the file
 
     return res.status(200).json({
       ok: true,
