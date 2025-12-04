@@ -71,12 +71,13 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
   const [imageUrl, setImageUrl] = useState("");
   const [acceptedAnswers, setAcceptedAnswers] = useState("");
 
+  // --- UPDATED: Trigger fetch when subTab OR filter changes ---
   useEffect(() => {
     if (subTab === "questions") fetchQuestions();
     else if (subTab === "schedule") fetchSchedule();
     else if (subTab === "contributors") fetchContributors();
     else if (subTab === "leaderboard") fetchLeaderboard();
-  }, [subTab]);
+  }, [subTab, questionsFilter]); // Added questionsFilter here
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -275,10 +276,11 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
       {subTab === "questions" && !loading && (
         <div className="space-y-4">
           <div className="flex gap-2 mb-4">
+            {/* --- UPDATED: Clean onClick handlers (useEffect handles fetch) --- */}
             {(["pending", "approved", "all"] as const).map(filter => (
               <button
                 key={filter}
-                onClick={() => { setQuestionsFilter(filter); setTimeout(fetchQuestions, 0); }}
+                onClick={() => setQuestionsFilter(filter)}
                 className={`px-4 py-2 rounded-lg text-sm ${
                   questionsFilter === filter
                     ? "bg-cyan-500 text-white"
