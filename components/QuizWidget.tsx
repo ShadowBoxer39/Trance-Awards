@@ -637,7 +637,8 @@ export default function QuizWidget() {
             <span className="text-purple-400"> שני</span> = 2 נקודות • 
             <span className="text-pink-400"> שלישי</span> = 1 נקודה
           </p>
-        </div>
+      </div>
       </div>
     </div>
   );
+}
