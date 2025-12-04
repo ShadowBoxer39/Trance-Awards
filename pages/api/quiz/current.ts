@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import supabase from "../../../lib/supabaseServer";
+import { obfuscateId } from "../../../lib/security"; // <--- 1. Import Security Helper
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -28,12 +29,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           youtube_url,
           youtube_start_seconds,
           youtube_duration_seconds,
+          audio_url,
           accepted_artists, 
           accepted_tracks,
           accepted_answers,
           contributor:quiz_contributors(name, photo_url)
         )
-      `)
+      `) // <--- 2. Added audio_url above
       .lte("scheduled_for", today)
       .eq("is_active", true)
       .order("scheduled_for", { ascending: false })
@@ -96,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const attemptsUsed = attempts?.length || 0;
     const hasCorrectAnswer = attempts?.some(a => a.is_correct) || false;
 
-    // --- FIX: Check if score is saved based ONLY on User ID ---
+    // Check if score is saved based ONLY on User ID
     let scoreSaved = false;
     if (userId) {
       const { data: existingScore } = await supabase
@@ -109,6 +111,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       scoreSaved = !!existingScore;
     }
 
+    // --- 3. LOGIC: Generate Audio Proxy URL ---
+    const rawUrl = (schedule.question as any).youtube_url;
+    let finalAudioUrl = (schedule.question as any).audio_url; // Use direct MP3 if available
+
+    // If no MP3, but we have YouTube, generate a secure Proxy Link
+    if (!finalAudioUrl && rawUrl) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = rawUrl.match(regExp);
+        const videoId = (match && match[2].length === 11) ? match[2] : null;
+        
+        if (videoId) {
+            const encryptedVideoId = obfuscateId(videoId);
+            finalAudioUrl = `/api/quiz/stream?id=${encodeURIComponent(encryptedVideoId)}`;
+        }
+    }
+
     return res.status(200).json({
       ok: true,
       quiz: {
@@ -116,7 +134,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         type: (schedule.question as any).type,
         questionText: (schedule.question as any).question_text,
         imageUrl: (schedule.question as any).image_url,
-        youtubeUrl: (schedule.question as any).youtube_url,
+        
+        // --- 4. Send ONLY audioUrl (Proxy or MP3), never the raw YouTube URL ---
+        audioUrl: finalAudioUrl,
+        
         youtubeStart: (schedule.question as any).youtube_start_seconds,
         youtubeDuration: (schedule.question as any).youtube_duration_seconds,
         contributor: (schedule.question as any).contributor
