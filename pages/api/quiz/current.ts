@@ -7,13 +7,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Use Israel time for consistency
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
     const dayOfWeek = new Date().toLocaleDateString("en-US", { timeZone: "Asia/Jerusalem", weekday: "long" });
     
-    // Get user ID from query if provided
     const userId = req.query.userId as string | undefined;
 
-    // Get active scheduled quiz for today
+    // --- FIX: Get the LATEST active quiz that is scheduled for today or earlier ---
     const { data: schedule, error: scheduleError } = await supabase
       .from("quiz_schedule")
       .select(`
@@ -30,25 +30,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           youtube_url,
           youtube_start_seconds,
           youtube_duration_seconds,
+          accepted_artists, 
+          accepted_tracks,
+          accepted_answers,
           contributor:quiz_contributors(
             name,
             photo_url
           )
         )
       `)
-      .eq("scheduled_for", today)
-      .eq("is_active", true)
+      .lte("scheduled_for", today) // Less than or equal to today
+      .eq("is_active", true)       // Must be active
+      .order("scheduled_for", { ascending: false }) // Get the most recent one
+      .limit(1)
       .single();
 
     if (scheduleError || !schedule) {
       return res.status(200).json({
         ok: true,
         quiz: null,
-        message: "no_quiz_today",
-        nextQuizDay: dayOfWeek === "Monday" || dayOfWeek === "Thursday" ? null : 
-                     ["Friday", "Saturday", "Sunday"].includes(dayOfWeek) ? "Monday" : "Thursday"
+        message: "no_active_quiz",
+        nextQuizDay: ["Monday", "Thursday"].includes(dayOfWeek) ? null : "Soon"
       });
     }
+
+    // ... (Rest of the file remains the same) ...
 
     // Get previous quiz answer if revealed
     let previousAnswer = null;
@@ -65,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             contributor:quiz_contributors(name, photo_url)
           )
         `)
-        .lt("scheduled_for", today)
+        .lt("scheduled_for", schedule.scheduled_for) // Older than current
         .order("scheduled_for", { ascending: false })
         .limit(1)
         .single();
