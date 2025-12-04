@@ -119,7 +119,7 @@ export default function QuizWidget() {
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
   };
 
-  const fetchQuiz = async () => {
+ const fetchQuiz = async () => {
     try {
       const res = await fetch("/api/quiz/current");
       const data = await res.json();
@@ -128,6 +128,11 @@ export default function QuizWidget() {
         setAttempts(data.attempts);
         setPreviousAnswer(data.previousAnswer);
         setNextQuizDay(data.nextQuizDay);
+        
+        // Check if score already saved
+        if (data.scoreSaved) {
+          setScoreSaved(true);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch quiz:", error);
