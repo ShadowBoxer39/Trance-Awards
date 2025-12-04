@@ -244,7 +244,7 @@ export default function QuizWidget() {
   // --- UPDATED PLAY SNIPPET FUNCTION ---
 // ... inside QuizWidget ...
 
-  const playSnippet = () => {
+ const playSnippet = () => {
     if (!quiz) return;
     const duration = quiz.youtubeDuration || 10;
     const startTime = quiz.youtubeStart || 0; 
@@ -255,18 +255,17 @@ export default function QuizWidget() {
 
     // 1. Try Audio Player
     if (quiz.audioUrl && audioPlayerRef.current) {
-        // CHECK: Is this our Proxy?
+        // CHECK: Is this coming from our secure Proxy?
+        // If yes, the server already cut the file to the start time.
         const isProxy = quiz.audioUrl.includes("/api/quiz/stream");
         
-        // If it's a Proxy, the audio ALREADY starts at the right time. Don't seek.
-        // If it's a manual MP3 upload, we MUST seek.
-        if (!isProxy) {
-            audioPlayerRef.current.currentTime = startTime; 
+        if (isProxy) {
+            audioPlayerRef.current.currentTime = 0; // Play from start of the STREAM
         } else {
-            audioPlayerRef.current.currentTime = 0; // Reset to start of the snippet
+            audioPlayerRef.current.currentTime = startTime; // Play from start of the FILE
         }
         
-        audioPlayerRef.current.play();
+        audioPlayerRef.current.play().catch(e => console.error("Audio Play Error:", e));
     } 
     // 2. Fallback to YouTube Player
     else if (youtubePlayerRef.current) {
@@ -274,8 +273,7 @@ export default function QuizWidget() {
         youtubePlayerRef.current.playVideo();
     }
 
-    // ... rest of the function
-    // Start Timer
+    // Start Progress Timer
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       const elapsed = (Date.now() - startTs) / 1000;
@@ -283,7 +281,6 @@ export default function QuizWidget() {
       if (elapsed >= duration) stopPlayback();
     }, 100);
   };
-
   const stopPlayback = () => {
     if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
