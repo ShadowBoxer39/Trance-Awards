@@ -3,27 +3,25 @@ import ytdl from "@distube/ytdl-core";
 import { deobfuscateId } from "../../../lib/security";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { id, start } = req.query;
+  const { id } = req.query;
 
   if (!id || typeof id !== "string") {
     return res.status(400).send("Missing ID");
   }
 
   try {
-    // 1. Decrypt ID
     const videoId = deobfuscateId(id);
     if (!videoId) return res.status(400).send("Invalid ID");
 
-    // 2. Get Video Info first
     const info = await ytdl.getInfo(videoId);
 
-    // 3. Find the best compatible format (AAC/MP4 is best for browsers)
+    // Filter for audio/mp4 (AAC) which is most compatible with browsers (Safari/iOS)
     let format = ytdl.chooseFormat(info.formats, {
       quality: "lowestaudio",
       filter: (f) => f.container === 'mp4' && f.hasAudio && !f.hasVideo
     });
 
-    // Fallback: If no MP4 audio, take whatever audio is available (usually WebM)
+    // Fallback if no MP4 found
     if (!format || !format.url) {
         format = ytdl.chooseFormat(info.formats, { 
             quality: "lowestaudio", 
@@ -35,17 +33,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).send("Audio not found");
     }
 
-    // 4. Set the CORRECT Content-Type (Important for "No Sound" fix)
-    // This tells the browser exactly what format is coming (e.g. 'audio/mp4' or 'audio/webm')
+    // Set correct Content-Type (Essential for playback)
     res.setHeader("Content-Type", format.mimeType || "audio/mp4");
     
-    // 5. Calculate start time
-    const beginTime = start ? `${start}s` : "0s";
-
-    // 6. Pipe the stream
+    // Download the FULL file (No 'begin' param) to prevent corruption
     const stream = ytdl.downloadFromInfo(info, {
       format: format,
-      begin: beginTime,       
       highWaterMark: 1 << 25, 
     });
 
