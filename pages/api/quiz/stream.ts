@@ -10,21 +10,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // 1. Decrypt the ID
     const videoId = deobfuscateId(id);
     if (!videoId) return res.status(400).send("Invalid ID");
 
-    // 2. Get Video Info
     const info = await ytdl.getInfo(videoId);
 
-    // 3. Find the best compatible format (AAC/MP4 is best for browsers)
-    // We prioritize 'audio/mp4' because WebM audio often fails on iOS
+    // 1. Prioritize MP4/M4A (Best for Safari/iOS)
     let format = ytdl.chooseFormat(info.formats, {
       quality: "lowestaudio",
       filter: (f) => f.container === 'mp4' && f.hasAudio && !f.hasVideo
     });
 
-    // Fallback: If no MP4 audio, take whatever audio is available
+    // 2. Fallback to WebM (Best for Chrome/Android) if MP4 unavailable
     if (!format || !format.url) {
         format = ytdl.chooseFormat(info.formats, { 
             quality: "lowestaudio", 
@@ -36,14 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).send("Audio not found");
     }
 
-    // 4. Set the CORRECT Content-Type (Essential for playback)
+    // 3. CRITICAL FIX: Send the ACTUAL mime type from YouTube
+    // This fixes the "No Sound" / Silence bug
     res.setHeader("Content-Type", format.mimeType || "audio/mp4");
     
-    // 5. Stream the FULL file (Start from 0 to keep headers intact)
-    // CRITICAL: We do NOT use 'begin' here. We stream the valid file and seek on client.
+    // 4. Stream the FULL file (Start from 0 to avoid corruption)
     const stream = ytdl.downloadFromInfo(info, {
       format: format,
-      highWaterMark: 1 << 25, // Large buffer for smooth playback
+      highWaterMark: 1 << 25, 
     });
 
     stream.on("error", (err) => {
