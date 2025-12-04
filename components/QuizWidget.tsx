@@ -75,9 +75,11 @@ export default function QuizWidget() {
           setUserPhoto(userInfo.photoUrl);
         }
         
-        // If user just signed in, scroll to quiz section
+    // If user just signed in, scroll to quiz section and re-fetch quiz
         if (event === 'SIGNED_IN') {
+          // Re-fetch quiz to check if score was saved
           setTimeout(() => {
+            fetchQuiz();
             const quizSection = document.getElementById('quiz-widget-section');
             if (quizSection) {
               quizSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -119,9 +121,12 @@ export default function QuizWidget() {
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
   };
 
- const fetchQuiz = async () => {
+const fetchQuiz = async () => {
     try {
-      const res = await fetch("/api/quiz/current");
+      const url = user?.id 
+        ? `/api/quiz/current?userId=${user.id}` 
+        : "/api/quiz/current";
+      const res = await fetch(url);
       const data = await res.json();
       if (data.ok) {
         setQuiz(data.quiz);
