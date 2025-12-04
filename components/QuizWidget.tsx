@@ -242,18 +242,30 @@ export default function QuizWidget() {
   };
 
   // --- UPDATED PLAY SNIPPET FUNCTION ---
+// ... inside QuizWidget ...
+
   const playSnippet = () => {
     if (!quiz) return;
     const duration = quiz.youtubeDuration || 10;
-    const startTime = quiz.youtubeStart || 0; // Grab the start time
+    const startTime = quiz.youtubeStart || 0; 
 
     setIsPlaying(true); 
     setProgress(0);
     const startTs = Date.now();
 
-    // 1. Try Audio Player (Proxy/MP3) first
+    // 1. Try Audio Player
     if (quiz.audioUrl && audioPlayerRef.current) {
-        audioPlayerRef.current.currentTime = startTime; // Seek to start
+        // CHECK: Is this our Proxy?
+        const isProxy = quiz.audioUrl.includes("/api/quiz/stream");
+        
+        // If it's a Proxy, the audio ALREADY starts at the right time. Don't seek.
+        // If it's a manual MP3 upload, we MUST seek.
+        if (!isProxy) {
+            audioPlayerRef.current.currentTime = startTime; 
+        } else {
+            audioPlayerRef.current.currentTime = 0; // Reset to start of the snippet
+        }
+        
         audioPlayerRef.current.play();
     } 
     // 2. Fallback to YouTube Player
@@ -262,6 +274,7 @@ export default function QuizWidget() {
         youtubePlayerRef.current.playVideo();
     }
 
+    // ... rest of the function
     // Start Timer
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
