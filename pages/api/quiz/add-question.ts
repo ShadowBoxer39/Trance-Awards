@@ -5,26 +5,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") return res.status(405).end();
 
   try {
-    const { userId, type, ...data } = req.body;
+    const { userId, adminKey, type, ...data } = req.body;
 
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    let contributorId = null;
+    let status = "pending";
 
-    // 1. Verify user is a contributor
-    const { data: contributor, error: contributorError } = await supabase
-      .from("quiz_contributors")
-      .select("id, is_active")
-      .eq("user_id", userId)
-      .single();
+    // Scenario 1: Admin submission (via Admin Panel)
+    if (adminKey === process.env.ADMIN_KEY) {
+      status = "approved"; // Admin submissions are auto-approved
+      // Optional: Set contributorId to a generic 'Admin' user if you have one, or keep null
+    } 
+    // Scenario 2: Contributor submission
+    else if (userId) {
+      // Verify user is a contributor
+      const { data: contributor, error: contributorError } = await supabase
+        .from("quiz_contributors")
+        .select("id, is_active")
+        .eq("user_id", userId)
+        .single();
 
-    if (contributorError || !contributor || !contributor.is_active) {
-      return res.status(403).json({ error: "not_contributor" });
+      if (contributorError || !contributor || !contributor.is_active) {
+        return res.status(403).json({ error: "not_contributor" });
+      }
+      contributorId = contributor.id;
+    } 
+    else {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // 2. Insert Question
+    // Insert Question
     const insertData: any = {
       type,
-      status: "pending", // Always pending for contributors
-      contributor_id: contributor.id,
+      status, 
+      contributor_id: contributorId,
       created_at: new Date().toISOString(),
     };
 
