@@ -6,12 +6,10 @@ export const obfuscateId = (text: string): string => {
     const chars = text.split('').map((c, i) => {
       return c.charCodeAt(0) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length);
     });
-    // Return as Base64 to make it look like a random string
     return typeof btoa !== 'undefined' 
       ? btoa(String.fromCharCode(...chars)) 
       : Buffer.from(String.fromCharCode(...chars)).toString('base64');
   } catch (e) {
-    console.error("Obfuscation error", e);
     return text;
   }
 };
@@ -28,7 +26,6 @@ export const deobfuscateId = (encoded: string): string => {
     });
     return chars.join('');
   } catch (e) {
-    console.error("Deobfuscation error", e);
     return "";
   }
 };
