@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 import Navigation from "../../components/Navigation";
@@ -10,6 +10,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Helper to extract ID from various YouTube URL formats
+const getYouTubeID = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
 export default function ContributePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -18,6 +25,7 @@ export default function ContributePage() {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "registering" | "idle" | "success" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   // Question Form State
   const [type, setType] = useState<"snippet" | "trivia">("snippet");
@@ -30,16 +38,28 @@ export default function ContributePage() {
   const [triviaAnswer, setTriviaAnswer] = useState("");
   const [triviaImage, setTriviaImage] = useState("");
 
+  // Preview Player State
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef<any>(null);
+  const [previewReady, setPreviewReady] = useState(false);
+
   useEffect(() => {
+    // Load YouTube API for preview
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+    
     checkUser();
     
-    // 1. Capture invite code from URL
+    // Capture invite code
     const queryCode = new URLSearchParams(window.location.search).get("code");
     if (queryCode) {
       setInviteCode(queryCode);
       localStorage.setItem("quiz_invite_code", queryCode);
     } else {
-      // 2. Try to recover from local storage (if returning from login)
       const storedCode = localStorage.getItem("quiz_invite_code");
       if (storedCode) setInviteCode(storedCode);
     }
@@ -59,7 +79,6 @@ export default function ContributePage() {
 
   const checkContributorStatus = async (userId: string) => {
     try {
-      // Check if already a contributor
       const { data, error } = await supabase
         .from("quiz_contributors")
         .select("id, is_active")
@@ -69,10 +88,8 @@ export default function ContributePage() {
       if (data && data.is_active) {
         setIsContributor(true);
         setStatus("idle");
-        // Clear stored code if we are already registered
         localStorage.removeItem("quiz_invite_code");
       } else {
-        // Not a contributor yet. Do we have a code to register?
         const code = new URLSearchParams(window.location.search).get("code") || localStorage.getItem("quiz_invite_code");
         if (code) {
           registerContributor(userId, code);
@@ -99,8 +116,8 @@ export default function ContributePage() {
       
       if (data.ok) {
         setIsContributor(true);
-        localStorage.removeItem("quiz_invite_code"); // Cleanup
-        alert("נרשמת בהצלחה כתורם!");
+        localStorage.removeItem("quiz_invite_code");
+        setSuccessMsg("ברוך הבא לצוות התורמים!");
       } else {
         setErrorMsg(data.error === "invalid_code" ? "קוד הזמנה לא תקין" : "שגיאה ברישום");
       }
@@ -111,9 +128,54 @@ export default function ContributePage() {
     }
   };
 
+  // --- PREVIEW LOGIC ---
+  const loadPreview = () => {
+    const videoId = getYouTubeID(youtubeUrl);
+    if (!videoId) return alert("קישור לא תקין");
+    
+    if (playerRef.current) {
+      playerRef.current.loadVideoById({
+        videoId: videoId,
+        startSeconds: startSeconds,
+        endSeconds: startSeconds + duration
+      });
+    } else {
+      playerRef.current = new window.YT.Player('preview-player', {
+        height: '200',
+        width: '100%',
+        videoId: videoId,
+        playerVars: {
+          start: startSeconds,
+          end: startSeconds + duration,
+          autoplay: 1,
+          controls: 1,
+        },
+        events: {
+          onStateChange: (e: any) => {
+            if (e.data === window.YT.PlayerState.ENDED) {
+               // Loop preview? or just stop
+            }
+          }
+        }
+      });
+    }
+    setPreviewReady(true);
+  };
+
   const submitQuestion = async () => {
     if (!user) return;
+    
+    // Basic Validation
+    if (type === "snippet") {
+      if (!getYouTubeID(youtubeUrl)) return alert("אנא הכנס קישור תקין ליוטיוב");
+      if (!artistAnswer.trim() || !trackAnswer.trim()) return alert("חובה למלא שם אמן וטראק");
+    } else {
+      if (!triviaQuestion.trim() || !triviaAnswer.trim()) return alert("חובה למלא שאלה ותשובה");
+    }
+
     setStatus("loading");
+    setErrorMsg("");
+    setSuccessMsg("");
     
     try {
       const body: any = { 
@@ -123,8 +185,8 @@ export default function ContributePage() {
 
       if (type === "snippet") {
         body.youtubeUrl = youtubeUrl;
-        body.youtubeStartSeconds = startSeconds;
-        body.youtubeDurationSeconds = duration;
+        body.youtubeStartSeconds = Number(startSeconds);
+        body.youtubeDurationSeconds = Number(duration);
         body.acceptedArtists = artistAnswer.split("\n").map(s => s.trim()).filter(Boolean);
         body.acceptedTracks = trackAnswer.split("\n").map(s => s.trim()).filter(Boolean);
       } else {
@@ -141,7 +203,7 @@ export default function ContributePage() {
 
       const data = await res.json();
       if (data.ok) {
-        alert("השאלה נשלחה בהצלחה וממתינה לאישור! תודה רבה 🎵");
+        setSuccessMsg("השאלה נשלחה בהצלחה וממתינה לאישור! תודה רבה 🎵");
         // Reset form
         setYoutubeUrl("");
         setArtistAnswer("");
@@ -149,11 +211,16 @@ export default function ContributePage() {
         setTriviaQuestion("");
         setTriviaAnswer("");
         setTriviaImage("");
+        setPreviewReady(false);
+        if (playerRef.current) {
+            playerRef.current.destroy();
+            playerRef.current = null;
+        }
       } else {
-        alert("שגיאה: " + data.error);
+        setErrorMsg("שגיאה: " + data.error);
       }
     } catch (e) {
-      alert("שגיאה בשליחה");
+      setErrorMsg("שגיאה בשליחה");
     } finally {
       setStatus("idle");
     }
@@ -172,6 +239,18 @@ export default function ContributePage() {
         </h1>
         <p className="text-gray-400 mb-8">עזרו לנו לאתגר את הקהילה עם שאלות חדשות!</p>
 
+        {/* Global Messages */}
+        {successMsg && (
+            <div className="bg-green-500/20 border border-green-500/50 p-4 rounded-xl mb-6 text-green-300 text-center animate-pulse">
+                {successMsg}
+            </div>
+        )}
+        {errorMsg && (
+            <div className="bg-red-500/20 border border-red-500/50 p-4 rounded-xl mb-6 text-red-300 text-center">
+                {errorMsg}
+            </div>
+        )}
+
         {!user ? (
           <div className="glass-card p-8 text-center border border-white/10 rounded-xl">
             <p className="mb-6 text-lg">יש להתחבר כדי להוסיף שאלות</p>
@@ -184,7 +263,7 @@ export default function ContributePage() {
           <div className="glass-card p-8 text-center border border-red-500/30 rounded-xl">
             <h3 className="text-xl font-bold text-red-400 mb-2">אין הרשאה</h3>
             <p className="text-gray-300 mb-4">
-              {errorMsg || "דף זה מיועד לתורמים רשומים בלבד."}
+              דף זה מיועד לתורמים רשומים בלבד.
             </p>
             <div className="bg-white/5 p-4 rounded-lg inline-block text-right">
               <p className="text-sm font-bold mb-2">יש לך קוד הזמנה?</p>
@@ -237,7 +316,7 @@ export default function ContributePage() {
                       type="url"
                       value={youtubeUrl}
                       onChange={(e) => setYoutubeUrl(e.target.value)}
-                      className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
+                      className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white focus:border-cyan-500 outline-none dir-ltr"
                       placeholder="https://www.youtube.com/watch?v=..."
                     />
                   </div>
@@ -263,6 +342,20 @@ export default function ContributePage() {
                     </div>
                   </div>
 
+                  {/* PREVIEW BUTTON */}
+                  <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                     <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold">בדיקת הקטע:</span>
+                        <button 
+                            onClick={loadPreview}
+                            className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-sm transition"
+                        >
+                            ▶️ נגן תצוגה מקדימה
+                        </button>
+                     </div>
+                     <div id="preview-player" className="rounded-lg overflow-hidden bg-black aspect-video"></div>
+                  </div>
+
                   <div>
                     <label className="block text-cyan-400 font-bold mb-2">שם האמן (תשובות מקובלות)</label>
                     <textarea
@@ -271,7 +364,7 @@ export default function ContributePage() {
                       className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white h-24"
                       placeholder="Infected Mushroom&#10;אינפקטד&#10;אינפקטד מאשרום"
                     />
-                    <p className="text-xs text-gray-500 mt-1">כל שורה היא תשובה שתתקבל כנכונה</p>
+                    <p className="text-xs text-gray-500 mt-1">כל שורה היא וריאציה שתתקבל כנכונה</p>
                   </div>
 
                   <div>
@@ -302,7 +395,7 @@ export default function ContributePage() {
                       type="url"
                       value={triviaImage}
                       onChange={(e) => setTriviaImage(e.target.value)}
-                      className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white"
+                      className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white dir-ltr"
                       placeholder="https://..."
                     />
                   </div>
@@ -315,7 +408,7 @@ export default function ContributePage() {
                       className="w-full bg-black/50 border border-white/20 rounded-lg p-3 text-white h-24"
                       placeholder="2000&#10;שנת 2000"
                     />
-                    <p className="text-xs text-gray-500 mt-1">כל שורה היא תשובה שתתקבל כנכונה</p>
+                    <p className="text-xs text-gray-500 mt-1">כל שורה היא וריאציה שתתקבל כנכונה</p>
                   </div>
                 </>
               )}
