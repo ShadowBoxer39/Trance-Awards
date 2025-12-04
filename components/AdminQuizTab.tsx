@@ -569,28 +569,40 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
                 className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
               />
              <div className="grid grid-cols-2 gap-4">
-  <div>
-    <label className="block text-sm text-white/60 mb-1">שנייה התחלה</label>
-    <input
-      type="number"
-      value={startSeconds}
-      onChange={(e) => setStartSeconds(Number(e.target.value))}
-      placeholder="0"
-      className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
-    />
-    <p className="text-xs text-cyan-400 mt-1">💡 1:45 = כתוב 105 (60+45)</p>
+<div className="bg-black/30 rounded-xl p-4 border border-cyan-500/20 mb-4">
+  <p className="text-cyan-400 font-medium mb-3">⏱️ בחירת קטע מהשיר</p>
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm text-white/60 mb-1">מתחיל בשנייה</label>
+      <input
+        type="number"
+        value={startSeconds}
+        onChange={(e) => setStartSeconds(Number(e.target.value))}
+        placeholder="0"
+        className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
+      />
+    </div>
+    <div>
+      <label className="block text-sm text-white/60 mb-1">משך הקטע (שניות)</label>
+      <input
+        type="number"
+        value={duration}
+        onChange={(e) => setDuration(Number(e.target.value))}
+        placeholder="10"
+        className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
+      />
+    </div>
   </div>
-  <div>
-    <label className="block text-sm text-white/60 mb-1">אורך הקטע (שניות)</label>
-    <input
-      type="number"
-      value={duration}
-      onChange={(e) => setDuration(Number(e.target.value))}
-      placeholder="10"
-      className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
-    />
-    <p className="text-xs text-cyan-400 mt-1">💡 מ-1:45 עד 1:52 = אורך 7</p>
+  <div className="mt-3 p-3 bg-cyan-500/10 rounded-lg text-sm">
+    <p className="text-cyan-300 font-medium">📍 הקטע שיתנגן:</p>
+    <p className="text-white mt-1">
+      מ-<span className="text-cyan-400 font-bold">{Math.floor(startSeconds / 60)}:{(startSeconds % 60).toString().padStart(2, '0')}</span>
+      {" "}עד{" "}
+      <span className="text-cyan-400 font-bold">{Math.floor((startSeconds + duration) / 60)}:{((startSeconds + duration) % 60).toString().padStart(2, '0')}</span>
+      {" "}({duration} שניות)
+    </p>
   </div>
+  <p className="text-xs text-white/40 mt-2">💡 טיפ: 1:45 = 105 שניות (60+45)</p>
 </div>
               <textarea
                 value={acceptedArtists}
