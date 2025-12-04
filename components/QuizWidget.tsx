@@ -129,6 +129,7 @@ export default function QuizWidget() {
 
   // 3. Leaderboard Fetch Effect (Run when finished)
   useEffect(() => {
+    // If the user has finished the quiz (correct answer or max attempts), fetch the leaderboard
     if (attempts?.hasCorrectAnswer || result?.isCorrect) {
       fetchLeaderboard();
     }
@@ -349,6 +350,14 @@ export default function QuizWidget() {
     }
   };
 
+  const shareWhatsApp = () => {
+    const text = result?.isCorrect
+      ? `🎵 ניחשתי נכון ב-${attempts?.used} ${attempts?.used === 1 ? "ניסיון" : "ניסיונות"}! הצטרפו לחידון יוצאים לטראק`
+      : `🎵 לא הצלחתי הפעם 😅 נסו אתם! חידון יוצאים לטראק`;
+    const url = "https://tracktrip.co.il";
+    window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, "_blank");
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -459,7 +468,7 @@ export default function QuizWidget() {
             </div>
           )}
 
-          {/* LEADERBOARD LIST */}
+          {/* LEADERBOARD LIST - Added Here */}
           <div className="text-right border-t border-white/10 pt-6">
             <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <span>🏆</span> טבלת המובילים
@@ -755,7 +764,7 @@ export default function QuizWidget() {
             <span className="text-purple-400"> שני</span> = 2 נקודות • 
             <span className="text-pink-400"> שלישי</span> = 1 נקודה
           </p>
-      </div>
+        </div>
       </div>
     </div>
   );
