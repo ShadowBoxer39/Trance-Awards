@@ -461,66 +461,112 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
         </div>
       )}
 
-      {/* CONTRIBUTORS TAB */}
+    {/* CONTRIBUTORS TAB */}
       {subTab === "contributors" && !loading && (
         <div className="space-y-4">
-          <div className="glass rounded-xl p-4 flex gap-3">
-            <input
-              type="text"
-              value={newInviteName}
-              onChange={(e) => setNewInviteName(e.target.value)}
-              placeholder="שם התורם החדש"
-              className="flex-1 bg-black/50 border border-white/20 rounded-lg px-3 py-2 text-white"
-            />
-            <button
-              onClick={createInvite}
-              className="px-4 py-2 bg-cyan-500 text-white rounded-lg font-medium"
-            >
-              צור הזמנה
-            </button>
+          {/* Explanation box */}
+          <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 text-sm">
+            <p className="text-cyan-300 font-medium mb-2">👥 איך להזמין תורמים?</p>
+            <ol className="text-white/70 space-y-1 list-decimal list-inside">
+              <li>הכנס שם לתורם החדש למטה</li>
+              <li>לחץ "צור הזמנה" - יופיע לינק</li>
+              <li>שלח את הלינק לתורם בוואטסאפ/מייל</li>
+              <li>התורם נכנס ללינק ומתחבר עם Google</li>
+              <li>התורם יכול להוסיף שאלות (ממתינות לאישורך)</li>
+            </ol>
           </div>
 
+          {/* Create invite form */}
+          <div className="glass rounded-xl p-4">
+            <p className="font-medium mb-3">➕ יצירת הזמנה חדשה</p>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={newInviteName}
+                onChange={(e) => setNewInviteName(e.target.value)}
+                placeholder="שם התורם (למשל: יוסי כהן)"
+                className="flex-1 bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white"
+              />
+              <button
+                onClick={createInvite}
+                disabled={!newInviteName.trim()}
+                className="px-6 py-3 bg-cyan-500 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-600 transition"
+              >
+                צור הזמנה
+              </button>
+            </div>
+            <p className="text-xs text-white/40 mt-2">💡 אחרי הלחיצה יופיע לינק להעתקה</p>
+          </div>
+
+          {/* Contributors list */}
+          <h3 className="text-lg font-semibold border-b border-white/10 pb-2">רשימת תורמים ({contributors.length})</h3>
+          
           {contributors.length === 0 ? (
-            <div className="text-center py-8 text-white/50">אין תורמים</div>
+            <div className="text-center py-8 text-white/50">
+              <span className="text-4xl block mb-3">👥</span>
+              <p>אין תורמים עדיין</p>
+              <p className="text-sm mt-1">צור הזמנה למעלה כדי להוסיף תורם</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {contributors.map(c => (
-                <div key={c.id} className="glass rounded-xl p-4 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    {c.photo_url ? (
-                      <img src={c.photo_url} alt={c.name} className="w-10 h-10 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">👤</div>
-                    )}
-                    <div>
-                      <p className="font-medium">{c.name}</p>
-                      <p className="text-xs text-white/40">
-                        {c.user_id ? "רשום" : "ממתין לרישום"} • קוד: {c.invite_code}
-                      </p>
+                <div key={c.id} className={`glass rounded-xl p-4 ${!c.is_active ? 'opacity-50' : ''}`}>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      {c.photo_url ? (
+                        <img src={c.photo_url} alt={c.name} className="w-12 h-12 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-purple-500/30 flex items-center justify-center text-xl">👤</div>
+                      )}
+                      <div>
+                        <p className="font-medium text-lg">{c.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {c.user_id ? (
+                            <span className="px-2 py-0.5 rounded text-xs bg-green-500/20 text-green-400">✓ רשום ופעיל</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-xs bg-yellow-500/20 text-yellow-400">⏳ ממתין לרישום</span>
+                          )}
+                          {!c.is_active && (
+                            <span className="px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-400">מושבת</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {c.is_active ? (
+                    <div className="flex flex-col gap-2 items-end">
                       <button
-                        onClick={() => manageContributor(c.id, "deactivate")}
-                        className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm"
+                        onClick={() => {
+                          const link = `${window.location.origin}/quiz/contribute?code=${c.invite_code}`;
+                          navigator.clipboard.writeText(link);
+                          alert('הלינק הועתק!\n\n' + link);
+                        }}
+                        className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-lg text-sm hover:bg-cyan-500/30"
                       >
-                        השבת
+                        📋 העתק לינק
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => manageContributor(c.id, "activate")}
-                        className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm"
-                      >
-                        הפעל
-                      </button>
-                    )}
-                    <button
-                      onClick={() => manageContributor(c.id, "delete")}
-                      className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm"
-                    >
-                      🗑️
-                    </button>
+                      <div className="flex gap-2">
+                        {c.is_active ? (
+                          <button
+                            onClick={() => manageContributor(c.id, "deactivate")}
+                            className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm hover:bg-yellow-500/30"
+                          >
+                            השבת
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => manageContributor(c.id, "activate")}
+                            className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm hover:bg-green-500/30"
+                          >
+                            הפעל
+                          </button>
+                        )}
+                        <button
+                          onClick={() => manageContributor(c.id, "delete")}
+                          className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
