@@ -60,29 +60,11 @@ export default function QuizWidget() {
   const playerRef = useRef<YT.Player | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
- useEffect(() => {
+  // 1. Main Initialization Effect
+  useEffect(() => {
     checkUser();
     fetchQuiz();
     loadYouTubeAPI();
-
-   // Re-fetch quiz when user changes to check if score was saved
-// Re-fetch quiz when user changes to check if score was saved
-  useEffect(() => {
-    if (user && quiz && !scoreSaved) {
-      const checkScoreSaved = async () => {
-        try {
-          const res = await fetch(`/api/quiz/current?userId=${user.id}`);
-          const data = await res.json();
-          if (data.ok && data.scoreSaved) {
-            setScoreSaved(true);
-          }
-        } catch (error) {
-          console.error("Failed to check score:", error);
-        }
-      };
-      checkScoreSaved();
-    }
-  }, [user?.id, quiz]);
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
@@ -94,7 +76,7 @@ export default function QuizWidget() {
           setUserPhoto(userInfo.photoUrl);
         }
         
-    // If user just signed in, scroll to quiz section and re-fetch quiz
+        // If user just signed in, scroll to quiz section and re-fetch quiz
         if (event === 'SIGNED_IN') {
           // Re-fetch quiz to check if score was saved
           setTimeout(() => {
@@ -116,6 +98,24 @@ export default function QuizWidget() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  // 2. Score Check Effect (Moved OUT of the effect above)
+  useEffect(() => {
+    if (user && quiz && !scoreSaved) {
+      const checkScoreSaved = async () => {
+        try {
+          const res = await fetch(`/api/quiz/current?userId=${user.id}`);
+          const data = await res.json();
+          if (data.ok && data.scoreSaved) {
+            setScoreSaved(true);
+          }
+        } catch (error) {
+          console.error("Failed to check score:", error);
+        }
+      };
+      checkScoreSaved();
+    }
+  }, [user, quiz, scoreSaved]); // Dependencies: run when user, quiz or score status changes
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -140,7 +140,7 @@ export default function QuizWidget() {
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
   };
 
-const fetchQuiz = async () => {
+  const fetchQuiz = async () => {
     try {
       const url = user?.id 
         ? `/api/quiz/current?userId=${user.id}` 
@@ -335,7 +335,7 @@ const fetchQuiz = async () => {
     );
   }
 
-// No quiz today
+  // No quiz today
   if (!quiz) {
     return (
       <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-white/10">
@@ -372,7 +372,7 @@ const fetchQuiz = async () => {
     );
   }
 
- // Already answered correctly
+  // Already answered correctly
   if (attempts?.hasCorrectAnswer || result?.isCorrect) {
     return (
       <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-green-500/30 bg-gradient-to-b from-green-500/5 to-transparent">
@@ -434,7 +434,7 @@ const fetchQuiz = async () => {
     );
   }
 
- // Out of attempts
+  // Out of attempts
   if (attempts && attempts.remaining === 0) {
     return (
       <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-red-500/30 bg-gradient-to-b from-red-500/5 to-transparent">
@@ -460,8 +460,7 @@ const fetchQuiz = async () => {
     );
   }
 
- 
- // Active quiz - ready to answer
+  // Active quiz - ready to answer
   return (
     <div id="quiz-widget-section" className="glass-card rounded-xl overflow-hidden border-2 border-cyan-500/30">
       {/* Header */}
@@ -666,7 +665,7 @@ const fetchQuiz = async () => {
             <span className="text-purple-400"> שני</span> = 2 נקודות • 
             <span className="text-pink-400"> שלישי</span> = 1 נקודה
           </p>
-      </div>
+        </div>
       </div>
     </div>
   );
