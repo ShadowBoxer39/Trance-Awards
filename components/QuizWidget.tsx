@@ -74,6 +74,33 @@ export default function QuizWidget() {
 
   // 1. Main Initialization
   useEffect(() => {
+    // --- NEW: Explicitly handle OAuth Callback ---
+    const handleOAuthCallback = async () => {
+      const url = window.location.href;
+      // Check for both hash (implicit flow) and query params (PKCE flow)
+      const hasHash = window.location.hash && window.location.hash.includes('access_token');
+      const hasCode = window.location.search && window.location.search.includes('code=');
+
+      if (hasHash || hasCode) {
+        console.log("🔐 Processing OAuth callback...");
+        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+        
+        if (error) {
+          console.error("OAuth error:", error);
+        } else if (data.session) {
+          console.log("✅ Session established from callback");
+          // Clean the URL to remove ugly tokens
+          window.history.replaceState({}, document.title, window.location.pathname);
+          // Force a user check immediately
+          checkUser();
+        }
+      }
+    };
+
+    // Run callback check first
+    handleOAuthCallback();
+    
+    // Then standard checks
     checkUser();
     fetchQuiz();
     loadYouTubeAPI();
@@ -129,7 +156,6 @@ export default function QuizWidget() {
 
   // 3. Leaderboard Fetch Effect (Run when finished)
   useEffect(() => {
-    // If the user has finished the quiz (correct answer or max attempts), fetch the leaderboard
     if (attempts?.hasCorrectAnswer || result?.isCorrect) {
       fetchLeaderboard();
     }
@@ -138,7 +164,6 @@ export default function QuizWidget() {
   const fetchLeaderboard = async () => {
     setLoadingLeaderboard(true);
     try {
-      // Fetch top 10 users
       const res = await fetch("/api/quiz/leaderboard?limit=10");
       const data = await res.json();
       if (data.ok) {
@@ -340,7 +365,6 @@ export default function QuizWidget() {
       const data = await res.json();
       if (data.ok) {
         setScoreSaved(true);
-        // Refresh leaderboard to show new score immediately
         fetchLeaderboard();
       } else if (data.error === "score_already_saved") {
         setScoreSaved(true);
@@ -407,7 +431,7 @@ export default function QuizWidget() {
     );
   }
 
-  // SUCCESS / ALREADY ANSWERED STATE
+  // Success / Already Answered State
   if (attempts?.hasCorrectAnswer || result?.isCorrect) {
     return (
       <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-green-500/30 bg-gradient-to-b from-green-500/5 to-transparent">
@@ -468,7 +492,7 @@ export default function QuizWidget() {
             </div>
           )}
 
-          {/* LEADERBOARD LIST - Added Here */}
+          {/* LEADERBOARD LIST */}
           <div className="text-right border-t border-white/10 pt-6">
             <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <span>🏆</span> טבלת המובילים
