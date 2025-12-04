@@ -361,58 +361,102 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
         </div>
       )}
 
-      {/* SCHEDULE TAB */}
+     {/* SCHEDULE TAB */}
       {subTab === "schedule" && !loading && (
         <div className="space-y-4">
+          {/* Explanation box */}
+          <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 text-sm">
+            <p className="text-purple-300 font-medium mb-2">📅 איך זה עובד?</p>
+            <ul className="text-white/70 space-y-1">
+              <li>• <span className="text-cyan-400">יום שני</span> = חידון Snippet (נחשו את הטראק)</li>
+              <li>• <span className="text-purple-400">יום חמישי</span> = חידון Trivia (שאלת טריוויה)</li>
+              <li>• לחץ "מלא אוטומטית" כדי לתזמן שאלות לשבועיים הקרובים</li>
+              <li>• לחץ "הפעל חידון היום" כדי להפעיל את החידון של היום</li>
+            </ul>
+          </div>
+
           <div className="flex gap-3 mb-4">
             <button
               onClick={activateToday}
-              className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm hover:bg-green-500/30"
+              className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm hover:bg-green-500/30 flex items-center gap-2"
             >
               ▶️ הפעל חידון היום
             </button>
             <button
               onClick={autoFillSchedule}
-              className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg text-sm hover:bg-cyan-500/30"
+              className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg text-sm hover:bg-cyan-500/30 flex items-center gap-2"
             >
-              🔄 מלא אוטומטית
+              🔄 מלא אוטומטית (שבועיים)
             </button>
           </div>
 
-          <h3 className="text-lg font-semibold">לו״ז קרוב</h3>
+          <h3 className="text-lg font-semibold border-b border-white/10 pb-2">📆 לו״ז קרוב</h3>
           {schedule.length === 0 ? (
-            <div className="text-center py-4 text-white/50">אין חידונים מתוזמנים</div>
+            <div className="text-center py-4 text-white/50">
+              <p>אין חידונים מתוזמנים</p>
+              <p className="text-sm mt-2">לחץ "מלא אוטומטית" כדי לתזמן</p>
+            </div>
           ) : (
             <div className="space-y-2">
-              {schedule.map(s => (
-                <div key={s.id} className={`glass rounded-xl p-4 flex justify-between items-center ${s.is_active ? "border-2 border-green-500/50" : ""}`}>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{s.scheduled_for}</span>
-                      <span className={`px-2 py-0.5 rounded text-xs ${
+              {schedule.map(s => {
+                const dateObj = new Date(s.scheduled_for);
+                const dayName = dateObj.toLocaleDateString('he-IL', { weekday: 'long' });
+                const dateStr = dateObj.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
+                
+                return (
+                  <div key={s.id} className={`glass rounded-xl p-4 ${s.is_active ? "border-2 border-green-500/50 bg-green-500/5" : ""}`}>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${
+                          s.type === "snippet" ? "bg-cyan-500/20" : "bg-purple-500/20"
+                        }`}>
+                          {s.type === "snippet" ? "🎵" : "🧠"}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{dayName}</span>
+                            <span className="text-white/50 text-sm">{dateStr}</span>
+                            {s.is_active && (
+                              <span className="px-2 py-0.5 rounded text-xs bg-green-500/20 text-green-400 animate-pulse">
+                                🟢 פעיל עכשיו
+                              </span>
+                            )}
+                          </div>
+                          {s.question ? (
+                            <p className="text-sm text-white/60 mt-1">
+                              {s.question.type === "snippet"
+                                ? `${s.question.accepted_artists?.[0]} - ${s.question.accepted_tracks?.[0]}`
+                                : s.question.question_text?.substring(0, 40) + "..."}
+                            </p>
+                          ) : (
+                            <p className="text-sm text-red-400 mt-1">⚠️ אין שאלה מקושרת</p>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-lg text-xs font-medium ${
                         s.type === "snippet" ? "bg-cyan-500/20 text-cyan-400" : "bg-purple-500/20 text-purple-400"
                       }`}>
-                        {s.type === "snippet" ? "🎵" : "🧠"}
+                        {s.type === "snippet" ? "Snippet" : "Trivia"}
                       </span>
-                      {s.is_active && <span className="px-2 py-0.5 rounded text-xs bg-green-500/20 text-green-400">פעיל</span>}
                     </div>
-                    {s.question && (
-                      <p className="text-sm text-white/60 mt-1">
-                        {s.question.type === "snippet"
-                          ? `${s.question.accepted_artists?.[0]} - ${s.question.accepted_tracks?.[0]}`
-                          : s.question.question_text?.substring(0, 50) + "..."}
-                      </p>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
-          <h3 className="text-lg font-semibold mt-6">שאלות זמינות ({availableQuestions.length})</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="text-cyan-400">Snippets: {availableQuestions.filter(q => q.type === "snippet").length}</div>
-            <div className="text-purple-400">Trivia: {availableQuestions.filter(q => q.type === "trivia").length}</div>
+          <h3 className="text-lg font-semibold border-b border-white/10 pb-2 mt-6">📦 שאלות זמינות לתזמון</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="glass rounded-xl p-4 text-center">
+              <span className="text-3xl">🎵</span>
+              <p className="text-2xl font-bold text-cyan-400 mt-2">{availableQuestions.filter(q => q.type === "snippet").length}</p>
+              <p className="text-sm text-white/60">שאלות Snippet</p>
+            </div>
+            <div className="glass rounded-xl p-4 text-center">
+              <span className="text-3xl">🧠</span>
+              <p className="text-2xl font-bold text-purple-400 mt-2">{availableQuestions.filter(q => q.type === "trivia").length}</p>
+              <p className="text-sm text-white/60">שאלות Trivia</p>
+            </div>
           </div>
         </div>
       )}
