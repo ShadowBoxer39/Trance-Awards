@@ -65,66 +65,68 @@ export default function QuizWidget() {
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [isProcessingAuth, setIsProcessingAuth] = useState(false); // New state for auth loading
 
   // Audio player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const playerRef = useRef<YT.Player | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const authProcessed = useRef(false); // Ref to prevent double auth processing
 
-  // 1. Main Initialization
+  // 1. Main Initialization & Auth Handling
   useEffect(() => {
-    // --- NEW: Explicitly handle OAuth Callback ---
-    const handleOAuthCallback = async () => {
-      const url = window.location.href;
-      // Check for both hash (implicit flow) and query params (PKCE flow)
-      const hasHash = window.location.hash && window.location.hash.includes('access_token');
-      const hasCode = window.location.search && window.location.search.includes('code=');
-
-      if (hasHash || hasCode) {
-        console.log("🔐 Processing OAuth callback...");
-        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
-        
-        if (error) {
-          console.error("OAuth error:", error);
-        } else if (data.session) {
-          console.log("✅ Session established from callback");
-          // Clean the URL to remove ugly tokens
-          window.history.replaceState({}, document.title, window.location.pathname);
-          // Force a user check immediately
-          checkUser();
-        }
-      }
-    };
-
-    // Run callback check first
-    handleOAuthCallback();
-    
-    // Then standard checks
-    checkUser();
-    fetchQuiz();
+    // Initialize YouTube API
     loadYouTubeAPI();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const { getGoogleUserInfo } = await import("../lib/googleAuthHelpers");
-        const userInfo = getGoogleUserInfo(session.user);
-        if (userInfo) {
-          setUserName(userInfo.name);
-          setUserPhoto(userInfo.photoUrl);
-        }
+    const initAuth = async () => {
+      // Check URL for OAuth codes
+      const url = window.location.href;
+      const hasCode = window.location.search && window.location.search.includes('code=');
+      const hasHash = window.location.hash && window.location.hash.includes('access_token');
+
+      if ((hasCode || hasHash) && !authProcessed.current) {
+        setIsProcessingAuth(true);
+        authProcessed.current = true; // Mark as processed immediately
+        console.log("🔐 Processing OAuth callback...");
         
-        if (event === 'SIGNED_IN') {
-          setTimeout(() => {
-            fetchQuiz();
-            const quizSection = document.getElementById('quiz-widget-section');
-            if (quizSection) {
-              quizSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }, 500);
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+          if (error) throw error;
+          
+          if (data.session) {
+            console.log("✅ Session established");
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            await updateUserState(data.session.user);
+          }
+        } catch (e) {
+          console.error("OAuth error:", e);
+        } finally {
+          setIsProcessingAuth(false);
         }
       } else {
+        // Normal load - check existing session
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user) {
+          await updateUserState(data.session.user);
+        }
+      }
+      
+      // Fetch quiz data regardless of auth state
+      fetchQuiz();
+    };
+
+    initAuth();
+
+    // Listen for auth changes (Sign In / Sign Out)
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        await updateUserState(session.user);
+        // Refresh quiz to check for saved score
+        setTimeout(fetchQuiz, 500);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
         setUserName("");
         setUserPhoto(null);
       }
@@ -136,7 +138,18 @@ export default function QuizWidget() {
     };
   }, []);
 
-  // 2. Score Check Effect
+  // Helper to update user state from Supabase user object
+  const updateUserState = async (currentUser: any) => {
+    setUser(currentUser);
+    const { getGoogleUserInfo } = await import("../lib/googleAuthHelpers");
+    const userInfo = getGoogleUserInfo(currentUser);
+    if (userInfo) {
+      setUserName(userInfo.name);
+      setUserPhoto(userInfo.photoUrl);
+    }
+  };
+
+  // 2. Score Check Effect - Dependent on user & quiz
   useEffect(() => {
     if (user && quiz && !scoreSaved) {
       const checkScoreSaved = async () => {
@@ -152,9 +165,9 @@ export default function QuizWidget() {
       };
       checkScoreSaved();
     }
-  }, [user, quiz, scoreSaved]);
+  }, [user?.id, quiz?.id, scoreSaved]);
 
-  // 3. Leaderboard Fetch Effect (Run when finished)
+  // 3. Leaderboard Fetch Effect
   useEffect(() => {
     if (attempts?.hasCorrectAnswer || result?.isCorrect) {
       fetchLeaderboard();
@@ -176,21 +189,6 @@ export default function QuizWidget() {
     }
   };
 
-  const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user ?? null;
-    setUser(user);
-
-    if (user) {
-      const { getGoogleUserInfo } = await import("../lib/googleAuthHelpers");
-      const userInfo = getGoogleUserInfo(user);
-      if (userInfo) {
-        setUserName(userInfo.name);
-        setUserPhoto(userInfo.photoUrl);
-      }
-    }
-  };
-
   const loadYouTubeAPI = () => {
     if (window.YT) return;
     const tag = document.createElement("script");
@@ -201,9 +199,14 @@ export default function QuizWidget() {
 
   const fetchQuiz = async () => {
     try {
-      const url = user?.id 
-        ? `/api/quiz/current?userId=${user.id}` 
+      // We use supabase.auth.getSession() directly here to ensure we have the latest user ID
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData.session?.user?.id;
+
+      const url = currentUserId 
+        ? `/api/quiz/current?userId=${currentUserId}` 
         : "/api/quiz/current";
+        
       const res = await fetch(url);
       const data = await res.json();
       if (data.ok) {
@@ -374,14 +377,6 @@ export default function QuizWidget() {
     }
   };
 
-  const shareWhatsApp = () => {
-    const text = result?.isCorrect
-      ? `🎵 ניחשתי נכון ב-${attempts?.used} ${attempts?.used === 1 ? "ניסיון" : "ניסיונות"}! הצטרפו לחידון יוצאים לטראק`
-      : `🎵 לא הצלחתי הפעם 😅 נסו אתם! חידון יוצאים לטראק`;
-    const url = "https://tracktrip.co.il";
-    window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, "_blank");
-  };
-
   // Loading state
   if (loading) {
     return (
@@ -431,7 +426,7 @@ export default function QuizWidget() {
     );
   }
 
-  // Success / Already Answered State
+  // SUCCESS / ALREADY ANSWERED STATE
   if (attempts?.hasCorrectAnswer || result?.isCorrect) {
     return (
       <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-green-500/30 bg-gradient-to-b from-green-500/5 to-transparent">
@@ -470,7 +465,12 @@ export default function QuizWidget() {
                 התחבר כדי להופיע בטבלת המובילים ולהתחרות עם חברים!
               </p>
               
-              {user ? (
+              {isProcessingAuth ? (
+                 <div className="w-full py-3 px-6 bg-white/5 rounded-lg text-white flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>מתחבר...</span>
+                 </div>
+              ) : user ? (
                 <button
                   onClick={saveScore}
                   className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-purple-500/25"
