@@ -568,7 +568,7 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
                 placeholder="קישור YouTube"
                 className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white"
               />
-             <div className="grid grid-cols-2 gap-4">
+       
 <div className="bg-black/30 rounded-xl p-4 border border-cyan-500/20 mb-4">
   <p className="text-cyan-400 font-medium mb-3">⏱️ בחירת קטע מהשיר</p>
   <div className="grid grid-cols-2 gap-4">
