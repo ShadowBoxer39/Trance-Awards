@@ -1267,7 +1267,7 @@ export async function getServerSideProps() {
     setHeader: () => mockRes,
   } as any;
   
-  // Initialize with safe defaults
+  // Initialize all props with safe defaults
   let episodes: Episode[] = [];
   let episodesError: string | null = null;
   let trackOfWeek: TrackOfWeek | null = null;
@@ -1276,7 +1276,7 @@ export async function getServerSideProps() {
   let artists: Artist[] = [];
   let legends: Legend[] = [];
 
-  // 1. Fetch episodes
+  // 1. Fetch episodes (API Handler)
   try {
     await episodeApiHandler(mockReq, mockRes);
     episodes = episodesData && Array.isArray(episodesData) ? episodesData : [];
@@ -1285,12 +1285,12 @@ export async function getServerSideProps() {
     episodesError = "שגיאה בטעינת הפרקים.";
   }
 
-  // Helper to get Supabase safely
+  // Helper to get Supabase client safely
   const getSupabase = () => {
     try {
       return require('../lib/supabaseServer').default;
     } catch (e) {
-      console.error("Supabase import failed:", e);
+      console.error("Supabase client import failed:", e);
       return null;
     }
   };
@@ -1307,6 +1307,7 @@ export async function getServerSideProps() {
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
+
       if (data) trackOfWeek = data;
     } catch (e) { /* Ignore error on empty DB */ }
 
@@ -1318,6 +1319,7 @@ export async function getServerSideProps() {
         .order('featured_at', { ascending: false })
         .limit(1)
         .single();
+
       if (currentArtist) featuredArtist = currentArtist;
 
       const { data: prevArtists } = await supabase
@@ -1325,6 +1327,7 @@ export async function getServerSideProps() {
         .select('*')
         .order('featured_at', { ascending: false })
         .range(1, 10);
+
       if (prevArtists) previousArtists = prevArtists;
     } catch (e) { /* Ignore error */ }
 
@@ -1336,6 +1339,7 @@ export async function getServerSideProps() {
         .eq('is_published', true)
         .order('stage_name', { ascending: true })
         .limit(12);
+
       if (artistsData) artists = artistsData;
     } catch (e) { /* Ignore error */ }
 
@@ -1348,24 +1352,34 @@ export async function getServerSideProps() {
         .limit(12);
 
       if (legendsRaw) {
-        const episodeIds = legendsRaw.map((l: any) => l.episode_id).filter((id: any) => typeof id === 'number');
-        let episodesById = new Map();
+        // Map episode IDs
+        const episodeIds = legendsRaw
+          .map((l: any) => l.episode_id)
+          .filter((id: any): id is number => typeof id === 'number');
+
+        let episodesById = new Map<number, string | null>();
 
         if (episodeIds.length > 0) {
-          const { data: eps } = await supabase.from('episodes').select('id, youtube_video_id').in('id', episodeIds);
-          if (eps) episodesById = new Map(eps.map((e: any) => [e.id, e.youtube_video_id]));
+          const { data: episodesData } = await supabase
+            .from('episodes')
+            .select('id, youtube_video_id')
+            .in('id', episodeIds);
+
+          if (episodesData) {
+            episodesById = new Map(episodesData.map((ep: any) => [ep.id, ep.youtube_video_id]));
+          }
         }
 
-        legends = legendsRaw.map((l: any) => ({
-          ...l,
-          youtube_video_id: l.episode_id ? episodesById.get(l.episode_id) : null,
+        legends = legendsRaw.map((legend: any) => ({
+          ...legend,
+          youtube_video_id: legend.episode_id ? episodesById.get(legend.episode_id) : null,
         }));
       }
-    } catch (e) { /* Ignore error */ }
+    } catch (e) { console.error("Legends fetch error", e); }
   }
 
   // --- CRITICAL FIX: Serialize Data ---
-  // This prevents the "Server Error" caused by undefined values or dates in the empty database
+  // This cleans the data of any 'undefined' values that cause the page to crash
   return {
     props: {
       episodes: JSON.parse(JSON.stringify(episodes)),
