@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import supabase from "../../../lib/supabaseServer";
-import { obfuscateId } from "../../../lib/security"; // <--- 1. Import Security Helper
+import { obfuscateId } from "../../../lib/security";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -10,9 +10,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
     const dayOfWeek = new Date().toLocaleDateString("en-US", { timeZone: "Asia/Jerusalem", weekday: "long" });
+    
+    // Get user ID from query if provided
     const userId = req.query.userId as string | undefined;
 
-    // Fetch the latest active quiz
+    // 1. Get active scheduled quiz for today
+    // We added 'audio_url' to this query
     const { data: schedule, error: scheduleError } = await supabase
       .from("quiz_schedule")
       .select(`
@@ -30,13 +33,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           youtube_start_seconds,
           youtube_duration_seconds,
           audio_url,
-          accepted_artists, 
-          accepted_tracks,
-          accepted_answers,
-          contributor:quiz_contributors(name, photo_url)
+          contributor:quiz_contributors(
+            name,
+            photo_url
+          )
         )
-      `) // <--- 2. Added audio_url above
-      .lte("scheduled_for", today)
+      `)
+      .lte("scheduled_for", today)     // Match logic: Active and <= Today
       .eq("is_active", true)
       .order("scheduled_for", { ascending: false })
       .limit(1)
@@ -46,12 +49,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({
         ok: true,
         quiz: null,
-        message: "no_active_quiz",
-        nextQuizDay: ["Monday", "Thursday"].includes(dayOfWeek) ? null : "Soon"
+        message: "no_quiz_today",
+        nextQuizDay: dayOfWeek === "Monday" || dayOfWeek === "Thursday" ? null : 
+                     ["Friday", "Saturday", "Sunday"].includes(dayOfWeek) ? "Monday" : "Thursday"
       });
     }
 
-    // Get previous answer if revealed
+    // 2. Get previous quiz answer if revealed
     let previousAnswer = null;
     if (schedule.previous_answer_revealed) {
       const { data: prevSchedule } = await supabase
@@ -84,8 +88,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Get attempts by IP
-    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+    // 3. Get attempts for this IP
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() 
+               || req.socket.remoteAddress 
+               || "unknown";
+
     const questionId = (schedule.question as any).id;
 
     const { data: attempts } = await supabase
@@ -98,7 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const attemptsUsed = attempts?.length || 0;
     const hasCorrectAnswer = attempts?.some(a => a.is_correct) || false;
 
-    // Check if score is saved based ONLY on User ID
+    // 4. Check if user already saved score (User ID check)
     let scoreSaved = false;
     if (userId) {
       const { data: existingScore } = await supabase
@@ -111,11 +118,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       scoreSaved = !!existingScore;
     }
 
-   // ... inside the handler ...
-
-    // --- 3. LOGIC: Generate Audio Proxy URL ---
+    // 5. SECURE AUDIO LOGIC
+    // Determine the final Audio URL (Direct MP3 or Secure Proxy)
     const rawUrl = (schedule.question as any).youtube_url;
-    let finalAudioUrl = (schedule.question as any).audio_url; 
+    let finalAudioUrl = (schedule.question as any).audio_url;
 
     if (!finalAudioUrl && rawUrl) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -124,24 +130,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         if (videoId) {
             const encryptedVideoId = obfuscateId(videoId);
-            const startSec = (schedule.question as any).youtube_start_seconds || 0;
-            
-            // Pass the start time to the proxy!
-            finalAudioUrl = `/api/quiz/stream?id=${encodeURIComponent(encryptedVideoId)}&start=${startSec}`;
+            // We do NOT add &start= here anymore, because the server streams the full file.
+            finalAudioUrl = `/api/quiz/stream?id=${encodeURIComponent(encryptedVideoId)}`;
         }
     }
-    
-    // ... rest of the file
 
     return res.status(200).json({
       ok: true,
       quiz: {
         id: questionId,
-        type: (schedule.question as any).type,
+        type: (schedule.question as any).type, // Use real question type
         questionText: (schedule.question as any).question_text,
         imageUrl: (schedule.question as any).image_url,
         
-        // --- 4. Send ONLY audioUrl (Proxy or MP3), never the raw YouTube URL ---
+        // Only send the secure audioUrl. 
+        // We DO NOT send youtubeUrl anymore to prevent iframe leaks.
         audioUrl: finalAudioUrl,
         
         youtubeStart: (schedule.question as any).youtube_start_seconds,
