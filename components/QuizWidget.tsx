@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 interface QuizData {
-  id: number;
+  id: number; 
   type: "snippet" | "trivia";
   questionText: string | null;
   imageUrl: string | null;
