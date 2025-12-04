@@ -4,7 +4,7 @@ import GoogleLoginButton from "./GoogleLoginButton";
 import { deobfuscateId } from "../lib/security"; // Ensure this import exists!
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
