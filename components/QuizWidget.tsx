@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import GoogleLoginButton from "./GoogleLoginButton";
-import { deobfuscateId } from "../lib/security"; // Ensure this import exists!
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
@@ -14,7 +13,6 @@ interface QuizData {
   questionText: string | null;
   imageUrl: string | null;
   youtubeUrl: string | null;
-  encryptedVideoId: string | null; // <--- Encrypted ID from API
   youtubeStart: number | null;
   youtubeDuration: number | null;
   audioUrl: string | null;
@@ -70,8 +68,8 @@ export default function QuizWidget() {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [useAudioPlayer, setUseAudioPlayer] = useState(false); // New state to control fallback
   
-  // Refs
   const youtubePlayerRef = useRef<YT.Player | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -151,6 +149,10 @@ export default function QuizWidget() {
         setPreviousAnswer(data.previousAnswer);
         setNextQuizDay(data.nextQuizDay);
         if (data.scoreSaved) setScoreSaved(true);
+        
+        // Decide whether to use Audio Player or YouTube
+        // We default to Audio Player if audioUrl is present.
+        setUseAudioPlayer(!!data.quiz.audioUrl);
       }
     } catch (error) { console.error("Failed to fetch quiz:", error); } 
     finally { setLoading(false); }
@@ -159,31 +161,12 @@ export default function QuizWidget() {
   // --- PLAYER LOGIC ---
 
   const initYouTubePlayer = () => {
-    if (quiz?.audioUrl || youtubePlayerRef.current) return;
-    
-    // Decrypt the ID here!
-    let videoId = null;
-    if (quiz?.encryptedVideoId) {
-        videoId = deobfuscateId(quiz.encryptedVideoId);
-    } else if (quiz?.youtubeUrl) {
-        // Fallback for old questions not using encryption
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-        const match = quiz.youtubeUrl.match(regExp);
-        videoId = (match && match[2].length === 11) ? match[2] : null;
-    }
-
+    if (!quiz?.youtubeUrl || youtubePlayerRef.current) return;
+    const videoId = extractVideoId(quiz.youtubeUrl);
     if (!videoId) return;
-
     youtubePlayerRef.current = new window.YT.Player("quiz-player", {
       height: "0", width: "0", videoId,
-      playerVars: { 
-        start: quiz.youtubeStart || 0, 
-        autoplay: 0, 
-        controls: 0, 
-        disablekb: 1, 
-        fs: 0, 
-        modestbranding: 1 
-      },
+      playerVars: { start: quiz.youtubeStart || 0, autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1 },
       events: {
         onReady: () => console.log("Player ready"),
         onStateChange: (event: YT.OnStateChangeEvent) => { if (event.data === window.YT.PlayerState.ENDED) stopPlayback(); },
@@ -192,48 +175,92 @@ export default function QuizWidget() {
   };
 
   useEffect(() => {
-    if (quiz?.audioUrl) {
-       // Audio ref is handled by React
-    } else if (quiz?.encryptedVideoId || quiz?.youtubeUrl) { 
+    // If NOT using audio player (or fallback triggered), try YouTube
+    if (!useAudioPlayer && quiz?.youtubeUrl) {
        if (window.YT) initYouTubePlayer(); 
        else (window as any).onYouTubeIframeAPIReady = initYouTubePlayer; 
     }
     return () => stopPlayback();
-  }, [quiz]);
+  }, [quiz, useAudioPlayer]);
+
+  const extractVideoId = (url: string): string | null => {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  // --- AUDIO HANDLERS ---
+  const handleAudioMetadata = () => {
+    if (audioPlayerRef.current && quiz?.youtubeStart) {
+        audioPlayerRef.current.currentTime = quiz.youtubeStart;
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (!audioPlayerRef.current || !quiz) return;
+    const current = audioPlayerRef.current.currentTime;
+    const start = quiz.youtubeStart || 0;
+    const duration = quiz.youtubeDuration || 10;
+    
+    const elapsed = current - start;
+    const pct = Math.min((elapsed / duration) * 100, 100);
+    setProgress(pct);
+
+    if (elapsed >= duration) stopPlayback();
+  };
+
+  const handleAudioError = () => {
+    console.error("Audio Player Error - Falling back to YouTube");
+    // CRITICAL: If audio fails, fallback to YouTube immediately
+    setUseAudioPlayer(false);
+    setIsPlaying(false);
+  };
 
   const playSnippet = () => {
     if (!quiz) return;
-    const duration = quiz.youtubeDuration || 10;
-    const startTime = quiz.youtubeStart || 0;
-
-    setIsPlaying(true); 
-    setProgress(0);
-    const startTs = Date.now();
-
-    // 1. Audio Player
-    if (quiz.audioUrl && audioPlayerRef.current) {
-        audioPlayerRef.current.currentTime = 0; // MP3 usually starts from 0 (clipped) or full
-        audioPlayerRef.current.play();
+    
+    // 1. Audio Player (Proxy/MP3)
+    if (useAudioPlayer && quiz.audioUrl && audioPlayerRef.current) {
+        if (quiz.youtubeStart) audioPlayerRef.current.currentTime = quiz.youtubeStart;
+        
+        audioPlayerRef.current.play()
+            .then(() => setIsPlaying(true))
+            .catch(e => {
+                console.error("Play failed:", e);
+                setIsPlaying(false);
+            });
     } 
-    // 2. YouTube Player (Standard Seek)
+    // 2. YouTube Player (Fallback)
     else if (youtubePlayerRef.current) {
-        youtubePlayerRef.current.seekTo(startTime, true);
+        const start = quiz.youtubeStart || 0;
+        const duration = quiz.youtubeDuration || 10;
+        
+        youtubePlayerRef.current.seekTo(start, true);
         youtubePlayerRef.current.playVideo();
+        setIsPlaying(true);
+        
+        const startTs = Date.now();
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = setInterval(() => {
+            const elapsed = (Date.now() - startTs) / 1000;
+            setProgress(Math.min((elapsed / duration) * 100, 100));
+            if (elapsed >= duration) stopPlayback();
+        }, 100);
     }
-
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startTs) / 1000;
-      setProgress(Math.min((elapsed / duration) * 100, 100));
-      if (elapsed >= duration) stopPlayback();
-    }, 100);
   };
 
   const stopPlayback = () => {
-    if (audioPlayerRef.current) { audioPlayerRef.current.pause(); audioPlayerRef.current.currentTime = 0; }
-    if (youtubePlayerRef.current && youtubePlayerRef.current.pauseVideo) youtubePlayerRef.current.pauseVideo();
+    setIsPlaying(false); 
+    setProgress(100);
+
+    if (audioPlayerRef.current) { 
+        audioPlayerRef.current.pause(); 
+        if(quiz?.youtubeStart) audioPlayerRef.current.currentTime = quiz.youtubeStart;
+    }
+    if (youtubePlayerRef.current && youtubePlayerRef.current.pauseVideo) {
+        youtubePlayerRef.current.pauseVideo();
+    }
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsPlaying(false); setProgress(100);
   };
 
   const submitAnswer = async () => {
@@ -284,11 +311,24 @@ export default function QuizWidget() {
       <div className="p-6 md:p-8">
         {quiz.contributor && <div className="flex items-center gap-3 mb-6 p-3 bg-white/5 rounded-lg border border-white/10">{quiz.contributor.photo_url ? <img src={quiz.contributor.photo_url} alt={quiz.contributor.name} className="w-10 h-10 rounded-full object-cover"/> : <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center"><span className="text-lg">👤</span></div>}<div><p className="text-xs text-gray-400">שאלה מאת</p><p className="text-sm font-medium text-purple-400">{quiz.contributor.name}</p></div></div>}
 
-        {/* REVERTED PLAYER UI */}
+        {/* PLAYER UI (Smart Fallback) */}
         {quiz.type === "snippet" && (quiz.youtubeUrl || quiz.audioUrl) && (
           <div className="mb-6">
             <div id="quiz-player" className="hidden" />
-            {quiz.audioUrl && <audio ref={audioPlayerRef} src={quiz.audioUrl} preload="auto" />}
+            
+            {/* Audio Element only if using audio player mode */}
+            {useAudioPlayer && quiz.audioUrl && (
+                <audio 
+                    ref={audioPlayerRef} 
+                    src={quiz.audioUrl} 
+                    preload="auto" 
+                    onLoadedMetadata={handleAudioMetadata}
+                    onTimeUpdate={handleTimeUpdate}
+                    onError={handleAudioError} // Triggers fallback to YouTube
+                    onEnded={stopPlayback}
+                />
+            )}
+
             <div className="bg-gradient-to-b from-black/60 to-black/40 rounded-2xl p-6 border border-cyan-500/20">
               <div className="flex items-end justify-center gap-1 h-20 mb-6">{[...Array(24)].map((_, i) => (<div key={i} className={`w-2 rounded-full transition-all duration-150 ${isPlaying ? "bg-gradient-to-t from-cyan-500 to-purple-500" : "bg-white/20"}`} style={{ height: isPlaying ? `${20 + Math.random() * 80}%` : "30%", animationDelay: `${i * 50}ms` }}/>))}</div>
               <div className="w-full bg-white/10 rounded-full h-2 mb-6"><div className="bg-gradient-to-r from-cyan-400 to-purple-500 h-2 rounded-full transition-all duration-100 shadow-lg shadow-cyan-500/30" style={{ width: `${progress}%` }}/></div>
@@ -299,6 +339,7 @@ export default function QuizWidget() {
           </div>
         )}
 
+        {/* ... Rest of the form ... */}
         {quiz.type === "trivia" && quiz.questionText && (
           <div className="mb-6 p-6 bg-gradient-to-b from-purple-500/10 to-transparent rounded-2xl border border-purple-500/20">
             {quiz.imageUrl && <img src={quiz.imageUrl} alt="Quiz" className="w-full max-h-64 object-contain rounded-lg mb-4"/>}
