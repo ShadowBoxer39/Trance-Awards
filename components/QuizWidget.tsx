@@ -60,12 +60,12 @@ export default function QuizWidget() {
   const playerRef = useRef<YT.Player | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
+ useEffect(() => {
     checkUser();
     fetchQuiz();
     loadYouTubeAPI();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         const { getGoogleUserInfo } = await import("../lib/googleAuthHelpers");
@@ -73,6 +73,16 @@ export default function QuizWidget() {
         if (userInfo) {
           setUserName(userInfo.name);
           setUserPhoto(userInfo.photoUrl);
+        }
+        
+        // If user just signed in, scroll to quiz section
+        if (event === 'SIGNED_IN') {
+          setTimeout(() => {
+            const quizSection = document.getElementById('quiz-widget-section');
+            if (quizSection) {
+              quizSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 500);
         }
       } else {
         setUserName("");
@@ -287,7 +297,7 @@ export default function QuizWidget() {
   // Loading state
   if (loading) {
     return (
-      <div className="glass-card rounded-xl p-8 border-2 border-cyan-500/30">
+     <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-red-500/30">
         <div className="flex items-center justify-center gap-3">
           <div className="w-8 h-8 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
           <span className="text-gray-400">טוען חידון...</span>
@@ -299,7 +309,7 @@ export default function QuizWidget() {
   // No quiz today
   if (!quiz) {
     return (
-      <div className="glass-card rounded-xl p-8 border-2 border-cyan-500/30">
+      <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-cyan-500/30">
         <div className="text-center">
           <span className="text-5xl mb-4 block">🎵</span>
           <h3 className="text-xl font-bold mb-2">אין חידון היום</h3>
@@ -328,7 +338,7 @@ export default function QuizWidget() {
   // Already answered correctly
   if (attempts?.hasCorrectAnswer || result?.isCorrect) {
     return (
-      <div className="glass-card rounded-xl p-8 border-2 border-green-500/30">
+     <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-green-500/30">
         <div className="text-center">
           <span className="text-5xl mb-4 block">🎉</span>
           <h3 className="text-2xl font-bold text-green-400 mb-2">כל הכבוד!</h3>
@@ -373,7 +383,7 @@ export default function QuizWidget() {
   // Out of attempts
   if (attempts && attempts.remaining === 0) {
     return (
-      <div className="glass-card rounded-xl p-8 border-2 border-red-500/30">
+     <div id="quiz-widget-section" className="glass-card rounded-xl p-8 border-2 border-red-500/30">
         <div className="text-center">
           <span className="text-5xl mb-4 block">😅</span>
           <h3 className="text-2xl font-bold text-red-400 mb-2">נגמרו הניסיונות</h3>
@@ -392,9 +402,10 @@ export default function QuizWidget() {
     );
   }
 
-  // Active quiz - ready to answer
+ 
+ // Active quiz - ready to answer
   return (
-    <div className="glass-card rounded-xl p-6 md:p-8 border-2 border-cyan-500/30">
+    <div id="quiz-widget-section" className="glass-card rounded-xl p-6 md:p-8 border-2 border-cyan-500/30">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div className="flex items-center gap-3">
