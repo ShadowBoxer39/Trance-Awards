@@ -113,7 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ok: true,
       quiz: {
         id: questionId,
-        type: schedule.type,
+        type: (schedule.question as any).type,
         questionText: (schedule.question as any).question_text,
         imageUrl: (schedule.question as any).image_url,
         youtubeUrl: (schedule.question as any).youtube_url,
