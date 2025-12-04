@@ -517,53 +517,90 @@ export default function AdminQuizTab({ adminKey }: { adminKey: string }) {
         </div>
       )}
 
-      {/* CONTRIBUTORS TAB */}
+      {/* CONTRIBUTORS TAB - RESTORED */}
       {subTab === "contributors" && !loading && (
         <div className="space-y-4">
-           <div className="glass rounded-xl p-4">
+          {/* Explanation box */}
+          <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 text-sm">
+            <p className="text-cyan-300 font-medium mb-2">👥 איך להזמין תורמים?</p>
+            <ol className="text-white/70 space-y-1 list-decimal list-inside">
+              <li>הכנס שם לתורם החדש למטה</li>
+              <li>לחץ "צור הזמנה" - יופיע לינק</li>
+              <li>שלח את הלינק לתורם בוואטסאפ/מייל</li>
+              <li>התורם נכנס ללינק ומתחבר עם Google</li>
+              <li>התורם יכול להוסיף שאלות (ממתינות לאישורך)</li>
+            </ol>
+          </div>
+
+          {/* Create invite form */}
+          <div className="glass rounded-xl p-4">
             <p className="font-medium mb-3">➕ יצירת הזמנה חדשה</p>
             <div className="flex gap-3">
-              <input type="text" value={newInviteName} onChange={(e) => setNewInviteName(e.target.value)} placeholder="שם התורם" className="flex-1 bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white"/>
-              <button onClick={createInvite} disabled={!newInviteName.trim()} className="px-6 py-3 bg-cyan-500 text-white rounded-lg">צור הזמנה</button>
+              <input type="text" value={newInviteName} onChange={(e) => setNewInviteName(e.target.value)} placeholder="שם התורם (למשל: יוסי כהן)" className="flex-1 bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white"/>
+              <button onClick={createInvite} disabled={!newInviteName.trim()} className="px-6 py-3 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition">צור הזמנה</button>
             </div>
-           </div>
-           
-           <div className="space-y-3">
-              {contributors.map(c => (
-                <div key={c.id} className={`glass rounded-xl p-4 ${!c.is_active ? 'opacity-50' : ''}`}>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      {c.photo_url ? <img src={c.photo_url} alt={c.name} className="w-12 h-12 rounded-full object-cover"/> : <div className="w-12 h-12 rounded-full bg-purple-500/30 flex items-center justify-center">👤</div>}
-                      <div><p className="font-medium">{c.name}</p></div>
-                    </div>
-                    <div className="flex gap-2">
-                         <button onClick={() => {navigator.clipboard.writeText(`${window.location.origin}/quiz/contribute?code=${c.invite_code}`); alert("הועתק");}} className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-lg text-sm">העתק</button>
-                         {c.is_active ? (
-                          <button onClick={() => manageContributor(c.id, "deactivate")} className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm">השבת</button>
-                        ) : (
-                          <button onClick={() => manageContributor(c.id, "activate")} className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm">הפעל</button>
-                        )}
-                        <button onClick={() => manageContributor(c.id, "delete")} className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm">🗑️</button>
+          </div>
+          
+          {/* Contributors list */}
+          <div className="space-y-3">
+            {contributors.map(c => (
+              <div key={c.id} className={`glass rounded-xl p-4 ${!c.is_active ? 'opacity-50' : ''}`}>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    {c.photo_url ? <img src={c.photo_url} alt={c.name} className="w-12 h-12 rounded-full object-cover"/> : <div className="w-12 h-12 rounded-full bg-purple-500/30 flex items-center justify-center text-xl">👤</div>}
+                    <div>
+                      <p className="font-medium text-lg">{c.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                          {c.user_id ? <span className="px-2 py-0.5 rounded text-xs bg-green-500/20 text-green-400">✓ רשום</span> : <span className="px-2 py-0.5 rounded text-xs bg-yellow-500/20 text-yellow-400">⏳ ממתין</span>}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex gap-2">
+                       <button onClick={() => {navigator.clipboard.writeText(`${window.location.origin}/quiz/contribute?code=${c.invite_code}`); alert("הועתק");}} className="px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-lg text-sm">📋 העתק לינק</button>
+                       {c.is_active ? (
+                        <button onClick={() => manageContributor(c.id, "deactivate")} className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm">השבת</button>
+                      ) : (
+                        <button onClick={() => manageContributor(c.id, "activate")} className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm">הפעל</button>
+                      )}
+                      <button onClick={() => manageContributor(c.id, "delete")} className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm">🗑️</button>
+                  </div>
                 </div>
-              ))}
-           </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* LEADERBOARD TAB */}
+      {/* LEADERBOARD TAB - RESTORED */}
       {subTab === "leaderboard" && !loading && (
          <div className="space-y-4">
-            {leaderboard.map((entry, idx) => (
-                <div key={entry.userId} className="glass rounded-xl p-4 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <span className="font-bold w-6 text-center">{idx + 1}</span>
-                        <span>{entry.displayName}</span>
-                    </div>
-                    <span className="text-cyan-400 font-bold">{entry.totalPoints}</span>
+            <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">לידרבורד (Top 50)</h3>
+                <button
+                    onClick={() => { if (confirm("לאפס את הלידרבורד? פעולה זו בלתי הפיכה!")) alert("פונקציית איפוס עדיין לא מוכנה"); }}
+                    className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm"
+                >
+                    🔄 אפס לידרבורד
+                </button>
+            </div>
+
+            {leaderboard.length === 0 ? <div className="text-center py-8 text-white/50">אין נתונים</div> : (
+                <div className="space-y-2">
+                    {leaderboard.map((entry, idx) => (
+                        <div key={entry.userId} className="glass rounded-xl p-4 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${idx === 0 ? "bg-yellow-500/30 text-yellow-400" : idx === 1 ? "bg-gray-400/30 text-gray-300" : idx === 2 ? "bg-orange-500/30 text-orange-400" : "bg-white/10 text-white/60"}`}>{idx + 1}</span>
+                                {entry.photoUrl ? <img src={entry.photoUrl} alt={entry.displayName} className="w-10 h-10 rounded-full object-cover"/> : <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">👤</div>}
+                                <div>
+                                    <p className="font-medium">{entry.displayName}</p>
+                                    <p className="text-xs text-white/40">{entry.questionsAnswered} שאלות</p>
+                                </div>
+                            </div>
+                            <span className="text-2xl font-bold text-cyan-400">{entry.totalPoints}</span>
+                        </div>
+                    ))}
                 </div>
-            ))}
+            )}
          </div>
       )}
 
