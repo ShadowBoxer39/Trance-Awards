@@ -3,33 +3,37 @@ import ytdl from "@distube/ytdl-core";
 import { deobfuscateId } from "../../../lib/security";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { id } = req.query;
+  const { id, start } = req.query; // Added 'start'
 
   if (!id || typeof id !== "string") {
     return res.status(400).send("Missing ID");
   }
 
   try {
-    // 1. Decrypt the ID (so even the API URL is safe)
     const videoId = deobfuscateId(id);
     if (!videoId) return res.status(400).send("Invalid ID");
 
-    // 2. Get Video Info
-    const info = await ytdl.getInfo(videoId);
+    // Set headers so browser knows it's audio
+    res.setHeader("Content-Type", "audio/mpeg");
+    
+    // Calculate start time string (e.g., "30s")
+    const beginTime = start ? `${start}s` : "0s";
 
-    // 3. Find the best audio-only format
-    const format = ytdl.chooseFormat(info.formats, { 
-      quality: "lowestaudio", // Lower quality loads faster for snippets
-      filter: "audioonly" 
+    // PIPE the stream (Server downloads -> Server sends to Client)
+    // This bypasses the IP restriction because YouTube only talks to your Server.
+    const stream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
+      filter: "audioonly",
+      quality: "lowestaudio", // Faster for snippets
+      begin: beginTime,       // Start downloading from the correct second!
+      highWaterMark: 1 << 25, // Large buffer
     });
 
-    if (!format || !format.url) {
-      return res.status(404).send("Audio not found");
-    }
+    stream.on("error", (err) => {
+        console.error("YTDL Error:", err);
+        res.status(500).end();
+    });
 
-    // 4. Redirect the browser to the raw audio stream
-    // This hides the YouTube Video ID because the GoogleVideo URL uses internal hashes.
-    return res.redirect(302, format.url);
+    stream.pipe(res);
 
   } catch (error) {
     console.error("Stream Error:", error);
