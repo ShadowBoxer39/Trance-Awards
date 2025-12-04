@@ -7,13 +7,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Use Israel time for consistency
     const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
     const dayOfWeek = new Date().toLocaleDateString("en-US", { timeZone: "Asia/Jerusalem", weekday: "long" });
-    
     const userId = req.query.userId as string | undefined;
 
-    // --- FIX: Get the LATEST active quiz that is scheduled for today or earlier ---
+    // Fetch the latest active quiz
     const { data: schedule, error: scheduleError } = await supabase
       .from("quiz_schedule")
       .select(`
@@ -33,15 +31,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           accepted_artists, 
           accepted_tracks,
           accepted_answers,
-          contributor:quiz_contributors(
-            name,
-            photo_url
-          )
+          contributor:quiz_contributors(name, photo_url)
         )
       `)
-      .lte("scheduled_for", today) // Less than or equal to today
-      .eq("is_active", true)       // Must be active
-      .order("scheduled_for", { ascending: false }) // Get the most recent one
+      .lte("scheduled_for", today)
+      .eq("is_active", true)
+      .order("scheduled_for", { ascending: false })
       .limit(1)
       .single();
 
@@ -54,9 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // ... (Rest of the file remains the same) ...
-
-    // Get previous quiz answer if revealed
+    // Get previous answer if revealed
     let previousAnswer = null;
     if (schedule.previous_answer_revealed) {
       const { data: prevSchedule } = await supabase
@@ -71,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             contributor:quiz_contributors(name, photo_url)
           )
         `)
-        .lt("scheduled_for", schedule.scheduled_for) // Older than current
+        .lt("scheduled_for", schedule.scheduled_for)
         .order("scheduled_for", { ascending: false })
         .limit(1)
         .single();
@@ -89,11 +82,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Get attempts for this IP
-    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() 
-               || req.socket.remoteAddress 
-               || "unknown";
-
+    // Get attempts by IP
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const questionId = (schedule.question as any).id;
 
     const { data: attempts } = await supabase
@@ -106,9 +96,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const attemptsUsed = attempts?.length || 0;
     const hasCorrectAnswer = attempts?.some(a => a.is_correct) || false;
 
-    // Check if user already saved score
+    // --- FIX: Check if score is saved based ONLY on User ID ---
     let scoreSaved = false;
-    if (userId && hasCorrectAnswer) {
+    if (userId) {
       const { data: existingScore } = await supabase
         .from("quiz_scores")
         .select("id")
