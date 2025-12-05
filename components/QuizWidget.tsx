@@ -66,7 +66,8 @@ export default function QuizWidget() {
   // Player State
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [useAudioPlayer, setUseAudioPlayer] = useState(false); // Controls Fallback
+  const [useAudioPlayer, setUseAudioPlayer] = useState(false);
+  const [youtubePlayerReady, setYoutubePlayerReady] = useState(false);
   
   const youtubePlayerRef = useRef<YT.Player | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
@@ -163,39 +164,63 @@ export default function QuizWidget() {
 
   // --- PLAYER LOGIC ---
   
-  // Initialize YouTube fallback
+  // Initialize YouTube player (always as backup)
   const initYouTubePlayer = () => {
-    if (useAudioPlayer || !quiz?.youtubeUrl || youtubePlayerRef.current) return;
+    if (!quiz?.youtubeUrl || youtubePlayerRef.current) return;
+    
     const videoId = extractVideoId(quiz.youtubeUrl);
     if (!videoId) return;
+    
+    console.log("Initializing YouTube player with video:", videoId);
+    
     youtubePlayerRef.current = new window.YT.Player("quiz-player", {
-      height: "0", width: "0", videoId,
-      playerVars: { start: quiz.youtubeStart || 0, autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1 },
+      height: "1",
+      width: "1",
+      videoId,
+      playerVars: { 
+        start: quiz.youtubeStart || 0, 
+        autoplay: 0, 
+        controls: 0, 
+        disablekb: 1, 
+        fs: 0, 
+        modestbranding: 1 
+      },
       events: {
-        onReady: () => console.log("Player ready"),
-        onStateChange: (event: YT.OnStateChangeEvent) => { if (event.data === window.YT.PlayerState.ENDED) stopPlayback(); },
+        onReady: (event) => {
+          console.log("YouTube player ready!");
+          setYoutubePlayerReady(true);
+        },
+        onStateChange: (event: YT.OnStateChangeEvent) => { 
+          if (event.data === window.YT.PlayerState.ENDED) stopPlayback(); 
+        },
+        onError: (event) => {
+          console.error("YouTube player error:", event.data);
+          alert("שגיאה בהפעלת הסרטון מיוטיוב");
+        }
       },
     });
   };
 
+  // ALWAYS initialize YouTube player as backup
   useEffect(() => {
-    // If audio player is disabled or unavailable, try YouTube
-    if (!useAudioPlayer && quiz?.youtubeUrl) {
-       if (window.YT) initYouTubePlayer(); 
-       else (window as any).onYouTubeIframeAPIReady = initYouTubePlayer; 
+    if (quiz?.youtubeUrl && !youtubePlayerRef.current) {
+       if (window.YT && window.YT.Player) {
+           initYouTubePlayer(); 
+       } else {
+           (window as any).onYouTubeIframeAPIReady = initYouTubePlayer; 
+       }
     }
     return () => stopPlayback();
-  }, [quiz, useAudioPlayer]);
+  }, [quiz]);
 
   // --- AUDIO HANDLERS ---
   const handleAudioMetadata = () => {
-    // When audio loads, seek to start time
     if (audioPlayerRef.current && quiz?.youtubeStart) {
         audioPlayerRef.current.currentTime = quiz.youtubeStart;
     }
   };
 
-  const handleAudioTimeUpdate = () => { // Fixed Name
+  const handleAudioTimeUpdate = () => {
     if (!audioPlayerRef.current || !quiz) return;
     const current = audioPlayerRef.current.currentTime;
     const start = quiz.youtubeStart || 0;
@@ -208,64 +233,65 @@ export default function QuizWidget() {
     if (elapsed >= duration) stopPlayback();
   };
 
-const handleAudioError = (e: any) => {
+  const handleAudioError = (e: any) => {
     console.error("Audio Stream Failed. Falling back to YouTube.", e);
-    setUseAudioPlayer(false); // Switch to YouTube
+    setUseAudioPlayer(false);
     setIsPlaying(false);
     setProgress(0);
     
-    // Force YouTube player initialization if not ready
+    // Make sure YouTube player exists
     if (!youtubePlayerRef.current && quiz?.youtubeUrl) {
-        initYouTubePlayer();
+        console.log("YouTube player doesn't exist, initializing now...");
+        if (window.YT && window.YT.Player) {
+            initYouTubePlayer();
+        }
     }
-};
+  };
 
- const playSnippet = () => {
+  const playSnippet = () => {
     if (!quiz) return;
     
-    // 1. Try Audio Player first
+    // 1. Try Audio Player first (if enabled and available)
     if (useAudioPlayer && quiz.audioUrl && audioPlayerRef.current) {
         const start = quiz.youtubeStart || 0;
-        
-        // Set the start time
         audioPlayerRef.current.currentTime = start;
         
-        // Try to play
         audioPlayerRef.current.play()
             .then(() => {
                 console.log("Audio playing successfully");
                 setIsPlaying(true);
             })
             .catch(e => {
-                console.error("Audio Play failed, switching to YouTube:", e);
-                // Switch to YouTube and try again
+                console.error("Audio failed:", e);
                 setUseAudioPlayer(false);
-                // Wait a bit for YouTube player to initialize, then play
+                
+                // Try YouTube after a short delay
                 setTimeout(() => {
-                    if (youtubePlayerRef.current && youtubePlayerRef.current.playVideo) {
+                    if (youtubePlayerReady && youtubePlayerRef.current) {
                         playYouTubeVideo();
                     } else {
-                        console.error("YouTube player not ready");
-                        alert("נכשל בניגון השמע. נסה שוב בעוד כמה שניות.");
+                        alert("הנגן לא מוכן. נסה שוב בעוד רגע.");
                     }
-                }, 500);
+                }, 300);
             });
     } 
-    // 2. YouTube Player (Fallback)
-    else if (youtubePlayerRef.current && youtubePlayerRef.current.playVideo) {
+    // 2. Use YouTube Player
+    else if (youtubePlayerReady && youtubePlayerRef.current) {
         playYouTubeVideo();
     } else {
-        console.error("No player available");
-        alert("הנגן לא מוכן. נסה שוב בעוד רגע.");
+        console.error("No player available. YouTube ready:", youtubePlayerReady);
+        alert("הנגן לא מוכן. רענן את הדף ונסה שוב.");
     }
-};
+  };
 
-// Separate function for YouTube playback
-const playYouTubeVideo = () => {
+  // Separate function for YouTube playback
+  const playYouTubeVideo = () => {
     if (!quiz || !youtubePlayerRef.current) return;
     
     const start = quiz.youtubeStart || 0;
     const duration = quiz.youtubeDuration || 10;
+    
+    console.log("Playing YouTube from", start, "for", duration, "seconds");
     
     youtubePlayerRef.current.seekTo(start, true);
     youtubePlayerRef.current.playVideo();
@@ -279,7 +305,7 @@ const playYouTubeVideo = () => {
         setProgress(Math.min((elapsed / duration) * 100, 100));
         if (elapsed >= duration) stopPlayback();
     }, 100);
-};
+  };
 
   const stopPlayback = () => {
     setIsPlaying(false); 
@@ -287,7 +313,6 @@ const playYouTubeVideo = () => {
 
     if (audioPlayerRef.current) { 
         audioPlayerRef.current.pause(); 
-        // Reset to start time for next play
         if(quiz?.youtubeStart) audioPlayerRef.current.currentTime = quiz.youtubeStart;
     }
     if (youtubePlayerRef.current && youtubePlayerRef.current.pauseVideo) {
@@ -601,7 +626,12 @@ const playYouTubeVideo = () => {
         {/* Snippet player */}
         {quiz.type === "snippet" && (quiz.youtubeUrl || quiz.audioUrl) && (
           <div className="mb-6">
-            <div id="quiz-player" className="hidden" />
+            {/* YouTube Player Container - Hidden but functional */}
+            <div 
+              id="quiz-player" 
+              className="absolute -left-[9999px] opacity-0 pointer-events-none" 
+              style={{ width: '1px', height: '1px' }}
+            />
             
             {/* Audio Element */}
             {useAudioPlayer && quiz.audioUrl && (
