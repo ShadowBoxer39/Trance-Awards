@@ -74,6 +74,7 @@ export default function QuizWidget() {
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const authProcessed = useRef(false);
+  const initializationAttempted = useRef(false);
 
   // 1. Init
   useEffect(() => {
@@ -166,14 +167,15 @@ export default function QuizWidget() {
   // --- PLAYER LOGIC ---
   
   // Initialize YouTube player (always as backup)
-  const initYouTubePlayer = () => {
-    if (!quiz?.youtubeUrl || youtubePlayerRef.current) return;
+ const initYouTubePlayer = () => {
+    if (!quiz?.youtubeUrl || youtubePlayerRef.current || initializationAttempted.current) return;
     
     const videoId = extractVideoId(quiz.youtubeUrl);
     if (!videoId) return;
     
     console.log("Initializing YouTube player with video:", videoId);
     setPlayerInitializing(true);
+    initializationAttempted.current = true;
     
     try {
       youtubePlayerRef.current = new window.YT.Player("quiz-player", {
@@ -200,6 +202,7 @@ export default function QuizWidget() {
           onError: (event) => {
             console.error("YouTube player error:", event.data);
             setPlayerInitializing(false);
+            initializationAttempted.current = false; // Allow retry on error
             alert("שגיאה בהפעלת הסרטון מיוטיוב");
           }
         },
@@ -207,11 +210,15 @@ export default function QuizWidget() {
     } catch (error) {
       console.error("Failed to initialize YouTube player:", error);
       setPlayerInitializing(false);
+      initializationAttempted.current = false; // Allow retry on error
     }
   };
 
   // ALWAYS initialize YouTube player as backup
   useEffect(() => {
+    // Reset initialization flag when quiz changes
+    initializationAttempted.current = false;
+    
     if (quiz?.youtubeUrl && !youtubePlayerRef.current) {
        if (window.YT && window.YT.Player) {
            initYouTubePlayer(); 
@@ -220,7 +227,7 @@ export default function QuizWidget() {
        }
     }
     return () => stopPlayback();
-  }, [quiz]);
+}, [quiz]);
 
   // --- AUDIO HANDLERS ---
   const handleAudioMetadata = () => {
@@ -257,19 +264,17 @@ export default function QuizWidget() {
     }
   };
 
-  const tryPlayYouTube = (retryCount = 0) => {
-    console.log(`Attempting YouTube playback (attempt ${retryCount + 1})`);
+ const tryPlayYouTube = (retryCount = 0) => {
+    console.log(`Attempting YouTube playback (attempt ${retryCount + 1}), ready: ${youtubePlayerReady}, initializing: ${playerInitializing}`);
     
     if (youtubePlayerReady && youtubePlayerRef.current) {
         playYouTubeVideo();
-    } else if (playerInitializing) {
+    } else if (playerInitializing && retryCount < 20) {
+        // Player is initializing, wait for it
         console.log("Player initializing, waiting...");
-        if (retryCount < 10) {
-            setTimeout(() => tryPlayYouTube(retryCount + 1), 300);
-        } else {
-            alert("הנגן לא מוכן. רענן את הדף ונסה שוב.");
-        }
-    } else if (!youtubePlayerRef.current) {
+        setTimeout(() => tryPlayYouTube(retryCount + 1), 300);
+    } else if (!youtubePlayerRef.current && !playerInitializing && !initializationAttempted.current) {
+        // Player doesn't exist and we haven't tried to initialize it yet
         console.log("YouTube player not initialized, initializing now...");
         if (window.YT && window.YT.Player) {
             initYouTubePlayer();
@@ -277,11 +282,19 @@ export default function QuizWidget() {
         } else {
             alert("YouTube API לא נטען. רענן את הדף ונסה שוב.");
         }
+    } else if (retryCount >= 20) {
+        console.error("Gave up after 20 attempts");
+        alert("הנגן לא מוכן. רענן את הדף ונסה שוב.");
     } else {
-        console.error("YouTube ready:", youtubePlayerReady, "Player exists:", !!youtubePlayerRef.current);
-        alert("הנגן לא מוכן. נסה שוב בעוד רגע.");
+        // Player exists but isn't ready, wait a bit more
+        console.log("Waiting for player to be ready...");
+        if (retryCount < 20) {
+            setTimeout(() => tryPlayYouTube(retryCount + 1), 300);
+        } else {
+            alert("הנגן לא מוכן. רענן את הדף ונסה שוב.");
+        }
     }
-  };
+};
 
   const playSnippet = () => {
     if (!quiz) return;
