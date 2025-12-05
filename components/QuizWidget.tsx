@@ -208,48 +208,78 @@ export default function QuizWidget() {
     if (elapsed >= duration) stopPlayback();
   };
 
-  const handleAudioError = (e: any) => {
-    console.error("Audio Stream Failed. Falling back to YouTube.");
-    setUseAudioPlayer(false); // Trigger Fallback
+const handleAudioError = (e: any) => {
+    console.error("Audio Stream Failed. Falling back to YouTube.", e);
+    setUseAudioPlayer(false); // Switch to YouTube
     setIsPlaying(false);
-  };
+    setProgress(0);
+    
+    // Force YouTube player initialization if not ready
+    if (!youtubePlayerRef.current && quiz?.youtubeUrl) {
+        initYouTubePlayer();
+    }
+};
 
-  const playSnippet = () => {
+ const playSnippet = () => {
     if (!quiz) return;
     
-    // 1. Secure Audio Player
+    // 1. Try Audio Player first
     if (useAudioPlayer && quiz.audioUrl && audioPlayerRef.current) {
-        // Only set time if not already there (prevents skipping if paused)
         const start = quiz.youtubeStart || 0;
-        if (Math.abs(audioPlayerRef.current.currentTime - start) > 1) {
-             audioPlayerRef.current.currentTime = start;
-        }
         
+        // Set the start time
+        audioPlayerRef.current.currentTime = start;
+        
+        // Try to play
         audioPlayerRef.current.play()
-            .then(() => setIsPlaying(true))
+            .then(() => {
+                console.log("Audio playing successfully");
+                setIsPlaying(true);
+            })
             .catch(e => {
-                console.error("Audio Play failed:", e);
-                // If play fails (e.g. not loaded), fallback
+                console.error("Audio Play failed, switching to YouTube:", e);
+                // Switch to YouTube and try again
                 setUseAudioPlayer(false);
+                // Wait a bit for YouTube player to initialize, then play
+                setTimeout(() => {
+                    if (youtubePlayerRef.current && youtubePlayerRef.current.playVideo) {
+                        playYouTubeVideo();
+                    } else {
+                        console.error("YouTube player not ready");
+                        alert("נכשל בניגון השמע. נסה שוב בעוד כמה שניות.");
+                    }
+                }, 500);
             });
     } 
     // 2. YouTube Player (Fallback)
-    else if (youtubePlayerRef.current) {
-        const start = quiz.youtubeStart || 0;
-        const duration = quiz.youtubeDuration || 10;
-        youtubePlayerRef.current.seekTo(start, true);
-        youtubePlayerRef.current.playVideo();
-        setIsPlaying(true);
-        
-        const startTs = Date.now();
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        intervalRef.current = setInterval(() => {
-            const elapsed = (Date.now() - startTs) / 1000;
-            setProgress(Math.min((elapsed / duration) * 100, 100));
-            if (elapsed >= duration) stopPlayback();
-        }, 100);
+    else if (youtubePlayerRef.current && youtubePlayerRef.current.playVideo) {
+        playYouTubeVideo();
+    } else {
+        console.error("No player available");
+        alert("הנגן לא מוכן. נסה שוב בעוד רגע.");
     }
-  };
+};
+
+// Separate function for YouTube playback
+const playYouTubeVideo = () => {
+    if (!quiz || !youtubePlayerRef.current) return;
+    
+    const start = quiz.youtubeStart || 0;
+    const duration = quiz.youtubeDuration || 10;
+    
+    youtubePlayerRef.current.seekTo(start, true);
+    youtubePlayerRef.current.playVideo();
+    setIsPlaying(true);
+    
+    const startTs = Date.now();
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    
+    intervalRef.current = setInterval(() => {
+        const elapsed = (Date.now() - startTs) / 1000;
+        setProgress(Math.min((elapsed / duration) * 100, 100));
+        if (elapsed >= duration) stopPlayback();
+    }, 100);
+};
 
   const stopPlayback = () => {
     setIsPlaying(false); 
