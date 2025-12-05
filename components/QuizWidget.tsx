@@ -174,7 +174,7 @@ export default function QuizWidget() {
         fs: 0,
         modestbranding: 1,
         rel: 0,
-        showinfo: 0,
+       
       },
       events: {
         onReady: () => {
