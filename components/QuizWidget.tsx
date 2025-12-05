@@ -65,6 +65,7 @@ export default function QuizWidget() {
 
   // Player State
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false); // <--- NEW: Visual feedback
   const [progress, setProgress] = useState(0);
   const [useAudioPlayer, setUseAudioPlayer] = useState(false);
   
@@ -72,6 +73,7 @@ export default function QuizWidget() {
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const authProcessed = useRef(false);
+  const fallbackTimer = useRef<NodeJS.Timeout | null>(null);
 
   // 1. Init
   useEffect(() => {
@@ -148,6 +150,7 @@ export default function QuizWidget() {
         setNextQuizDay(data.nextQuizDay);
         if (data.scoreSaved) setScoreSaved(true);
         
+        // Prioritize Audio Player if URL exists
         setUseAudioPlayer(!!data.quiz.audioUrl);
       }
     } catch (error) { console.error("Failed to fetch quiz:", error); } 
@@ -170,7 +173,14 @@ export default function QuizWidget() {
       height: "0", width: "0", videoId,
       playerVars: { start: quiz.youtubeStart || 0, autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1 },
       events: {
-        onReady: () => console.log("Player ready"),
+        onReady: (event) => {
+             console.log("YouTube Player Ready");
+             // Auto-play if we switched due to fallback
+             if (isPlaying) {
+                 event.target.seekTo(quiz.youtubeStart || 0, true);
+                 event.target.playVideo();
+             }
+        },
         onStateChange: (event: YT.OnStateChangeEvent) => { if (event.data === window.YT.PlayerState.ENDED) stopPlayback(); },
       },
     });
@@ -185,6 +195,26 @@ export default function QuizWidget() {
   }, [quiz, useAudioPlayer]);
 
   // --- AUDIO HANDLERS ---
+  
+  const triggerFallback = () => {
+    console.warn("Audio failed or timed out. Switching to YouTube fallback.");
+    setIsBuffering(false);
+    setUseAudioPlayer(false); // This triggers useEffect -> initYouTubePlayer
+    // Note: We keep isPlaying=true so YouTube auto-plays when ready
+  };
+
+  const handleAudioMetadata = () => {
+    if (audioPlayerRef.current && quiz?.youtubeStart) {
+        audioPlayerRef.current.currentTime = quiz.youtubeStart;
+    }
+  };
+
+  const handleAudioCanPlay = () => {
+      // Audio is ready to play!
+      setIsBuffering(false);
+      if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
+  };
+
   const handleAudioTimeUpdate = () => {
     if (!audioPlayerRef.current || !quiz) return;
     const current = audioPlayerRef.current.currentTime;
@@ -200,49 +230,43 @@ export default function QuizWidget() {
 
   const handleAudioError = (e: any) => {
     console.error("Audio Error:", e);
-    setUseAudioPlayer(false); // Fallback
-    setIsPlaying(false);
+    triggerFallback();
   };
 
   const playSnippet = () => {
     if (!quiz) return;
+    setIsPlaying(true);
     
-    // 1. Secure Audio Player (Click-to-Load Logic)
+    // 1. Secure Audio Player
     if (useAudioPlayer && quiz.audioUrl && audioPlayerRef.current) {
-        const start = quiz.youtubeStart || 0;
-        const audio = audioPlayerRef.current;
+        setIsBuffering(true);
+        
+        // Set a 5-second timeout: if audio doesn't start, switch to YouTube
+        if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
+        fallbackTimer.current = setTimeout(() => {
+            if (audioPlayerRef.current?.paused) triggerFallback();
+        }, 5000);
 
-        // We must load BEFORE seeking to avoid browser errors
-        if (audio.readyState === 0) {
-            audio.load();
+        const start = quiz.youtubeStart || 0;
+        // Reset time if needed
+        if (Math.abs(audioPlayerRef.current.currentTime - start) > 1) {
+             audioPlayerRef.current.currentTime = start;
         }
         
-        // Seek instantly if possible, or wait for metadata
-        if (audio.readyState >= 1) {
-            audio.currentTime = start;
-            audio.play()
-                .then(() => setIsPlaying(true))
-                .catch(() => setUseAudioPlayer(false));
-        } else {
-            // Wait for load then play
-            const onLoaded = () => {
-                audio.currentTime = start;
-                audio.play()
-                    .then(() => setIsPlaying(true))
-                    .catch(() => setUseAudioPlayer(false));
-                audio.removeEventListener('loadedmetadata', onLoaded);
-            };
-            audio.addEventListener('loadedmetadata', onLoaded);
-        }
+        audioPlayerRef.current.play()
+            .catch(e => {
+                console.error("Play failed:", e);
+                triggerFallback();
+            });
     } 
-    // 2. YouTube Player
+    // 2. YouTube Player (Fallback)
     else if (youtubePlayerRef.current) {
         const start = quiz.youtubeStart || 0;
         const duration = quiz.youtubeDuration || 10;
         youtubePlayerRef.current.seekTo(start, true);
         youtubePlayerRef.current.playVideo();
-        setIsPlaying(true);
         
+        // Timer for progress
         const startTs = Date.now();
         if (intervalRef.current) clearInterval(intervalRef.current);
         intervalRef.current = setInterval(() => {
@@ -255,15 +279,18 @@ export default function QuizWidget() {
 
   const stopPlayback = () => {
     setIsPlaying(false); 
+    setIsBuffering(false);
     setProgress(100);
 
     if (audioPlayerRef.current) { 
         audioPlayerRef.current.pause(); 
+        if(quiz?.youtubeStart) audioPlayerRef.current.currentTime = quiz.youtubeStart;
     }
     if (youtubePlayerRef.current && youtubePlayerRef.current.pauseVideo) {
         youtubePlayerRef.current.pauseVideo();
     }
     if (intervalRef.current) clearInterval(intervalRef.current);
+    if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
   };
 
   const submitAnswer = async () => {
@@ -323,7 +350,7 @@ export default function QuizWidget() {
       <div className="p-6 md:p-8">
         {quiz.contributor && <div className="flex items-center gap-3 mb-6 p-3 bg-white/5 rounded-lg border border-white/10">{quiz.contributor.photo_url ? <img src={quiz.contributor.photo_url} alt={quiz.contributor.name} className="w-10 h-10 rounded-full object-cover"/> : <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center"><span className="text-lg">👤</span></div>}<div><p className="text-xs text-gray-400">שאלה מאת</p><p className="text-sm font-medium text-purple-400">{quiz.contributor.name}</p></div></div>}
 
-        {/* PLAYER UI (With Fallback Logic) */}
+        {/* PLAYER UI (Robust) */}
         {quiz.type === "snippet" && (quiz.youtubeUrl || quiz.audioUrl) && (
           <div className="mb-6">
             <div id="quiz-player" className="hidden" />
@@ -334,6 +361,8 @@ export default function QuizWidget() {
                     ref={audioPlayerRef} 
                     src={quiz.audioUrl} 
                     preload="auto" 
+                    onLoadedMetadata={handleAudioMetadata}
+                    onCanPlay={handleAudioCanPlay}
                     onTimeUpdate={handleAudioTimeUpdate}
                     onError={handleAudioError}
                     onEnded={stopPlayback}
@@ -343,13 +372,24 @@ export default function QuizWidget() {
             <div className="bg-gradient-to-b from-black/60 to-black/40 rounded-2xl p-6 border border-cyan-500/20">
               <div className="flex items-end justify-center gap-1 h-20 mb-6">{[...Array(24)].map((_, i) => (<div key={i} className={`w-2 rounded-full transition-all duration-150 ${isPlaying ? "bg-gradient-to-t from-cyan-500 to-purple-500" : "bg-white/20"}`} style={{ height: isPlaying ? `${20 + Math.random() * 80}%` : "30%", animationDelay: `${i * 50}ms` }}/>))}</div>
               <div className="w-full bg-white/10 rounded-full h-2 mb-6"><div className="bg-gradient-to-r from-cyan-400 to-purple-500 h-2 rounded-full transition-all duration-100 shadow-lg shadow-cyan-500/30" style={{ width: `${progress}%` }}/></div>
+              
               <button onClick={isPlaying ? stopPlayback : playSnippet} className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all ${isPlaying ? "bg-white/10 text-white border-2 border-white/20" : "bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02]"}`}>
-                {isPlaying ? (<><svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>עצור</>) : (<><svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>נגן קטע ({quiz.youtubeDuration || 10} שניות)</>)}
+                {isBuffering ? (
+                    <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        טוען אודיו...
+                    </>
+                ) : isPlaying ? (
+                    <><svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>עצור</>
+                ) : (
+                    <><svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>נגן קטע ({quiz.youtubeDuration || 10} שניות)</>
+                )}
               </button>
             </div>
           </div>
         )}
 
+        {/* Rest of Form */}
         {quiz.type === "trivia" && quiz.questionText && (
           <div className="mb-6 p-6 bg-gradient-to-b from-purple-500/10 to-transparent rounded-2xl border border-purple-500/20">
             {quiz.imageUrl && <img src={quiz.imageUrl} alt="Quiz" className="w-full max-h-64 object-contain rounded-lg mb-4"/>}
