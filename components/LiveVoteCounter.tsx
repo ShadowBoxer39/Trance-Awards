@@ -8,7 +8,7 @@ export default function LiveVoteCounter() {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const fetchTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const minuteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  // REMOVED: const minuteTimer = useRef... (The fake voter timer)
 
   async function fetchCount() {
     try {
@@ -37,16 +37,7 @@ export default function LiveVoteCounter() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Local optimistic +1 per minute (only after we have an initial count)
-  useEffect(() => {
-    if (count === null) return;
-    minuteTimer.current = setInterval(() => {
-      setIsAnimating(true);
-      setCount((c) => (c === null ? c : c + 1));
-      setTimeout(() => setIsAnimating(false), 800);
-    }, 60000);
-    return () => { if (minuteTimer.current) clearInterval(minuteTimer.current); };
-  }, [count]);
+  // REMOVED: The useEffect that added +1 every minute
 
   // Smoothly animate `displayCount` toward `count`
   useEffect(() => {
