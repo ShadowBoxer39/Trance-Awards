@@ -543,7 +543,7 @@ export default function QuizWidget() {
           </div>
         )}
 
-       {/* NEW SIMPLE PLAYER */}
+   {/* Snippet player */}
 {quiz.type === "snippet" && quiz.youtubeUrl && (
   <div className="mb-6">
     <div className="bg-gradient-to-b from-black/60 to-black/40 rounded-2xl p-6 border border-cyan-500/20">
