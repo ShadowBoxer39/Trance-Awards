@@ -543,60 +543,78 @@ export default function QuizWidget() {
           </div>
         )}
 
-        {/* NEW SIMPLE PLAYER */}
-        {quiz.type === "snippet" && quiz.youtubeUrl && (
-          <div className="mb-6">
-            <div className="bg-gradient-to-b from-black/60 to-black/40 rounded-2xl p-6 border border-cyan-500/20">
-              
-              {/* YouTube player - visible but styled */}
-              <div className="w-full aspect-video rounded-xl overflow-hidden mb-4 bg-black">
-                <div id="youtube-player" className="w-full h-full"></div>
-              </div>
+       {/* NEW SIMPLE PLAYER */}
+{quiz.type === "snippet" && quiz.youtubeUrl && (
+  <div className="mb-6">
+    <div className="bg-gradient-to-b from-black/60 to-black/40 rounded-2xl p-6 border border-cyan-500/20">
+      
+      {/* Visualizer bars */}
+      <div className="flex items-end justify-center gap-1 h-20 mb-6">
+        {[...Array(24)].map((_, i) => (
+          <div
+            key={i}
+            className={`w-2 rounded-full transition-all duration-150 ${
+              isPlaying 
+                ? "bg-gradient-to-t from-cyan-500 to-purple-500" 
+                : "bg-white/20"
+            }`}
+            style={{
+              height: isPlaying ? `${20 + Math.random() * 80}%` : "30%",
+              animationDelay: `${i * 50}ms`,
+            }}
+          />
+        ))}
+      </div>
 
-              {/* Progress bar */}
-              <div className="w-full bg-white/10 rounded-full h-2 mb-4">
-                <div
-                  className="bg-gradient-to-r from-cyan-400 to-purple-500 h-2 rounded-full transition-all duration-100 shadow-lg shadow-cyan-500/30"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+      {/* Hidden YouTube player */}
+      <div className="hidden">
+        <div id="youtube-player"></div>
+      </div>
 
-              {/* Play button */}
-              <button
-                onClick={isPlaying ? stopPlayback : playSnippet}
-                disabled={!playerReady}
-                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all ${
-                  isPlaying 
-                    ? "bg-white/10 text-white border-2 border-white/20" 
-                    : !playerReady
-                    ? "bg-white/5 text-gray-500 cursor-wait"
-                    : "bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02]"
-                }`}
-              >
-                {!playerReady ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    טוען נגן...
-                  </>
-                ) : isPlaying ? (
-                  <>
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                    </svg>
-                    עצור
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                    נגן קטע ({quiz.youtubeDuration || 10} שניות)
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+      {/* Progress bar */}
+      <div className="w-full bg-white/10 rounded-full h-2 mb-6">
+        <div
+          className="bg-gradient-to-r from-cyan-400 to-purple-500 h-2 rounded-full transition-all duration-100 shadow-lg shadow-cyan-500/30"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      {/* Play button */}
+      <button
+        onClick={isPlaying ? stopPlayback : playSnippet}
+        disabled={!playerReady}
+        className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all ${
+          isPlaying 
+            ? "bg-white/10 text-white border-2 border-white/20" 
+            : !playerReady
+            ? "bg-white/5 text-gray-500 cursor-wait"
+            : "bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02]"
+        }`}
+      >
+        {!playerReady ? (
+          <>
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            טוען נגן...
+          </>
+        ) : isPlaying ? (
+          <>
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+            </svg>
+            עצור
+          </>
+        ) : (
+          <>
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            נגן קטע ({quiz.youtubeDuration || 10} שניות)
+          </>
         )}
+      </button>
+    </div>
+  </div>
+)}
 
         {quiz.type === "trivia" && quiz.questionText && (
           <div className="mb-6 p-6 bg-gradient-to-b from-purple-500/10 to-transparent rounded-2xl border border-purple-500/20">
