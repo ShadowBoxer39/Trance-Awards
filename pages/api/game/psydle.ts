@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 1. Get all names for autocomplete
     const { data: allArtists } = await supabase.from('psy_dle_artists').select('name');
     
-    // 2. Get today's silhouette (we send the image URL but NO name)
+    // 2. Get today's silhouette
     const today = new Date().toISOString().split('T')[0];
     const { data: challenge } = await supabase
       .from('daily_psydle_challenge')
@@ -23,9 +23,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Fallback if no game today
     let silhouette = null;
     if (challenge?.psy_dle_artists) {
-        silhouette = (challenge.psy_dle_artists as any).image_url;
+        // Supabase returns an object or array depending on relationship, handle cast safely
+        const artistData = challenge.psy_dle_artists as any; 
+        silhouette = artistData.image_url;
     } else {
-        // Fallback logic
         const { data: fallback } = await supabase.from('psy_dle_artists').select('image_url').limit(1).single();
         silhouette = fallback?.image_url;
     }
@@ -33,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ 
         ok: true, 
         names: allArtists?.map(a => a.name) || [],
-        silhouetteUrl: silhouette // Client gets image but not name
+        silhouetteUrl: silhouette 
     });
   }
 
@@ -51,9 +52,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!challenge) {
        const { data: fallback } = await supabase.from('psy_dle_artists').select('*').limit(1).single();
-       challenge = { psy_dle_artists: fallback };
+       // FIX: Provide the expected structure including artist_id
+       challenge = { 
+           artist_id: fallback?.id || 0, 
+           psy_dle_artists: fallback 
+       } as any;
     }
-    const solution = challenge.psy_dle_artists;
+
+    // Handle potential array vs object return from join
+    const solution = Array.isArray(challenge.psy_dle_artists) 
+        ? challenge.psy_dle_artists[0] 
+        : challenge.psy_dle_artists;
+
+    if (!solution) {
+        return res.status(500).json({ ok: false, error: 'Game configuration error' });
+    }
 
     // 2. Get Guess
     const { data: guess } = await supabase
@@ -67,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 3. Logic: Compare
     const getDir = (g: any, s: any) => (g === s ? 'equal' : g < s ? 'higher' : 'lower');
     
-    // First Letter Logic (A=65, Z=90)
+    // First Letter Logic
     const gLet = guess.name.charAt(0).toUpperCase();
     const sLet = solution.name.charAt(0).toUpperCase();
     const letterDir = getDir(gLet.charCodeAt(0), sLet.charCodeAt(0));
