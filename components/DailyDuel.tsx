@@ -1,3 +1,4 @@
+// components/DailyDuel.tsx
 import React, { useState, useEffect } from 'react';
 import { usePlayer } from './PlayerProvider'; 
 import { createClient } from '@supabase/supabase-js';
@@ -19,7 +20,7 @@ type DuelData = {
 };
 
 export default function DailyDuel() {
-  // FIX: Changed from playTrack to playUrl to match your PlayerProvider
+  // ✅ FIX 1: Use playUrl instead of playTrack
   const { playUrl } = usePlayer();
   
   const [duel, setDuel] = useState<DuelData | null>(null);
@@ -31,39 +32,65 @@ export default function DailyDuel() {
   }, []);
 
   const fetchDuel = async () => {
-    const { data } = await supabase
-      .from('daily_duels')
-      .select('*')
-      .order('publish_date', { ascending: false })
-      .limit(1)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('daily_duels')
+        .select('*')
+        .order('publish_date', { ascending: false })
+        .limit(1)
+        .single();
 
-    if (data) {
-      setDuel(data);
-      if (localStorage.getItem(`duel_vote_${data.id}`)) {
-        setHasVoted(true);
+      if (data) {
+        setDuel(data);
+        if (localStorage.getItem(`duel_vote_${data.id}`)) {
+          setHasVoted(true);
+        }
+      } else {
+        // ✅ FIX 2: Fallback Mock Data (So you see the UI even if DB is empty)
+        console.log("No duel found in DB, showing demo mode.");
+        setDuel({
+          id: 999,
+          type: 'track',
+          title_a: 'Infected Mushroom - Becoming Insane',
+          media_url_a: 'https://soundcloud.com/infectedmushroom/becoming-insane',
+          votes_a: 120,
+          title_b: 'Astrix - Deep Jungle Walk',
+          media_url_b: 'https://soundcloud.com/astrix-official/astrix-deep-jungle-walk',
+          votes_b: 145
+        });
       }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleVote = async (side: 'a' | 'b') => {
     if (!duel || hasVoted) return;
 
+    // Optimistic Update
     setHasVoted(true);
     setDuel(prev => prev ? {
       ...prev,
       [side === 'a' ? 'votes_a' : 'votes_b']: prev[side === 'a' ? 'votes_a' : 'votes_b'] + 1
     } : null);
 
-    await supabase.rpc('increment_duel_vote', { row_id: duel.id, side });
-    localStorage.setItem(`duel_vote_${duel.id}`, side);
+    // Only try to save to DB if it's a real record (id !== 999)
+    if (duel.id !== 999) {
+        await supabase.rpc('increment_duel_vote', { row_id: duel.id, side });
+        localStorage.setItem(`duel_vote_${duel.id}`, side);
+    }
   };
 
+  // ✅ FIX 3: Safe play handler
   const handlePlay = (e: React.MouseEvent, url: string) => {
     e.stopPropagation();
-    // FIX: Using playUrl with just the string string
-    playUrl(url);
+    if (url && url.includes('soundcloud')) {
+        playUrl(url);
+    } else {
+        alert("Playing: " + url); // Fallback if not a soundcloud link
+    }
   };
 
   if (loading || !duel) return null;
@@ -73,13 +100,15 @@ export default function DailyDuel() {
   const percentB = 100 - percentA;
 
   return (
-    <div className="w-full max-w-6xl mx-auto my-8 px-4">
+    <div className="w-full max-w-6xl mx-auto my-8 px-4 relative z-30">
+      
+      {/* Header */}
       <div className="text-center mb-8 relative">
         <div className="absolute inset-0 flex items-center justify-center opacity-20 blur-3xl">
           <div className="w-32 h-32 bg-purple-500 rounded-full"></div>
         </div>
         <h2 className="relative text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-100 to-blue-500 italic tracking-tighter">
-          BATTLE OF THE DAY
+          THE DAILY DUEL
         </h2>
         <p className="text-gray-400 text-sm mt-2 font-mono uppercase tracking-widest">
           {duel.type.toUpperCase()} DUEL • CAST YOUR VOTE
@@ -97,6 +126,7 @@ export default function DailyDuel() {
           <div className="absolute inset-0 bg-gradient-to-br from-red-900/80 to-black z-0 group-hover:scale-110 transition-transform duration-1000" />
           
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6 text-center">
+            
             <div className="mb-6 relative group/media">
                {duel.type === 'track' ? (
                  <button 
