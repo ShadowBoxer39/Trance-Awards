@@ -9,7 +9,24 @@ const supabase = createClient(
 
 const FALLBACK_IMG = "/images/logo.png";
 
-// --- Compact Vinyl with Fixed Seek ---
+// --- Types for DB Data ---
+type DuelType = 'track' | 'artist' | 'album';
+
+interface DuelData {
+  id: number;
+  publish_date: string;
+  type: DuelType;
+  title_a: string;
+  title_b: string;
+  image_a: string;
+  image_b: string;
+  media_url_a?: string | null;
+  media_url_b?: string | null;
+  votes_a: number;
+  votes_b: number;
+}
+
+// --- Compact Vinyl (Only renders if we have audio) ---
 function CompactVinyl({ 
   isPlaying, 
   isActive,
@@ -185,7 +202,7 @@ function CompactVinyl({
   );
 }
 
-// --- Enhanced Duel Card ---
+// --- Dynamic Duel Card ---
 function CompactDuelCard({ 
   side,
   title,
@@ -197,19 +214,19 @@ function CompactDuelCard({
   onVote,
   onPlayPause,
   onSeek,
-  isTrack
+  hasAudio
 }: {
   side: 'a' | 'b';
   title: string;
   imageUrl: string;
-  mediaUrl: string;
+  mediaUrl?: string | null;
   isActive: boolean;
   isPlaying: boolean;
   progress: number;
   onVote: () => void;
   onPlayPause: () => void;
   onSeek: (progress: number) => void;
-  isTrack: boolean;
+  hasAudio: boolean;
 }) {
   const color = side === 'a' ? 'red' : 'blue';
   const buttonGradient = side === 'a' ? 'from-red-600 to-orange-600' : 'from-blue-600 to-cyan-600';
@@ -238,7 +255,8 @@ function CompactDuelCard({
                 {title}
             </h3>
 
-            {isTrack && mediaUrl ? (
+            {/* Conditionally render Player ONLY if audio exists */}
+            {hasAudio && mediaUrl ? (
                 <CompactVinyl
                     imageUrl={imageUrl} 
                     isPlaying={isPlaying}
@@ -264,7 +282,7 @@ function CompactDuelCard({
 
 // --- Minimized Results Bar ---
 function ResultsBar({ 
-    duel, percentA, percentB, activeUrl, isPlaying, progress, onPlay, onSeek 
+    duel, percentA, percentB, activeUrl, isPlaying, progress, onPlay, onSeek, hasAudio 
 }: any) {
     const isPlayingA = isPlaying && activeUrl === duel.media_url_a;
     const isPlayingB = isPlaying && activeUrl === duel.media_url_b;
@@ -284,15 +302,17 @@ function ResultsBar({
                  <div className="absolute inset-0 flex items-center pl-3 gap-3 z-10" dir="ltr">
                      <span className="text-2xl md:text-3xl font-black text-white/90 drop-shadow-md">{percentA}%</span>
                      <div className="hidden sm:block">
-                        <CompactVinyl 
-                            isPlaying={isPlayingA}
-                            isActive={activeUrl === duel.media_url_a}
-                            progress={activeUrl === duel.media_url_a ? progress : 0}
-                            color="red"
-                            onPlayPause={() => onPlay(duel.media_url_a, duel.title_a, duel.image_a)}
-                            onSeek={onSeek}
-                            size="small"
-                        />
+                        {hasAudio && duel.media_url_a && (
+                            <CompactVinyl 
+                                isPlaying={isPlayingA}
+                                isActive={activeUrl === duel.media_url_a}
+                                progress={activeUrl === duel.media_url_a ? progress : 0}
+                                color="red"
+                                onPlayPause={() => onPlay(duel.media_url_a, duel.title_a, duel.image_a)}
+                                onSeek={onSeek}
+                                size="small"
+                            />
+                        )}
                      </div>
                  </div>
             </div>
@@ -309,15 +329,17 @@ function ResultsBar({
 
                  <div className="absolute inset-0 flex items-center justify-end pr-3 gap-3 z-10" dir="ltr">
                      <div className="hidden sm:block w-32">
-                        <CompactVinyl 
-                            isPlaying={isPlayingB}
-                            isActive={activeUrl === duel.media_url_b}
-                            progress={activeUrl === duel.media_url_b ? progress : 0}
-                            color="blue"
-                            onPlayPause={() => onPlay(duel.media_url_b, duel.title_b, duel.image_b)}
-                            onSeek={onSeek}
-                            size="small"
-                        />
+                        {hasAudio && duel.media_url_b && (
+                            <CompactVinyl 
+                                isPlaying={isPlayingB}
+                                isActive={activeUrl === duel.media_url_b}
+                                progress={activeUrl === duel.media_url_b ? progress : 0}
+                                color="blue"
+                                onPlayPause={() => onPlay(duel.media_url_b, duel.title_b, duel.image_b)}
+                                onSeek={onSeek}
+                                size="small"
+                            />
+                        )}
                      </div>
                      <span className="text-2xl md:text-3xl font-black text-white/90 drop-shadow-md">{percentB}%</span>
                  </div>
@@ -335,56 +357,45 @@ function ResultsBar({
 // --- Main Layout ---
 export default function DailyDuel() {
   const { playTrack, activeUrl, isPlaying, toggle, progress, seek } = usePlayer();
-  const [duel, setDuel] = useState<any>(null);
+  const [duel, setDuel] = useState<DuelData | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDuel();
+    fetchDynamicDuel();
   }, []);
 
-  const fetchDuel = async () => {
+  const fetchDynamicDuel = async () => {
     try {
-      const { data } = await supabase
+      // DYNAMIC FETCH: 
+      // 1. Get duels where publish_date is in the past (active)
+      // 2. Order by newest first
+      // 3. Take the first one
+      const { data, error } = await supabase
         .from('daily_duels')
         .select('*')
+        .lte('publish_date', new Date().toISOString()) 
         .order('publish_date', { ascending: false })
         .limit(1)
         .single();
 
+      if (error && error.code !== 'PGRST116') {
+         console.error("Error fetching duel:", error);
+      }
+
       if (data) {
-        setDuel(data);
+        setDuel(data as DuelData);
+        // Check local storage for this specific ID
         if (typeof window !== 'undefined' && localStorage.getItem(`duel_vote_${data.id}`)) {
           setHasVoted(true);
         }
       } else {
-        setDuel({
-          id: 999,
-          type: 'track',
-          title_a: 'Detune - The Point',
-          media_url_a: 'https://www.youtube.com/watch?v=Z6hL6fkJ1_k',
-          image_a: 'https://i.ytimg.com/vi/Z6hL6fkJ1_k/hqdefault.jpg',
-          votes_a: 120,
-          title_b: 'Skizologic - Spirituality',
-          media_url_b: 'https://www.youtube.com/watch?v=7NrnTe28tsM',
-          image_b: 'https://i.ytimg.com/vi/7NrnTe28tsM/hqdefault.jpg',
-          votes_b: 145
-        });
+        // No active duel found in DB
+        setDuel(null); 
       }
     } catch (e) {
-      console.error(e);
-      setDuel({
-          id: 999,
-          type: 'track',
-          title_a: 'Detune - The Point',
-          media_url_a: 'https://www.youtube.com/watch?v=Z6hL6fkJ1_k',
-          image_a: 'https://i.ytimg.com/vi/Z6hL6fkJ1_k/hqdefault.jpg',
-          votes_a: 120,
-          title_b: 'Skizologic - Spirituality',
-          media_url_b: 'https://www.youtube.com/watch?v=7NrnTe28tsM',
-          image_b: 'https://i.ytimg.com/vi/7NrnTe28tsM/hqdefault.jpg',
-          votes_b: 145
-        });
+      console.error("Critical error fetching duel:", e);
+      setDuel(null);
     } finally {
       setLoading(false);
     }
@@ -394,21 +405,23 @@ export default function DailyDuel() {
     if (!duel || hasVoted) return;
     
     setHasVoted(true);
-    setDuel((prev: any) => prev ? {
+    // Optimistic Update
+    setDuel((prev) => prev ? {
       ...prev,
       [side === 'a' ? 'votes_a' : 'votes_b']: (prev[side === 'a' ? 'votes_a' : 'votes_b'] || 0) + 1
     } : null);
 
     localStorage.setItem(`duel_vote_${duel.id}`, side);
     
-    if (duel.id !== 999) {
-      try {
-        await supabase.rpc('increment_duel_vote', { row_id: duel.id, side });
-      } catch (e) { console.error(e); }
+    try {
+      await supabase.rpc('increment_duel_vote', { row_id: duel.id, side });
+    } catch (e) { 
+      console.error("Vote failed to save to DB:", e); 
     }
   };
 
-  const handlePlay = (url: string, title: string, img: string) => {
+  const handlePlay = (url: string | null | undefined, title: string, img: string) => {
+    if (!url) return;
     if (activeUrl === url) {
         toggle();
     } else {
@@ -431,10 +444,17 @@ export default function DailyDuel() {
     );
   }
 
-  if (!duel) return null;
+  // --- EMPTY STATE: NO ACTIVE DUEL ---
+  if (!duel) {
+     return (
+        <div className="w-full max-w-4xl mx-auto px-4 py-12 text-center">
+            <h2 className="text-3xl font-black italic text-gray-700 uppercase">Coming Soon</h2>
+            <p className="text-gray-500">No active duel at this moment.</p>
+        </div>
+     );
+  }
 
-  const duelType = (duel.type || 'track') as 'track' | 'artist' | 'album';
-  const isTrack = duelType === 'track';
+  // Calculate stats
   const totalVotes = (duel.votes_a || 0) + (duel.votes_b || 0);
   const percentA = totalVotes === 0 ? 50 : Math.round(((duel.votes_a || 0) / totalVotes) * 100);
   const percentB = 100 - percentA;
@@ -442,34 +462,41 @@ export default function DailyDuel() {
   const isActiveA = activeUrl === duel.media_url_a;
   const isActiveB = activeUrl === duel.media_url_b;
 
+  // Determine if this duel supports audio
+  // Logic: It must be a 'track' OR an 'album' (if albums have previews), AND have URLs
+  const hasAudio = duel.type !== 'artist' && (!!duel.media_url_a || !!duel.media_url_b);
+
+  // Dynamic Header Text
+  let headerText = 'איזה טראק ינצח היום?';
+  if (duel.type === 'artist') headerText = 'איזה אמן ינצח היום?';
+  if (duel.type === 'album') headerText = 'איזה אלבום ינצח היום?';
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-2" dir="rtl">
       
-      {/* FIX: Increased margin-bottom (mb-8) to separate text from cards.
-         FIX: Added padding-y (py-4) so the gradient text doesn't get clipped.
-      */}
       <div className="text-center mb-8 py-4">
         <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase transform -rotate-1">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-sm pb-1 block">
-            במי אתם בוחרים?
+            Daily Duel
           </span>
         </h2>
+        <p className="text-gray-400 font-medium text-sm mt-1">{headerText}</p>
       </div>
 
       {!hasVoted ? (
         <div className="relative flex flex-col md:flex-row items-stretch gap-4 md:gap-6 animate-in fade-in zoom-in duration-500">
             <CompactDuelCard
-            side="a"
-            title={duel.title_a}
-            imageUrl={duel.image_a || FALLBACK_IMG}
-            mediaUrl={duel.media_url_a}
-            isActive={isActiveA}
-            isPlaying={isPlaying && isActiveA}
-            progress={isActiveA ? progress : 0}
-            onVote={() => handleVote('a')}
-            onPlayPause={() => handlePlay(duel.media_url_a, duel.title_a, duel.image_a)}
-            onSeek={handleSeek}
-            isTrack={isTrack}
+                side="a"
+                title={duel.title_a}
+                imageUrl={duel.image_a || FALLBACK_IMG}
+                mediaUrl={duel.media_url_a}
+                isActive={isActiveA}
+                isPlaying={isPlaying && isActiveA}
+                progress={isActiveA ? progress : 0}
+                onVote={() => handleVote('a')}
+                onPlayPause={() => handlePlay(duel.media_url_a, duel.title_a, duel.image_a)}
+                onSeek={handleSeek}
+                hasAudio={hasAudio}
             />
 
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
@@ -484,17 +511,17 @@ export default function DailyDuel() {
             </div>
 
             <CompactDuelCard
-            side="b"
-            title={duel.title_b}
-            imageUrl={duel.image_b || FALLBACK_IMG}
-            mediaUrl={duel.media_url_b}
-            isActive={isActiveB}
-            isPlaying={isPlaying && isActiveB}
-            progress={isActiveB ? progress : 0}
-            onVote={() => handleVote('b')}
-            onPlayPause={() => handlePlay(duel.media_url_b, duel.title_b, duel.image_b)}
-            onSeek={handleSeek}
-            isTrack={isTrack}
+                side="b"
+                title={duel.title_b}
+                imageUrl={duel.image_b || FALLBACK_IMG}
+                mediaUrl={duel.media_url_b}
+                isActive={isActiveB}
+                isPlaying={isPlaying && isActiveB}
+                progress={isActiveB ? progress : 0}
+                onVote={() => handleVote('b')}
+                onPlayPause={() => handlePlay(duel.media_url_b, duel.title_b, duel.image_b)}
+                onSeek={handleSeek}
+                hasAudio={hasAudio}
             />
         </div>
       ) : (
@@ -508,6 +535,7 @@ export default function DailyDuel() {
                 progress={progress}
                 onPlay={handlePlay}
                 onSeek={handleSeek}
+                hasAudio={hasAudio}
              />
              <div className="text-center mt-2">
                 <span className="text-[10px] text-gray-500">תודה שהצבעת! סה״כ {totalVotes.toLocaleString('he-IL')} הצבעות</span>
