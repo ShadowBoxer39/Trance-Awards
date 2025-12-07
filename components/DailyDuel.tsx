@@ -16,7 +16,8 @@ function CompactVinyl({
   progress,
   color,
   onPlayPause,
-  onSeek
+  onSeek,
+  size = 'normal' // Added size prop for the minimized view
 }: { 
   imageUrl?: string; 
   isPlaying: boolean;
@@ -25,6 +26,7 @@ function CompactVinyl({
   color: 'red' | 'blue';
   onPlayPause: () => void;
   onSeek: (progress: number) => void;
+  size?: 'normal' | 'small';
 }) {
   const [rotation, setRotation] = useState(0);
   const [localProgress, setLocalProgress] = useState(progress);
@@ -93,11 +95,11 @@ function CompactVinyl({
   const handleSeekEnd = useCallback(() => {
     if (isDragging) {
       setIsDragging(false);
-      onSeek(dragProgressRef.current); // Send final value
+      onSeek(dragProgressRef.current);
     }
   }, [isDragging, onSeek]);
 
-  // Global listeners for smooth dragging outside the bar
+  // Global listeners
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => handleSeekMove(e.clientX);
     const onTouchMove = (e: TouchEvent) => handleSeekMove(e.touches[0].clientX);
@@ -117,7 +119,6 @@ function CompactVinyl({
     };
   }, [isDragging, handleSeekMove, handleSeekEnd]);
 
-  // Click handler
   const handleBarClick = (e: React.MouseEvent) => {
     if (!isActive) return;
     e.stopPropagation();
@@ -128,14 +129,18 @@ function CompactVinyl({
 
   const accentColor = color === 'red' ? 'from-red-500 to-orange-500' : 'from-blue-500 to-cyan-500';
   const glowColor = color === 'red' ? 'shadow-red-500/50' : 'shadow-blue-500/50';
+  
+  // Size adjustments
+  const discSize = size === 'small' ? 'w-8 h-8' : 'w-12 h-12';
+  const iconSize = size === 'small' ? 'w-3 h-3' : 'w-4 h-4';
+  const barHeight = size === 'small' ? 'h-5' : 'h-8';
 
   return (
-    // dir="ltr" is CRITICAL here for the math to work correctly on Hebrew sites
     <div className="flex items-center gap-3 w-full mt-auto pt-2" dir="ltr">
       
       {/* Vinyl Play Button */}
       <div 
-        className={`relative w-12 h-12 flex-shrink-0 cursor-pointer group`}
+        className={`relative ${discSize} flex-shrink-0 cursor-pointer group`}
         onClick={(e) => {
           e.stopPropagation();
           onPlayPause();
@@ -152,7 +157,7 @@ function CompactVinyl({
           }} />
 
           <div className="absolute inset-0 flex items-center justify-center">
-             <div className={`w-4 h-4 text-white z-10 drop-shadow-md ${isPlaying ? '' : 'pl-0.5'}`}>
+             <div className={`${iconSize} text-white z-10 drop-shadow-md ${isPlaying ? '' : 'pl-0.5'}`}>
                {isPlaying ? (
                  <svg fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
                ) : (
@@ -166,7 +171,7 @@ function CompactVinyl({
       {/* Seek Bar */}
       <div 
         ref={seekBarRef}
-        className={`relative flex-1 h-8 flex items-center cursor-pointer group ${!isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`relative flex-1 ${barHeight} flex items-center cursor-pointer group ${!isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
         onClick={handleBarClick}
         onMouseDown={(e) => handleSeekStart(e.clientX)}
         onTouchStart={(e) => handleSeekStart(e.touches[0].clientX)}
@@ -198,8 +203,6 @@ function CompactDuelCard({
   isActive,
   isPlaying,
   progress,
-  hasVoted,
-  votePercent,
   onVote,
   onPlayPause,
   onSeek,
@@ -212,8 +215,6 @@ function CompactDuelCard({
   isActive: boolean;
   isPlaying: boolean;
   progress: number;
-  hasVoted: boolean;
-  votePercent: number;
   onVote: () => void;
   onPlayPause: () => void;
   onSeek: (progress: number) => void;
@@ -225,7 +226,7 @@ function CompactDuelCard({
   return (
     <div className={`relative flex-1 min-w-0 h-48 md:h-56 rounded-2xl overflow-hidden group transition-all duration-500 ${isActive ? 'ring-2 ring-white/20 scale-[1.02] z-10' : 'hover:ring-1 hover:ring-white/10'}`}>
       
-      {/* 1. BIG BACKGROUND IMAGE */}
+      {/* Background Image */}
       <div className="absolute inset-0">
         <img 
           src={imageUrl || FALLBACK_IMG} 
@@ -240,20 +241,7 @@ function CompactDuelCard({
         )}
       </div>
 
-      <div className="relative h-full flex flex-col justify-between p-4 md:p-5">
-        
-        <div className="flex justify-between items-start">
-            <span className={`text-[10px] font-black tracking-widest uppercase px-2 py-1 rounded bg-black/40 backdrop-blur text-white/70 border border-white/5`}>
-                {side === 'a' ? 'Challenger' : 'Defender'}
-            </span>
-            
-            {hasVoted && (
-                <div className="flex flex-col items-end animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <span className="text-2xl md:text-3xl font-black text-white drop-shadow-lg">{votePercent}%</span>
-                </div>
-            )}
-        </div>
-
+      <div className="relative h-full flex flex-col justify-end p-4 md:p-5">
         <div className="space-y-3">
             <h3 className="text-white font-bold text-base md:text-lg leading-tight line-clamp-2 drop-shadow-md">
                 {title}
@@ -271,27 +259,91 @@ function CompactDuelCard({
                 />
             ) : null}
 
-            {!hasVoted && (
-                <button
-                onClick={onVote}
-                className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r ${buttonGradient} text-white shadow-lg shadow-black/30 transition-all hover:scale-[1.02] active:scale-95 border border-white/10`}
-                >
-                הצבעה ל{side === 'a' ? 'צד א׳' : 'צד ב׳'}
-                </button>
-            )}
-            
-            {hasVoted && (
-                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
-                    <div 
-                      className={`h-full bg-gradient-to-r ${buttonGradient} transition-all duration-1000 ease-out`}
-                      style={{ width: `${votePercent}%` }}
-                    />
-                 </div>
-            )}
+            <button
+            onClick={onVote}
+            className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r ${buttonGradient} text-white shadow-lg shadow-black/30 transition-all hover:scale-[1.02] active:scale-95 border border-white/10`}
+            >
+            הצבעה ל{side === 'a' ? 'צד א׳' : 'צד ב׳'}
+            </button>
         </div>
       </div>
     </div>
   );
+}
+
+// --- NEW: Minimized Results Bar ---
+function ResultsBar({ 
+    duel, percentA, percentB, activeUrl, isPlaying, progress, onPlay, onSeek 
+}: any) {
+    const isPlayingA = isPlaying && activeUrl === duel.media_url_a;
+    const isPlayingB = isPlaying && activeUrl === duel.media_url_b;
+
+    return (
+        <div className="w-full h-24 relative rounded-xl overflow-hidden shadow-2xl flex border border-white/10 mt-1">
+            {/* Left Side (A) */}
+            <div 
+                className="relative h-full bg-gray-900 transition-all duration-1000 ease-out border-r border-black/50 overflow-hidden"
+                style={{ width: `${percentA}%`, minWidth: '80px' }}
+            >
+                 {/* Background A */}
+                 <div className="absolute inset-0">
+                    <img src={duel.image_a} className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 to-transparent" />
+                 </div>
+                 
+                 {/* Content A */}
+                 <div className="absolute inset-0 flex items-center pl-3 gap-3 z-10" dir="ltr">
+                     <span className="text-2xl md:text-3xl font-black text-white/90 drop-shadow-md">{percentA}%</span>
+                     <div className="hidden sm:block">
+                        <CompactVinyl 
+                            isPlaying={isPlayingA}
+                            isActive={activeUrl === duel.media_url_a}
+                            progress={activeUrl === duel.media_url_a ? progress : 0}
+                            color="red"
+                            onPlayPause={() => onPlay(duel.media_url_a, duel.title_a, duel.image_a)}
+                            onSeek={onSeek}
+                            size="small"
+                        />
+                     </div>
+                 </div>
+            </div>
+
+            {/* Right Side (B) */}
+            <div 
+                className="relative h-full bg-gray-900 transition-all duration-1000 ease-out overflow-hidden"
+                style={{ width: `${percentB}%`, minWidth: '80px' }}
+            >
+                {/* Background B */}
+                 <div className="absolute inset-0">
+                    <img src={duel.image_b} className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all" />
+                    <div className="absolute inset-0 bg-gradient-to-l from-blue-900/40 to-transparent" />
+                 </div>
+
+                 {/* Content B */}
+                 <div className="absolute inset-0 flex items-center justify-end pr-3 gap-3 z-10" dir="ltr">
+                     <div className="hidden sm:block w-32">
+                        <CompactVinyl 
+                            isPlaying={isPlayingB}
+                            isActive={activeUrl === duel.media_url_b}
+                            progress={activeUrl === duel.media_url_b ? progress : 0}
+                            color="blue"
+                            onPlayPause={() => onPlay(duel.media_url_b, duel.title_b, duel.image_b)}
+                            onSeek={onSeek}
+                            size="small"
+                        />
+                     </div>
+                     <span className="text-2xl md:text-3xl font-black text-white/90 drop-shadow-md">{percentB}%</span>
+                 </div>
+            </div>
+            
+            {/* Center Badge */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                <div className="w-8 h-8 rounded-full bg-black border border-white/20 flex items-center justify-center shadow-lg">
+                    <span className="text-[10px] font-black italic text-gray-400">VS</span>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 // --- Main Layout ---
@@ -336,7 +388,6 @@ export default function DailyDuel() {
       }
     } catch (e) {
       console.error(e);
-      // Fallback on error
       setDuel({
           id: 999,
           type: 'track',
@@ -373,8 +424,11 @@ export default function DailyDuel() {
   };
 
   const handlePlay = (url: string, title: string, img: string) => {
-    if (!url) return;
-    playTrack({ url, title, image: img || FALLBACK_IMG });
+    if (activeUrl === url) {
+        toggle();
+    } else {
+        playTrack({ url, title, image: img || FALLBACK_IMG });
+    }
   };
 
   const handleSeek = (newProgress: number) => {
@@ -404,72 +458,76 @@ export default function DailyDuel() {
   const isActiveB = activeUrl === duel.media_url_b;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-6" dir="rtl">
-      <div className="text-center mb-6">
+    // Reduced Vertical Padding (py-2)
+    <div className="w-full max-w-4xl mx-auto px-4 py-2" dir="rtl">
+      
+      {/* Minimized Header Margin (mb-2) */}
+      <div className="text-center mb-2">
         <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase transform -rotate-1">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-sm">
             Daily Duel
           </span>
         </h2>
-        <p className="text-gray-400 font-medium text-sm mt-1">איזה טראק ינצח היום?</p>
       </div>
 
-      <div className="relative flex flex-col md:flex-row items-stretch gap-4 md:gap-6">
-        <CompactDuelCard
-          side="a"
-          title={duel.title_a}
-          imageUrl={duel.image_a || FALLBACK_IMG}
-          mediaUrl={duel.media_url_a}
-          isActive={isActiveA}
-          isPlaying={isPlaying && isActiveA}
-          progress={isActiveA ? progress : 0}
-          hasVoted={hasVoted}
-          votePercent={percentA}
-          onVote={() => handleVote('a')}
-          onPlayPause={() => {
-            if (isActiveA) toggle();
-            else handlePlay(duel.media_url_a, duel.title_a, duel.image_a);
-          }}
-          onSeek={handleSeek}
-          isTrack={isTrack}
-        />
+      {!hasVoted ? (
+        // BATTLE MODE (Cards)
+        <div className="relative flex flex-col md:flex-row items-stretch gap-4 md:gap-6 animate-in fade-in zoom-in duration-500">
+            <CompactDuelCard
+            side="a"
+            title={duel.title_a}
+            imageUrl={duel.image_a || FALLBACK_IMG}
+            mediaUrl={duel.media_url_a}
+            isActive={isActiveA}
+            isPlaying={isPlaying && isActiveA}
+            progress={isActiveA ? progress : 0}
+            onVote={() => handleVote('a')}
+            onPlayPause={() => handlePlay(duel.media_url_a, duel.title_a, duel.image_a)}
+            onSeek={handleSeek}
+            isTrack={isTrack}
+            />
 
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-white rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity" />
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-black border-2 border-white/10 rounded-full flex items-center justify-center shadow-2xl shadow-black/50">
-              <span className="text-lg md:text-xl font-black italic bg-gradient-to-br from-red-500 to-blue-500 bg-clip-text text-transparent">
-                VS
-              </span>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+            <div className="relative group">
+                <div className="absolute inset-0 bg-white rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-black border-2 border-white/10 rounded-full flex items-center justify-center shadow-2xl shadow-black/50">
+                <span className="text-lg md:text-xl font-black italic bg-gradient-to-br from-red-500 to-blue-500 bg-clip-text text-transparent">
+                    VS
+                </span>
+                </div>
             </div>
-          </div>
+            </div>
+
+            <CompactDuelCard
+            side="b"
+            title={duel.title_b}
+            imageUrl={duel.image_b || FALLBACK_IMG}
+            mediaUrl={duel.media_url_b}
+            isActive={isActiveB}
+            isPlaying={isPlaying && isActiveB}
+            progress={isActiveB ? progress : 0}
+            onVote={() => handleVote('b')}
+            onPlayPause={() => handlePlay(duel.media_url_b, duel.title_b, duel.image_b)}
+            onSeek={handleSeek}
+            isTrack={isTrack}
+            />
         </div>
-
-        <CompactDuelCard
-          side="b"
-          title={duel.title_b}
-          imageUrl={duel.image_b || FALLBACK_IMG}
-          mediaUrl={duel.media_url_b}
-          isActive={isActiveB}
-          isPlaying={isPlaying && isActiveB}
-          progress={isActiveB ? progress : 0}
-          hasVoted={hasVoted}
-          votePercent={percentB}
-          onVote={() => handleVote('b')}
-          onPlayPause={() => {
-            if (isActiveB) toggle();
-            else handlePlay(duel.media_url_b, duel.title_b, duel.image_b);
-          }}
-          onSeek={handleSeek}
-          isTrack={isTrack}
-        />
-      </div>
-
-      {hasVoted && (
-        <div className="text-center mt-6 animate-in fade-in duration-700">
-          <span className="inline-block px-4 py-1 rounded-full bg-white/5 text-xs text-gray-400 border border-white/5">
-            סה״כ {totalVotes.toLocaleString('he-IL')} הצבעות
-          </span>
+      ) : (
+        // RESULTS MODE (Minimized Top Bar)
+        <div className="animate-in slide-in-from-bottom-4 duration-700 fade-in">
+             <ResultsBar 
+                duel={duel} 
+                percentA={percentA} 
+                percentB={percentB}
+                activeUrl={activeUrl}
+                isPlaying={isPlaying}
+                progress={progress}
+                onPlay={handlePlay}
+                onSeek={handleSeek}
+             />
+             <div className="text-center mt-2">
+                <span className="text-[10px] text-gray-500">תודה שהצבעת! סה״כ {totalVotes.toLocaleString('he-IL')} הצבעות</span>
+             </div>
         </div>
       )}
     </div>
