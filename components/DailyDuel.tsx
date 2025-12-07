@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from './PlayerProvider'; 
 import { createClient } from '@supabase/supabase-js';
-import { FaPlay, FaPause, FaVoteYea } from 'react-icons/fa';
+import { FaPlay, FaPause, FaBolt } from 'react-icons/fa';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,48 +10,35 @@ const supabase = createClient(
 
 const FALLBACK_IMG = "/images/logo.png"; 
 
-// --- NEON VISUALIZER ---
-const NeonEqualizer = ({ color }: { color: string }) => (
-  <div className="flex items-end justify-center gap-1 h-6 w-10">
-    <div className={`w-1.5 rounded-t-full animate-[bounce_0.8s_infinite] h-3 ${color}`}></div>
-    <div className={`w-1.5 rounded-t-full animate-[bounce_1.2s_infinite] h-6 ${color}`}></div>
-    <div className={`w-1.5 rounded-t-full animate-[bounce_0.6s_infinite] h-4 ${color}`}></div>
-    <div className={`w-1.5 rounded-t-full animate-[bounce_1.0s_infinite] h-5 ${color}`}></div>
-  </div>
-);
-
 export default function DailyDuel() {
   const { playTrack, activeUrl, isPlaying, toggle, progress, seek } = usePlayer();
   const [duel, setDuel] = useState<any>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // --- SEEKING FIX: Local state to handle dragging ---
+  // --- SMOOTH SEEKING LOGIC ---
+  const [localProgress, setLocalProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragValue, setDragValue] = useState(0);
 
-  // Sync local drag value with global progress ONLY when not dragging
+  // Sync player progress to local state ONLY when not dragging
   useEffect(() => {
     if (!isDragging) {
-      setDragValue(progress);
+      setLocalProgress(progress);
     }
   }, [progress, isDragging]);
 
+  const handleSeekStart = () => setIsDragging(true);
+  
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDragValue(parseFloat(e.target.value));
-  };
-
-  const handleSeekStart = () => {
-    setIsDragging(true);
+    setLocalProgress(parseFloat(e.target.value));
   };
 
   const handleSeekEnd = (e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) => {
     setIsDragging(false);
     // @ts-ignore
-    const newValue = parseFloat(e.target.value);
-    seek(newValue);
+    seek(parseFloat(e.target.value));
   };
-  // ----------------------------------------------------
+  // ---------------------------
 
   useEffect(() => {
     fetchDuel();
@@ -70,7 +57,7 @@ export default function DailyDuel() {
         setDuel(data);
         if (typeof window !== 'undefined' && localStorage.getItem(`duel_vote_${data.id}`)) setHasVoted(true);
       } else {
-        // FALLBACK DEMO
+        // Fallback Data
         setDuel({
           id: 999,
           type: 'track',
@@ -111,194 +98,164 @@ export default function DailyDuel() {
     playTrack({ url, title, image: img || FALLBACK_IMG });
   };
 
-  const stopProp = (e: React.MouseEvent | React.TouchEvent) => e.stopPropagation();
-
   if (loading || !duel) return null;
 
   const totalVotes = (duel.votes_a || 0) + (duel.votes_b || 0);
   const percentA = totalVotes === 0 ? 50 : Math.round(((duel.votes_a || 0) / totalVotes) * 100);
   const percentB = 100 - percentA;
-  const imgA = duel.image_a || FALLBACK_IMG;
-  const imgB = duel.image_b || FALLBACK_IMG;
   
   const isActiveA = activeUrl === duel.media_url_a;
   const isActiveB = activeUrl === duel.media_url_b;
   const isPlayingA = isPlaying && isActiveA;
   const isPlayingB = isPlaying && isActiveB;
 
-  if (hasVoted) {
+  // Reusable Vinyl Card Component
+  const DuelCard = ({ side, title, img, url, isActive, isPlayingLocal, percent }: any) => {
+    const isRed = side === 'a';
+    const colorClass = isRed ? 'red' : 'blue'; // Used for dynamic class names logic
+    const glowColor = isRed ? 'shadow-red-500/40' : 'shadow-blue-500/40';
+    const borderColor = isRed ? 'border-red-500/50' : 'border-blue-500/50';
+    const btnGradient = isRed ? 'from-red-600 to-orange-600' : 'from-blue-600 to-cyan-600';
+
     return (
-      <div className="w-full max-w-4xl mx-auto my-8 px-4 animate-fade-in-down" dir="rtl">
-        <div className="relative overflow-hidden rounded-2xl p-[2px] bg-gradient-to-r from-red-500 via-purple-500 to-blue-500">
-          <div className="bg-black/90 backdrop-blur-xl rounded-2xl p-6 relative">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-blue-400">התוצאות</h3>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="flex flex-col items-center gap-2 flex-1">
-                 <img src={imgA} className="w-20 h-20 object-cover rounded-xl" style={{ border: '3px solid #ef4444' }} alt="" />
-                 <span className="text-white text-xs font-bold text-center line-clamp-1 mt-2">{duel.title_a}</span>
-              </div>
-              <div className="flex-[3] flex flex-col gap-2">
-                  <div className="h-6 bg-gray-800 rounded-full overflow-hidden flex text-[10px] font-black shadow-inner border border-white/5">
-                      <div className="bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center text-white relative" style={{ width: `${percentA}%` }}>{percentA}%</div>
-                      <div className="bg-gradient-to-l from-blue-600 to-blue-500 flex items-center justify-center text-white relative" style={{ width: `${percentB}%` }}>{percentB}%</div>
-                  </div>
-              </div>
-              <div className="flex flex-col items-center gap-2 flex-1">
-                 <img src={imgB} className="w-20 h-20 object-cover rounded-xl" style={{ border: '3px solid #3b82f6' }} alt="" />
-                 <span className="text-white text-xs font-bold text-center line-clamp-1">{duel.title_b}</span>
-              </div>
-            </div>
+      <div className={`relative group flex flex-col items-center p-4 rounded-3xl bg-gray-900/40 border border-white/5 transition-all duration-300 ${isActive ? `bg-gray-900/80 ${borderColor} shadow-lg ${glowColor}` : 'hover:bg-gray-900/60'}`}>
+        
+        {/* VINYL DISC IMAGE */}
+        <div 
+          className="relative w-32 h-32 md:w-40 md:h-40 cursor-pointer mb-4"
+          onClick={isPlayingLocal ? toggle : (e) => handlePlay(e, url, title, img)}
+        >
+          {/* Spinning Animation Wrapper */}
+          <div className={`w-full h-full rounded-full border-4 ${isRed ? 'border-gray-800' : 'border-gray-800'} shadow-2xl overflow-hidden ${isPlayingLocal ? 'animate-spin-slow' : ''}`}>
+             <img src={img} alt={title} className="w-full h-full object-cover" />
+             {/* Center Vinyl Hole */}
+             <div className="absolute inset-0 m-auto w-8 h-8 bg-gray-900 rounded-full border-2 border-white/20 z-10"></div>
           </div>
+
+          {/* Play/Pause Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center z-20">
+             <div className={`w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/20 transition-transform ${isPlayingLocal ? 'scale-100' : 'scale-0 group-hover:scale-100'}`}>
+                {isPlayingLocal ? <FaPause className="text-white text-xs" /> : <FaPlay className="text-white text-xs ml-0.5" />}
+             </div>
+          </div>
+        </div>
+
+        {/* INFO & CONTROLS */}
+        <div className="w-full text-center z-10">
+          <h3 className="text-sm md:text-base font-bold text-white line-clamp-1 mb-2 h-6">{title}</h3>
+          
+          {/* Custom Seek Bar */}
+          <div className="relative w-full h-6 flex items-center justify-center mb-3">
+             <div className="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden relative">
+                {/* Progress Fill */}
+                <div 
+                  className={`absolute left-0 top-0 h-full transition-all duration-75 ease-out ${isRed ? 'bg-red-500' : 'bg-blue-500'}`} 
+                  style={{ width: `${isActive ? localProgress * 100 : 0}%` }}
+                />
+                {/* Range Input (Invisible but interactive) */}
+                <input 
+                  type="range" min={0} max={1} step="0.001"
+                  value={isActive ? localProgress : 0}
+                  onChange={handleSeekChange}
+                  onMouseDown={handleSeekStart}
+                  onMouseUp={handleSeekEnd}
+                  onTouchStart={handleSeekStart}
+                  onTouchEnd={handleSeekEnd}
+                  disabled={!isActive}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
+                />
+             </div>
+          </div>
+
+          {/* Vote Button OR Result Bar */}
+          {!hasVoted ? (
+            <button 
+              onClick={() => handleVote(side)}
+              className={`w-full py-2.5 rounded-xl font-bold text-xs md:text-sm uppercase tracking-wider bg-gradient-to-r ${btnGradient} text-white hover:scale-[1.02] active:scale-95 transition-all shadow-lg`}
+            >
+              הצבעה
+            </button>
+          ) : (
+            <div className="w-full">
+               <div className="flex justify-between text-xs text-gray-400 mb-1 font-mono">
+                 <span>{percent}%</span>
+               </div>
+               <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                 <div 
+                   className={`h-full bg-gradient-to-r ${btnGradient} transition-all duration-1000 ease-out`} 
+                   style={{ width: `${percent}%` }}
+                 />
+               </div>
+            </div>
+          )}
         </div>
       </div>
     );
-  }
+  };
 
   return (
-    <div className="w-full max-w-5xl mx-auto my-12 px-4 relative z-20" dir="rtl">
+    <div className="w-full max-w-4xl mx-auto my-8 px-4 relative z-20" dir="rtl">
       
-      <div className="text-center mb-10 relative">
-        <h2 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter drop-shadow-2xl transform -skew-x-6">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <h2 className="text-3xl md:text-5xl font-black italic tracking-tighter text-white">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 animate-gradient-x">
             DAILY DUEL
           </span>
         </h2>
-        <div className="flex items-center justify-center gap-3 mt-4">
-            <span className="h-px w-12 bg-white/30"></span>
-            <p className="text-purple-300 text-xs md:text-sm font-bold tracking-[0.3em] uppercase">מי ינצח היום?</p>
-            <span className="h-px w-12 bg-white/30"></span>
+        <div className="text-xs font-bold text-gray-400 tracking-[0.3em] uppercase mt-1">
+          מי ינצח היום?
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative">
+      {/* Grid Container */}
+      <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
         
-        {/* VS LOGO */}
-        <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none items-center justify-center">
-             <div className="w-24 h-24 relative flex items-center justify-center">
-                <div className="absolute inset-0 bg-white/20 blur-xl rounded-full animate-pulse"></div>
-                <div className="w-20 h-20 bg-black border-2 border-white/20 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.3)] z-10 backdrop-blur-md">
-                    <span className="font-black italic text-3xl text-white">VS</span>
-                </div>
-             </div>
+        {/* VS Badge (Absolute Center) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none hidden md:flex">
+           <div className="w-12 h-12 bg-black border border-white/20 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+              <span className="font-black italic text-xs text-white"><FaBolt /></span>
+           </div>
         </div>
 
-        {/* CARD A */}
-        <div className={`relative bg-gray-900/40 rounded-3xl p-4 border transition-all duration-500 ${isPlayingA ? 'border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.3)] scale-[1.02]' : 'border-white/5 hover:border-white/20 hover:bg-gray-900/60'}`}>
-            <div 
-                className="relative aspect-square cursor-pointer mx-auto w-full max-w-[280px]"
-                onClick={isPlayingA ? toggle : (e) => handlePlay(e, duel.media_url_a, duel.title_a, imgA)}
-            >
-                {/* FIX 1: ROUNDED-2XL INSTEAD OF ROUNDED-FULL */}
-                <div 
-                  className={`w-full h-full rounded-2xl border-4 border-gray-800 shadow-2xl overflow-hidden`} 
-                >
-                    <img src={imgA} alt={duel.title_a} className="w-full h-full object-cover" />
-                </div>
-                
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-16 h-16 bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-xl group-hover:scale-110 transition-transform">
-                        {isPlayingA ? <FaPause className="text-red-500" /> : <FaPlay className="text-white ml-1" />}
-                    </div>
-                </div>
-            </div>
+        {/* Card A */}
+        <DuelCard 
+          side="a"
+          title={duel.title_a}
+          img={duel.image_a || FALLBACK_IMG}
+          url={duel.media_url_a}
+          isActive={isActiveA}
+          isPlayingLocal={isPlayingA}
+          percent={percentA}
+        />
 
-            <div className="mt-6 text-center">
-                <h3 className="text-xl md:text-2xl font-black text-white mb-1 line-clamp-1">{duel.title_a}</h3>
-                <div className="h-6 flex justify-center items-center mb-4">
-                    {isPlayingA ? <NeonEqualizer color="bg-red-500" /> : <span className="text-xs text-gray-500 font-bold tracking-widest">לחץ לניגון</span>}
-                </div>
-
-                {/* SEEK BAR A - FIXED */}
-                <div 
-                    className={`relative h-12 flex items-center justify-center ${isActiveA ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}
-                    onMouseDown={stopProp} onTouchStart={stopProp} onClick={stopProp}
-                >
-                    <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
-                        <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 absolute left-0 top-0 transition-all duration-100 ease-out" 
-                             style={{ width: `${isActiveA ? dragValue * 100 : 0}%` }}></div>
-                        <input 
-                            type="range" min={0} max={1} step="any"
-                            value={isActiveA ? dragValue : 0}
-                            onChange={handleSeekChange}
-                            onMouseDown={handleSeekStart}
-                            onMouseUp={handleSeekEnd}
-                            onTouchStart={handleSeekStart}
-                            onTouchEnd={handleSeekEnd}
-                            style={{ pointerEvents: 'auto', zIndex: 50 }} 
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                    </div>
-                </div>
-
-                <button 
-                    onClick={() => handleVote('a')}
-                    className="w-full py-4 rounded-xl font-black text-lg uppercase bg-gradient-to-r from-red-600 to-red-800 text-white flex items-center justify-center gap-3 mt-4 hover:scale-[1.02] transition-transform"
-                >
-                    <FaVoteYea /> אני בוחר בזה
-                </button>
-            </div>
-        </div>
-
-        {/* CARD B */}
-        <div className={`relative bg-gray-900/40 rounded-3xl p-4 border transition-all duration-500 ${isPlayingB ? 'border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.3)] scale-[1.02]' : 'border-white/5 hover:border-white/20 hover:bg-gray-900/60'}`}>
-            <div 
-                className="relative aspect-square cursor-pointer mx-auto w-full max-w-[280px]"
-                onClick={isPlayingB ? toggle : (e) => handlePlay(e, duel.media_url_b, duel.title_b, imgB)}
-            >
-                {/* FIX 1: ROUNDED-2XL INSTEAD OF ROUNDED-FULL */}
-                <div 
-                  className={`w-full h-full rounded-2xl border-4 border-gray-800 shadow-2xl overflow-hidden`} 
-                >
-                    <img src={imgB} alt={duel.title_b} className="w-full h-full object-cover" />
-                </div>
-                
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-16 h-16 bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-xl hover:scale-110 transition-transform">
-                        {isPlayingB ? <FaPause className="text-blue-500" /> : <FaPlay className="text-white ml-1" />}
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-6 text-center">
-                <h3 className="text-xl md:text-2xl font-black text-white mb-1 line-clamp-1">{duel.title_b}</h3>
-                <div className="h-6 flex justify-center items-center mb-4">
-                    {isPlayingB ? <NeonEqualizer color="bg-blue-500" /> : <span className="text-xs text-gray-500 font-bold tracking-widest">לחץ לניגון</span>}
-                </div>
-
-                {/* SEEK BAR B - FIXED */}
-                <div 
-                    className={`relative h-12 flex items-center justify-center ${isActiveB ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}
-                    onMouseDown={stopProp} onTouchStart={stopProp} onClick={stopProp}
-                >
-                    <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
-                        <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 absolute left-0 top-0 transition-all duration-100 ease-out" 
-                             style={{ width: `${isActiveB ? dragValue * 100 : 0}%` }}></div>
-                        <input 
-                            type="range" min={0} max={1} step="any"
-                            value={isActiveB ? dragValue : 0}
-                            onChange={handleSeekChange}
-                            onMouseDown={handleSeekStart}
-                            onMouseUp={handleSeekEnd}
-                            onTouchStart={handleSeekStart}
-                            onTouchEnd={handleSeekEnd}
-                            style={{ pointerEvents: 'auto', zIndex: 50 }} 
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                    </div>
-                </div>
-
-                <button 
-                    onClick={() => handleVote('b')}
-                    className="w-full py-4 rounded-xl font-black text-lg uppercase bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center gap-3 mt-4 hover:scale-[1.02] transition-transform"
-                >
-                    <FaVoteYea /> אני בוחר בזה
-                </button>
-            </div>
-        </div>
+        {/* Card B */}
+        <DuelCard 
+          side="b"
+          title={duel.title_b}
+          img={duel.image_b || FALLBACK_IMG}
+          url={duel.media_url_b}
+          isActive={isActiveB}
+          isPlayingLocal={isPlayingB}
+          percent={percentB}
+        />
 
       </div>
+      
+      {/* Mobile VS Badge (Inline) */}
+      <div className="md:hidden text-center -mt-2 mb-2 relative z-30">
+         <span className="bg-black px-2 text-xs font-bold text-gray-500 border border-white/10 rounded-full py-1">VS</span>
+      </div>
+
+      <style jsx global>{`
+        .animate-spin-slow {
+          animation: spin 6s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
