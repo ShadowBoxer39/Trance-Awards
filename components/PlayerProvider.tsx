@@ -10,6 +10,7 @@ type TrackData = {
 
 type PlayerAPI = {
   playTrack: (data: TrackData) => void;
+  playUrl: (url: string) => void; // <--- Restored this property
   toggle: () => void;
   seek: (percentage: number) => void;
   activeUrl: string | null;
@@ -19,8 +20,9 @@ type PlayerAPI = {
 
 const PlayerContext = createContext<PlayerAPI>({
   playTrack: () => {},
+  playUrl: () => {}, // <--- Restored this default
   toggle: () => {},
-  seek: () => {},
+  seek: () => {}, 
   activeUrl: null,
   isPlaying: false,
   progress: 0,
@@ -30,6 +32,7 @@ export const usePlayer = () => useContext(PlayerContext);
 
 // --- Helper: Extract YouTube ID ---
 const getYouTubeId = (url: string) => {
+  if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
@@ -47,7 +50,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
 
   // 1. Initialize YouTube API
   useEffect(() => {
-    // Check if API script is already present
     if (!window.YT) {
       const tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
@@ -57,7 +59,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
 
     // Define the global callback
     window.onYouTubeIframeAPIReady = () => {
-      // API is ready, but we wait for user to play a track to create the player
+      // API is ready
     };
 
     return () => {
@@ -70,7 +72,10 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     if (!activeUrl) return;
 
     const videoId = getYouTubeId(activeUrl);
-    if (!videoId) return;
+    if (!videoId) {
+        console.warn("PlayerProvider: Non-YouTube URL detected or invalid ID", activeUrl);
+        return;
+    }
 
     if (!playerRef.current) {
       // Create Player if it doesn't exist
@@ -84,7 +89,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             'controls': 0,
             'disablekb': 1,
             'fs': 0,
-            'playsinline': 1, // Important for mobile
+            'playsinline': 1,
           },
           events: {
             'onReady': (event: any) => {
@@ -92,7 +97,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
               setIsPlaying(true);
             },
             'onStateChange': (event: any) => {
-              // YT.PlayerState.PLAYING = 1, PAUSED = 2, ENDED = 0
+              // 1 = Playing, 2 = Paused, 0 = Ended
               if (event.data === 1) setIsPlaying(true);
               if (event.data === 2) setIsPlaying(false);
               if (event.data === 0) {
@@ -120,7 +125,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
           setProgress(current / duration);
         }
       }
-    }, 100); // Check every 100ms
+    }, 100); 
 
     return () => { 
       if (timerRef.current) clearInterval(timerRef.current); 
@@ -136,6 +141,11 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       setActiveUrl(data.url);
       setProgress(0);
     }
+  };
+
+  // --- RESTORED FUNCTION ---
+  const playUrl = (url: string) => {
+    playTrack({ url, title: "Unknown Track", image: "" });
   };
 
   const toggle = () => {
@@ -155,7 +165,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     if (!playerRef.current || typeof playerRef.current.seekTo !== 'function') return;
 
     isSeekingRef.current = true;
-    setProgress(percentage); // Visual update immediately
+    setProgress(percentage);
 
     const duration = playerRef.current.getDuration();
     if (duration) {
@@ -163,7 +173,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       playerRef.current.seekTo(seekTime, true);
     }
 
-    // Release lock shortly after
     setTimeout(() => {
       isSeekingRef.current = false;
     }, 500);
@@ -173,6 +182,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     <PlayerContext.Provider
       value={{
         playTrack,
+        playUrl, // <--- Exposed to Context
         toggle,
         seek,
         activeUrl,
@@ -181,7 +191,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       }}
     >
       {children}
-      {/* Hidden container for the iframe */}
       <div 
         id="yt-player-target" 
         className="fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none z-[-1]" 
