@@ -9,9 +9,8 @@ const supabase = createClient(
 
 const FALLBACK_IMG = "/images/logo.png";
 
-// Compact Vinyl with inline seek bar
+// --- Compact Vinyl with Improved Seeker ---
 function CompactVinyl({ 
-  imageUrl, 
   isPlaying, 
   isActive,
   progress,
@@ -19,7 +18,7 @@ function CompactVinyl({
   onPlayPause,
   onSeek
 }: { 
-  imageUrl: string;
+  imageUrl?: string; // Optional now, as image is on the card background
   isPlaying: boolean;
   isActive: boolean;
   progress: number;
@@ -30,24 +29,31 @@ function CompactVinyl({
   const [rotation, setRotation] = useState(0);
   const [localProgress, setLocalProgress] = useState(progress);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Refs for animation and logic
   const animationRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const seekBarRef = useRef<HTMLDivElement>(null);
+  
+  // We use a ref for drag progress to ensure the 'mouseup' event gets the fresh value immediately
+  // without waiting for a React render cycle.
+  const dragProgressRef = useRef(progress);
 
   // Sync external progress when not dragging
   useEffect(() => {
     if (!isDragging) {
       setLocalProgress(progress);
+      dragProgressRef.current = progress;
     }
   }, [progress, isDragging]);
 
-  // Smooth rotation animation
+  // Rotation Animation
   useEffect(() => {
     if (isPlaying && !isDragging) {
       const animate = (currentTime: number) => {
         if (lastTimeRef.current) {
           const delta = currentTime - lastTimeRef.current;
-          setRotation(prev => (prev + delta * 0.015) % 360);
+          setRotation(prev => (prev + delta * 0.045) % 360); // Speed up slightly for effect
         }
         lastTimeRef.current = currentTime;
         animationRef.current = requestAnimationFrame(animate);
@@ -59,143 +65,108 @@ function CompactVinyl({
         cancelAnimationFrame(animationRef.current);
       }
     }
-    
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [isPlaying, isDragging]);
 
-  // Handle seek bar interaction
-  const handleSeekInteraction = useCallback((clientX: number) => {
-    if (!seekBarRef.current || !isActive) return;
-    
+  // --- Seeker Logic ---
+
+  const calculateProgress = useCallback((clientX: number) => {
+    if (!seekBarRef.current) return 0;
     const rect = seekBarRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
-    const newProgress = Math.max(0, Math.min(1, x / rect.width));
+    // Clamp between 0 and 1
+    return Math.max(0, Math.min(1, x / rect.width));
+  }, []);
+
+  const handleSeekStart = (clientX: number) => {
+    if (!isActive) return;
+    setIsDragging(true);
+    const newProgress = calculateProgress(clientX);
     setLocalProgress(newProgress);
-    return newProgress;
-  }, [isActive]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!isActive) return;
-    setIsDragging(true);
-    handleSeekInteraction(e.clientX);
+    dragProgressRef.current = newProgress;
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
+  const handleSeekMove = useCallback((clientX: number) => {
     if (isDragging) {
-      handleSeekInteraction(e.clientX);
+      const newProgress = calculateProgress(clientX);
+      setLocalProgress(newProgress);
+      dragProgressRef.current = newProgress;
     }
-  }, [isDragging, handleSeekInteraction]);
+  }, [isDragging, calculateProgress]);
 
-  const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false);
-      onSeek(localProgress);
-    }
-  }, [isDragging, localProgress, onSeek]);
-
-  // Touch handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isActive) return;
-    setIsDragging(true);
-    handleSeekInteraction(e.touches[0].clientX);
-  };
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (isDragging) {
-      handleSeekInteraction(e.touches[0].clientX);
-    }
-  }, [isDragging, handleSeekInteraction]);
-
-  const handleTouchEnd = useCallback(() => {
+  const handleSeekEnd = useCallback(() => {
     if (isDragging) {
       setIsDragging(false);
-      onSeek(localProgress);
+      // Send the value from the Ref to ensure it's the latest
+      onSeek(dragProgressRef.current);
     }
-  }, [isDragging, localProgress, onSeek]);
+  }, [isDragging, onSeek]);
 
-  // Global mouse/touch listeners for dragging
+  // Global Mouse/Touch Listeners
   useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => handleSeekMove(e.clientX);
+    const onTouchMove = (e: TouchEvent) => handleSeekMove(e.touches[0].clientX);
+    const onMouseUp = () => handleSeekEnd();
+    
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('touchmove', handleTouchMove);
-      window.addEventListener('touchend', handleTouchEnd);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      window.addEventListener('touchmove', onTouchMove);
+      window.addEventListener('touchend', onMouseUp);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onMouseUp);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+  }, [isDragging, handleSeekMove, handleSeekEnd]);
 
-  // Click directly on seek bar
-  const handleSeekClick = (e: React.MouseEvent) => {
+  // Direct Click on Bar
+  const handleBarClick = (e: React.MouseEvent) => {
     if (!isActive) return;
-    const newProgress = handleSeekInteraction(e.clientX);
-    if (newProgress !== undefined) {
-      onSeek(newProgress);
-    }
+    const newProgress = calculateProgress(e.clientX);
+    setLocalProgress(newProgress);
+    onSeek(newProgress);
   };
 
   const accentColor = color === 'red' ? 'from-red-500 to-orange-500' : 'from-blue-500 to-cyan-500';
-  const glowColor = color === 'red' ? 'shadow-red-500/30' : 'shadow-blue-500/30';
+  const glowColor = color === 'red' ? 'shadow-red-500/50' : 'shadow-blue-500/50';
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Mini Vinyl */}
+    <div className="flex items-center gap-3 w-full mt-auto pt-2">
+      {/* Vinyl Play Button */}
       <div 
-        className={`relative w-14 h-14 flex-shrink-0 cursor-pointer group`}
-        onClick={onPlayPause}
+        className={`relative w-12 h-12 flex-shrink-0 cursor-pointer group`}
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent card click
+          onPlayPause();
+        }}
       >
-        {/* Glow */}
-        <div className={`absolute -inset-1 rounded-full bg-gradient-to-br ${accentColor} blur-md opacity-0 group-hover:opacity-50 transition-opacity ${isActive ? 'opacity-40' : ''}`} />
+        <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${accentColor} blur opacity-20 group-hover:opacity-60 transition-opacity`} />
         
-        {/* Vinyl disc */}
+        {/* Disc */}
         <div 
-          className={`relative w-full h-full rounded-full overflow-hidden shadow-lg ${glowColor} ${isActive ? 'ring-2 ring-white/30' : ''}`}
+          className={`relative w-full h-full rounded-full bg-black shadow-lg ${isActive ? glowColor : ''} border border-white/10 flex items-center justify-center overflow-hidden`}
           style={{ transform: `rotate(${rotation}deg)` }}
         >
-          {/* Vinyl base */}
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-800" />
-          
-          {/* Grooves */}
-          <div className="absolute inset-0" style={{
-            background: `repeating-radial-gradient(circle at center, transparent 0px, transparent 1px, rgba(255,255,255,0.03) 1px, rgba(255,255,255,0.03) 2px)`
+           {/* Vinyl Grooves Texture */}
+           <div className="absolute inset-0 opacity-30" style={{
+            background: `repeating-radial-gradient(circle at center, #333 0, #333 1px, transparent 2px, transparent 4px)`
           }} />
-          
-          {/* Label */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-gray-700">
-              <img 
-                src={imageUrl || FALLBACK_IMG} 
-                alt=""
-                className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
-              />
-            </div>
-          </div>
-          
-          {/* Center hole */}
-          <div className="absolute inset-0 m-auto w-1.5 h-1.5 bg-gray-900 rounded-full" />
-        </div>
 
-        {/* Play/Pause overlay */}
-        <div className={`absolute inset-0 rounded-full flex items-center justify-center bg-black/50 transition-opacity ${isPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
-          <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${accentColor} flex items-center justify-center`}>
-            {isPlaying ? (
-              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-              </svg>
-            ) : (
-              <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            )}
+          {/* Center Label (Play Icon) */}
+          <div className="absolute inset-0 flex items-center justify-center">
+             {/* If not active, show play. If active and playing, show pause. */}
+             <div className={`w-4 h-4 text-white z-10 drop-shadow-md ${isPlaying ? '' : 'pl-0.5'}`}>
+               {isPlaying ? (
+                 <svg fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+               ) : (
+                 <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+               )}
+             </div>
           </div>
         </div>
       </div>
@@ -203,35 +174,33 @@ function CompactVinyl({
       {/* Seek Bar */}
       <div 
         ref={seekBarRef}
-        className={`flex-1 h-8 flex items-center cursor-pointer group ${!isActive ? 'opacity-40 cursor-not-allowed' : ''}`}
-        onClick={handleSeekClick}
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
+        className={`relative flex-1 h-8 flex items-center cursor-pointer group ${!isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={handleBarClick}
+        onMouseDown={(e) => handleSeekStart(e.clientX)}
+        onTouchStart={(e) => handleSeekStart(e.touches[0].clientX)}
       >
-        <div className="relative w-full h-2 bg-gray-700/50 rounded-full overflow-hidden">
-          {/* Progress fill */}
+        {/* Track Background */}
+        <div className="relative w-full h-1.5 bg-black/40 backdrop-blur-md rounded-full overflow-hidden border border-white/5">
+          {/* Progress Fill */}
           <div 
-            className={`absolute inset-y-0 left-0 bg-gradient-to-r ${accentColor} rounded-full transition-all ${isDragging ? '' : 'duration-100'}`}
+            className={`absolute inset-y-0 left-0 bg-gradient-to-r ${accentColor} transition-all ${isDragging ? 'duration-0' : 'duration-300 ease-out'}`}
             style={{ width: `${localProgress * 100}%` }}
           />
-          
-          {/* Hover effect */}
-          <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
-          
-          {/* Drag handle */}
-          {isActive && (
-            <div 
-              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow-lg transition-transform ${isDragging ? 'scale-125' : 'scale-0 group-hover:scale-100'}`}
-              style={{ left: `calc(${localProgress * 100}% - 8px)` }}
-            />
-          )}
         </div>
+        
+        {/* Thumb (Only visible on hover or drag or active) */}
+        {isActive && (
+            <div 
+              className={`absolute h-4 w-4 bg-white rounded-full shadow-md pointer-events-none transition-transform duration-75 ${isDragging ? 'scale-125' : 'scale-0 group-hover:scale-100'}`}
+              style={{ left: `${localProgress * 100}%`, transform: `translateX(-50%) ${isDragging ? 'scale(1.25)' : ''}` }}
+            />
+        )}
       </div>
     </div>
   );
 }
 
-// Compact Duel Card
+// --- Enhanced Duel Card ---
 function CompactDuelCard({ 
   side,
   title,
@@ -262,76 +231,90 @@ function CompactDuelCard({
   isTrack: boolean;
 }) {
   const color = side === 'a' ? 'red' : 'blue';
-  const borderGradient = side === 'a' ? 'from-red-500/40 to-orange-500/40' : 'from-blue-500/40 to-cyan-500/40';
   const buttonGradient = side === 'a' ? 'from-red-600 to-orange-600' : 'from-blue-600 to-cyan-600';
-  const textColor = side === 'a' ? 'text-red-400' : 'text-blue-400';
 
   return (
-    <div className="relative flex-1 min-w-0">
-      {/* Glow on active */}
-      <div className={`absolute -inset-0.5 rounded-2xl bg-gradient-to-r ${borderGradient} blur-md transition-opacity duration-300 ${isActive ? 'opacity-60' : 'opacity-0'}`} />
+    <div className={`relative flex-1 min-w-0 h-48 md:h-56 rounded-2xl overflow-hidden group transition-all duration-500 ${isActive ? 'ring-2 ring-white/20 scale-[1.02] z-10' : 'hover:ring-1 hover:ring-white/10'}`}>
       
-      {/* Card */}
-      <div className={`relative bg-gray-900/80 backdrop-blur-sm rounded-2xl p-4 border border-white/10 transition-all ${isActive ? 'border-white/20' : ''}`}>
+      {/* 1. BIG BACKGROUND IMAGE */}
+      <div className="absolute inset-0">
+        <img 
+          src={imageUrl || FALLBACK_IMG} 
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
+        />
+        {/* Gradient Overlay for Readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent opacity-90" />
         
-        {/* Title */}
-        <h3 className="text-sm font-bold text-white truncate mb-3 text-center">
-          {title}
-        </h3>
-
-        {/* Player or Image */}
-        {isTrack && mediaUrl ? (
-          <CompactVinyl
-            imageUrl={imageUrl}
-            isPlaying={isPlaying}
-            isActive={isActive}
-            progress={progress}
-            color={color}
-            onPlayPause={onPlayPause}
-            onSeek={onSeek}
-          />
-        ) : (
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-              <img 
-                src={imageUrl || FALLBACK_IMG}
-                alt={title}
-                className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
-              />
-            </div>
-          </div>
+        {/* Active Glow Overlay */}
+        {isActive && (
+             <div className={`absolute inset-0 bg-gradient-to-t ${side === 'a' ? 'from-red-900/20' : 'from-blue-900/20'} to-transparent mix-blend-overlay`} />
         )}
+      </div>
 
-        {/* Vote Button or Result */}
-        <div className="mt-3">
-          {!hasVoted ? (
-            <button
-              onClick={onVote}
-              className={`w-full py-2 px-3 rounded-lg font-bold text-xs uppercase tracking-wider bg-gradient-to-r ${buttonGradient} text-white shadow-md transition-all hover:scale-[1.02] active:scale-95`}
-            >
-              הצבעה
-            </button>
-          ) : (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className={`text-lg font-black ${textColor}`}>{votePercent}%</span>
-              </div>
-              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full bg-gradient-to-r ${buttonGradient} rounded-full transition-all duration-1000`}
-                  style={{ width: `${votePercent}%` }}
+      {/* Content Container */}
+      <div className="relative h-full flex flex-col justify-between p-4 md:p-5">
+        
+        {/* Header (Vote % or Side Label) */}
+        <div className="flex justify-between items-start">
+            <span className={`text-[10px] font-black tracking-widest uppercase px-2 py-1 rounded bg-black/40 backdrop-blur text-white/70 border border-white/5`}>
+                {side === 'a' ? 'Challenger' : 'Defender'}
+            </span>
+            
+            {hasVoted && (
+                <div className="flex flex-col items-end animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <span className="text-2xl md:text-3xl font-black text-white drop-shadow-lg">{votePercent}%</span>
+                </div>
+            )}
+        </div>
+
+        {/* Bottom Section: Title, Player & Vote Button */}
+        <div className="space-y-3">
+            {/* Title */}
+            <h3 className="text-white font-bold text-base md:text-lg leading-tight line-clamp-2 drop-shadow-md">
+                {title}
+            </h3>
+
+            {/* Player Controls */}
+            {isTrack && mediaUrl ? (
+                <CompactVinyl
+                    imageUrl={imageUrl} // Passed but handled via background now
+                    isPlaying={isPlaying}
+                    isActive={isActive}
+                    progress={progress}
+                    color={color}
+                    onPlayPause={onPlayPause}
+                    onSeek={onSeek}
                 />
-              </div>
-            </div>
-          )}
+            ) : null}
+
+            {/* Vote Button (Only shows if not voted) */}
+            {!hasVoted && (
+                <button
+                onClick={onVote}
+                className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r ${buttonGradient} text-white shadow-lg shadow-black/30 transition-all hover:scale-[1.02] active:scale-95 border border-white/10`}
+                >
+                הצבעה ל{side === 'a' ? 'צד א׳' : 'צד ב׳'}
+                </button>
+            )}
+            
+            {/* Voted State Progress Bar */}
+            {hasVoted && (
+                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
+                    <div 
+                      className={`h-full bg-gradient-to-r ${buttonGradient} transition-all duration-1000 ease-out`}
+                      style={{ width: `${votePercent}%` }}
+                    />
+                 </div>
+            )}
         </div>
       </div>
     </div>
   );
 }
 
-// Main Component - Compact Horizontal Layout
+// --- Main Layout ---
 export default function DailyDuel() {
   const { playTrack, activeUrl, isPlaying, toggle, progress, seek } = usePlayer();
   const [duel, setDuel] = useState<any>(null);
@@ -357,6 +340,7 @@ export default function DailyDuel() {
           setHasVoted(true);
         }
       } else {
+        // Fallback Data
         setDuel({
           id: 999,
           type: 'track',
@@ -372,18 +356,6 @@ export default function DailyDuel() {
       }
     } catch (e) {
       console.error('Failed to fetch duel:', e);
-      setDuel({
-        id: 999,
-        type: 'track',
-        title_a: 'Detune - The Point',
-        media_url_a: 'https://www.youtube.com/watch?v=Z6hL6fkJ1_k',
-        image_a: 'https://i.ytimg.com/vi/Z6hL6fkJ1_k/hqdefault.jpg',
-        votes_a: 120,
-        title_b: 'Skizologic - Spirituality',
-        media_url_b: 'https://www.youtube.com/watch?v=7NrnTe28tsM',
-        image_b: 'https://i.ytimg.com/vi/7NrnTe28tsM/hqdefault.jpg',
-        votes_b: 145
-      });
     } finally {
       setLoading(false);
     }
@@ -398,15 +370,12 @@ export default function DailyDuel() {
       [side === 'a' ? 'votes_a' : 'votes_b']: (prev[side === 'a' ? 'votes_a' : 'votes_b'] || 0) + 1
     } : null);
 
+    localStorage.setItem(`duel_vote_${duel.id}`, side);
+    
     if (duel.id !== 999) {
       try {
         await supabase.rpc('increment_duel_vote', { row_id: duel.id, side });
-        localStorage.setItem(`duel_vote_${duel.id}`, side);
-      } catch (e) {
-        console.error('Vote error:', e);
-      }
-    } else {
-      localStorage.setItem(`duel_vote_${duel.id}`, side);
+      } catch (e) { console.error(e); }
     }
   };
 
@@ -421,11 +390,10 @@ export default function DailyDuel() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-3xl mx-auto px-4 py-6">
-        <div className="animate-pulse flex gap-4">
-          <div className="flex-1 h-32 bg-gray-800 rounded-2xl" />
-          <div className="w-12" />
-          <div className="flex-1 h-32 bg-gray-800 rounded-2xl" />
+      <div className="w-full max-w-4xl mx-auto px-4 py-8">
+        <div className="animate-pulse flex gap-4 h-56">
+          <div className="flex-1 bg-gray-800 rounded-2xl" />
+          <div className="flex-1 bg-gray-800 rounded-2xl" />
         </div>
       </div>
     );
@@ -441,23 +409,22 @@ export default function DailyDuel() {
 
   const isActiveA = activeUrl === duel.media_url_a;
   const isActiveB = activeUrl === duel.media_url_b;
-  const isPlayingA = isPlaying && isActiveA;
-  const isPlayingB = isPlaying && isActiveB;
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 py-4" dir="rtl">
-      {/* Compact Header */}
-      <div className="text-center mb-4">
-        <h2 className="text-2xl md:text-3xl font-black italic tracking-tight">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500">
-            DAILY DUEL
+    <div className="w-full max-w-4xl mx-auto px-4 py-6" dir="rtl">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase transform -rotate-1">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-sm">
+            Daily Duel
           </span>
         </h2>
-        <p className="text-xs text-gray-500">מי ינצח היום?</p>
+        <p className="text-gray-400 font-medium text-sm mt-1">איזה טראק ינצח היום?</p>
       </div>
 
-      {/* Horizontal Battle Layout */}
-      <div className="flex items-stretch gap-3 md:gap-4">
+      {/* Battle Layout */}
+      <div className="relative flex flex-col md:flex-row items-stretch gap-4 md:gap-6">
+        
         {/* Card A */}
         <CompactDuelCard
           side="a"
@@ -465,7 +432,7 @@ export default function DailyDuel() {
           imageUrl={duel.image_a || FALLBACK_IMG}
           mediaUrl={duel.media_url_a}
           isActive={isActiveA}
-          isPlaying={isPlayingA}
+          isPlaying={isPlaying && isActiveA}
           progress={isActiveA ? progress : 0}
           hasVoted={hasVoted}
           votePercent={percentA}
@@ -478,12 +445,12 @@ export default function DailyDuel() {
           isTrack={isTrack}
         />
 
-        {/* VS Badge */}
-        <div className="flex items-center justify-center flex-shrink-0">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-blue-500 rounded-full blur-lg opacity-30" />
-            <div className="relative w-10 h-10 md:w-12 md:h-12 bg-black border border-white/20 rounded-full flex items-center justify-center">
-              <span className="text-xs md:text-sm font-black italic bg-gradient-to-r from-red-400 to-blue-400 bg-clip-text text-transparent">
+        {/* VS Badge (Floating in center) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-white rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity" />
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-black border-2 border-white/10 rounded-full flex items-center justify-center shadow-2xl shadow-black/50">
+              <span className="text-lg md:text-xl font-black italic bg-gradient-to-br from-red-500 to-blue-500 bg-clip-text text-transparent">
                 VS
               </span>
             </div>
@@ -497,7 +464,7 @@ export default function DailyDuel() {
           imageUrl={duel.image_b || FALLBACK_IMG}
           mediaUrl={duel.media_url_b}
           isActive={isActiveB}
-          isPlaying={isPlayingB}
+          isPlaying={isPlaying && isActiveB}
           progress={isActiveB ? progress : 0}
           hasVoted={hasVoted}
           votePercent={percentB}
@@ -511,11 +478,11 @@ export default function DailyDuel() {
         />
       </div>
 
-      {/* Total votes */}
-      {hasVoted && totalVotes > 0 && (
-        <div className="text-center mt-3">
-          <span className="text-xs text-gray-500">
-            {totalVotes.toLocaleString('he-IL')} הצבעות
+      {/* Footer Info */}
+      {hasVoted && (
+        <div className="text-center mt-6 animate-in fade-in duration-700">
+          <span className="inline-block px-4 py-1 rounded-full bg-white/5 text-xs text-gray-400 border border-white/5">
+            סה״כ {totalVotes.toLocaleString('he-IL')} הצבעות
           </span>
         </div>
       )}
