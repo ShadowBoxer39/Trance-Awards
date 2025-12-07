@@ -50,3 +50,44 @@
 .group:hover .blur {
   filter: blur(20px);
 }
+
+
+/* 3D Flip Animation */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Flip Keyframes */
+@keyframes flip-in {
+  0% { transform: rotateX(0deg); }
+  100% { transform: rotateX(180deg); } /* We flip X axis for a "slot machine" feel or Y for card */
+}
+
+/* Slot Machine Reveal Effect */
+.reveal-slot {
+  animation: flip-slot 0.6s ease-in-out forwards;
+}
+
+@keyframes flip-slot {
+  0% { transform: rotateX(0); opacity: 0; }
+  50% { transform: rotateX(-90deg); opacity: 0.5; }
+  100% { transform: rotateX(0); opacity: 1; }
+}
+
+/* Neon Text Glow fixes */
+.neon-text-fix {
+  padding-bottom: 0.2em; /* Prevents descender clipping */
+  line-height: 1.4;
+}
