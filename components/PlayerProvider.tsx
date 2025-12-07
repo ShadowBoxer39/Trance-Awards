@@ -1,16 +1,21 @@
 import React from "react";
 import Script from "next/script";
 
+// UPDATED TYPE: Now includes state!
 type PlayerAPI = {
   playUrl: (url: string) => void;
   toggle: () => void;
   seek: (seconds: number) => void;
+  activeUrl: string | null;  // <--- NEW
+  isPlaying: boolean;        // <--- NEW
 };
 
 const PlayerContext = React.createContext<PlayerAPI>({
   playUrl: () => {},
   toggle: () => {},
   seek: () => {},
+  activeUrl: null,
+  isPlaying: false,
 });
 
 export const usePlayer = () => React.useContext(PlayerContext);
@@ -32,11 +37,10 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [url, setUrl] = React.useState<string | null>(null);
 
-  const [duration, setDuration] = React.useState(0); // seconds
-  const [position, setPosition] = React.useState(0); // seconds
+  const [duration, setDuration] = React.useState(0);
+  const [position, setPosition] = React.useState(0);
   const [meta, setMeta] = React.useState<SoundMeta>({});
 
-  // --- Initialize the SoundCloud widget ---
   function setupWidget() {
     if (!iframeRef.current) return;
     // @ts-ignore
@@ -57,9 +61,8 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     });
   }
 
-  // --- Load and play a SoundCloud track ---
   function loadAndPlay(scUrl: string) {
-    const clean = scUrl.split("?")[0]; // remove tracking params
+    const clean = scUrl.split("?")[0];
     setUrl(clean);
     setVisible(true);
 
@@ -73,11 +76,9 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       hide_related: true,
     });
 
-    // fetch metadata & duration
     setTimeout(() => {
       const w = widgetRef.current;
       if (!w) return;
-
       w.getDuration((ms: number) => setDuration(Math.round((ms || 0) / 1000)));
       w.getCurrentSound((snd: any) => {
         if (snd) {
@@ -89,8 +90,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
           });
         }
       });
-
-      // start a polling timer for playback progress
       if (pollTimer.current !== null) {
         clearInterval(pollTimer.current);
         pollTimer.current = null;
@@ -102,7 +101,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     }, 250);
   }
 
-  // --- Cleanup on unmount ---
   React.useEffect(() => {
     return () => {
       if (pollTimer.current !== null) {
@@ -112,7 +110,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     };
   }, []);
 
-  // --- Expose control API ---
   const api: PlayerAPI = {
     playUrl: (u: string) => {
       if (!widgetRef.current) return;
@@ -130,6 +127,9 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       w.seekTo(clamped * 1000);
       setPosition(clamped);
     },
+    // EXPOSE STATE
+    activeUrl: url,
+    isPlaying: isPlaying,
   };
 
   function formatTime(sec: number) {
@@ -156,73 +156,44 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             dir="ltr"
           >
             <div className="mx-auto max-w-6xl px-3 py-2 flex items-center gap-3 text-white">
-              {/* Play / Pause */}
               <button
                 onClick={api.toggle}
                 disabled={!apiReady}
                 className="shrink-0 border rounded-xl px-3 py-1 text-xs hover:bg-white/10"
-                aria-label={isPlaying ? "Pause" : "Play"}
               >
                 {isPlaying ? "⏸" : "▶"}
               </button>
 
-              {/* Current time */}
               <div className="text-xs tabular-nums text-white/80 shrink-0">
                 {formatTime(position)}
               </div>
 
-              {/* Seek slider */}
               <input
                 type="range"
                 min={0}
                 max={Math.max(1, duration)}
                 value={Math.min(position, duration)}
                 onChange={(e) => api.seek(Number(e.target.value))}
-                className="mx-2 w-full"
+                className="mx-2 w-full accent-purple-500"
               />
 
-              {/* Duration */}
               <div className="text-xs tabular-nums text-white/80 shrink-0">
                 {formatTime(duration)}
               </div>
 
-              {/* Track info */}
               <div className="min-w-0 pl-2">
                 <div className="text-xs font-medium truncate">
                   {meta.title || url}
                 </div>
-                <div className="text-[11px] text-white/70 truncate">
-                  {meta.user?.username || "SoundCloud"}
-                </div>
               </div>
 
-              {/* Open in SC */}
-              {meta.permalink_url && (
-                <a
-                  href={meta.permalink_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 border rounded-xl px-3 py-1 text-xs hover:bg-white/10"
-                >
-                  Open
-                </a>
-              )}
-
-              {/* Close */}
               <button
                 onClick={() => {
                   setVisible(false);
                   setIsPlaying(false);
                   setMeta({});
-                  setDuration(0);
-                  setPosition(0);
-                  if (pollTimer.current !== null) {
-                    clearInterval(pollTimer.current);
-                    pollTimer.current = null;
-                  }
                 }}
                 className="ml-1 shrink-0 border rounded-xl px-2 py-1 text-xs hover:bg-white/10"
-                title="Close Player"
               >
                 ✕
               </button>
@@ -230,7 +201,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
           </div>
         )}
 
-        {/* Hidden SoundCloud iframe */}
         <iframe
           ref={iframeRef}
           title="SoundCloud Player"
