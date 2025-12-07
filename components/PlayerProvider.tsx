@@ -1,7 +1,6 @@
 import React, { useState, useRef, useContext, createContext } from "react";
 import dynamic from "next/dynamic";
 
-// Lazy load to fix hydration issues
 const ReactPlayer = dynamic(() => import("react-player/lazy"), { ssr: false });
 
 type TrackData = {
@@ -13,7 +12,7 @@ type TrackData = {
 
 type PlayerAPI = {
   playTrack: (data: TrackData) => void;
-  playUrl: (url: string) => void; // Legacy support
+  playUrl: (url: string) => void;
   toggle: () => void;
   seek: (amount: number) => void;
   activeUrl: string | null;
@@ -38,8 +37,9 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); 
   
-  // Anti-Flicker State: Prevents slider jumping while dragging
+  // ✅ FIX: These Refs handle the "Fighting" logic
   const isSeeking = useRef(false);
+  const seekTimeout = useRef<NodeJS.Timeout | null>(null);
   const playerRef = useRef<any>(null);
   
   const playTrack = (data: TrackData) => {
@@ -60,19 +60,24 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const toggle = () => setPlaying((p) => !p);
 
   const seek = (amount: number) => {
-    // 1. Lock updates so the slider follows your finger
+    // 1. Lock updates
     isSeeking.current = true;
     
-    // 2. Visual update instantly
+    // 2. ✅ CRITICAL: Clear previous timer so it doesn't snap back!
+    if (seekTimeout.current) clearTimeout(seekTimeout.current);
+
+    // 3. Visual update
     setProgress(amount);
     
-    // 3. Move audio
+    // 4. Move audio
     if (playerRef.current) {
       playerRef.current.seekTo(amount, "fraction");
     }
 
-    // 4. Release lock after 1s (allows buffering)
-    setTimeout(() => { isSeeking.current = false; }, 1000);
+    // 5. Release lock after 1.5s of no movement
+    seekTimeout.current = setTimeout(() => { 
+        isSeeking.current = false; 
+    }, 1500);
   };
 
   return (
@@ -88,8 +93,6 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       }}
     >
       {children}
-      
-      {/* HIDDEN PLAYER ENGINE */}
       <div className="fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none overflow-hidden z-[-1]">
         {url && (
           <ReactPlayer
@@ -99,9 +102,9 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             volume={1}
             width="100%"
             height="100%"
-            progressInterval={100} 
+            progressInterval={50} // Smoother updates
             onProgress={(state) => {
-                // Only update if NOT user seeking
+                // Only update if unlocked
                 if (!isSeeking.current) {
                     setProgress(state.played);
                 }
