@@ -36,6 +36,11 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [url, setUrl] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); 
+  
+  // NEW: Ref to track if we are currently dragging (seeking)
+  const isSeekingRef = useRef(false);
+  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const playerRef = useRef<any>(null);
   
   const playTrack = (data: TrackData) => {
@@ -45,6 +50,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       setUrl(data.url);
       setPlaying(true);
       setProgress(0);
+      isSeekingRef.current = false;
     }
   };
 
@@ -55,12 +61,24 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const toggle = () => setPlaying((p) => !p);
 
   const seek = (amount: number) => {
-    // 1. Instant UI update
+    // 1. Enter Seeking Mode (Blocks automatic updates)
+    isSeekingRef.current = true;
+    
+    // 2. Clear any existing reset timer
+    if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
+
+    // 3. Update UI instantly
     setProgress(amount);
-    // 2. Actual Player Seek
+    
+    // 4. Seek the player
     if (playerRef.current) {
       playerRef.current.seekTo(amount, "fraction");
     }
+
+    // 5. Exit Seeking Mode after a delay (allows buffer to catch up)
+    seekTimeoutRef.current = setTimeout(() => {
+        isSeekingRef.current = false;
+    }, 1000);
   };
 
   return (
@@ -85,10 +103,12 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             volume={1}
             width="100%"
             height="100%"
-            progressInterval={100} // Faster updates for smoother UI
+            progressInterval={100}
             onProgress={(state) => {
-                // Only update if not currently seeking (prevents jumping)
-                setProgress(state.played);
+                // Only update if NOT user seeking
+                if (!isSeekingRef.current) {
+                    setProgress(state.played);
+                }
             }}
             onEnded={() => setPlaying(false)}
             config={{
