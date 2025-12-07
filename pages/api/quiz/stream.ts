@@ -50,16 +50,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 3. Choose the best audio format
-    // Priority: MP4/M4A (best Safari/iOS support) -> WebM -> Any audio
+    // Priority: MP4 (best Safari/iOS support) -> WebM -> Any audio
     let format = null;
 
-    // Try MP4/M4A first (best cross-browser support)
+    // Try MP4 first (best cross-browser support, includes m4a audio)
     format = ytdl.chooseFormat(info.formats, {
       quality: "lowestaudio",
       filter: (f) => 
         f.hasAudio && 
         !f.hasVideo && 
-        (f.container === 'mp4' || f.container === 'm4a')
+        f.container === 'mp4'
     });
 
     // Fallback to WebM audio
