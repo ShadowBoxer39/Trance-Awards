@@ -1,13 +1,13 @@
 import React from "react";
 import Script from "next/script";
 
-// 1. Define the API shape including State
+// 1. Update Type to accept metadata
 type PlayerAPI = {
-  playUrl: (url: string) => void;
+  playUrl: (url: string, title?: string, image?: string) => void;
   toggle: () => void;
   seek: (seconds: number) => void;
-  activeUrl: string | null;  // Exposed for Duel Glow
-  isPlaying: boolean;        // Exposed for Duel Glow
+  activeUrl: string | null;
+  isPlaying: boolean;
 };
 
 const PlayerContext = React.createContext<PlayerAPI>({
@@ -18,15 +18,7 @@ const PlayerContext = React.createContext<PlayerAPI>({
   isPlaying: false,
 });
 
-// 2. Export the Hook
 export const usePlayer = () => React.useContext(PlayerContext);
-
-type SoundMeta = {
-  title?: string;
-  permalink_url?: string;
-  artwork_url?: string;
-  user?: { username?: string };
-};
 
 export default function PlayerProvider({ children }: { children: React.ReactNode }) {
   const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
@@ -36,13 +28,16 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [apiReady, setApiReady] = React.useState(false);
   const [visible, setVisible] = React.useState(false);
   
-  // State exposed to the app
+  // State
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [url, setUrl] = React.useState<string | null>(null);
+  
+  // NEW: Store metadata locally
+  const [trackTitle, setTrackTitle] = React.useState("Loading...");
+  const [trackImage, setTrackImage] = React.useState("");
 
   const [duration, setDuration] = React.useState(0);
   const [position, setPosition] = React.useState(0);
-  const [meta, setMeta] = React.useState<SoundMeta>({});
 
   function setupWidget() {
     if (!iframeRef.current) return;
@@ -64,12 +59,16 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     });
   }
 
-  function loadAndPlay(scUrl: string) {
+  // ✅ UPDATED: Accepts title/image for instant display
+  function loadAndPlay(scUrl: string, title?: string, image?: string) {
     const clean = scUrl.split("?")[0];
     setUrl(clean);
+    
+    // Set metadata instantly
+    if (title) setTrackTitle(title);
+    if (image) setTrackImage(image);
+    
     setVisible(true);
-    // Reset meta immediately so we don't show old track info
-    setMeta({ title: "Loading Track..." });
 
     if(!widgetRef.current) return;
 
@@ -87,17 +86,8 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       const w = widgetRef.current;
       if (!w) return;
       w.getDuration((ms: number) => setDuration(Math.round((ms || 0) / 1000)));
-      w.getCurrentSound((snd: any) => {
-        if (snd) {
-          setMeta({
-            title: snd.title,
-            permalink_url: snd.permalink_url,
-            artwork_url: snd.artwork_url,
-            user: { username: snd.user?.username },
-          });
-        }
-      });
-
+      
+      // Cleanup timer
       if (pollTimer.current !== null) clearInterval(pollTimer.current);
       pollTimer.current = setInterval(() => {
         w.getPosition((ms: number) => setPosition(Math.round((ms || 0) / 1000)));
@@ -113,8 +103,8 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   }, []);
 
   const api: PlayerAPI = {
-    playUrl: (u: string) => {
-      if (widgetRef.current) loadAndPlay(u);
+    playUrl: (u, t, i) => {
+      if (widgetRef.current) loadAndPlay(u, t, i);
     },
     toggle: () => {
       const w = widgetRef.current;
@@ -150,38 +140,40 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       <PlayerContext.Provider value={api}>
         {children}
 
+        {/* 🎵 THE NEW FLOATING PLAYER PILL 🎵 */}
         {visible && (
-          <div className="fixed bottom-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none animate-slide-up">
-            <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-full p-2 pr-6 flex items-center gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-xl pointer-events-auto ring-1 ring-white/20">
+          <div className="fixed bottom-6 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none animate-slide-up">
+            <div className="bg-black/90 backdrop-blur-2xl border border-white/10 rounded-full p-2 pr-6 pl-2 flex items-center gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.8)] w-full max-w-lg pointer-events-auto ring-1 ring-white/20">
               
-              {/* Play/Pause Button */}
+              {/* Artwork / Play Button Combo */}
               <button
                 onClick={api.toggle}
                 disabled={!apiReady}
-                className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all shadow-lg shadow-purple-500/30"
+                className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 group border border-white/10"
               >
-                {isPlaying ? (
-                  <span className="text-xl">⏸</span>
-                ) : (
-                  <span className="text-xl pl-1">▶</span>
+                {trackImage && (
+                    <img src={trackImage} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" alt="art" />
                 )}
+                <div className="absolute inset-0 flex items-center justify-center text-white bg-black/20">
+                    {isPlaying ? "⏸" : "▶"}
+                </div>
               </button>
 
               {/* Info & Progress */}
-              <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
+              <div className="flex-1 min-w-0 flex flex-col justify-center h-full" dir="rtl">
                  <div className="flex justify-between items-baseline mb-1">
-                   <span className="text-white text-sm font-bold truncate pr-2">
-                     {meta.title || "טוען..."}
+                   <span className="text-white text-sm font-bold truncate pl-2">
+                     {trackTitle}
                    </span>
-                   <span className="text-[10px] text-gray-400 font-mono">
-                     {formatTime(position)} / {formatTime(duration)}
+                   <span className="text-[10px] text-gray-400 font-mono" dir="ltr">
+                     {formatTime(position)}
                    </span>
                  </div>
                  
-                 {/* Custom Progress Bar */}
-                 <div className="relative w-full h-1.5 bg-gray-700 rounded-full overflow-hidden group cursor-pointer">
+                 {/* Progress Bar */}
+                 <div className="relative w-full h-1 bg-gray-700 rounded-full overflow-hidden cursor-pointer group/bar">
                    <div 
-                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-300"
+                     className="absolute inset-y-0 right-0 bg-gradient-to-l from-purple-500 to-blue-500 rounded-full transition-all duration-300"
                      style={{ width: `${(position / (duration || 1)) * 100}%` }}
                    />
                    <input
@@ -195,14 +187,14 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
                  </div>
               </div>
 
-              {/* Close Button */}
+              {/* Close */}
               <button
                 onClick={() => {
                   setVisible(false);
                   setIsPlaying(false);
-                  setMeta({});
+                  setTrackTitle("");
                 }}
-                className="text-gray-400 hover:text-white transition-colors p-2"
+                className="text-gray-400 hover:text-white transition-colors p-2 text-lg"
               >
                 ✕
               </button>
