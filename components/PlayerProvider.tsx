@@ -1,9 +1,6 @@
-import React, { useState, useRef, useContext, createContext, useCallback } from "react";
-import dynamic from "next/dynamic";
+import React, { useState, useEffect, useRef, useContext, createContext, useCallback } from "react";
 
-// Import types for ReactPlayer if needed, or use 'any' for the ref to be safe with dynamic
-const ReactPlayer = dynamic(() => import("react-player/lazy"), { ssr: false });
-
+// --- Types ---
 type TrackData = {
   url: string;
   title: string;
@@ -13,9 +10,8 @@ type TrackData = {
 
 type PlayerAPI = {
   playTrack: (data: TrackData) => void;
-  playUrl: (url: string) => void;
   toggle: () => void;
-  seek: (amount: number) => void;
+  seek: (percentage: number) => void;
   activeUrl: string | null;
   isPlaying: boolean;
   progress: number;
@@ -23,9 +19,8 @@ type PlayerAPI = {
 
 const PlayerContext = createContext<PlayerAPI>({
   playTrack: () => {},
-  playUrl: () => {},
   toggle: () => {},
-  seek: () => {}, 
+  seek: () => {},
   activeUrl: null,
   isPlaying: false,
   progress: 0,
@@ -33,98 +28,172 @@ const PlayerContext = createContext<PlayerAPI>({
 
 export const usePlayer = () => useContext(PlayerContext);
 
+// --- Helper: Extract YouTube ID ---
+const getYouTubeId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+// --- Main Provider ---
 export default function PlayerProvider({ children }: { children: React.ReactNode }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); 
+  const [activeUrl, setActiveUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
   
-  // We use a callback ref to ensure we capture the player instance even if it remounts
-  const playerRef = useRef<any>(null);
-  const isSeeking = useRef(false);
-  const seekTimeout = useRef<NodeJS.Timeout | null>(null);
-  
-  const playTrack = (data: TrackData) => {
-    if (url === data.url) {
-      setPlaying(!playing);
-    } else {
-      setUrl(data.url);
-      setPlaying(true);
-      setProgress(0);
-      isSeeking.current = false;
-    }
-  };
+  const playerRef = useRef<any>(null); // The raw YT Player instance
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isSeekingRef = useRef(false);
 
-  const playUrl = (simpleUrl: string) => {
-    playTrack({ url: simpleUrl, title: "", image: "" });
-  };
-
-  const toggle = () => setPlaying((p) => !p);
-
-  const seek = useCallback((amount: number) => {
-    // 1. Lock updates immediately to prevent jitter
-    isSeeking.current = true;
-    
-    // 2. Clear existing timeout
-    if (seekTimeout.current) clearTimeout(seekTimeout.current);
-
-    // 3. Update Visual State immediately
-    setProgress(amount);
-    
-    // 4. Perform the actual seek on the player
-    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      // 'fraction' seeks to a percentage (0 to 1)
-      playerRef.current.seekTo(amount, "fraction");
+  // 1. Initialize YouTube API
+  useEffect(() => {
+    // Check if API script is already present
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
     }
 
-    // 5. Unlock after a short delay (prevents the player from snapping back to old time)
-    seekTimeout.current = setTimeout(() => { 
-        isSeeking.current = false; 
-    }, 1000);
+    // Define the global callback
+    window.onYouTubeIframeAPIReady = () => {
+      // API is ready, but we wait for user to play a track to create the player
+    };
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, []);
 
-  // Callback ref to securely attach the player
-  const handlePlayerRef = (player: any) => {
-    playerRef.current = player;
+  // 2. Setup/Update Player when URL changes
+  useEffect(() => {
+    if (!activeUrl) return;
+
+    const videoId = getYouTubeId(activeUrl);
+    if (!videoId) return;
+
+    if (!playerRef.current) {
+      // Create Player if it doesn't exist
+      if (window.YT && window.YT.Player) {
+        playerRef.current = new window.YT.Player('yt-player-target', {
+          height: '0',
+          width: '0',
+          videoId: videoId,
+          playerVars: {
+            'autoplay': 1,
+            'controls': 0,
+            'disablekb': 1,
+            'fs': 0,
+            'playsinline': 1, // Important for mobile
+          },
+          events: {
+            'onReady': (event: any) => {
+              event.target.playVideo();
+              setIsPlaying(true);
+            },
+            'onStateChange': (event: any) => {
+              // YT.PlayerState.PLAYING = 1, PAUSED = 2, ENDED = 0
+              if (event.data === 1) setIsPlaying(true);
+              if (event.data === 2) setIsPlaying(false);
+              if (event.data === 0) {
+                setIsPlaying(false);
+                setProgress(0);
+              }
+            }
+          }
+        });
+      }
+    } else {
+      // Player exists, just load new video
+      playerRef.current.loadVideoById(videoId);
+      setIsPlaying(true);
+    }
+  }, [activeUrl]);
+
+  // 3. Progress Loop (Manual Polling)
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      if (playerRef.current && playerRef.current.getCurrentTime && !isSeekingRef.current) {
+        const current = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
+        if (duration > 0) {
+          setProgress(current / duration);
+        }
+      }
+    }, 100); // Check every 100ms
+
+    return () => { 
+      if (timerRef.current) clearInterval(timerRef.current); 
+    };
+  }, []);
+
+  // --- Controls ---
+
+  const playTrack = (data: TrackData) => {
+    if (activeUrl === data.url) {
+      toggle();
+    } else {
+      setActiveUrl(data.url);
+      setProgress(0);
+    }
   };
+
+  const toggle = () => {
+    if (!playerRef.current || typeof playerRef.current.getPlayerState !== 'function') return;
+    
+    const state = playerRef.current.getPlayerState();
+    if (state === 1) { // Playing
+      playerRef.current.pauseVideo();
+      setIsPlaying(false);
+    } else {
+      playerRef.current.playVideo();
+      setIsPlaying(true);
+    }
+  };
+
+  const seek = useCallback((percentage: number) => {
+    if (!playerRef.current || typeof playerRef.current.seekTo !== 'function') return;
+
+    isSeekingRef.current = true;
+    setProgress(percentage); // Visual update immediately
+
+    const duration = playerRef.current.getDuration();
+    if (duration) {
+      const seekTime = duration * percentage;
+      playerRef.current.seekTo(seekTime, true);
+    }
+
+    // Release lock shortly after
+    setTimeout(() => {
+      isSeekingRef.current = false;
+    }, 500);
+  }, []);
 
   return (
     <PlayerContext.Provider
       value={{
         playTrack,
-        playUrl,
         toggle,
         seek,
-        activeUrl: url,
-        isPlaying: playing,
+        activeUrl,
+        isPlaying,
         progress,
       }}
     >
       {children}
-      {/* Hidden Player */}
-      <div className="fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none overflow-hidden z-[-1]">
-        {url && (
-          <ReactPlayer
-            ref={handlePlayerRef}
-            url={url}
-            playing={playing}
-            volume={1}
-            width="100%"
-            height="100%"
-            progressInterval={100} 
-            onProgress={(state: any) => {
-                if (!isSeeking.current) {
-                    setProgress(state.played);
-                }
-            }}
-            onEnded={() => setPlaying(false)}
-            config={{
-              youtube: { playerVars: { playsinline: 1 } },
-              soundcloud: { options: { auto_play: true } },
-              file: { attributes: { playsInline: true } }
-            }}
-          />
-        )}
-      </div>
+      {/* Hidden container for the iframe */}
+      <div 
+        id="yt-player-target" 
+        className="fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none z-[-1]" 
+      />
     </PlayerContext.Provider>
   );
+}
+
+// Add types for global YT object
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: any;
+  }
 }
