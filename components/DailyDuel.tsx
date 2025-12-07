@@ -6,7 +6,7 @@ import { FaPlay, FaPause, FaVoteYea } from 'react-icons/fa'; // Make sure you ha
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+); 
 
 const FALLBACK_IMG = "/images/logo.png"; 
 
