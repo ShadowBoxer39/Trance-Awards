@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePlayer } from './PlayerProvider'; 
 import { createClient } from '@supabase/supabase-js';
-import { FaPlay, FaPause, FaVoteYea, FaMusic } from 'react-icons/fa';
+import { FaPlay, FaPause, FaVoteYea } from 'react-icons/fa';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +23,7 @@ type DuelData = {
   votes_b: number;
 };
 
-// --- NEON EQUALIZER ---
+// --- NEON VISUALIZER ---
 const NeonEqualizer = ({ color }: { color: string }) => (
   <div className="flex items-end justify-center gap-1 h-6 w-10">
     <div className={`w-1.5 rounded-t-full animate-[bounce_0.8s_infinite] h-3 ${color}`}></div>
@@ -99,7 +99,7 @@ export default function DailyDuel() {
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation(); // Stops click from bubbling to card
+    e.stopPropagation(); 
     seek(parseFloat(e.target.value));
   };
 
@@ -114,8 +114,11 @@ export default function DailyDuel() {
   const imgA = duel.image_a || FALLBACK_IMG;
   const imgB = duel.image_b || FALLBACK_IMG;
 
-  const isPlayingA = isPlaying && activeUrl === duel.media_url_a;
-  const isPlayingB = isPlaying && activeUrl === duel.media_url_b;
+  const isActiveA = activeUrl === duel.media_url_a;
+  const isActiveB = activeUrl === duel.media_url_b;
+  
+  const isPlayingA = isPlaying && isActiveA;
+  const isPlayingB = isPlaying && isActiveB;
 
   // --- RESULT BAR (Compact) ---
   if (hasVoted) {
@@ -211,7 +214,7 @@ export default function DailyDuel() {
                 className="relative aspect-square rounded-full border-8 border-gray-900 shadow-2xl cursor-pointer overflow-hidden group mx-auto w-full max-w-[280px]"
                 onClick={isPlayingA ? toggle : (e) => handlePlay(e, duel.media_url_a, duel.title_a, imgA)}
             >
-                {/* Spinning Vinyl */}
+                {/* Fixed Spinning Vinyl Image */}
                 <img 
                     src={imgA} 
                     alt={duel.title_a} 
@@ -227,7 +230,6 @@ export default function DailyDuel() {
                     </div>
                 </div>
 
-                {/* Playing Ring */}
                 {isPlayingA && <div className="absolute inset-0 rounded-full border-4 border-red-500/50 animate-ping"></div>}
             </div>
 
@@ -238,22 +240,25 @@ export default function DailyDuel() {
                     {isPlayingA ? <NeonEqualizer color="bg-red-500" /> : <span className="text-xs text-gray-500 font-bold tracking-widest">לחץ לניגון</span>}
                 </div>
 
-                {/* BIG SEEKER BAR */}
+                {/* BIG SEEKER BAR - NOW MOVEABLE */}
                 <div 
-                    className={`relative h-12 flex items-center justify-center transition-all duration-500 ${isPlayingA ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 pointer-events-none'}`}
+                    className={`relative h-12 flex items-center justify-center transition-all duration-500 ${isActiveA ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 pointer-events-none'}`}
                     onClick={preventBubble}
                 >
                     <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
-                        <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isPlayingA ? progress * 100 : 0}%` }}></div>
+                        <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isActiveA ? progress * 100 : 0}%` }}></div>
+                        
+                        {/* THE INPUT SLIDER */}
                         <input 
                             type="range" 
                             min={0} max={1} step="any"
-                            value={isPlayingA ? progress : 0}
+                            value={isActiveA ? progress : 0}
                             onChange={handleSeek}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
                         />
+                        
                         {/* Thumb Indicator */}
-                        {isPlayingA && (
+                        {isActiveA && (
                             <div 
                                 className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg pointer-events-none transition-all duration-100 ease-out"
                                 style={{ left: `${progress * 100}%`, transform: 'translate(-50%, -50%)' }}
@@ -283,7 +288,7 @@ export default function DailyDuel() {
                 className="relative aspect-square rounded-full border-8 border-gray-900 shadow-2xl cursor-pointer overflow-hidden group mx-auto w-full max-w-[280px]"
                 onClick={isPlayingB ? toggle : (e) => handlePlay(e, duel.media_url_b, duel.title_b, imgB)}
             >
-                {/* Spinning Vinyl */}
+                {/* Fixed Spinning Vinyl Image */}
                 <img 
                     src={imgB} 
                     alt={duel.title_b} 
@@ -310,19 +315,23 @@ export default function DailyDuel() {
 
                 {/* BIG SEEKER BAR */}
                 <div 
-                    className={`relative h-12 flex items-center justify-center transition-all duration-500 ${isPlayingB ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 pointer-events-none'}`}
+                    className={`relative h-12 flex items-center justify-center transition-all duration-500 ${isActiveB ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 pointer-events-none'}`}
                     onClick={preventBubble}
                 >
                     <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
-                        <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isPlayingB ? progress * 100 : 0}%` }}></div>
+                        <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isActiveB ? progress * 100 : 0}%` }}></div>
+                        
+                        {/* INPUT SLIDER */}
                         <input 
                             type="range" 
                             min={0} max={1} step="any"
-                            value={isPlayingB ? progress : 0}
+                            value={isActiveB ? progress : 0}
                             onChange={handleSeek}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
                         />
-                        {isPlayingB && (
+                        
+                        {/* Thumb Indicator */}
+                        {isActiveB && (
                             <div 
                                 className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg pointer-events-none transition-all duration-100 ease-out"
                                 style={{ left: `${progress * 100}%`, transform: 'translate(-50%, -50%)' }}
