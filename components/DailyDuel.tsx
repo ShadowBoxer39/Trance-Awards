@@ -134,18 +134,27 @@ export default function DailyDuel() {
             </div>
             <div className="flex items-center gap-6">
               <div className="flex flex-col items-center gap-2 flex-1">
-                 <img src={imgA} className="w-20 h-20 rounded-full border-4 border-red-500 object-cover" alt="" />
-                 <span className="text-white text-xs font-bold text-center line-clamp-1">{duel.title_a}</span>
+                 <img src={imgA} className="w-20 h-20 object-cover relative z-10" style={{ borderRadius: '50%', border: '4px solid #ef4444' }} alt="" />
+                 <span className="text-white text-xs font-bold text-center line-clamp-1 mt-2">{duel.title_a}</span>
               </div>
               <div className="flex-[3] flex flex-col gap-2">
                   <div className="h-6 bg-gray-800 rounded-full overflow-hidden flex text-[10px] font-black shadow-inner border border-white/5">
-                      <div className="bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center text-white" style={{ width: `${percentA}%` }}>{percentA}%</div>
-                      <div className="bg-gradient-to-l from-blue-600 to-blue-500 flex items-center justify-center text-white" style={{ width: `${percentB}%` }}>{percentB}%</div>
+                      <div className="bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center text-white relative" style={{ width: `${percentA}%` }}>
+                        <span className="z-10 relative drop-shadow-md">{percentA}%</span>
+                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                      </div>
+                      <div className="bg-gradient-to-l from-blue-600 to-blue-500 flex items-center justify-center text-white relative" style={{ width: `${percentB}%` }}>
+                        <span className="z-10 relative drop-shadow-md">{percentB}%</span>
+                      </div>
+                  </div>
+                  <div className="flex justify-between px-2 text-[10px] text-gray-500 font-mono tracking-widest">
+                      <span>{duel.votes_a} VOTES</span>
+                      <span>{duel.votes_b} VOTES</span>
                   </div>
               </div>
               <div className="flex flex-col items-center gap-2 flex-1">
-                 <img src={imgB} className="w-20 h-20 rounded-full border-4 border-blue-500 object-cover" alt="" />
-                 <span className="text-white text-xs font-bold text-center line-clamp-1">{duel.title_b}</span>
+                 <img src={imgB} className="w-20 h-20 object-cover relative z-10" style={{ borderRadius: '50%', border: '4px solid #3b82f6' }} alt="" />
+                 <span className="text-white text-xs font-bold text-center line-clamp-1 mt-2">{duel.title_b}</span>
               </div>
             </div>
           </div>
@@ -154,44 +163,56 @@ export default function DailyDuel() {
     );
   }
 
-  // --- ARENA MODE ---
+  // --- ARENA MODE (Voting) ---
   return (
     <div className="w-full max-w-5xl mx-auto my-12 px-4 relative z-20" dir="rtl">
       
-      {/* HEADER */}
-      <div className="text-center mb-10">
+      <div className="text-center mb-10 relative">
         <h2 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter drop-shadow-2xl transform -skew-x-6">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 animate-gradient-x">
             DAILY DUEL
           </span>
         </h2>
-        <p className="text-purple-300 text-xs md:text-sm font-bold tracking-[0.3em] uppercase mt-4">
-          מי ינצח היום?
-        </p>
+        <div className="flex items-center justify-center gap-3 mt-4">
+            <span className="h-px w-12 bg-white/30"></span>
+            <p className="text-purple-300 text-xs md:text-sm font-bold tracking-[0.3em] uppercase">
+            מי ינצח היום?
+            </p>
+            <span className="h-px w-12 bg-white/30"></span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative">
         
-        {/* === CARD A === */}
-        <div className={`relative bg-gray-900/40 rounded-3xl p-4 border transition-all duration-500 ${isPlayingA ? 'border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.3)] scale-[1.02]' : 'border-white/5'}`}>
+        {/* === CARD A (RED) === */}
+        <div className={`relative bg-gray-900/40 rounded-3xl p-4 border transition-all duration-500
+            ${isPlayingA ? 'border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.3)] scale-[1.02]' : 'border-white/5 hover:border-white/20 hover:bg-gray-900/60'}
+        `}>
+            {/* DISC CONTAINER */}
             <div 
-                className="relative aspect-square cursor-pointer mx-auto w-full max-w-[280px]"
+                className="relative aspect-square rounded-full border-8 border-gray-900 shadow-2xl cursor-pointer overflow-hidden group mx-auto w-full max-w-[280px]"
                 onClick={isPlayingA ? toggle : (e) => handlePlay(e, duel.media_url_a, duel.title_a, imgA)}
             >
-                {/* VINYL IMAGE: FORCED ROUNDNESS */}
-                <div className={`w-full h-full rounded-full overflow-hidden border-8 border-gray-900 shadow-2xl ${isPlayingA ? 'animate-[spin_4s_linear_infinite]' : ''}`}>
-                    <img src={imgA} alt={duel.title_a} className="w-full h-full object-cover" style={{ borderRadius: '50%' }} />
-                </div>
+                {/* Spinning Vinyl - FORCED ROUND */}
+                <img 
+                    src={imgA} 
+                    alt={duel.title_a} 
+                    className={`w-full h-full object-cover 
+                        ${isPlayingA ? 'animate-[spin_4s_linear_infinite]' : 'group-hover:scale-110 transition-transform duration-700'}
+                    `}
+                    style={{ borderRadius: '50%' }}
+                />
                 
-                {/* Center Play Button */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-xl hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-xl group-hover:scale-110 transition-transform">
                         {isPlayingA ? <FaPause className="text-red-500" /> : <FaPlay className="text-white ml-1" />}
                     </div>
                 </div>
+
+                {isPlayingA && <div className="absolute inset-0 rounded-full border-4 border-red-500/50 animate-ping"></div>}
             </div>
 
-            {/* CONTROLS */}
+            {/* INFO & CONTROLS */}
             <div className="mt-6 text-center">
                 <h3 className="text-xl md:text-2xl font-black text-white mb-1 line-clamp-1">{duel.title_a}</h3>
                 <div className="h-6 flex justify-center items-center mb-4">
@@ -200,54 +221,74 @@ export default function DailyDuel() {
 
                 {/* SEEKER BAR - NOW PROTECTED */}
                 <div 
-                    className={`relative h-12 flex items-center justify-center ${isActiveA ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}
-                    onMouseDown={stopProp} 
+                    className={`relative h-12 flex items-center justify-center transition-all duration-500 ${isActiveA ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 pointer-events-none'}`}
+                    onMouseDown={stopProp}
                     onTouchStart={stopProp}
                     onClick={stopProp}
                 >
-                    <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative">
-                        <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 absolute left-0 top-0" style={{ width: `${isActiveA ? progress * 100 : 0}%` }}></div>
+                    <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
+                        <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isActiveA ? progress * 100 : 0}%` }}></div>
                         
-                        {/* INPUT: High Z-Index + Pointer Events */}
+                        {/* INPUT SLIDER: High Z-Index + Forced Pointer Events */}
                         <input 
                             type="range" 
                             min={0} max={1} step="any"
                             value={isActiveA ? progress : 0}
                             onChange={handleSeek}
-                            style={{ pointerEvents: 'auto' }} 
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
+                            style={{ pointerEvents: 'auto', zIndex: 50 }} 
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
+                        
+                        {isActiveA && (
+                            <div 
+                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg pointer-events-none transition-all duration-100 ease-out"
+                                style={{ left: `${progress * 100}%`, transform: 'translate(-50%, -50%)' }}
+                            />
+                        )}
                     </div>
                 </div>
 
                 <button 
                     onClick={() => handleVote('a')}
-                    className="w-full py-4 rounded-xl font-black text-lg uppercase bg-gradient-to-r from-red-600 to-red-800 text-white flex items-center justify-center gap-3 mt-4 hover:scale-[1.02] transition-transform"
+                    className="w-full py-4 rounded-xl font-black text-lg uppercase tracking-wider transition-all duration-300
+                    bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg shadow-red-900/20
+                    hover:shadow-red-500/40 hover:scale-[1.02] active:scale-[0.98]
+                    flex items-center justify-center gap-3 mt-4 border border-red-500/20"
                 >
                     <FaVoteYea /> אני בוחר בזה
                 </button>
             </div>
         </div>
 
-        {/* === CARD B === */}
-        <div className={`relative bg-gray-900/40 rounded-3xl p-4 border transition-all duration-500 ${isPlayingB ? 'border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.3)] scale-[1.02]' : 'border-white/5'}`}>
+        {/* === CARD B (BLUE) === */}
+        <div className={`relative bg-gray-900/40 rounded-3xl p-4 border transition-all duration-500
+            ${isPlayingB ? 'border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.3)] scale-[1.02]' : 'border-white/5 hover:border-white/20 hover:bg-gray-900/60'}
+        `}>
+            {/* DISC CONTAINER */}
             <div 
-                className="relative aspect-square cursor-pointer mx-auto w-full max-w-[280px]"
+                className="relative aspect-square rounded-full border-8 border-gray-900 shadow-2xl cursor-pointer overflow-hidden group mx-auto w-full max-w-[280px]"
                 onClick={isPlayingB ? toggle : (e) => handlePlay(e, duel.media_url_b, duel.title_b, imgB)}
             >
-                {/* VINYL IMAGE */}
-                <div className={`w-full h-full rounded-full overflow-hidden border-8 border-gray-900 shadow-2xl ${isPlayingB ? 'animate-[spin_4s_linear_infinite]' : ''}`}>
-                    <img src={imgB} alt={duel.title_b} className="w-full h-full object-cover" style={{ borderRadius: '50%' }} />
-                </div>
+                {/* Spinning Vinyl - FORCED ROUND */}
+                <img 
+                    src={imgB} 
+                    alt={duel.title_b} 
+                    className={`w-full h-full object-cover 
+                        ${isPlayingB ? 'animate-[spin_4s_linear_infinite]' : 'group-hover:scale-110 transition-transform duration-700'}
+                    `}
+                    style={{ borderRadius: '50%' }}
+                />
                 
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-xl hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-xl group-hover:scale-110 transition-transform">
                         {isPlayingB ? <FaPause className="text-blue-500" /> : <FaPlay className="text-white ml-1" />}
                     </div>
                 </div>
+
+                {isPlayingB && <div className="absolute inset-0 rounded-full border-4 border-blue-500/50 animate-ping"></div>}
             </div>
 
-            {/* CONTROLS */}
+            {/* INFO & CONTROLS */}
             <div className="mt-6 text-center">
                 <h3 className="text-xl md:text-2xl font-black text-white mb-1 line-clamp-1">{duel.title_b}</h3>
                 <div className="h-6 flex justify-center items-center mb-4">
@@ -256,28 +297,39 @@ export default function DailyDuel() {
 
                 {/* SEEKER BAR */}
                 <div 
-                    className={`relative h-12 flex items-center justify-center ${isActiveB ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}
-                    onMouseDown={stopProp} 
+                    className={`relative h-12 flex items-center justify-center transition-all duration-500 ${isActiveB ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 pointer-events-none'}`}
+                    onMouseDown={stopProp}
                     onTouchStart={stopProp}
                     onClick={stopProp}
                 >
-                    <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative">
-                        <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 absolute left-0 top-0" style={{ width: `${isActiveB ? progress * 100 : 0}%` }}></div>
+                    <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
+                        <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isActiveB ? progress * 100 : 0}%` }}></div>
                         
+                        {/* INPUT SLIDER: High Z-Index + Forced Pointer Events */}
                         <input 
                             type="range" 
                             min={0} max={1} step="any"
                             value={isActiveB ? progress : 0}
                             onChange={handleSeek}
-                            style={{ pointerEvents: 'auto' }} 
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
+                            style={{ pointerEvents: 'auto', zIndex: 50 }} 
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
+                        
+                        {isActiveB && (
+                            <div 
+                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg pointer-events-none transition-all duration-100 ease-out"
+                                style={{ left: `${progress * 100}%`, transform: 'translate(-50%, -50%)' }}
+                            />
+                        )}
                     </div>
                 </div>
 
                 <button 
                     onClick={() => handleVote('b')}
-                    className="w-full py-4 rounded-xl font-black text-lg uppercase bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center gap-3 mt-4 hover:scale-[1.02] transition-transform"
+                    className="w-full py-4 rounded-xl font-black text-lg uppercase tracking-wider transition-all duration-300
+                    bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg shadow-blue-900/20
+                    hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]
+                    flex items-center justify-center gap-3 mt-4 border border-blue-500/20"
                 >
                     <FaVoteYea /> אני בוחר בזה
                 </button>
@@ -285,7 +337,7 @@ export default function DailyDuel() {
         </div>
 
       </div>
-      <div className="absolute top-0 right-0 text-[8px] text-gray-800 p-2">v3.0</div>
+      <div className="absolute top-0 right-0 text-[8px] text-gray-800 p-2">v4.0 (Fixed)</div>
     </div>
   );
 }
