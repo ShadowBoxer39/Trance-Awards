@@ -367,10 +367,6 @@ export default function DailyDuel() {
 
   const fetchDynamicDuel = async () => {
     try {
-      // DYNAMIC FETCH: 
-      // 1. Get duels where publish_date is in the past (active)
-      // 2. Order by newest first
-      // 3. Take the first one
       const { data, error } = await supabase
         .from('daily_duels')
         .select('*')
@@ -385,12 +381,10 @@ export default function DailyDuel() {
 
       if (data) {
         setDuel(data as DuelData);
-        // Check local storage for this specific ID
         if (typeof window !== 'undefined' && localStorage.getItem(`duel_vote_${data.id}`)) {
           setHasVoted(true);
         }
       } else {
-        // No active duel found in DB
         setDuel(null); 
       }
     } catch (e) {
@@ -405,7 +399,6 @@ export default function DailyDuel() {
     if (!duel || hasVoted) return;
     
     setHasVoted(true);
-    // Optimistic Update
     setDuel((prev) => prev ? {
       ...prev,
       [side === 'a' ? 'votes_a' : 'votes_b']: (prev[side === 'a' ? 'votes_a' : 'votes_b'] || 0) + 1
@@ -444,17 +437,14 @@ export default function DailyDuel() {
     );
   }
 
-  // --- EMPTY STATE: NO ACTIVE DUEL ---
   if (!duel) {
      return (
         <div className="w-full max-w-4xl mx-auto px-4 py-12 text-center">
             <h2 className="text-3xl font-black italic text-gray-700 uppercase">Coming Soon</h2>
-            <p className="text-gray-500">No active duel at this moment.</p>
         </div>
      );
   }
 
-  // Calculate stats
   const totalVotes = (duel.votes_a || 0) + (duel.votes_b || 0);
   const percentA = totalVotes === 0 ? 50 : Math.round(((duel.votes_a || 0) / totalVotes) * 100);
   const percentB = 100 - percentA;
@@ -462,24 +452,25 @@ export default function DailyDuel() {
   const isActiveA = activeUrl === duel.media_url_a;
   const isActiveB = activeUrl === duel.media_url_b;
 
-  // Determine if this duel supports audio
-  // Logic: It must be a 'track' OR an 'album' (if albums have previews), AND have URLs
   const hasAudio = duel.type !== 'artist' && (!!duel.media_url_a || !!duel.media_url_b);
 
-  // Dynamic Header Text
-  let headerText = 'איזה טראק ינצח היום?';
-  if (duel.type === 'artist') headerText = 'איזה אמן ינצח היום?';
-  if (duel.type === 'album') headerText = 'איזה אלבום ינצח היום?';
+  // --- UPDATED DYNAMIC TEXT LOGIC ---
+  let headerText = 'איזה טראק אתם לוקחים לאי בודד?'; // Track (Default)
+  if (duel.type === 'artist') headerText = 'לסט של איזה אמן אתם הולכים קודם?';
+  if (duel.type === 'album') headerText = 'איזה אלבום מנצח פה?';
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-2" dir="rtl">
       
       <div className="text-center mb-8 py-4">
-        <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase transform -rotate-1">
+        {/* NEW TITLE: במי אתם בוחרים? */}
+        <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter transform -rotate-1">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-sm pb-1 block">
-            Daily Duel
+            במי אתם בוחרים?
           </span>
         </h2>
+        
+        {/* DYNAMIC QUESTION */}
         <p className="text-gray-400 font-medium text-sm mt-1">{headerText}</p>
       </div>
 
