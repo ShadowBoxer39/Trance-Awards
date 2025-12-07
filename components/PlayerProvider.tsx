@@ -37,9 +37,8 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); 
   
-  // NEW: Ref to track if we are currently dragging (seeking)
-  const isSeekingRef = useRef(false);
-  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Anti-Flicker State
+  const isSeeking = useRef(false);
   
   const playerRef = useRef<any>(null);
   
@@ -50,7 +49,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       setUrl(data.url);
       setPlaying(true);
       setProgress(0);
-      isSeekingRef.current = false;
+      isSeeking.current = false;
     }
   };
 
@@ -61,24 +60,19 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const toggle = () => setPlaying((p) => !p);
 
   const seek = (amount: number) => {
-    // 1. Enter Seeking Mode (Blocks automatic updates)
-    isSeekingRef.current = true;
+    // 1. User is dragging -> Stop listening to player updates
+    isSeeking.current = true;
     
-    // 2. Clear any existing reset timer
-    if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
-
-    // 3. Update UI instantly
+    // 2. Update slider visually instantly
     setProgress(amount);
     
-    // 4. Seek the player
+    // 3. Move the player
     if (playerRef.current) {
       playerRef.current.seekTo(amount, "fraction");
     }
 
-    // 5. Exit Seeking Mode after a delay (allows buffer to catch up)
-    seekTimeoutRef.current = setTimeout(() => {
-        isSeekingRef.current = false;
-    }, 1000);
+    // 4. Release lock after short delay
+    setTimeout(() => { isSeeking.current = false; }, 500);
   };
 
   return (
@@ -94,6 +88,8 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       }}
     >
       {children}
+      
+      {/* HIDDEN PLAYER ENGINE */}
       <div className="fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none overflow-hidden z-[-1]">
         {url && (
           <ReactPlayer
@@ -103,10 +99,9 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             volume={1}
             width="100%"
             height="100%"
-            progressInterval={100}
+            progressInterval={100} // Fast updates
             onProgress={(state) => {
-                // Only update if NOT user seeking
-                if (!isSeekingRef.current) {
+                if (!isSeeking.current) {
                     setProgress(state.played);
                 }
             }}
