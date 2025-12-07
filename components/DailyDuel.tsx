@@ -100,7 +100,7 @@ function VinylDisc({
   const discRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [rotation, setRotation] = useState(0);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   
   // Smooth rotation animation
