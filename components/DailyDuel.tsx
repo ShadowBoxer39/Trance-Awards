@@ -5,7 +5,7 @@ import { FaPlay, FaPause, FaBolt } from 'react-icons/fa';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! 
 );
 
 const FALLBACK_IMG = "/images/logo.png"; 
