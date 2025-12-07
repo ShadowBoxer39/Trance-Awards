@@ -1,7 +1,6 @@
 import React, { useState, useRef, useContext, createContext } from "react";
 import dynamic from "next/dynamic";
 
-// Lazy load to fix hydration
 const ReactPlayer = dynamic(() => import("react-player/lazy"), { ssr: false });
 
 type TrackData = {
@@ -13,17 +12,19 @@ type TrackData = {
 
 type PlayerAPI = {
   playTrack: (data: TrackData) => void;
-  playUrl: (url: string) => void; // Legacy support
+  playUrl: (url: string) => void;
   toggle: () => void;
+  seek: (amount: number) => void; // ✅ Added back
   activeUrl: string | null;
   isPlaying: boolean;
-  progress: number; // 0 to 1 (New!)
+  progress: number;
 };
 
 const PlayerContext = createContext<PlayerAPI>({
   playTrack: () => {},
   playUrl: () => {},
   toggle: () => {},
+  seek: () => {}, 
   activeUrl: null,
   isPlaying: false,
   progress: 0,
@@ -34,12 +35,10 @@ export const usePlayer = () => useContext(PlayerContext);
 export default function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [url, setUrl] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); // 0 to 1
-  
-  // We don't need meta/visible anymore since the UI is in the cards
+  const [progress, setProgress] = useState(0); 
+  const playerRef = useRef<any>(null);
   
   const playTrack = (data: TrackData) => {
-    // If clicking the same track, just toggle
     if (url === data.url) {
       setPlaying(!playing);
     } else {
@@ -55,24 +54,31 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
 
   const toggle = () => setPlaying((p) => !p);
 
+  // ✅ Seek Function
+  const seek = (amount: number) => {
+    if (playerRef.current) {
+      playerRef.current.seekTo(amount, "fraction");
+      setProgress(amount);
+    }
+  };
+
   return (
     <PlayerContext.Provider
       value={{
         playTrack,
         playUrl,
         toggle,
+        seek,
         activeUrl: url,
         isPlaying: playing,
         progress,
       }}
     >
       {children}
-
-      {/* THE INVISIBLE ENGINE */}
-      {/* We keep it 1x1px so YouTube techincally "sees" it and allows playback */}
       <div className="fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none overflow-hidden z-[-1]">
         {url && (
           <ReactPlayer
+            ref={playerRef}
             url={url}
             playing={playing}
             volume={1}
