@@ -16,7 +16,7 @@ export const config = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow GET requests
   if (req.method !== "GET") {
-    return res.status(405).send("Method not allowed");
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { id } = req.query;
@@ -24,19 +24,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Validate encrypted ID parameter
   if (!id || typeof id !== "string") {
     console.error("[Stream] Missing or invalid ID parameter");
-    return res.status(400).send("Missing ID");
+    return res.status(400).json({ error: "Missing ID parameter" });
   }
 
+  console.log("[Stream] Received request with encrypted ID length:", id.length);
+
   try {
-    // 1. DECRYPT the video ID (this is the security layer!)
-    const videoId = deobfuscateId(id);
+    // 1. DECRYPT the video ID
+    let videoId: string | null = null;
+    
+    try {
+      videoId = deobfuscateId(id);
+      console.log("[Stream] Decryption result:", videoId ? "Success (11 chars)" : "Failed");
+    } catch (decryptError: any) {
+      console.error("[Stream] Decryption threw error:", decryptError.message);
+      return res.status(400).json({ error: "Decryption failed", details: decryptError.message });
+    }
     
     if (!videoId) {
-      console.error("[Stream] Failed to decrypt video ID");
-      return res.status(400).send("Invalid ID");
+      console.error("[Stream] Failed to decrypt video ID - got null/empty");
+      return res.status(400).json({ error: "Invalid or corrupted ID" });
     }
 
-    console.log(`[Stream] Processing request for video (ID hidden for security)`);
+    // Validate video ID format (11 alphanumeric chars with - and _)
+    if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+      console.error("[Stream] Decrypted value is not a valid YouTube ID:", videoId.length, "chars");
+      return res.status(400).json({ error: "Invalid video ID format" });
+    }
+
+    console.log("[Stream] Valid video ID decrypted, fetching info...");
 
     // 2. Get video info from YouTube
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
@@ -44,52 +60,72 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let info;
     try {
       info = await ytdl.getInfo(videoUrl);
+      console.log("[Stream] Got video info, formats available:", info.formats.length);
     } catch (ytError: any) {
       console.error("[Stream] ytdl.getInfo failed:", ytError.message);
-      return res.status(500).send("Failed to get video info");
+      return res.status(500).json({ 
+        error: "Failed to get video info from YouTube",
+        details: ytError.message 
+      });
     }
 
     // 3. Choose the best audio format
-    // Priority: MP4 (best Safari/iOS support) -> WebM -> Any audio
     let format = null;
 
-    // Try MP4 first (best cross-browser support, includes m4a audio)
-    format = ytdl.chooseFormat(info.formats, {
-      quality: "lowestaudio",
-      filter: (f) => 
-        f.hasAudio && 
-        !f.hasVideo && 
-        f.container === 'mp4'
-    });
+    // Try MP4 audio first (best cross-browser support)
+    try {
+      format = ytdl.chooseFormat(info.formats, {
+        quality: "lowestaudio",
+        filter: (f) => f.hasAudio && !f.hasVideo && f.container === 'mp4'
+      });
+    } catch (e) {
+      console.log("[Stream] No MP4 audio format found");
+    }
 
     // Fallback to WebM audio
     if (!format || !format.url) {
-      format = ytdl.chooseFormat(info.formats, {
-        quality: "lowestaudio",
-        filter: (f) => 
-          f.hasAudio && 
-          !f.hasVideo && 
-          f.container === 'webm'
-      });
+      try {
+        format = ytdl.chooseFormat(info.formats, {
+          quality: "lowestaudio",
+          filter: (f) => f.hasAudio && !f.hasVideo && f.container === 'webm'
+        });
+      } catch (e) {
+        console.log("[Stream] No WebM audio format found");
+      }
     }
 
     // Last resort: any audio-only format
     if (!format || !format.url) {
-      format = ytdl.chooseFormat(info.formats, {
-        quality: "lowestaudio",
-        filter: "audioonly",
-      });
+      try {
+        format = ytdl.chooseFormat(info.formats, {
+          quality: "lowestaudio",
+          filter: "audioonly",
+        });
+      } catch (e) {
+        console.log("[Stream] No audio-only format found");
+      }
+    }
+
+    // Ultimate fallback: any format with audio
+    if (!format || !format.url) {
+      try {
+        format = ytdl.chooseFormat(info.formats, {
+          quality: "lowest",
+          filter: (f) => f.hasAudio
+        });
+      } catch (e) {
+        console.log("[Stream] No format with audio found");
+      }
     }
 
     if (!format || !format.url) {
-      console.error("[Stream] No suitable audio format found");
-      return res.status(404).send("Audio format not found");
+      console.error("[Stream] No suitable audio format found in", info.formats.length, "formats");
+      return res.status(404).json({ error: "No audio format available for this video" });
     }
 
-    console.log(`[Stream] Using format: ${format.container}, ${format.mimeType}`);
+    console.log("[Stream] Selected format:", format.container, format.mimeType);
 
     // 4. Set response headers
-    // CRITICAL: Use the actual mime type from YouTube
     const contentType = format.mimeType?.split(';')[0] || 'audio/mp4';
     
     res.setHeader("Content-Type", contentType);
@@ -97,31 +133,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
-    
-    // Prevent caching of the URL
     res.setHeader("X-Content-Type-Options", "nosniff");
     
-    // Set content length if available
     if (format.contentLength) {
       res.setHeader("Content-Length", format.contentLength);
     }
 
     // 5. Stream the audio
+    console.log("[Stream] Starting audio stream...");
+    
     const stream = ytdl.downloadFromInfo(info, {
       format: format,
-      highWaterMark: 1 << 25, // 32MB buffer for smoother streaming
+      highWaterMark: 1 << 25, // 32MB buffer
     });
 
     // Handle stream errors
     stream.on("error", (err) => {
       console.error("[Stream] Stream error:", err.message);
       if (!res.headersSent) {
-        res.status(500).end();
+        res.status(500).json({ error: "Stream error", details: err.message });
       }
+    });
+
+    // Log when stream starts sending data
+    stream.once("data", () => {
+      console.log("[Stream] First chunk sent");
     });
 
     // Handle client disconnect
     req.on("close", () => {
+      console.log("[Stream] Client disconnected");
       stream.destroy();
     });
 
@@ -129,10 +170,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     stream.pipe(res);
 
   } catch (error: any) {
-    console.error("[Stream] Handler error:", error.message);
+    console.error("[Stream] Unexpected handler error:", error.message, error.stack);
     
     if (!res.headersSent) {
-      res.status(500).send("Stream failed");
+      res.status(500).json({ 
+        error: "Stream failed", 
+        details: error.message 
+      });
     }
   }
 }
