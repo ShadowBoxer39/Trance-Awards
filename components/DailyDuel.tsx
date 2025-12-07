@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from './PlayerProvider'; 
 import { createClient } from '@supabase/supabase-js';
 import { FaPlay, FaPause, FaVoteYea } from 'react-icons/fa';
@@ -25,6 +25,33 @@ export default function DailyDuel() {
   const [duel, setDuel] = useState<any>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // --- SEEKING FIX: Local state to handle dragging ---
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragValue, setDragValue] = useState(0);
+
+  // Sync local drag value with global progress ONLY when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setDragValue(progress);
+    }
+  }, [progress, isDragging]);
+
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDragValue(parseFloat(e.target.value));
+  };
+
+  const handleSeekStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleSeekEnd = (e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) => {
+    setIsDragging(false);
+    // @ts-ignore
+    const newValue = parseFloat(e.target.value);
+    seek(newValue);
+  };
+  // ----------------------------------------------------
 
   useEffect(() => {
     fetchDuel();
@@ -84,11 +111,6 @@ export default function DailyDuel() {
     playTrack({ url, title, image: img || FALLBACK_IMG });
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation(); 
-    seek(parseFloat(e.target.value));
-  };
-
   const stopProp = (e: React.MouseEvent | React.TouchEvent) => e.stopPropagation();
 
   if (loading || !duel) return null;
@@ -114,7 +136,7 @@ export default function DailyDuel() {
             </div>
             <div className="flex items-center gap-6">
               <div className="flex flex-col items-center gap-2 flex-1">
-                 <img src={imgA} className="w-20 h-20 object-cover" style={{ borderRadius: '50%', border: '4px solid #ef4444' }} alt="" />
+                 <img src={imgA} className="w-20 h-20 object-cover rounded-xl" style={{ border: '3px solid #ef4444' }} alt="" />
                  <span className="text-white text-xs font-bold text-center line-clamp-1 mt-2">{duel.title_a}</span>
               </div>
               <div className="flex-[3] flex flex-col gap-2">
@@ -124,7 +146,7 @@ export default function DailyDuel() {
                   </div>
               </div>
               <div className="flex flex-col items-center gap-2 flex-1">
-                 <img src={imgB} className="w-20 h-20 object-cover" style={{ borderRadius: '50%', border: '4px solid #3b82f6' }} alt="" />
+                 <img src={imgB} className="w-20 h-20 object-cover rounded-xl" style={{ border: '3px solid #3b82f6' }} alt="" />
                  <span className="text-white text-xs font-bold text-center line-clamp-1">{duel.title_b}</span>
               </div>
             </div>
@@ -137,9 +159,6 @@ export default function DailyDuel() {
   return (
     <div className="w-full max-w-5xl mx-auto my-12 px-4 relative z-20" dir="rtl">
       
-      {/* VERSION CHECKER - IF YOU DONT SEE THIS, YOU ARE DEPLOYING THE WRONG FOLDER */}
-      <div className="absolute top-0 right-0 text-[10px] text-red-500 font-mono bg-black p-1 z-50">v6.0 TEST</div>
-
       <div className="text-center mb-10 relative">
         <h2 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter drop-shadow-2xl transform -skew-x-6">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 animate-gradient-x">
@@ -171,12 +190,11 @@ export default function DailyDuel() {
                 className="relative aspect-square cursor-pointer mx-auto w-full max-w-[280px]"
                 onClick={isPlayingA ? toggle : (e) => handlePlay(e, duel.media_url_a, duel.title_a, imgA)}
             >
-                {/* FORCE ROUND CONTAINER with transform fix */}
+                {/* FIX 1: ROUNDED-2XL INSTEAD OF ROUNDED-FULL */}
                 <div 
-                  className={`w-full h-full rounded-full border-8 border-gray-900 shadow-2xl overflow-hidden ${isPlayingA ? 'animate-[spin_4s_linear_infinite]' : ''}`} 
-                  style={{ borderRadius: '50%', transform: 'translateZ(0)' }}
+                  className={`w-full h-full rounded-2xl border-4 border-gray-800 shadow-2xl overflow-hidden`} 
                 >
-                    <img src={imgA} alt={duel.title_a} className="w-full h-full object-cover" style={{ borderRadius: '50%' }} />
+                    <img src={imgA} alt={duel.title_a} className="w-full h-full object-cover" />
                 </div>
                 
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -192,16 +210,22 @@ export default function DailyDuel() {
                     {isPlayingA ? <NeonEqualizer color="bg-red-500" /> : <span className="text-xs text-gray-500 font-bold tracking-widest">לחץ לניגון</span>}
                 </div>
 
+                {/* SEEK BAR A - FIXED */}
                 <div 
                     className={`relative h-12 flex items-center justify-center ${isActiveA ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}
                     onMouseDown={stopProp} onTouchStart={stopProp} onClick={stopProp}
                 >
                     <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
-                        <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isActiveA ? progress * 100 : 0}%` }}></div>
+                        <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 absolute left-0 top-0 transition-all duration-100 ease-out" 
+                             style={{ width: `${isActiveA ? dragValue * 100 : 0}%` }}></div>
                         <input 
                             type="range" min={0} max={1} step="any"
-                            value={isActiveA ? progress : 0}
-                            onChange={handleSeek}
+                            value={isActiveA ? dragValue : 0}
+                            onChange={handleSeekChange}
+                            onMouseDown={handleSeekStart}
+                            onMouseUp={handleSeekEnd}
+                            onTouchStart={handleSeekStart}
+                            onTouchEnd={handleSeekEnd}
                             style={{ pointerEvents: 'auto', zIndex: 50 }} 
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
@@ -223,11 +247,11 @@ export default function DailyDuel() {
                 className="relative aspect-square cursor-pointer mx-auto w-full max-w-[280px]"
                 onClick={isPlayingB ? toggle : (e) => handlePlay(e, duel.media_url_b, duel.title_b, imgB)}
             >
+                {/* FIX 1: ROUNDED-2XL INSTEAD OF ROUNDED-FULL */}
                 <div 
-                  className={`w-full h-full rounded-full border-8 border-gray-900 shadow-2xl overflow-hidden ${isPlayingB ? 'animate-[spin_4s_linear_infinite]' : ''}`} 
-                  style={{ borderRadius: '50%', transform: 'translateZ(0)' }}
+                  className={`w-full h-full rounded-2xl border-4 border-gray-800 shadow-2xl overflow-hidden`} 
                 >
-                    <img src={imgB} alt={duel.title_b} className="w-full h-full object-cover" style={{ borderRadius: '50%' }} />
+                    <img src={imgB} alt={duel.title_b} className="w-full h-full object-cover" />
                 </div>
                 
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -243,16 +267,22 @@ export default function DailyDuel() {
                     {isPlayingB ? <NeonEqualizer color="bg-blue-500" /> : <span className="text-xs text-gray-500 font-bold tracking-widest">לחץ לניגון</span>}
                 </div>
 
+                {/* SEEK BAR B - FIXED */}
                 <div 
                     className={`relative h-12 flex items-center justify-center ${isActiveB ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}
                     onMouseDown={stopProp} onTouchStart={stopProp} onClick={stopProp}
                 >
                     <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
-                        <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isActiveB ? progress * 100 : 0}%` }}></div>
+                        <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 absolute left-0 top-0 transition-all duration-100 ease-out" 
+                             style={{ width: `${isActiveB ? dragValue * 100 : 0}%` }}></div>
                         <input 
                             type="range" min={0} max={1} step="any"
-                            value={isActiveB ? progress : 0}
-                            onChange={handleSeek}
+                            value={isActiveB ? dragValue : 0}
+                            onChange={handleSeekChange}
+                            onMouseDown={handleSeekStart}
+                            onMouseUp={handleSeekEnd}
+                            onTouchStart={handleSeekStart}
+                            onTouchEnd={handleSeekEnd}
                             style={{ pointerEvents: 'auto', zIndex: 50 }} 
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
