@@ -4,7 +4,7 @@
 function CompactVinyl({ 
   isPlaying, 
   isActive,
-  progress,
+  progress, 
   color,
   onPlayPause,
   onSeek
