@@ -549,6 +549,22 @@ export default function Admin() {
 
         {tally && (
           <>
+            <div className="flex flex-wrap gap-4 mb-6">
+      <Link 
+        href="/admin/featured-artist" 
+        className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition hover:scale-105"
+      >
+         ⭐ ניהול אמן מומלץ
+      </Link>
+      
+      <Link 
+        href="/admin/duels" 
+        className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-purple-500/50 text-purple-300 hover:bg-purple-500/20 flex items-center gap-2 transition hover:scale-105"
+      >
+         ⚔️ ניהול דואל יומי
+      </Link>
+    </div>
+            
             <div className="glass rounded-2xl p-1 flex gap-2 overflow-x-auto">
               {[
                 { id: "votes", label: `🗳️ הצבעות (${totalVotes})` },
