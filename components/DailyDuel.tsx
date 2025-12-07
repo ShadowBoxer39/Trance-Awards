@@ -9,7 +9,7 @@ const supabase = createClient(
 
 const FALLBACK_IMG = "/images/logo.png";
 
-// --- Compact Vinyl with Improved Seeker ---
+// --- Compact Vinyl with Fixed Seek ---
 function CompactVinyl({ 
   isPlaying, 
   isActive,
@@ -30,15 +30,12 @@ function CompactVinyl({
   const [localProgress, setLocalProgress] = useState(progress);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Refs for animation and logic
   const animationRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const seekBarRef = useRef<HTMLDivElement>(null);
-  
-  // We use a ref for drag progress to ensure the 'mouseup' event gets the fresh value immediately
   const dragProgressRef = useRef(progress);
 
-  // Sync external progress when not dragging
+  // Sync external progress
   useEffect(() => {
     if (!isDragging) {
       setLocalProgress(progress);
@@ -60,26 +57,23 @@ function CompactVinyl({
       animationRef.current = requestAnimationFrame(animate);
     } else {
       lastTimeRef.current = 0;
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     }
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [isPlaying, isDragging]);
 
-  // --- Seeker Logic ---
-
+  // Calculate seek percentage (0.0 to 1.0)
   const calculateProgress = useCallback((clientX: number) => {
     if (!seekBarRef.current) return 0;
     const rect = seekBarRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
-    // Ensure we send a clean 0.0 - 1.0 float
     const val = Math.max(0, Math.min(1, x / rect.width));
-    return parseFloat(val.toFixed(4)); 
+    return parseFloat(val.toFixed(4));
   }, []);
 
+  // --- Drag Handlers ---
   const handleSeekStart = (clientX: number) => {
     if (!isActive) return;
     setIsDragging(true);
@@ -99,16 +93,14 @@ function CompactVinyl({
   const handleSeekEnd = useCallback(() => {
     if (isDragging) {
       setIsDragging(false);
-      // Send the value from the Ref to ensure it's the latest
-      onSeek(dragProgressRef.current);
+      onSeek(dragProgressRef.current); // Send final value
     }
   }, [isDragging, onSeek]);
 
-  // Global Mouse/Touch Listeners
+  // Global listeners for smooth dragging outside the bar
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => handleSeekMove(e.clientX);
     const onTouchMove = (e: TouchEvent) => handleSeekMove(e.touches[0].clientX);
-    // Bind mouseup to window to catch releases outside the bar
     const onMouseUp = () => handleSeekEnd();
     
     if (isDragging) {
@@ -125,10 +117,10 @@ function CompactVinyl({
     };
   }, [isDragging, handleSeekMove, handleSeekEnd]);
 
-  // Direct Click on Bar
+  // Click handler
   const handleBarClick = (e: React.MouseEvent) => {
     if (!isActive) return;
-    e.stopPropagation(); // Prevent bubbling
+    e.stopPropagation();
     const newProgress = calculateProgress(e.clientX);
     setLocalProgress(newProgress);
     onSeek(newProgress);
@@ -138,30 +130,27 @@ function CompactVinyl({
   const glowColor = color === 'red' ? 'shadow-red-500/50' : 'shadow-blue-500/50';
 
   return (
-    // FORCE LTR HERE so the drag math works correctly even if the page is RTL
+    // dir="ltr" is CRITICAL here for the math to work correctly on Hebrew sites
     <div className="flex items-center gap-3 w-full mt-auto pt-2" dir="ltr">
       
       {/* Vinyl Play Button */}
       <div 
         className={`relative w-12 h-12 flex-shrink-0 cursor-pointer group`}
         onClick={(e) => {
-          e.stopPropagation(); // Prevent card click
+          e.stopPropagation();
           onPlayPause();
         }}
       >
         <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${accentColor} blur opacity-20 group-hover:opacity-60 transition-opacity`} />
         
-        {/* Disc */}
         <div 
           className={`relative w-full h-full rounded-full bg-black shadow-lg ${isActive ? glowColor : ''} border border-white/10 flex items-center justify-center overflow-hidden`}
           style={{ transform: `rotate(${rotation}deg)` }}
         >
-           {/* Vinyl Grooves Texture */}
            <div className="absolute inset-0 opacity-30" style={{
             background: `repeating-radial-gradient(circle at center, #333 0, #333 1px, transparent 2px, transparent 4px)`
           }} />
 
-          {/* Center Label (Play Icon) */}
           <div className="absolute inset-0 flex items-center justify-center">
              <div className={`w-4 h-4 text-white z-10 drop-shadow-md ${isPlaying ? '' : 'pl-0.5'}`}>
                {isPlaying ? (
@@ -182,16 +171,13 @@ function CompactVinyl({
         onMouseDown={(e) => handleSeekStart(e.clientX)}
         onTouchStart={(e) => handleSeekStart(e.touches[0].clientX)}
       >
-        {/* Track Background */}
         <div className="relative w-full h-1.5 bg-black/40 backdrop-blur-md rounded-full overflow-hidden border border-white/5">
-          {/* Progress Fill */}
           <div 
             className={`absolute inset-y-0 left-0 bg-gradient-to-r ${accentColor} transition-all ${isDragging ? 'duration-0' : 'duration-300 ease-out'}`}
             style={{ width: `${localProgress * 100}%` }}
           />
         </div>
         
-        {/* Thumb (Only visible on hover or drag or active) */}
         {isActive && (
             <div 
               className={`absolute top-1/2 -translate-y-1/2 h-4 w-4 bg-white rounded-full shadow-md pointer-events-none transition-transform duration-75 ${isDragging ? 'scale-125' : 'scale-0 group-hover:scale-100'}`}
@@ -247,19 +233,15 @@ function CompactDuelCard({
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
         />
-        {/* Gradient Overlay for Readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent opacity-90" />
         
-        {/* Active Glow Overlay */}
         {isActive && (
              <div className={`absolute inset-0 bg-gradient-to-t ${side === 'a' ? 'from-red-900/20' : 'from-blue-900/20'} to-transparent mix-blend-overlay`} />
         )}
       </div>
 
-      {/* Content Container */}
       <div className="relative h-full flex flex-col justify-between p-4 md:p-5">
         
-        {/* Header (Vote % or Side Label) */}
         <div className="flex justify-between items-start">
             <span className={`text-[10px] font-black tracking-widest uppercase px-2 py-1 rounded bg-black/40 backdrop-blur text-white/70 border border-white/5`}>
                 {side === 'a' ? 'Challenger' : 'Defender'}
@@ -272,17 +254,14 @@ function CompactDuelCard({
             )}
         </div>
 
-        {/* Bottom Section: Title, Player & Vote Button */}
         <div className="space-y-3">
-            {/* Title */}
             <h3 className="text-white font-bold text-base md:text-lg leading-tight line-clamp-2 drop-shadow-md">
                 {title}
             </h3>
 
-            {/* Player Controls */}
             {isTrack && mediaUrl ? (
                 <CompactVinyl
-                    imageUrl={imageUrl} // Passed but handled via background now
+                    imageUrl={imageUrl} 
                     isPlaying={isPlaying}
                     isActive={isActive}
                     progress={progress}
@@ -292,7 +271,6 @@ function CompactDuelCard({
                 />
             ) : null}
 
-            {/* Vote Button (Only shows if not voted) */}
             {!hasVoted && (
                 <button
                 onClick={onVote}
@@ -302,7 +280,6 @@ function CompactDuelCard({
                 </button>
             )}
             
-            {/* Voted State Progress Bar */}
             {hasVoted && (
                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
                     <div 
@@ -343,7 +320,7 @@ export default function DailyDuel() {
           setHasVoted(true);
         }
       } else {
-        // Fallback Data
+        // Fallback
         setDuel({
           id: 999,
           type: 'track',
@@ -358,9 +335,9 @@ export default function DailyDuel() {
         });
       }
     } catch (e) {
-      console.error('Failed to fetch duel:', e);
-      // Even on error, show fallback so the component doesn't break
-       setDuel({
+      console.error(e);
+      // Fallback on error
+      setDuel({
           id: 999,
           type: 'track',
           title_a: 'Detune - The Point',
@@ -428,7 +405,6 @@ export default function DailyDuel() {
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-6" dir="rtl">
-      {/* Header */}
       <div className="text-center mb-6">
         <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase transform -rotate-1">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-sm">
@@ -438,10 +414,7 @@ export default function DailyDuel() {
         <p className="text-gray-400 font-medium text-sm mt-1">איזה טראק ינצח היום?</p>
       </div>
 
-      {/* Battle Layout */}
       <div className="relative flex flex-col md:flex-row items-stretch gap-4 md:gap-6">
-        
-        {/* Card A */}
         <CompactDuelCard
           side="a"
           title={duel.title_a}
@@ -461,7 +434,6 @@ export default function DailyDuel() {
           isTrack={isTrack}
         />
 
-        {/* VS Badge (Floating in center) */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
           <div className="relative group">
             <div className="absolute inset-0 bg-white rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity" />
@@ -473,7 +445,6 @@ export default function DailyDuel() {
           </div>
         </div>
 
-        {/* Card B */}
         <CompactDuelCard
           side="b"
           title={duel.title_b}
@@ -494,7 +465,6 @@ export default function DailyDuel() {
         />
       </div>
 
-      {/* Footer Info */}
       {hasVoted && (
         <div className="text-center mt-6 animate-in fade-in duration-700">
           <span className="inline-block px-4 py-1 rounded-full bg-white/5 text-xs text-gray-400 border border-white/5">
