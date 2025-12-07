@@ -23,7 +23,7 @@ type DuelData = {
   votes_b: number;
 };
 
-// --- ANIMATED EQUALIZER ---
+// --- VISUALIZER ---
 const Equalizer = () => (
   <div className="flex items-end justify-center gap-0.5 h-4 w-6">
     <div className="w-1 bg-green-400 animate-[bounce_1s_infinite] h-2"></div>
@@ -103,13 +103,13 @@ export default function DailyDuel() {
     toggle();
   };
 
-  // ✅ New Seeker Function
+  // ✅ FIXED SEEKER
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Crucial: Stop propagation so we don't click the card
     e.stopPropagation();
     seek(parseFloat(e.target.value));
   };
 
-  // Prevent click bubbling on the range input
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();
 
   if (loading || !duel) return null;
@@ -162,7 +162,7 @@ export default function DailyDuel() {
     );
   }
 
-  // --- COMPACT FULL MODE ---
+  // --- FULL MODE ---
   return (
     <div className="w-full max-w-4xl mx-auto my-6 px-4 relative z-30" dir="rtl">
       
@@ -189,7 +189,6 @@ export default function DailyDuel() {
                 <img src={imgA} alt={duel.title_a} className={`w-full h-full object-cover transition-transform duration-700 ${isPlayingA ? 'scale-110 opacity-100' : 'group-hover:scale-105 opacity-60'}`}/>
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-80" />
 
-                {/* Center Button */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
                     {isPlayingA ? (
                         <div className="w-12 h-12 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg border border-white/20">
@@ -203,19 +202,29 @@ export default function DailyDuel() {
                     {isPlayingA && <div className="mt-2"><Equalizer /></div>}
                 </div>
 
-                {/* ✅ INTERACTIVE TIMELINE */}
+                {/* ✅ FIXED TIMELINE CONTAINER */}
                 {isPlayingA && (
-                    <div className="absolute bottom-0 left-0 right-0 h-4 z-30 flex items-end group/bar" onClick={stopProp}>
+                    <div 
+                      className="absolute bottom-4 left-4 right-4 h-6 z-40 flex items-center"
+                      onClick={stopProp} // IMPORTANT: Stops click bubbling to play/pause
+                    >
+                        {/* 1. Invisible Touch/Click Area */}
                         <input 
                             type="range" 
                             min={0} max={1} step="any"
-                            value={progress}
+                            value={progress || 0}
                             onChange={handleSeek}
-                            className="absolute w-full h-full opacity-0 cursor-pointer z-40"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
                         />
-                        <div className="w-full h-1 bg-white/20">
-                            <div className="h-full bg-red-500 relative" style={{ width: `${progress * 100}%` }}>
-                                <div className="absolute right-0 -top-1 w-3 h-3 bg-white rounded-full shadow-md scale-0 group-hover/bar:scale-100 transition-transform"/>
+                        
+                        {/* 2. Visual Bar */}
+                        <div className="w-full h-1.5 bg-white/30 rounded-full relative pointer-events-none">
+                            <div 
+                                className="h-full bg-red-500 rounded-full relative" 
+                                style={{ width: `${(progress || 0) * 100}%` }}
+                            >
+                                {/* Thumb */}
+                                <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md"/>
                             </div>
                         </div>
                     </div>
@@ -262,19 +271,25 @@ export default function DailyDuel() {
                     {isPlayingB && <div className="mt-2"><Equalizer /></div>}
                 </div>
 
-                {/* ✅ INTERACTIVE TIMELINE */}
+                {/* ✅ FIXED TIMELINE CONTAINER */}
                 {isPlayingB && (
-                    <div className="absolute bottom-0 left-0 right-0 h-4 z-30 flex items-end group/bar" onClick={stopProp}>
+                    <div 
+                      className="absolute bottom-4 left-4 right-4 h-6 z-40 flex items-center"
+                      onClick={stopProp}
+                    >
                         <input 
                             type="range" 
                             min={0} max={1} step="any"
-                            value={progress}
+                            value={progress || 0}
                             onChange={handleSeek}
-                            className="absolute w-full h-full opacity-0 cursor-pointer z-40"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
                         />
-                        <div className="w-full h-1 bg-white/20">
-                            <div className="h-full bg-blue-500 relative" style={{ width: `${progress * 100}%` }}>
-                                <div className="absolute right-0 -top-1 w-3 h-3 bg-white rounded-full shadow-md scale-0 group-hover/bar:scale-100 transition-transform"/>
+                        <div className="w-full h-1.5 bg-white/30 rounded-full relative pointer-events-none">
+                            <div 
+                                className="h-full bg-blue-500 rounded-full relative" 
+                                style={{ width: `${(progress || 0) * 100}%` }}
+                            >
+                                <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md"/>
                             </div>
                         </div>
                     </div>
