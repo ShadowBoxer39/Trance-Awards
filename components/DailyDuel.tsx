@@ -250,7 +250,6 @@ function CompactDuelCard({
                 />
             ) : null}
 
-            {/* --- UPDATED BUTTON TEXT HERE --- */}
             <button
             onClick={onVote}
             className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r ${buttonGradient} text-white shadow-lg shadow-black/30 transition-all hover:scale-[1.02] active:scale-95 border border-white/10`}
@@ -446,10 +445,13 @@ export default function DailyDuel() {
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-2" dir="rtl">
       
-      <div className="text-center mb-2">
+      {/* FIX: Increased margin-bottom (mb-8) to separate text from cards.
+         FIX: Added padding-y (py-4) so the gradient text doesn't get clipped.
+      */}
+      <div className="text-center mb-8 py-4">
         <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase transform -rotate-1">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-sm">
-           במי אתם בוחרים?
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-sm pb-1 block">
+            במי אתם בוחרים?
           </span>
         </h2>
       </div>
