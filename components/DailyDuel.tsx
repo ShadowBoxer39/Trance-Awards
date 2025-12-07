@@ -19,7 +19,9 @@ type DuelData = {
 };
 
 export default function DailyDuel() {
-  const { playTrack } = usePlayer();
+  // FIX: Changed from playTrack to playUrl to match your PlayerProvider
+  const { playUrl } = usePlayer();
+  
   const [duel, setDuel] = useState<DuelData | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,8 +31,7 @@ export default function DailyDuel() {
   }, []);
 
   const fetchDuel = async () => {
-    // Fetch the latest duel (or today's specific one)
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('daily_duels')
       .select('*')
       .order('publish_date', { ascending: false })
@@ -39,7 +40,6 @@ export default function DailyDuel() {
 
     if (data) {
       setDuel(data);
-      // Check if user already voted locally
       if (localStorage.getItem(`duel_vote_${data.id}`)) {
         setHasVoted(true);
       }
@@ -50,34 +50,23 @@ export default function DailyDuel() {
   const handleVote = async (side: 'a' | 'b') => {
     if (!duel || hasVoted) return;
 
-    // 1. Optimistic UI Update (Instant feedback)
     setHasVoted(true);
     setDuel(prev => prev ? {
       ...prev,
       [side === 'a' ? 'votes_a' : 'votes_b']: prev[side === 'a' ? 'votes_a' : 'votes_b'] + 1
     } : null);
 
-    // 2. Save to DB securely
     await supabase.rpc('increment_duel_vote', { row_id: duel.id, side });
-
-    // 3. Lock vote locally
     localStorage.setItem(`duel_vote_${duel.id}`, side);
   };
 
-  // Safe play function
-  const handlePlay = (e: React.MouseEvent, url: string, title: string) => {
-    e.stopPropagation(); // Don't trigger vote when clicking play
-    playTrack({ 
-      id: url, // Using URL as ID for simplicity
-      title: title,
-      artist: "Daily Duel",
-      url: url,
-      artwork: "/images/logo.png" // Fallback image
-    });
+  const handlePlay = (e: React.MouseEvent, url: string) => {
+    e.stopPropagation();
+    // FIX: Using playUrl with just the string string
+    playUrl(url);
   };
 
-  if (loading) return null;
-  if (!duel) return null;
+  if (loading || !duel) return null;
 
   const totalVotes = (duel.votes_a || 0) + (duel.votes_b || 0);
   const percentA = totalVotes === 0 ? 50 : Math.round(((duel.votes_a || 0) / totalVotes) * 100);
@@ -85,8 +74,6 @@ export default function DailyDuel() {
 
   return (
     <div className="w-full max-w-6xl mx-auto my-8 px-4">
-      
-      {/* Header */}
       <div className="text-center mb-8 relative">
         <div className="absolute inset-0 flex items-center justify-center opacity-20 blur-3xl">
           <div className="w-32 h-32 bg-purple-500 rounded-full"></div>
@@ -107,16 +94,13 @@ export default function DailyDuel() {
             ${hasVoted ? 'flex-[1] grayscale-[0.5] hover:grayscale-0' : 'hover:flex-[1.5] cursor-pointer'}`}
           onClick={() => !hasVoted && handleVote('a')}
         >
-          {/* Background Image / Gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-red-900/80 to-black z-0 group-hover:scale-110 transition-transform duration-1000" />
           
-          {/* Content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6 text-center">
-            
             <div className="mb-6 relative group/media">
                {duel.type === 'track' ? (
                  <button 
-                   onClick={(e) => handlePlay(e, duel.media_url_a, duel.title_a)}
+                   onClick={(e) => handlePlay(e, duel.media_url_a)}
                    className="w-28 h-28 rounded-full bg-red-600/20 border-2 border-red-500 flex items-center justify-center hover:scale-110 hover:bg-red-600 transition-all shadow-[0_0_30px_rgba(239,68,68,0.3)]"
                  >
                    <span className="text-4xl pl-1">▶</span>
@@ -158,7 +142,7 @@ export default function DailyDuel() {
              <div className="mb-6 relative group/media">
                {duel.type === 'track' ? (
                  <button 
-                   onClick={(e) => handlePlay(e, duel.media_url_b, duel.title_b)}
+                   onClick={(e) => handlePlay(e, duel.media_url_b)}
                    className="w-28 h-28 rounded-full bg-blue-600/20 border-2 border-blue-500 flex items-center justify-center hover:scale-110 hover:bg-blue-600 transition-all shadow-[0_0_30px_rgba(59,130,246,0.3)]"
                  >
                    <span className="text-4xl pl-1">▶</span>
