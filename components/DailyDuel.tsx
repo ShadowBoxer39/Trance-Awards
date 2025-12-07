@@ -7,6 +7,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// ✅ VALID FALLBACK (Exists in your repo)
 const FALLBACK_IMG = "/images/logo.png"; 
 
 type DuelData = {
@@ -47,17 +48,19 @@ export default function DailyDuel() {
           setHasVoted(true);
         }
       } else {
-        // Demo Data
+        // --- DEMO MODE (For Testing) ---
+        // ✅ FIXED: Using verified paths from your file list
         setDuel({
           id: 999,
           type: 'track',
           title_a: 'Infected Mushroom - Becoming Insane',
-          media_url_a: 'https://soundcloud.com/infectedmushroom/becoming-insane',
-          image_a: 'https://i1.sndcdn.com/artworks-000216719875-5x5z5g-t500x500.jpg',
+          media_url_a: 'https://soundcloud.com/infectedmushroom/becoming-insane', 
+          image_a: '/images/infected.jpg', // Verified .jpg
           votes_a: 120,
+          
           title_b: 'Astrix - Deep Jungle Walk',
           media_url_b: 'https://soundcloud.com/astrix-official/astrix-deep-jungle-walk',
-          image_b: 'https://i1.sndcdn.com/artworks-000164625360-p073s4-t500x500.jpg',
+          image_b: '/images/astrix.jpeg', // Verified .jpeg
           votes_b: 145
         });
       }
@@ -84,7 +87,9 @@ export default function DailyDuel() {
 
   const handlePlay = (e: React.MouseEvent, url: string, title: string, img: string) => {
     e.stopPropagation();
-    // Use the NEW method for better experience
+    if (!url) return;
+    
+    // ✅ Uses the NEW PlayerProvider function
     playTrack({
       url: url,
       title: title,
@@ -105,13 +110,12 @@ export default function DailyDuel() {
   const isPlayingA = isPlaying && activeUrl === duel.media_url_a;
   const isPlayingB = isPlaying && activeUrl === duel.media_url_b;
 
-  // Compact Mode
+  // COMPACT MODE (Post Vote)
   if (hasVoted) {
     return (
-      <div className="w-full max-w-4xl mx-auto my-6 px-4 animate-fade-in-down" dir="rtl">
+      <div className="w-full max-w-4xl mx-auto my-6 px-4" dir="rtl">
         <div className="bg-white/5 border border-white/10 rounded-full p-2 shadow-2xl relative overflow-hidden backdrop-blur-md">
           <div className="flex items-center gap-4 relative z-10">
-            {/* A */}
             <div className="flex items-center gap-3 flex-1 justify-end pl-2">
                <span className="text-white font-bold text-sm truncate hidden md:block">{duel.title_a}</span>
                <div className="relative shrink-0">
@@ -119,12 +123,10 @@ export default function DailyDuel() {
                  {duel.votes_a >= duel.votes_b && <span className="absolute -top-2 -right-1 text-lg">👑</span>}
                </div>
             </div>
-            {/* Bar */}
             <div className="flex-[2] h-6 bg-gray-900 rounded-full overflow-hidden flex text-[10px] font-bold shadow-inner">
               <div className="bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center text-white" style={{ width: `${percentA}%` }}>{percentA}%</div>
               <div className="bg-gradient-to-l from-blue-600 to-blue-500 flex items-center justify-center text-white" style={{ width: `${percentB}%` }}>{percentB}%</div>
             </div>
-            {/* B */}
             <div className="flex items-center gap-3 flex-1 justify-start pr-2">
                <div className="relative shrink-0">
                  <img src={imgB} className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover" alt="" />
@@ -138,7 +140,7 @@ export default function DailyDuel() {
     );
   }
 
-  // Full Mode
+  // FULL MODE
   return (
     <div className="w-full max-w-6xl mx-auto my-8 px-4 relative z-30" dir="rtl">
       <div className="text-center mb-6 relative">
