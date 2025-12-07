@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// ✅ VALID FALLBACK (Exists in your repo)
+// Fallback Image
 const FALLBACK_IMG = "/images/logo.png"; 
 
 type DuelData = {
@@ -48,19 +48,20 @@ export default function DailyDuel() {
           setHasVoted(true);
         }
       } else {
-        // --- DEMO MODE (For Testing) ---
-        // ✅ FIXED: Using verified paths from your file list
+        // ✅ DEMO MODE: NOW USING YOUTUBE!
+        // These are official tracks. Click play to test.
         setDuel({
           id: 999,
           type: 'track',
           title_a: 'Infected Mushroom - Becoming Insane',
-          media_url_a: 'https://soundcloud.com/infectedmushroom/becoming-insane', 
-          image_a: '/images/infected.jpg', // Verified .jpg
+          // Note the '?t=10' -> Starts at 10 seconds!
+          media_url_a: 'https://www.youtube.com/watch?v=Z6hL6fkJ1_k?t=10', 
+          image_a: 'https://i.ytimg.com/vi/Z6hL6fkJ1_k/maxresdefault.jpg',
           votes_a: 120,
           
           title_b: 'Astrix - Deep Jungle Walk',
-          media_url_b: 'https://soundcloud.com/astrix-official/astrix-deep-jungle-walk',
-          image_b: '/images/astrix.jpeg', // Verified .jpeg
+          media_url_b: 'https://www.youtube.com/watch?v=7NrnTe28tsM?t=60',
+          image_b: 'https://i.ytimg.com/vi/7NrnTe28tsM/maxresdefault.jpg',
           votes_b: 145
         });
       }
@@ -89,7 +90,6 @@ export default function DailyDuel() {
     e.stopPropagation();
     if (!url) return;
     
-    // ✅ Uses the NEW PlayerProvider function
     playTrack({
       url: url,
       title: title,
@@ -113,7 +113,7 @@ export default function DailyDuel() {
   // COMPACT MODE (Post Vote)
   if (hasVoted) {
     return (
-      <div className="w-full max-w-4xl mx-auto my-6 px-4" dir="rtl">
+      <div className="w-full max-w-4xl mx-auto my-6 px-4 animate-fade-in-down" dir="rtl">
         <div className="bg-white/5 border border-white/10 rounded-full p-2 shadow-2xl relative overflow-hidden backdrop-blur-md">
           <div className="flex items-center gap-4 relative z-10">
             <div className="flex items-center gap-3 flex-1 justify-end pl-2">
@@ -136,6 +136,7 @@ export default function DailyDuel() {
             </div>
           </div>
         </div>
+        <div className="text-center mt-2 text-xs text-gray-500">תודה שהצבעתם! נתראה בקרב הבא מחר.</div>
       </div>
     );
   }
