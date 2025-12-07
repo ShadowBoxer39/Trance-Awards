@@ -1,11 +1,12 @@
 // pages/admin.tsx
 import React from "react";
+import Link from "next/link"; // <--- Added missing import
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
 
 const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-  const match = url.match(regex); 
+  const match = url.match(regex);
   return match ? match[1] : null;
 };
 
@@ -121,7 +122,6 @@ export default function Admin() {
   const [selectedTrackSub, setSelectedTrackSub] = React.useState<TrackSubmission | null>(null);
 
   const [visits, setVisits] = React.useState<VisitData[]>([]);
-  // New state for artist stats to avoid conflicting with 'visits' structure
   const [artistStats, setArtistStats] = React.useState<any[]>([]); 
   const [analyticsLoading, setAnalyticsLoading] = React.useState(false);
   
@@ -379,11 +379,8 @@ export default function Admin() {
       const j = await r.json();
       if (!r.ok || !j?.ok) throw new Error(j?.error);
       
-      // Update visits (for existing charts)
       setVisits(j.visits || []);
       
-      // Update artist stats (for the new section)
-      // Convert the object to a sorted array
       if (j.artistPageVisits) {
         const sortedArtists = Object.values(j.artistPageVisits).sort((a: any, b: any) => b.visits - a.visits);
         setArtistStats(sortedArtists);
@@ -549,22 +546,23 @@ export default function Admin() {
 
         {tally && (
           <>
+            {/* Navigation Buttons Section */}
             <div className="flex flex-wrap gap-4 mb-6">
-      <Link 
-        href="/admin/featured-artist" 
-        className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition hover:scale-105"
-      >
-         ⭐ ניהול אמן מומלץ
-      </Link>
-      
-      <Link 
-        href="/admin/duels" 
-        className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-purple-500/50 text-purple-300 hover:bg-purple-500/20 flex items-center gap-2 transition hover:scale-105"
-      >
-         ⚔️ ניהול דואל יומי
-      </Link>
-    </div>
-            
+              <Link 
+                href="/admin/featured-artist" 
+                className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition hover:scale-105"
+              >
+                 ⭐ ניהול אמן מומלץ
+              </Link>
+              
+              <Link 
+                href="/admin/duels" 
+                className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-purple-500/50 text-purple-300 hover:bg-purple-500/20 flex items-center gap-2 transition hover:scale-105"
+              >
+                 ⚔️ ניהול דואל יומי
+              </Link>
+            </div>
+
             <div className="glass rounded-2xl p-1 flex gap-2 overflow-x-auto">
               {[
                 { id: "votes", label: `🗳️ הצבעות (${totalVotes})` },
@@ -763,7 +761,6 @@ export default function Admin() {
                     </div>
                   </div>
 
-                   {/* NEW: Artist Page Visits */}
                    {artistStats.length > 0 && (
                     <div className="glass rounded-2xl p-6 mt-4">
                       <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔥 עמודי האמנים החמים ביותר</h3>
