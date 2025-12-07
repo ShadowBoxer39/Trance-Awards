@@ -1,4 +1,3 @@
-// components/DailyDuel.tsx
 import React, { useState, useEffect } from 'react';
 import { usePlayer } from './PlayerProvider'; 
 import { createClient } from '@supabase/supabase-js';
@@ -12,17 +11,18 @@ type DuelData = {
   id: number;
   type: 'track' | 'album' | 'artist';
   title_a: string;
-  media_url_a: string;
+  media_url_a: string; // SoundCloud URL
+  image_a?: string;    // NEW: Image URL
   votes_a: number;
+  
   title_b: string;
-  media_url_b: string;
+  media_url_b: string; // SoundCloud URL
+  image_b?: string;    // NEW: Image URL
   votes_b: number;
 };
 
 export default function DailyDuel() {
-  // ✅ FIX 1: Use playUrl instead of playTrack
-  const { playUrl } = usePlayer();
-  
+  const { playUrl, activeUrl, isPlaying } = usePlayer();
   const [duel, setDuel] = useState<DuelData | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ export default function DailyDuel() {
 
   const fetchDuel = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('daily_duels')
         .select('*')
         .order('publish_date', { ascending: false })
@@ -42,20 +42,22 @@ export default function DailyDuel() {
 
       if (data) {
         setDuel(data);
-        if (localStorage.getItem(`duel_vote_${data.id}`)) {
+        if (typeof window !== 'undefined' && localStorage.getItem(`duel_vote_${data.id}`)) {
           setHasVoted(true);
         }
       } else {
-        // ✅ FIX 2: Fallback Mock Data (So you see the UI even if DB is empty)
-        console.log("No duel found in DB, showing demo mode.");
+        // Mock Data with IMAGES
         setDuel({
           id: 999,
           type: 'track',
           title_a: 'Infected Mushroom - Becoming Insane',
           media_url_a: 'https://soundcloud.com/infectedmushroom/becoming-insane',
+          image_a: '/images/infected.jpg', // Make sure this exists in public/images or use a remote URL
           votes_a: 120,
+          
           title_b: 'Astrix - Deep Jungle Walk',
           media_url_b: 'https://soundcloud.com/astrix-official/astrix-deep-jungle-walk',
+          image_b: '/images/astrix.jpeg',
           votes_b: 145
         });
       }
@@ -69,28 +71,21 @@ export default function DailyDuel() {
   const handleVote = async (side: 'a' | 'b') => {
     if (!duel || hasVoted) return;
 
-    // Optimistic Update
     setHasVoted(true);
     setDuel(prev => prev ? {
       ...prev,
       [side === 'a' ? 'votes_a' : 'votes_b']: prev[side === 'a' ? 'votes_a' : 'votes_b'] + 1
     } : null);
 
-    // Only try to save to DB if it's a real record (id !== 999)
     if (duel.id !== 999) {
-        await supabase.rpc('increment_duel_vote', { row_id: duel.id, side });
-        localStorage.setItem(`duel_vote_${duel.id}`, side);
+      await supabase.rpc('increment_duel_vote', { row_id: duel.id, side });
+      localStorage.setItem(`duel_vote_${duel.id}`, side);
     }
   };
 
-  // ✅ FIX 3: Safe play handler
   const handlePlay = (e: React.MouseEvent, url: string) => {
     e.stopPropagation();
-    if (url && url.includes('soundcloud')) {
-        playUrl(url);
-    } else {
-        alert("Playing: " + url); // Fallback if not a soundcloud link
-    }
+    playUrl(url);
   };
 
   if (loading || !duel) return null;
@@ -99,99 +94,167 @@ export default function DailyDuel() {
   const percentA = totalVotes === 0 ? 50 : Math.round(((duel.votes_a || 0) / totalVotes) * 100);
   const percentB = 100 - percentA;
 
+  // --- 1. COMPACT / SHRUNK VIEW (POST VOTE) ---
+  if (hasVoted) {
+    return (
+      <div className="w-full max-w-4xl mx-auto my-6 px-4 animate-fade-in-up" dir="rtl">
+        <div className="bg-gradient-to-r from-gray-900 to-black border border-white/20 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
+          
+          {/* Header */}
+          <div className="flex justify-between items-center mb-3 relative z-10">
+             <span className="text-gray-400 text-xs font-bold tracking-widest">הדו-קרב היומי: התוצאות</span>
+             <span className="text-green-400 text-xs">תודה שהצבעתם!</span>
+          </div>
+
+          {/* The Bar */}
+          <div className="flex items-center gap-4 relative z-10">
+            
+            {/* Side A Info */}
+            <div className="flex items-center gap-3 flex-1 justify-end">
+               <span className="text-white font-bold text-sm truncate max-w-[100px] md:max-w-xs">{duel.title_a}</span>
+               <div className="relative">
+                 <img src={duel.image_a || duel.media_url_a} className="w-10 h-10 rounded-full border border-red-500 object-cover" alt="" />
+                 {duel.votes_a > duel.votes_b && <span className="absolute -top-1 -right-1 text-xs">👑</span>}
+               </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="flex-1 max-w-[300px] h-4 bg-gray-800 rounded-full overflow-hidden flex text-[10px] font-bold">
+              <div 
+                className="bg-red-600 flex items-center justify-center text-white transition-all duration-1000"
+                style={{ width: `${percentA}%` }}
+              >
+                {percentA}%
+              </div>
+              <div 
+                className="bg-blue-600 flex items-center justify-center text-white transition-all duration-1000"
+                style={{ width: `${percentB}%` }}
+              >
+                {percentB}%
+              </div>
+            </div>
+
+            {/* Side B Info */}
+            <div className="flex items-center gap-3 flex-1 justify-start">
+               <div className="relative">
+                 <img src={duel.image_b || duel.media_url_b} className="w-10 h-10 rounded-full border border-blue-500 object-cover" alt="" />
+                 {duel.votes_b > duel.votes_a && <span className="absolute -top-1 -right-1 text-xs">👑</span>}
+               </div>
+               <span className="text-white font-bold text-sm truncate max-w-[100px] md:max-w-xs">{duel.title_b}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- 2. FULL VIEW (PRE VOTE) ---
+  const isPlayingA = isPlaying && activeUrl === duel.media_url_a.split('?')[0];
+  const isPlayingB = isPlaying && activeUrl === duel.media_url_b.split('?')[0];
+
   return (
-    <div className="w-full max-w-6xl mx-auto my-8 px-4 relative z-30">
+    <div className="w-full max-w-6xl mx-auto my-8 px-4 relative z-30" dir="rtl">
       
       {/* Header */}
       <div className="text-center mb-8 relative">
-        <div className="absolute inset-0 flex items-center justify-center opacity-20 blur-3xl">
-          <div className="w-32 h-32 bg-purple-500 rounded-full"></div>
-        </div>
-        <h2 className="relative text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-100 to-blue-500 italic tracking-tighter">
-          THE DAILY DUEL
+        <h2 className="relative text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-l from-red-500 via-purple-100 to-blue-500 italic tracking-tighter">
+          הדו-קרב היומי
         </h2>
-        <p className="text-gray-400 text-sm mt-2 font-mono uppercase tracking-widest">
-          {duel.type.toUpperCase()} DUEL • CAST YOUR VOTE
+        <p className="text-gray-400 text-sm mt-2 font-bold tracking-wide">
+          מי ינצח? הבחירה בידיים שלכם
         </p>
       </div>
 
       <div className="relative flex flex-col md:flex-row gap-0 items-stretch min-h-[450px] rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-black/40 backdrop-blur-sm">
         
-        {/* === CHALLENGER A (RED) === */}
+        {/* === CHALLENGER A (Right Side in RTL) === */}
         <div 
-          className={`relative flex-1 group transition-all duration-700 ease-out 
-            ${hasVoted ? 'flex-[1] grayscale-[0.5] hover:grayscale-0' : 'hover:flex-[1.5] cursor-pointer'}`}
-          onClick={() => !hasVoted && handleVote('a')}
+          className={`relative flex-1 group cursor-pointer overflow-hidden transition-all duration-500
+            ${isPlayingA ? 'ring-[6px] ring-inset ring-red-500 shadow-[0_0_50px_rgba(239,68,68,0.5)] z-20' : 'hover:flex-[1.2]'}
+          `}
+          onClick={() => handleVote('a')}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-red-900/80 to-black z-0 group-hover:scale-110 transition-transform duration-1000" />
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0">
+             <img 
+               src={duel.image_a || duel.media_url_a} 
+               alt={duel.title_a} 
+               className="w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700" 
+             />
+             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-red-900/30" />
+          </div>
           
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6 text-center">
             
-            <div className="mb-6 relative group/media">
-               {duel.type === 'track' ? (
-                 <button 
-                   onClick={(e) => handlePlay(e, duel.media_url_a)}
-                   className="w-28 h-28 rounded-full bg-red-600/20 border-2 border-red-500 flex items-center justify-center hover:scale-110 hover:bg-red-600 transition-all shadow-[0_0_30px_rgba(239,68,68,0.3)]"
-                 >
-                   <span className="text-4xl pl-1">▶</span>
-                 </button>
-               ) : (
-                 <img src={duel.media_url_a} className="w-56 h-56 object-cover rounded-xl shadow-2xl border-2 border-red-500/30 group-hover/media:border-red-500 transition-colors" alt={duel.title_a} />
-               )}
-            </div>
+            {/* Play Button (Always visible for tracks) */}
+            {duel.type === 'track' && (
+               <button 
+                 onClick={(e) => handlePlay(e, duel.media_url_a)}
+                 className={`w-20 h-20 mb-6 rounded-full flex items-center justify-center transition-all duration-300
+                   ${isPlayingA 
+                     ? 'bg-red-500 text-white scale-110 shadow-[0_0_30px_rgba(239,68,68,0.8)]' 
+                     : 'bg-white/10 border-2 border-white/50 hover:bg-red-600 hover:border-red-600 hover:scale-110 backdrop-blur-md'
+                   }`}
+               >
+                 <span className="text-3xl pr-1">{isPlayingA ? '⏸' : '▶'}</span>
+               </button>
+            )}
 
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 leading-tight max-w-xs drop-shadow-lg">
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 leading-tight drop-shadow-lg">
               {duel.title_a}
             </h3>
-            
-            {hasVoted && (
-               <div className="mt-4">
-                 <span className="text-6xl font-black text-white">{percentA}%</span>
-                 <div className="text-red-400 font-bold uppercase text-xs tracking-widest mt-1">Votes</div>
-               </div>
-            )}
+            <span className="text-red-300 font-bold text-sm tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+              לחץ להצבעה
+            </span>
           </div>
         </div>
 
         {/* === VS BADGE === */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none">
-          <div className="w-20 h-20 bg-black border border-white/10 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-xl">
-            <span className="font-black italic text-2xl bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-blue-400">VS</span>
+          <div className="w-20 h-20 bg-black border-2 border-white/10 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.15)] backdrop-blur-xl">
+            <span className="font-black italic text-2xl text-white">VS</span>
           </div>
         </div>
 
-        {/* === CHALLENGER B (BLUE) === */}
+        {/* === CHALLENGER B (Left Side in RTL) === */}
         <div 
-          className={`relative flex-1 group transition-all duration-700 ease-out 
-            ${hasVoted ? 'flex-[1] grayscale-[0.5] hover:grayscale-0' : 'hover:flex-[1.5] cursor-pointer'}`}
-          onClick={() => !hasVoted && handleVote('b')}
+          className={`relative flex-1 group cursor-pointer overflow-hidden transition-all duration-500
+            ${isPlayingB ? 'ring-[6px] ring-inset ring-blue-500 shadow-[0_0_50px_rgba(59,130,246,0.5)] z-20' : 'hover:flex-[1.2]'}
+          `}
+          onClick={() => handleVote('b')}
         >
-          <div className="absolute inset-0 bg-gradient-to-bl from-blue-900/80 to-black z-0 group-hover:scale-110 transition-transform duration-1000" />
+           {/* Background Image */}
+           <div className="absolute inset-0 z-0">
+             <img 
+               src={duel.image_b || duel.media_url_b} 
+               alt={duel.title_b} 
+               className="w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700" 
+             />
+             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-blue-900/30" />
+          </div>
           
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 p-6 text-center">
-             <div className="mb-6 relative group/media">
-               {duel.type === 'track' ? (
-                 <button 
-                   onClick={(e) => handlePlay(e, duel.media_url_b)}
-                   className="w-28 h-28 rounded-full bg-blue-600/20 border-2 border-blue-500 flex items-center justify-center hover:scale-110 hover:bg-blue-600 transition-all shadow-[0_0_30px_rgba(59,130,246,0.3)]"
-                 >
-                   <span className="text-4xl pl-1">▶</span>
-                 </button>
-               ) : (
-                 <img src={duel.media_url_b} className="w-56 h-56 object-cover rounded-xl shadow-2xl border-2 border-blue-500/30 group-hover/media:border-blue-500 transition-colors" alt={duel.title_b} />
-               )}
-            </div>
+             
+             {/* Play Button */}
+             {duel.type === 'track' && (
+               <button 
+                 onClick={(e) => handlePlay(e, duel.media_url_b)}
+                 className={`w-20 h-20 mb-6 rounded-full flex items-center justify-center transition-all duration-300
+                   ${isPlayingB
+                     ? 'bg-blue-500 text-white scale-110 shadow-[0_0_30px_rgba(59,130,246,0.8)]' 
+                     : 'bg-white/10 border-2 border-white/50 hover:bg-blue-600 hover:border-blue-600 hover:scale-110 backdrop-blur-md'
+                   }`}
+               >
+                 <span className="text-3xl pr-1">{isPlayingB ? '⏸' : '▶'}</span>
+               </button>
+            )}
 
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 leading-tight max-w-xs drop-shadow-lg">
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 leading-tight drop-shadow-lg">
               {duel.title_b}
             </h3>
-
-            {hasVoted && (
-               <div className="mt-4">
-                 <span className="text-6xl font-black text-white">{percentB}%</span>
-                 <div className="text-blue-400 font-bold uppercase text-xs tracking-widest mt-1">Votes</div>
-               </div>
-            )}
+            <span className="text-blue-300 font-bold text-sm tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+              לחץ להצבעה
+            </span>
           </div>
         </div>
       </div>
