@@ -39,6 +39,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   
   // Anti-Flicker State
   const isSeeking = useRef(false);
+  const seekTimeout = useRef<NodeJS.Timeout | null>(null); // ✅ Added Ref for cleanup
   
   const playerRef = useRef<any>(null);
   
@@ -63,16 +64,21 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
     // 1. User is dragging -> Stop listening to player updates
     isSeeking.current = true;
     
-    // 2. Update slider visually instantly
+    // 2. Clear any existing release timer (This fixes the "Jumping" bug!)
+    if (seekTimeout.current) clearTimeout(seekTimeout.current);
+
+    // 3. Update slider visually instantly
     setProgress(amount);
     
-    // 3. Move the player
+    // 4. Move the player
     if (playerRef.current) {
       playerRef.current.seekTo(amount, "fraction");
     }
 
-    // 4. Release lock after short delay
-    setTimeout(() => { isSeeking.current = false; }, 500);
+    // 5. Release lock only after you stop dragging for 1 second
+    seekTimeout.current = setTimeout(() => { 
+        isSeeking.current = false; 
+    }, 1000);
   };
 
   return (
@@ -99,8 +105,9 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             volume={1}
             width="100%"
             height="100%"
-            progressInterval={100} // Fast updates
+            progressInterval={100} 
             onProgress={(state) => {
+                // Only update if not currently seeking
                 if (!isSeeking.current) {
                     setProgress(state.played);
                 }
