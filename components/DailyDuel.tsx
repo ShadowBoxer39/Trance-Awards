@@ -17,7 +17,7 @@ function CompactVinyl({
   color,
   onPlayPause,
   onSeek,
-  size = 'normal' // Added size prop for the minimized view
+  size = 'normal'
 }: { 
   imageUrl?: string; 
   isPlaying: boolean;
@@ -37,7 +37,6 @@ function CompactVinyl({
   const seekBarRef = useRef<HTMLDivElement>(null);
   const dragProgressRef = useRef(progress);
 
-  // Sync external progress
   useEffect(() => {
     if (!isDragging) {
       setLocalProgress(progress);
@@ -45,7 +44,6 @@ function CompactVinyl({
     }
   }, [progress, isDragging]);
 
-  // Rotation Animation
   useEffect(() => {
     if (isPlaying && !isDragging) {
       const animate = (currentTime: number) => {
@@ -66,7 +64,6 @@ function CompactVinyl({
     };
   }, [isPlaying, isDragging]);
 
-  // Calculate seek percentage (0.0 to 1.0)
   const calculateProgress = useCallback((clientX: number) => {
     if (!seekBarRef.current) return 0;
     const rect = seekBarRef.current.getBoundingClientRect();
@@ -75,7 +72,6 @@ function CompactVinyl({
     return parseFloat(val.toFixed(4));
   }, []);
 
-  // --- Drag Handlers ---
   const handleSeekStart = (clientX: number) => {
     if (!isActive) return;
     setIsDragging(true);
@@ -99,7 +95,6 @@ function CompactVinyl({
     }
   }, [isDragging, onSeek]);
 
-  // Global listeners
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => handleSeekMove(e.clientX);
     const onTouchMove = (e: TouchEvent) => handleSeekMove(e.touches[0].clientX);
@@ -130,15 +125,12 @@ function CompactVinyl({
   const accentColor = color === 'red' ? 'from-red-500 to-orange-500' : 'from-blue-500 to-cyan-500';
   const glowColor = color === 'red' ? 'shadow-red-500/50' : 'shadow-blue-500/50';
   
-  // Size adjustments
   const discSize = size === 'small' ? 'w-8 h-8' : 'w-12 h-12';
   const iconSize = size === 'small' ? 'w-3 h-3' : 'w-4 h-4';
   const barHeight = size === 'small' ? 'h-5' : 'h-8';
 
   return (
     <div className="flex items-center gap-3 w-full mt-auto pt-2" dir="ltr">
-      
-      {/* Vinyl Play Button */}
       <div 
         className={`relative ${discSize} flex-shrink-0 cursor-pointer group`}
         onClick={(e) => {
@@ -168,7 +160,6 @@ function CompactVinyl({
         </div>
       </div>
 
-      {/* Seek Bar */}
       <div 
         ref={seekBarRef}
         className={`relative flex-1 ${barHeight} flex items-center cursor-pointer group ${!isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -259,11 +250,12 @@ function CompactDuelCard({
                 />
             ) : null}
 
+            {/* --- UPDATED BUTTON TEXT HERE --- */}
             <button
             onClick={onVote}
             className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r ${buttonGradient} text-white shadow-lg shadow-black/30 transition-all hover:scale-[1.02] active:scale-95 border border-white/10`}
             >
-            הצבעה ל{side === 'a' ? 'צד א׳' : 'צד ב׳'}
+            בחר
             </button>
         </div>
       </div>
@@ -271,7 +263,7 @@ function CompactDuelCard({
   );
 }
 
-// --- NEW: Minimized Results Bar ---
+// --- Minimized Results Bar ---
 function ResultsBar({ 
     duel, percentA, percentB, activeUrl, isPlaying, progress, onPlay, onSeek 
 }: any) {
@@ -285,13 +277,11 @@ function ResultsBar({
                 className="relative h-full bg-gray-900 transition-all duration-1000 ease-out border-r border-black/50 overflow-hidden"
                 style={{ width: `${percentA}%`, minWidth: '80px' }}
             >
-                 {/* Background A */}
                  <div className="absolute inset-0">
                     <img src={duel.image_a} className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all" />
                     <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 to-transparent" />
                  </div>
                  
-                 {/* Content A */}
                  <div className="absolute inset-0 flex items-center pl-3 gap-3 z-10" dir="ltr">
                      <span className="text-2xl md:text-3xl font-black text-white/90 drop-shadow-md">{percentA}%</span>
                      <div className="hidden sm:block">
@@ -313,13 +303,11 @@ function ResultsBar({
                 className="relative h-full bg-gray-900 transition-all duration-1000 ease-out overflow-hidden"
                 style={{ width: `${percentB}%`, minWidth: '80px' }}
             >
-                {/* Background B */}
                  <div className="absolute inset-0">
                     <img src={duel.image_b} className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all" />
                     <div className="absolute inset-0 bg-gradient-to-l from-blue-900/40 to-transparent" />
                  </div>
 
-                 {/* Content B */}
                  <div className="absolute inset-0 flex items-center justify-end pr-3 gap-3 z-10" dir="ltr">
                      <div className="hidden sm:block w-32">
                         <CompactVinyl 
@@ -336,7 +324,6 @@ function ResultsBar({
                  </div>
             </div>
             
-            {/* Center Badge */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
                 <div className="w-8 h-8 rounded-full bg-black border border-white/20 flex items-center justify-center shadow-lg">
                     <span className="text-[10px] font-black italic text-gray-400">VS</span>
@@ -372,7 +359,6 @@ export default function DailyDuel() {
           setHasVoted(true);
         }
       } else {
-        // Fallback
         setDuel({
           id: 999,
           type: 'track',
@@ -458,20 +444,17 @@ export default function DailyDuel() {
   const isActiveB = activeUrl === duel.media_url_b;
 
   return (
-    // Reduced Vertical Padding (py-2)
     <div className="w-full max-w-4xl mx-auto px-4 py-2" dir="rtl">
       
-      {/* Minimized Header Margin (mb-2) */}
       <div className="text-center mb-2">
         <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase transform -rotate-1">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 drop-shadow-sm">
-            Daily Duel
+           במי אתם בוחרים?
           </span>
         </h2>
       </div>
 
       {!hasVoted ? (
-        // BATTLE MODE (Cards)
         <div className="relative flex flex-col md:flex-row items-stretch gap-4 md:gap-6 animate-in fade-in zoom-in duration-500">
             <CompactDuelCard
             side="a"
@@ -513,7 +496,6 @@ export default function DailyDuel() {
             />
         </div>
       ) : (
-        // RESULTS MODE (Minimized Top Bar)
         <div className="animate-in slide-in-from-bottom-4 duration-700 fade-in">
              <ResultsBar 
                 duel={duel} 
