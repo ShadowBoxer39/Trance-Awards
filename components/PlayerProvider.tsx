@@ -1,6 +1,7 @@
 import React, { useState, useRef, useContext, createContext } from "react";
 import dynamic from "next/dynamic";
 
+// Lazy load to fix hydration issues
 const ReactPlayer = dynamic(() => import("react-player/lazy"), { ssr: false });
 
 type TrackData = {
@@ -12,7 +13,7 @@ type TrackData = {
 
 type PlayerAPI = {
   playTrack: (data: TrackData) => void;
-  playUrl: (url: string) => void;
+  playUrl: (url: string) => void; // Legacy support
   toggle: () => void;
   seek: (amount: number) => void;
   activeUrl: string | null;
@@ -37,10 +38,8 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); 
   
-  // Anti-Flicker State
+  // Anti-Flicker State: Prevents slider jumping while dragging
   const isSeeking = useRef(false);
-  const seekTimeout = useRef<NodeJS.Timeout | null>(null); // ✅ Added Ref for cleanup
-  
   const playerRef = useRef<any>(null);
   
   const playTrack = (data: TrackData) => {
@@ -61,24 +60,19 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const toggle = () => setPlaying((p) => !p);
 
   const seek = (amount: number) => {
-    // 1. User is dragging -> Stop listening to player updates
+    // 1. Lock updates so the slider follows your finger
     isSeeking.current = true;
     
-    // 2. Clear any existing release timer (This fixes the "Jumping" bug!)
-    if (seekTimeout.current) clearTimeout(seekTimeout.current);
-
-    // 3. Update slider visually instantly
+    // 2. Visual update instantly
     setProgress(amount);
     
-    // 4. Move the player
+    // 3. Move audio
     if (playerRef.current) {
       playerRef.current.seekTo(amount, "fraction");
     }
 
-    // 5. Release lock only after you stop dragging for 1 second
-    seekTimeout.current = setTimeout(() => { 
-        isSeeking.current = false; 
-    }, 1000);
+    // 4. Release lock after 1s (allows buffering)
+    setTimeout(() => { isSeeking.current = false; }, 1000);
   };
 
   return (
@@ -107,7 +101,7 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             height="100%"
             progressInterval={100} 
             onProgress={(state) => {
-                // Only update if not currently seeking
+                // Only update if NOT user seeking
                 if (!isSeeking.current) {
                     setProgress(state.played);
                 }
