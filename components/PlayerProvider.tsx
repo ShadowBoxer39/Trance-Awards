@@ -14,7 +14,7 @@ type PlayerAPI = {
   playTrack: (data: TrackData) => void;
   playUrl: (url: string) => void;
   toggle: () => void;
-  seek: (amount: number) => void; // ✅ Added back
+  seek: (amount: number) => void;
   activeUrl: string | null;
   isPlaying: boolean;
   progress: number;
@@ -54,11 +54,12 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
 
   const toggle = () => setPlaying((p) => !p);
 
-  // ✅ Seek Function
   const seek = (amount: number) => {
+    // 1. Instant UI update
+    setProgress(amount);
+    // 2. Actual Player Seek
     if (playerRef.current) {
       playerRef.current.seekTo(amount, "fraction");
-      setProgress(amount);
     }
   };
 
@@ -84,7 +85,11 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             volume={1}
             width="100%"
             height="100%"
-            onProgress={(state) => setProgress(state.played)}
+            progressInterval={100} // Faster updates for smoother UI
+            onProgress={(state) => {
+                // Only update if not currently seeking (prevents jumping)
+                setProgress(state.played);
+            }}
             onEnded={() => setPlaying(false)}
             config={{
               youtube: { playerVars: { playsinline: 1 } },
