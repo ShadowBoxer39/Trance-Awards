@@ -1,6 +1,7 @@
-import React, { useState, useRef, useContext, createContext } from "react";
+import React, { useState, useRef, useContext, createContext, useCallback } from "react";
 import dynamic from "next/dynamic";
 
+// Import types for ReactPlayer if needed, or use 'any' for the ref to be safe with dynamic
 const ReactPlayer = dynamic(() => import("react-player/lazy"), { ssr: false });
 
 type TrackData = {
@@ -37,10 +38,10 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); 
   
-  // ✅ FIX: These Refs handle the "Fighting" logic
+  // We use a callback ref to ensure we capture the player instance even if it remounts
+  const playerRef = useRef<any>(null);
   const isSeeking = useRef(false);
   const seekTimeout = useRef<NodeJS.Timeout | null>(null);
-  const playerRef = useRef<any>(null);
   
   const playTrack = (data: TrackData) => {
     if (url === data.url) {
@@ -59,25 +60,31 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
 
   const toggle = () => setPlaying((p) => !p);
 
-  const seek = (amount: number) => {
-    // 1. Lock updates
+  const seek = useCallback((amount: number) => {
+    // 1. Lock updates immediately to prevent jitter
     isSeeking.current = true;
     
-    // 2. ✅ CRITICAL: Clear previous timer so it doesn't snap back!
+    // 2. Clear existing timeout
     if (seekTimeout.current) clearTimeout(seekTimeout.current);
 
-    // 3. Visual update
+    // 3. Update Visual State immediately
     setProgress(amount);
     
-    // 4. Move audio
-    if (playerRef.current) {
+    // 4. Perform the actual seek on the player
+    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+      // 'fraction' seeks to a percentage (0 to 1)
       playerRef.current.seekTo(amount, "fraction");
     }
 
-    // 5. Release lock after 1.5s of no movement
+    // 5. Unlock after a short delay (prevents the player from snapping back to old time)
     seekTimeout.current = setTimeout(() => { 
         isSeeking.current = false; 
-    }, 1500);
+    }, 1000);
+  }, []);
+
+  // Callback ref to securely attach the player
+  const handlePlayerRef = (player: any) => {
+    playerRef.current = player;
   };
 
   return (
@@ -93,18 +100,18 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
       }}
     >
       {children}
+      {/* Hidden Player */}
       <div className="fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none overflow-hidden z-[-1]">
         {url && (
           <ReactPlayer
-            ref={playerRef}
+            ref={handlePlayerRef}
             url={url}
             playing={playing}
             volume={1}
             width="100%"
             height="100%"
-            progressInterval={50} // Smoother updates
-            onProgress={(state) => {
-                // Only update if unlocked
+            progressInterval={100} 
+            onProgress={(state: any) => {
                 if (!isSeeking.current) {
                     setProgress(state.played);
                 }
@@ -112,7 +119,8 @@ export default function PlayerProvider({ children }: { children: React.ReactNode
             onEnded={() => setPlaying(false)}
             config={{
               youtube: { playerVars: { playsinline: 1 } },
-              soundcloud: { options: { auto_play: true } }
+              soundcloud: { options: { auto_play: true } },
+              file: { attributes: { playsInline: true } }
             }}
           />
         )}
