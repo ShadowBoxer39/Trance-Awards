@@ -4,7 +4,7 @@ import Script from "next/script";
 // 1. Update Type to accept metadata
 type PlayerAPI = {
   playUrl: (url: string, title?: string, image?: string) => void;
-  toggle: () => void;
+  toggle: () => void; 
   seek: (seconds: number) => void;
   activeUrl: string | null;
   isPlaying: boolean;
