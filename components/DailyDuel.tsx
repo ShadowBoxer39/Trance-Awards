@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePlayer } from './PlayerProvider'; 
 import { createClient } from '@supabase/supabase-js';
-import { FaPlay, FaPause, FaVoteYea } from 'react-icons/fa';
+import { FaPlay, FaPause, FaVoteYea, FaMusic } from 'react-icons/fa';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,12 +23,13 @@ type DuelData = {
   votes_b: number;
 };
 
-// --- VISUALIZER ---
-const Equalizer = () => (
-  <div className="flex items-end justify-center gap-0.5 h-4 w-6">
-    <div className="w-1 bg-green-400 animate-[bounce_1s_infinite] h-2"></div>
-    <div className="w-1 bg-green-400 animate-[bounce_1.2s_infinite] h-4"></div>
-    <div className="w-1 bg-green-400 animate-[bounce_0.8s_infinite] h-3"></div>
+// --- NEON EQUALIZER ---
+const NeonEqualizer = ({ color }: { color: string }) => (
+  <div className="flex items-end justify-center gap-1 h-6 w-10">
+    <div className={`w-1.5 rounded-t-full animate-[bounce_0.8s_infinite] h-3 ${color}`}></div>
+    <div className={`w-1.5 rounded-t-full animate-[bounce_1.2s_infinite] h-6 ${color}`}></div>
+    <div className={`w-1.5 rounded-t-full animate-[bounce_0.6s_infinite] h-4 ${color}`}></div>
+    <div className={`w-1.5 rounded-t-full animate-[bounce_1.0s_infinite] h-5 ${color}`}></div>
   </div>
 );
 
@@ -57,7 +58,6 @@ export default function DailyDuel() {
           setHasVoted(true);
         }
       } else {
-        // Fallback Demo
         setDuel({
           id: 999,
           type: 'track',
@@ -98,19 +98,12 @@ export default function DailyDuel() {
     playTrack({ url, title, image: img || FALLBACK_IMG });
   };
 
-  const handlePause = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toggle();
-  };
-
-  // ✅ FIXED SEEKER
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Crucial: Stop propagation so we don't click the card
-    e.stopPropagation();
+    e.stopPropagation(); // Stops click from bubbling to card
     seek(parseFloat(e.target.value));
   };
 
-  const stopProp = (e: React.MouseEvent) => e.stopPropagation();
+  const preventBubble = (e: React.MouseEvent) => e.stopPropagation();
 
   if (loading || !duel) return null;
 
@@ -124,37 +117,51 @@ export default function DailyDuel() {
   const isPlayingA = isPlaying && activeUrl === duel.media_url_a;
   const isPlayingB = isPlaying && activeUrl === duel.media_url_b;
 
-  // --- COMPACT MODE (Post Vote) ---
+  // --- RESULT BAR (Compact) ---
   if (hasVoted) {
     return (
-      <div className="w-full max-w-4xl mx-auto my-4 px-4 animate-fade-in-down" dir="rtl">
-        <div className="bg-gradient-to-r from-gray-900 to-black border border-white/10 rounded-xl p-3 shadow-lg relative overflow-hidden">
-          <div className="text-center mb-2">
-            <h3 className="text-sm font-bold text-gray-300">תוצאות הדו-קרב</h3>
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-            {/* A */}
-            <div className="flex flex-col items-center gap-1 flex-1">
-               <div className="relative">
-                 <img src={imgA} className="w-10 h-10 rounded-full border-2 border-red-500 object-cover" alt="" />
-                 {duel.votes_a >= duel.votes_b && <span className="absolute -top-2 -right-1 text-lg animate-bounce">👑</span>}
-               </div>
-               <span className="text-white text-[10px] font-bold text-center line-clamp-1">{duel.title_a}</span>
+      <div className="w-full max-w-4xl mx-auto my-8 px-4 animate-fade-in-down" dir="rtl">
+        <div className="relative overflow-hidden rounded-2xl p-[2px] bg-gradient-to-r from-red-500 via-purple-500 to-blue-500">
+          <div className="bg-black/90 backdrop-blur-xl rounded-2xl p-6 relative">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-blue-400">התוצאות</h3>
+              <p className="text-gray-400 text-xs mt-1">נתראה בקרב הבא!</p>
             </div>
-            {/* Bar */}
-            <div className="flex-[3] flex flex-col gap-1">
-                <div className="h-4 bg-gray-800 rounded-full overflow-hidden flex text-[9px] font-bold shadow-inner">
-                    <div className="bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center text-white" style={{ width: `${percentA}%` }}>{percentA}%</div>
-                    <div className="bg-gradient-to-l from-blue-600 to-blue-500 flex items-center justify-center text-white" style={{ width: `${percentB}%` }}>{percentB}%</div>
-                </div>
-            </div>
-            {/* B */}
-            <div className="flex flex-col items-center gap-1 flex-1">
-               <div className="relative">
-                 <img src={imgB} className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover" alt="" />
-                 {duel.votes_b >= duel.votes_a && <span className="absolute -top-2 -right-1 text-lg animate-bounce">👑</span>}
-               </div>
-               <span className="text-white text-[10px] font-bold text-center line-clamp-1">{duel.title_b}</span>
+            <div className="flex items-center gap-6">
+              {/* A */}
+              <div className="flex flex-col items-center gap-2 flex-1">
+                 <div className="relative group">
+                   <div className="absolute inset-0 bg-red-500 blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                   <img src={imgA} className="w-20 h-20 rounded-full border-4 border-red-500 object-cover relative z-10" alt="" />
+                   {duel.votes_a >= duel.votes_b && <span className="absolute -top-6 -right-4 text-4xl drop-shadow-lg animate-bounce z-20">👑</span>}
+                 </div>
+                 <span className="text-white text-xs font-bold text-center line-clamp-1 mt-2">{duel.title_a}</span>
+              </div>
+              {/* Bar */}
+              <div className="flex-[3] flex flex-col gap-2">
+                  <div className="h-6 bg-gray-800 rounded-full overflow-hidden flex text-[10px] font-black shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] border border-white/5">
+                      <div className="bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center text-white relative" style={{ width: `${percentA}%` }}>
+                        <span className="z-10 relative drop-shadow-md">{percentA}%</span>
+                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                      </div>
+                      <div className="bg-gradient-to-l from-blue-600 to-blue-500 flex items-center justify-center text-white relative" style={{ width: `${percentB}%` }}>
+                        <span className="z-10 relative drop-shadow-md">{percentB}%</span>
+                      </div>
+                  </div>
+                  <div className="flex justify-between px-2 text-[10px] text-gray-500 font-mono tracking-widest">
+                      <span>{duel.votes_a} VOTES</span>
+                      <span>{duel.votes_b} VOTES</span>
+                  </div>
+              </div>
+              {/* B */}
+              <div className="flex flex-col items-center gap-2 flex-1">
+                 <div className="relative group">
+                   <div className="absolute inset-0 bg-blue-500 blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                   <img src={imgB} className="w-20 h-20 rounded-full border-4 border-blue-500 object-cover relative z-10" alt="" />
+                   {duel.votes_b >= duel.votes_a && <span className="absolute -top-6 -right-4 text-4xl drop-shadow-lg animate-bounce z-20">👑</span>}
+                 </div>
+                 <span className="text-white text-xs font-bold text-center line-clamp-1 mt-2">{duel.title_b}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -162,151 +169,176 @@ export default function DailyDuel() {
     );
   }
 
-  // --- FULL MODE ---
+  // --- ARENA MODE (Voting) ---
   return (
-    <div className="w-full max-w-4xl mx-auto my-6 px-4 relative z-30" dir="rtl">
+    <div className="w-full max-w-5xl mx-auto my-12 px-4 relative z-20" dir="rtl">
       
-      <div className="text-center mb-4 relative">
-        <h2 className="relative text-3xl font-black text-transparent bg-clip-text bg-gradient-to-l from-red-500 via-purple-100 to-blue-500 italic tracking-tighter">
-          BATTLE OF THE BEATS
+      {/* HEADER */}
+      <div className="text-center mb-10 relative group cursor-default">
+        <div className="absolute inset-0 bg-purple-500/20 blur-[100px] rounded-full opacity-50 group-hover:opacity-70 transition-opacity"></div>
+        <h2 className="relative text-5xl md:text-7xl font-black text-white italic tracking-tighter drop-shadow-2xl transform -skew-x-6">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-white to-blue-500 animate-gradient-x">
+            DAILY DUEL
+          </span>
         </h2>
-        <p className="text-gray-500 text-xs mt-1 font-bold tracking-widest uppercase">
-          הבחירה בידיים שלכם
-        </p>
+        <div className="flex items-center justify-center gap-3 mt-4">
+            <span className="h-px w-12 bg-white/30"></span>
+            <p className="text-purple-300 text-xs md:text-sm font-bold tracking-[0.3em] uppercase">
+            מי ינצח היום?
+            </p>
+            <span className="h-px w-12 bg-white/30"></span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 max-w-3xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 relative">
         
-        {/* === CARD A === */}
-        <div className={`relative rounded-xl overflow-hidden bg-gray-900 border transition-all duration-300 group
-            ${isPlayingA ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'border-white/10'}
-        `}>
-            {/* IMAGE + PLAYER */}
-            <div 
-                className="relative h-40 sm:h-52 cursor-pointer overflow-hidden"
-                onClick={isPlayingA ? handlePause : (e) => handlePlay(e, duel.media_url_a, duel.title_a, imgA)}
-            >
-                <img src={imgA} alt={duel.title_a} className={`w-full h-full object-cover transition-transform duration-700 ${isPlayingA ? 'scale-110 opacity-100' : 'group-hover:scale-105 opacity-60'}`}/>
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-80" />
+        {/* === VS LIGHTNING === */}
+        <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none items-center justify-center">
+             <div className="w-24 h-24 relative flex items-center justify-center">
+                <div className="absolute inset-0 bg-white/20 blur-xl rounded-full animate-pulse"></div>
+                <div className="w-20 h-20 bg-black border-2 border-white/20 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.3)] z-10 backdrop-blur-md">
+                    <span className="font-black italic text-3xl text-white">VS</span>
+                </div>
+             </div>
+        </div>
 
-                <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                    {isPlayingA ? (
-                        <div className="w-12 h-12 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg border border-white/20">
-                            <FaPause className="text-white text-sm" />
-                        </div>
-                    ) : (
-                        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/30 group-hover:scale-110 transition-all">
-                            <FaPlay className="text-white text-lg ml-1" />
-                        </div>
-                    )}
-                    {isPlayingA && <div className="mt-2"><Equalizer /></div>}
+        {/* === CARD A (RED) === */}
+        <div className={`relative bg-gray-900/40 rounded-3xl p-4 border transition-all duration-500
+            ${isPlayingA ? 'border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.3)] scale-[1.02]' : 'border-white/5 hover:border-white/20 hover:bg-gray-900/60'}
+        `}>
+            {/* DISC CONTAINER */}
+            <div 
+                className="relative aspect-square rounded-full border-8 border-gray-900 shadow-2xl cursor-pointer overflow-hidden group mx-auto w-full max-w-[280px]"
+                onClick={isPlayingA ? toggle : (e) => handlePlay(e, duel.media_url_a, duel.title_a, imgA)}
+            >
+                {/* Spinning Vinyl */}
+                <img 
+                    src={imgA} 
+                    alt={duel.title_a} 
+                    className={`w-full h-full object-cover rounded-full 
+                        ${isPlayingA ? 'animate-[spin_4s_linear_infinite]' : 'group-hover:scale-110 transition-transform duration-700'}
+                    `}
+                />
+                
+                {/* Center Hole / Play Button */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-xl group-hover:scale-110 transition-transform">
+                        {isPlayingA ? <FaPause className="text-red-500" /> : <FaPlay className="text-white ml-1" />}
+                    </div>
                 </div>
 
-                {/* ✅ FIXED TIMELINE CONTAINER */}
-                {isPlayingA && (
-                    <div 
-                      className="absolute bottom-4 left-4 right-4 h-6 z-40 flex items-center"
-                      onClick={stopProp} // IMPORTANT: Stops click bubbling to play/pause
-                    >
-                        {/* 1. Invisible Touch/Click Area */}
+                {/* Playing Ring */}
+                {isPlayingA && <div className="absolute inset-0 rounded-full border-4 border-red-500/50 animate-ping"></div>}
+            </div>
+
+            {/* INFO & CONTROLS */}
+            <div className="mt-6 text-center">
+                <h3 className="text-xl md:text-2xl font-black text-white mb-1 line-clamp-1">{duel.title_a}</h3>
+                <div className="h-6 flex justify-center items-center mb-4">
+                    {isPlayingA ? <NeonEqualizer color="bg-red-500" /> : <span className="text-xs text-gray-500 font-bold tracking-widest">לחץ לניגון</span>}
+                </div>
+
+                {/* BIG SEEKER BAR */}
+                <div 
+                    className={`relative h-12 flex items-center justify-center transition-all duration-500 ${isPlayingA ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 pointer-events-none'}`}
+                    onClick={preventBubble}
+                >
+                    <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
+                        <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isPlayingA ? progress * 100 : 0}%` }}></div>
                         <input 
                             type="range" 
                             min={0} max={1} step="any"
-                            value={progress || 0}
+                            value={isPlayingA ? progress : 0}
                             onChange={handleSeek}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                         />
-                        
-                        {/* 2. Visual Bar */}
-                        <div className="w-full h-1.5 bg-white/30 rounded-full relative pointer-events-none">
+                        {/* Thumb Indicator */}
+                        {isPlayingA && (
                             <div 
-                                className="h-full bg-red-500 rounded-full relative" 
-                                style={{ width: `${(progress || 0) * 100}%` }}
-                            >
-                                {/* Thumb */}
-                                <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md"/>
-                            </div>
-                        </div>
+                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg pointer-events-none transition-all duration-100 ease-out"
+                                style={{ left: `${progress * 100}%`, transform: 'translate(-50%, -50%)' }}
+                            />
+                        )}
                     </div>
-                )}
-            </div>
+                </div>
 
-            {/* VOTE BUTTON */}
-            <div className="p-3 text-center bg-gray-900/80 backdrop-blur-sm border-t border-white/5">
-                <h3 className="text-sm font-bold text-white mb-2 line-clamp-1">{duel.title_a}</h3>
                 <button 
                     onClick={() => handleVote('a')}
-                    className="w-full py-2 rounded-lg font-bold text-xs uppercase tracking-wide
-                    bg-gradient-to-r from-red-900 to-red-800 border border-red-500/30 text-red-100
-                    hover:from-red-600 hover:to-red-500 hover:text-white transition-all
-                    flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-xl font-black text-lg uppercase tracking-wider transition-all duration-300
+                    bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg shadow-red-900/20
+                    hover:shadow-red-500/40 hover:scale-[1.02] active:scale-[0.98]
+                    flex items-center justify-center gap-3 mt-4 border border-red-500/20"
                 >
-                    <FaVoteYea /> הצבעה
+                    <FaVoteYea /> אני בוחר בזה
                 </button>
             </div>
         </div>
 
-        {/* === CARD B === */}
-        <div className={`relative rounded-xl overflow-hidden bg-gray-900 border transition-all duration-300 group
-            ${isPlayingB ? 'border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]' : 'border-white/10'}
+        {/* === CARD B (BLUE) === */}
+        <div className={`relative bg-gray-900/40 rounded-3xl p-4 border transition-all duration-500
+            ${isPlayingB ? 'border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.3)] scale-[1.02]' : 'border-white/5 hover:border-white/20 hover:bg-gray-900/60'}
         `}>
-            {/* IMAGE + PLAYER */}
+            {/* DISC CONTAINER */}
             <div 
-                className="relative h-40 sm:h-52 cursor-pointer overflow-hidden"
-                onClick={isPlayingB ? handlePause : (e) => handlePlay(e, duel.media_url_b, duel.title_b, imgB)}
+                className="relative aspect-square rounded-full border-8 border-gray-900 shadow-2xl cursor-pointer overflow-hidden group mx-auto w-full max-w-[280px]"
+                onClick={isPlayingB ? toggle : (e) => handlePlay(e, duel.media_url_b, duel.title_b, imgB)}
             >
-                <img src={imgB} alt={duel.title_b} className={`w-full h-full object-cover transition-transform duration-700 ${isPlayingB ? 'scale-110 opacity-100' : 'group-hover:scale-105 opacity-60'}`}/>
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-80" />
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                    {isPlayingB ? (
-                        <div className="w-12 h-12 rounded-full bg-blue-600/90 flex items-center justify-center shadow-lg border border-white/20">
-                            <FaPause className="text-white text-sm" />
-                        </div>
-                    ) : (
-                        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/30 group-hover:scale-110 transition-all">
-                            <FaPlay className="text-white text-lg ml-1" />
-                        </div>
-                    )}
-                    {isPlayingB && <div className="mt-2"><Equalizer /></div>}
+                {/* Spinning Vinyl */}
+                <img 
+                    src={imgB} 
+                    alt={duel.title_b} 
+                    className={`w-full h-full object-cover rounded-full 
+                        ${isPlayingB ? 'animate-[spin_4s_linear_infinite]' : 'group-hover:scale-110 transition-transform duration-700'}
+                    `}
+                />
+                
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-black/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-xl group-hover:scale-110 transition-transform">
+                        {isPlayingB ? <FaPause className="text-blue-500" /> : <FaPlay className="text-white ml-1" />}
+                    </div>
                 </div>
 
-                {/* ✅ FIXED TIMELINE CONTAINER */}
-                {isPlayingB && (
-                    <div 
-                      className="absolute bottom-4 left-4 right-4 h-6 z-40 flex items-center"
-                      onClick={stopProp}
-                    >
+                {isPlayingB && <div className="absolute inset-0 rounded-full border-4 border-blue-500/50 animate-ping"></div>}
+            </div>
+
+            {/* INFO & CONTROLS */}
+            <div className="mt-6 text-center">
+                <h3 className="text-xl md:text-2xl font-black text-white mb-1 line-clamp-1">{duel.title_b}</h3>
+                <div className="h-6 flex justify-center items-center mb-4">
+                    {isPlayingB ? <NeonEqualizer color="bg-blue-500" /> : <span className="text-xs text-gray-500 font-bold tracking-widest">לחץ לניגון</span>}
+                </div>
+
+                {/* BIG SEEKER BAR */}
+                <div 
+                    className={`relative h-12 flex items-center justify-center transition-all duration-500 ${isPlayingB ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-2 pointer-events-none'}`}
+                    onClick={preventBubble}
+                >
+                    <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden relative group">
+                        <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 absolute left-0 top-0 transition-all duration-100 ease-out" style={{ width: `${isPlayingB ? progress * 100 : 0}%` }}></div>
                         <input 
                             type="range" 
                             min={0} max={1} step="any"
-                            value={progress || 0}
+                            value={isPlayingB ? progress : 0}
                             onChange={handleSeek}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                         />
-                        <div className="w-full h-1.5 bg-white/30 rounded-full relative pointer-events-none">
+                        {isPlayingB && (
                             <div 
-                                className="h-full bg-blue-500 rounded-full relative" 
-                                style={{ width: `${(progress || 0) * 100}%` }}
-                            >
-                                <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md"/>
-                            </div>
-                        </div>
+                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg pointer-events-none transition-all duration-100 ease-out"
+                                style={{ left: `${progress * 100}%`, transform: 'translate(-50%, -50%)' }}
+                            />
+                        )}
                     </div>
-                )}
-            </div>
+                </div>
 
-            {/* VOTE BUTTON */}
-            <div className="p-3 text-center bg-gray-900/80 backdrop-blur-sm border-t border-white/5">
-                <h3 className="text-sm font-bold text-white mb-2 line-clamp-1">{duel.title_b}</h3>
                 <button 
                     onClick={() => handleVote('b')}
-                    className="w-full py-2 rounded-lg font-bold text-xs uppercase tracking-wide
-                    bg-gradient-to-r from-blue-900 to-blue-800 border border-blue-500/30 text-blue-100
-                    hover:from-blue-600 hover:to-blue-500 hover:text-white transition-all
-                    flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-xl font-black text-lg uppercase tracking-wider transition-all duration-300
+                    bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg shadow-blue-900/20
+                    hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98]
+                    flex items-center justify-center gap-3 mt-4 border border-blue-500/20"
                 >
-                    <FaVoteYea /> הצבעה
+                    <FaVoteYea /> אני בוחר בזה
                 </button>
             </div>
         </div>
