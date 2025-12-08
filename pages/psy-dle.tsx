@@ -124,8 +124,8 @@ export default function PsyDle() {
       </div>
   );
 
-  // Cell Component
-  const Cell = ({ item, delay }: { item: FeedbackItem, delay: number }) => {
+  // Cell Component - FIXED: Added isText to props definition
+  const Cell = ({ item, delay, isText = false }: { item: FeedbackItem, delay: number, isText?: boolean }) => {
     const isMatch = item.match;
     const isHigher = item.direction === 'higher'; 
     const isLower = item.direction === 'lower';
@@ -134,6 +134,7 @@ export default function PsyDle() {
     if (isMatch) bgClass = 'bg-green-600 border-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]';
     
     const textLength = String(item.value).length;
+    // Allow slightly smaller font for long artist names if isText is true
     const fontSize = textLength > 12 ? 'text-[9px] md:text-[10px]' : textLength > 8 ? 'text-[10px] md:text-xs' : 'text-xs md:text-sm';
 
     return (
@@ -201,7 +202,7 @@ export default function PsyDle() {
 
       <main className="max-w-5xl mx-auto px-2 pt-24 pb-32">
         
-        {/* HEADER - FIX APPLIED HERE */}
+        {/* HEADER */}
         <div className="flex flex-col items-center mb-10 relative">
             <h1 className="title-safe-area text-6xl md:text-8xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
                 PSY-DLE
@@ -230,7 +231,7 @@ export default function PsyDle() {
                     <div className="relative w-48 h-48 rounded-full border-4 border-purple-500/30 bg-black shadow-[0_0_50px_rgba(168,85,247,0.15)] mx-auto">
                         <img 
                             src={silhouetteUrl} 
-                            className="w-full h-full object-cover rounded-full stencil-silhouette" // <--- Applied new class
+                            className="w-full h-full object-cover rounded-full stencil-silhouette"
                             alt="Mystery Artist"
                         />
                     </div>
@@ -289,7 +290,7 @@ export default function PsyDle() {
             </div>
         </div>
 
-        {/* --- STICKY INPUT --- */}
+        {/* --- STICKY INPUT AREA --- */}
         {!isWon && (
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent z-40 pb-8">
                 <div className="max-w-lg mx-auto relative">
@@ -302,6 +303,7 @@ export default function PsyDle() {
                         autoFocus
                     />
                     
+                    {/* Autocomplete */}
                     {suggestions.length > 0 && (
                         <div className="absolute bottom-full left-0 right-0 mb-4 bg-[#18181b] rounded-2xl border border-gray-700 shadow-2xl overflow-hidden max-h-60 overflow-y-auto animate-in slide-in-from-bottom-2">
                             {suggestions.map(s => (
