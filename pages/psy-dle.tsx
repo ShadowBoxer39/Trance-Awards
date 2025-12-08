@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Navigation from '../components/Navigation';
 import { FaShareAlt, FaQuestionCircle, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { BsArrowUpSquareFill, BsArrowDownSquareFill } from 'react-icons/bs'; // Poeltl style arrows
+import { BsArrowUpSquareFill, BsArrowDownSquareFill } from 'react-icons/bs'; // Poeltl style arrows 
 
 // --- Configuration ---
 const MAX_GUESSES = 8;
