@@ -104,3 +104,18 @@
   padding-bottom: 0.1em;
   line-height: 1.2;
 }
+
+/* FIX 1: Title Clipping Fix */
+.title-safe-area {
+  padding-right: 0.3em; /* Space for the italic E */
+  padding-bottom: 0.2em; /* Space for the glow */
+  line-height: 1.2;
+}
+
+/* FIX 2: "Stencil" Silhouette for JPEGs */
+/* This turns a photo into a high-contrast shadow shape */
+.stencil-silhouette {
+  filter: grayscale(100%) contrast(500%) brightness(0.6) blur(2px);
+  mix-blend-mode: normal;
+  transition: all 0.5s ease;
+}
