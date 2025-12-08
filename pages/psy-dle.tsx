@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Navigation from '../components/Navigation';
-import { FaArrowUp, FaArrowDown, FaCheck, FaShareAlt, FaQuestionCircle, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { createClient } from '@supabase/supabase-js';
+import { FaShareAlt, FaQuestionCircle, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { BsArrowUpSquareFill, BsArrowDownSquareFill } from 'react-icons/bs'; // Poeltl style arrows
 
 // --- Configuration ---
-const MAX_GUESSES = 8; 
-const DELAY_MS = 350; // Delay between cell reveals 
+const MAX_GUESSES = 8;
 
 interface FeedbackItem {
   value: string | number;
@@ -36,7 +35,6 @@ export default function PsyDle() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Auto-scroll to bottom of grid when guessing
   const gridEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -80,14 +78,14 @@ export default function PsyDle() {
           const data = await res.json();
           
           if (data.ok) {
-              const newGuesses = [...guesses, data.feedback]; // Append to end for natural flow
+              const newGuesses = [...guesses, data.feedback];
               setGuesses(newGuesses);
               if (data.isCorrect) {
                   setTimeout(() => {
                       setIsWon(true);
                       setSolution(data.solution);
                       setShowSilhouette(true);
-                  }, 2500); // Wait for animation
+                  }, 1500);
               }
           }
       } catch (e) { console.error(e); }
@@ -114,69 +112,55 @@ export default function PsyDle() {
     }
   };
 
-  // --- SUB-COMPONENTS ---
-
-  // The Header Row (Sticky on mobile)
+  // --- Header Row ---
   const HeaderRow = () => (
-      <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 px-1 sticky top-20 z-30 bg-[#09090b] py-2 border-b border-white/10 text-[9px] md:text-xs text-gray-500 font-bold text-center uppercase tracking-wider">
+      <div className="grid grid-cols-7 gap-1 md:gap-2 mb-3 px-1 sticky top-20 z-30 bg-[#09090b] py-3 border-b border-white/10 text-[10px] md:text-xs text-gray-400 font-bold text-center uppercase tracking-wider shadow-lg">
             <div>אמן</div>
             <div>ז'אנר</div>
             <div>מדינה</div>
-            <div>שנה</div>
+            <div>מתי התחילו</div> {/* Fixed Label */}
             <div>הרכב</div>
             <div>אלבומים</div>
             <div>אות</div>
       </div>
   );
 
-  // A Single Feedback Cell with 3D Flip
+  // --- Feedback Cell ---
   const Cell = ({ item, delay, isText = false }: { item: FeedbackItem, delay: number, isText?: boolean }) => {
-    // Determine styles
     const isMatch = item.match;
-    const isHigher = item.direction === 'higher';
+    // Note: 'higher' means the target value is higher than the guess -> Up Arrow
+    const isHigher = item.direction === 'higher'; 
     const isLower = item.direction === 'lower';
     
-    // Base Colors (Poeltl Style)
-    // Green = Match
-    // Yellow = Close/Direction (Only for arrows)
-    // Gray = Wrong
+    let bgClass = 'bg-[#202024] border-[#303036]'; // Neutral Dark
+    if (isMatch) bgClass = 'bg-green-600 border-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]';
     
-    // Animation: We use a simple CSS animation with delay
-    // We render the 'result' state immediately but hide it with animation
-    
-    let bgClass = 'bg-[#18181b] border-[#27272a]'; // Default dark
-    if (isMatch) bgClass = 'bg-green-600 border-green-500 text-white shadow-[0_0_10px_rgba(22,163,74,0.4)]';
-    
-    // For text resizing (fit long names)
+    // Text Sizing logic
     const textLength = String(item.value).length;
     const fontSize = textLength > 12 ? 'text-[9px] md:text-[10px]' : textLength > 8 ? 'text-[10px] md:text-xs' : 'text-xs md:text-sm';
 
     return (
-      <div 
-        className="relative h-14 md:h-16 w-full perspective-1000"
-      >
+      <div className="relative h-16 md:h-20 w-full perspective-1000">
           <div 
-            className={`w-full h-full flex flex-col items-center justify-center p-1 text-center border rounded-lg transition-all duration-700 ${bgClass}`}
+            className={`w-full h-full flex flex-col items-center justify-center p-1 text-center border-2 rounded-xl transition-all duration-700 ${bgClass}`}
             style={{ 
                 animation: `flip-slot 0.6s ease-out forwards`,
                 animationDelay: `${delay}ms`,
-                opacity: 0, // Start hidden
-                transform: 'rotateX(90deg)' // Start rotated
+                opacity: 0,
+                transform: 'rotateX(90deg)' 
             }}
           >
-              <span className={`font-bold leading-tight break-words ${fontSize}`}>
+              <span className={`font-bold leading-tight break-words ${fontSize} mb-1`}>
                   {item.value}
               </span>
               
-              {/* Direction Arrows */}
+              {/* --- POELTL STYLE ARROWS --- */}
               {!isMatch && (isHigher || isLower) && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-                      {isHigher ? <FaArrowUp className="text-yellow-400 text-4xl" /> : <FaArrowDown className="text-yellow-400 text-4xl" />}
+                  <div className="mt-1">
+                      {isHigher && <BsArrowUpSquareFill className="text-yellow-400 text-lg md:text-xl drop-shadow-md animate-bounce" />}
+                      {isLower && <BsArrowDownSquareFill className="text-yellow-400 text-lg md:text-xl drop-shadow-md animate-bounce" />}
                   </div>
               )}
-               {/* Small overlay arrows for clarity */}
-               {!isMatch && isHigher && <FaArrowUp className="text-yellow-400 text-[10px] mt-1" />}
-               {!isMatch && isLower && <FaArrowDown className="text-yellow-400 text-[10px] mt-1" />}
           </div>
       </div>
     );
@@ -189,30 +173,32 @@ export default function PsyDle() {
 
       {/* Instructions Modal */}
       {showInstructions && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in">
-            <div className="bg-gray-900 border border-purple-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
-                <button onClick={() => setShowInstructions(false)} className="absolute top-4 left-4 text-gray-400 hover:text-white"><FaTimes /></button>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in">
+            <div className="bg-[#18181b] border border-purple-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
+                <button onClick={() => setShowInstructions(false)} className="absolute top-4 left-4 text-gray-400 hover:text-white transition"><FaTimes size={20}/></button>
                 <div className="text-center mb-6">
-                    <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2">איך משחקים?</h2>
-                    <p className="text-gray-400 text-sm">יש לכם 8 ניסיונות לנחש את האמן היומי.</p>
+                    <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">איך משחקים?</h2>
+                    <p className="text-gray-400">יש לכם 8 ניסיונות לנחש את האמן היומי.</p>
                 </div>
                 
-                <div className="space-y-4 text-sm bg-black/40 p-4 rounded-xl mb-6">
-                    <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 flex items-center justify-center bg-green-600 rounded-lg text-white font-bold">V</span>
+                <div className="space-y-4 text-sm bg-black/40 p-5 rounded-2xl mb-6 border border-white/5">
+                    <div className="flex items-center gap-4">
+                        <span className="w-10 h-10 flex items-center justify-center bg-green-600 rounded-lg text-white font-bold shadow-lg">V</span>
                         <span>תכונה <strong>נכונה</strong> (ז'אנר, מדינה וכו')</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                         <span className="w-8 h-8 flex items-center justify-center bg-[#18181b] border border-gray-700 rounded-lg text-white font-bold">X</span>
+                    <div className="flex items-center gap-4">
+                         <span className="w-10 h-10 flex items-center justify-center bg-[#202024] border border-gray-600 rounded-lg text-white font-bold shadow-lg">X</span>
                         <span>תכונה <strong>לא נכונה</strong></span>
                     </div>
-                    <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 flex items-center justify-center bg-[#18181b] border border-gray-700 rounded-lg text-white"><FaArrowUp className="text-yellow-400" /></div>
+                    <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 flex items-center justify-center bg-[#202024] border border-gray-600 rounded-lg text-white shadow-lg">
+                            <BsArrowUpSquareFill className="text-yellow-400 text-xl" />
+                         </div>
                         <span>התשובה <strong>גבוהה</strong> או <strong>מאוחרת</strong> יותר</span>
                     </div>
                 </div>
 
-                <button onClick={() => { setShowInstructions(false); localStorage.setItem('psydle_instructions_seen', 'true'); }} className="w-full btn-primary py-3 rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20">
+                <button onClick={() => { setShowInstructions(false); localStorage.setItem('psydle_instructions_seen', 'true'); }} className="w-full btn-primary py-4 rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform">
                     יאללה מתחילים!
                 </button>
             </div>
@@ -221,45 +207,41 @@ export default function PsyDle() {
 
       <main className="max-w-5xl mx-auto px-2 pt-24 pb-32">
         
-        {/* HEADER */}
-        <div className="flex flex-col items-center mb-8 relative">
-            <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 neon-text-fix pb-2">
+        {/* HEADER with Title Fix */}
+        <div className="flex flex-col items-center mb-10 relative">
+            {/* Added padding-bottom to prevent clipping */}
+            <h1 className="text-clip-fix text-6xl md:text-8xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 pb-3">
                 PSY-DLE
             </h1>
             <button 
                 onClick={() => setShowInstructions(true)} 
-                className="absolute left-0 top-2 text-purple-400 hover:text-white transition opacity-60 hover:opacity-100"
+                className="absolute left-4 top-4 text-purple-400 hover:text-white transition opacity-80 hover:opacity-100 bg-purple-500/10 p-2 rounded-full"
             >
-                <FaQuestionCircle size={24}/>
+                <FaQuestionCircle size={20}/>
             </button>
         </div>
 
-        {/* --- SILHOUETTE HINT --- */}
+        {/* --- SILHOUETTE AREA (IMPROVED) --- */}
         {silhouetteUrl && !isWon && (
-            <div className="flex flex-col items-center mb-8">
-                 {/* Toggle Button */}
+            <div className="flex flex-col items-center mb-10">
                  <button 
                     onClick={() => setShowSilhouette(!showSilhouette)}
-                    className="flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-purple-500/50 transition-all text-sm text-gray-300 mb-4"
+                    className={`flex items-center gap-2 px-6 py-2 rounded-full border transition-all text-sm mb-6 ${showSilhouette ? 'bg-purple-600 border-purple-500 text-white shadow-lg' : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'}`}
                 >
                     {showSilhouette ? <FaEyeSlash /> : <FaEye />} 
-                    {showSilhouette ? 'הסתר רמז' : 'הצג רמז ויזואלי'}
+                    {showSilhouette ? 'הסתר צללית' : 'הצג צללית (רמז)'}
                 </button>
 
-                {/* The "Silhouette" (Actually a glitchy preview) */}
-                <div className={`transition-all duration-500 overflow-hidden ${showSilhouette ? 'h-40 opacity-100' : 'h-0 opacity-0'}`}>
-                    <div className="relative w-40 h-40 rounded-full border-4 border-purple-500/30 bg-black shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+                {/* Animated Reveal Container */}
+                <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showSilhouette ? 'h-48 opacity-100' : 'h-0 opacity-0'}`}>
+                    <div className="relative w-48 h-48 rounded-full border-4 border-purple-500/30 bg-black shadow-[0_0_50px_rgba(168,85,247,0.15)] mx-auto">
                         <img 
                             src={silhouetteUrl} 
-                            className="w-full h-full object-cover"
-                            style={{ 
-                                // Heavy blur + Grayscale to prevent easy guessing
-                                filter: 'blur(15px) grayscale(100%) brightness(0.8) contrast(1.5)',
-                                transform: 'scale(1.2)' 
-                            }}
+                            className="w-full h-full object-cover rounded-full noir-silhouette"
+                            alt="Mystery Artist"
                         />
-                        {/* Overlay to obscure details */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/80" />
+                        {/* Vignette Overlay to hide square edges of source image if any */}
+                        <div className="absolute inset-0 rounded-full bg-radial-gradient-vignette pointer-events-none" />
                     </div>
                 </div>
             </div>
@@ -267,34 +249,34 @@ export default function PsyDle() {
 
         {/* --- VICTORY SCREEN --- */}
         {isWon && solution && (
-            <div className="mb-10 animate-in zoom-in duration-500">
-                <div className="bg-gradient-to-b from-gray-900 to-black border border-green-500/40 rounded-3xl p-8 max-w-md mx-auto text-center shadow-[0_0_50px_rgba(34,197,94,0.15)]">
+            <div className="mb-12 animate-in zoom-in duration-500">
+                <div className="bg-gradient-to-b from-[#18181b] to-black border border-green-500/40 rounded-3xl p-10 max-w-md mx-auto text-center shadow-[0_0_60px_rgba(34,197,94,0.1)]">
                     <div className="relative w-40 h-40 mx-auto mb-6">
-                        <img src={solution.image_url} className="w-full h-full rounded-full border-4 border-green-500 shadow-xl object-cover" />
-                        <div className="absolute -bottom-2 -right-2 bg-green-500 text-black p-3 rounded-full text-2xl shadow-lg border-4 border-black">🎉</div>
+                        <img src={solution.image_url} className="w-full h-full rounded-full border-4 border-green-500 shadow-2xl object-cover" />
+                        <div className="absolute -bottom-2 -right-2 bg-green-500 text-black p-3 rounded-full text-2xl shadow-lg border-4 border-[#18181b]">🎉</div>
                     </div>
                     <h2 className="text-4xl font-black text-white mb-2">{solution.name}</h2>
-                    <div className="flex justify-center gap-2 mb-6">
-                        <span className="bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-xs border border-green-500/30">
+                    <div className="flex justify-center gap-2 mb-8">
+                        <span className="bg-green-900/40 text-green-400 px-4 py-1 rounded-full text-sm font-bold border border-green-500/30">
                             {solution.genre}
                         </span>
-                        <span className="bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-xs border border-green-500/30">
+                        <span className="bg-green-900/40 text-green-400 px-4 py-1 rounded-full text-sm font-bold border border-green-500/30">
                             {solution.country}
                         </span>
                     </div>
-                    <button onClick={handleShare} className="w-full btn-primary py-4 rounded-xl text-lg font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform">
+                    <button onClick={handleShare} className="w-full btn-primary py-4 rounded-xl text-lg font-bold flex items-center justify-center gap-2 shadow-xl hover:shadow-purple-500/40 hover:scale-[1.02] transition-all">
                         <FaShareAlt /> שתף ניצחון
                     </button>
-                    <p className="text-xs text-gray-600 mt-4">המשחק יתאפס מחר בחצות</p>
+                    <p className="text-xs text-gray-600 mt-6 font-medium">המשחק יתאפס מחר בחצות</p>
                 </div>
             </div>
         )}
 
         {/* --- GAME GRID --- */}
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="w-full max-w-5xl mx-auto px-1">
             {guesses.length > 0 && <HeaderRow />}
 
-            <div className="space-y-2 mb-32"> {/* Extra padding for bottom input */}
+            <div className="space-y-3 mb-32">
                 {/* Past Guesses */}
                 {guesses.map((g, i) => (
                     <div key={i} className="grid grid-cols-7 gap-1 md:gap-2">
@@ -308,11 +290,11 @@ export default function PsyDle() {
                     </div>
                 ))}
 
-                {/* Empty Slots (Visual placeholders) */}
+                {/* Empty Slots */}
                 {!isWon && Array.from({ length: Math.max(0, MAX_GUESSES - guesses.length) }).map((_, i) => (
                     <div key={`empty-${i}`} className="grid grid-cols-7 gap-1 md:gap-2 opacity-30">
                         {Array.from({ length: 7 }).map((_, j) => (
-                            <div key={j} className="h-14 w-full bg-white/5 rounded-lg border border-white/5 border-dashed" />
+                            <div key={j} className="h-14 md:h-16 w-full bg-white/5 rounded-xl border border-white/5" />
                         ))}
                     </div>
                 ))}
@@ -326,7 +308,7 @@ export default function PsyDle() {
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent z-40 pb-8">
                 <div className="max-w-lg mx-auto relative">
                     <input 
-                        className="w-full bg-[#18181b] border-2 border-purple-500/40 rounded-2xl px-6 py-4 text-white text-center text-lg focus:outline-none focus:border-purple-400 focus:shadow-[0_0_30px_rgba(168,85,247,0.3)] transition-all placeholder-gray-500 shadow-2xl"
+                        className="w-full bg-[#18181b] border-2 border-purple-500/40 rounded-2xl px-6 py-5 text-white text-center text-xl font-bold focus:outline-none focus:border-purple-400 focus:shadow-[0_0_30px_rgba(168,85,247,0.3)] transition-all placeholder-gray-500 shadow-2xl"
                         placeholder="הקלידו שם אמן..."
                         value={query}
                         onChange={handleSearch}
@@ -341,7 +323,7 @@ export default function PsyDle() {
                                 <div 
                                     key={s} 
                                     onClick={() => submitGuess(s)}
-                                    className="px-6 py-4 hover:bg-purple-600/20 hover:text-purple-300 cursor-pointer border-b border-gray-800 last:border-0 transition-colors font-medium flex justify-between items-center group"
+                                    className="px-6 py-4 hover:bg-purple-600/20 hover:text-purple-300 cursor-pointer border-b border-gray-800 last:border-0 transition-colors font-bold text-lg flex justify-between items-center group"
                                 >
                                     <span>{s}</span>
                                     <span className="text-gray-600 group-hover:text-purple-400 text-sm">בחר</span>
