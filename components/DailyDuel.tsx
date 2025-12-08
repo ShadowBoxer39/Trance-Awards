@@ -345,11 +345,7 @@ function ResultsBar({
                  </div>
             </div>
             
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                <div className="w-8 h-8 rounded-full bg-black border border-white/20 flex items-center justify-center shadow-lg">
-                    <span className="text-[10px] font-black italic text-gray-400">VS</span>
-                </div>
-            </div>
+           
         </div>
     );
 }
