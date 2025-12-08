@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // --- Configuration ---
 const MAX_GUESSES = 8;
-const DELAY_MS = 350; // Delay between cell reveals
+const DELAY_MS = 350; // Delay between cell reveals 
 
 interface FeedbackItem {
   value: string | number;
