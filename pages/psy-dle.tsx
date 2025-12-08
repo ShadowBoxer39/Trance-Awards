@@ -5,7 +5,7 @@ import { FaArrowUp, FaArrowDown, FaCheck, FaShareAlt, FaQuestionCircle, FaTimes,
 import { createClient } from '@supabase/supabase-js';
 
 // --- Configuration ---
-const MAX_GUESSES = 8;
+const MAX_GUESSES = 8; 
 const DELAY_MS = 350; // Delay between cell reveals 
 
 interface FeedbackItem {
