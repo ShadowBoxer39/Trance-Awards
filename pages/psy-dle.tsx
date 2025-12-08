@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Navigation from '../components/Navigation';
 import { FaShareAlt, FaQuestionCircle, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { BsArrowUpSquareFill, BsArrowDownSquareFill } from 'react-icons/bs'; // Poeltl style arrows 
+import { BsArrowUpSquareFill, BsArrowDownSquareFill } from 'react-icons/bs';
 
-// --- Configuration ---
 const MAX_GUESSES = 8;
 
 interface FeedbackItem {
@@ -84,7 +83,7 @@ export default function PsyDle() {
                   setTimeout(() => {
                       setIsWon(true);
                       setSolution(data.solution);
-                      setShowSilhouette(true);
+                      setShowSilhouette(true); // Reveal full image
                   }, 1500);
               }
           }
@@ -112,30 +111,28 @@ export default function PsyDle() {
     }
   };
 
-  // --- Header Row ---
+  // Header Component
   const HeaderRow = () => (
       <div className="grid grid-cols-7 gap-1 md:gap-2 mb-3 px-1 sticky top-20 z-30 bg-[#09090b] py-3 border-b border-white/10 text-[10px] md:text-xs text-gray-400 font-bold text-center uppercase tracking-wider shadow-lg">
             <div>אמן</div>
             <div>ז'אנר</div>
             <div>מדינה</div>
-            <div>מתי התחילו</div> {/* Fixed Label */}
+            <div>מתי התחילו</div>
             <div>הרכב</div>
             <div>אלבומים</div>
             <div>אות</div>
       </div>
   );
 
-  // --- Feedback Cell ---
-  const Cell = ({ item, delay, isText = false }: { item: FeedbackItem, delay: number, isText?: boolean }) => {
+  // Cell Component
+  const Cell = ({ item, delay }: { item: FeedbackItem, delay: number }) => {
     const isMatch = item.match;
-    // Note: 'higher' means the target value is higher than the guess -> Up Arrow
     const isHigher = item.direction === 'higher'; 
     const isLower = item.direction === 'lower';
     
-    let bgClass = 'bg-[#202024] border-[#303036]'; // Neutral Dark
+    let bgClass = 'bg-[#202024] border-[#303036]'; 
     if (isMatch) bgClass = 'bg-green-600 border-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]';
     
-    // Text Sizing logic
     const textLength = String(item.value).length;
     const fontSize = textLength > 12 ? 'text-[9px] md:text-[10px]' : textLength > 8 ? 'text-[10px] md:text-xs' : 'text-xs md:text-sm';
 
@@ -153,12 +150,10 @@ export default function PsyDle() {
               <span className={`font-bold leading-tight break-words ${fontSize} mb-1`}>
                   {item.value}
               </span>
-              
-              {/* --- POELTL STYLE ARROWS --- */}
               {!isMatch && (isHigher || isLower) && (
-                  <div className="mt-1">
-                      {isHigher && <BsArrowUpSquareFill className="text-yellow-400 text-lg md:text-xl drop-shadow-md animate-bounce" />}
-                      {isLower && <BsArrowDownSquareFill className="text-yellow-400 text-lg md:text-xl drop-shadow-md animate-bounce" />}
+                  <div className="mt-1 animate-bounce">
+                      {isHigher && <BsArrowUpSquareFill className="text-yellow-400 text-lg md:text-xl drop-shadow-md" />}
+                      {isLower && <BsArrowDownSquareFill className="text-yellow-400 text-lg md:text-xl drop-shadow-md" />}
                   </div>
               )}
           </div>
@@ -197,8 +192,7 @@ export default function PsyDle() {
                         <span>התשובה <strong>גבוהה</strong> או <strong>מאוחרת</strong> יותר</span>
                     </div>
                 </div>
-
-                <button onClick={() => { setShowInstructions(false); localStorage.setItem('psydle_instructions_seen', 'true'); }} className="w-full btn-primary py-4 rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform">
+                <button onClick={() => { setShowInstructions(false); localStorage.setItem('psydle_instructions_seen', 'true'); }} className="w-full btn-primary py-4 rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20 hover:scale-[1.02] transition-transform">
                     יאללה מתחילים!
                 </button>
             </div>
@@ -207,10 +201,9 @@ export default function PsyDle() {
 
       <main className="max-w-5xl mx-auto px-2 pt-24 pb-32">
         
-        {/* HEADER with Title Fix */}
+        {/* HEADER - FIX APPLIED HERE */}
         <div className="flex flex-col items-center mb-10 relative">
-            {/* Added padding-bottom to prevent clipping */}
-            <h1 className="text-clip-fix text-6xl md:text-8xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 pb-3">
+            <h1 className="title-safe-area text-6xl md:text-8xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
                 PSY-DLE
             </h1>
             <button 
@@ -221,7 +214,7 @@ export default function PsyDle() {
             </button>
         </div>
 
-        {/* --- SILHOUETTE AREA (IMPROVED) --- */}
+        {/* --- SILHOUETTE AREA --- */}
         {silhouetteUrl && !isWon && (
             <div className="flex flex-col items-center mb-10">
                  <button 
@@ -229,19 +222,17 @@ export default function PsyDle() {
                     className={`flex items-center gap-2 px-6 py-2 rounded-full border transition-all text-sm mb-6 ${showSilhouette ? 'bg-purple-600 border-purple-500 text-white shadow-lg' : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'}`}
                 >
                     {showSilhouette ? <FaEyeSlash /> : <FaEye />} 
-                    {showSilhouette ? 'הסתר צללית' : 'הצג צללית (רמז)'}
+                    {showSilhouette ? 'הסתר רמז' : 'הצג רמז'}
                 </button>
 
-                {/* Animated Reveal Container */}
+                {/* Animated Reveal with STENCIL Filter */}
                 <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showSilhouette ? 'h-48 opacity-100' : 'h-0 opacity-0'}`}>
                     <div className="relative w-48 h-48 rounded-full border-4 border-purple-500/30 bg-black shadow-[0_0_50px_rgba(168,85,247,0.15)] mx-auto">
                         <img 
                             src={silhouetteUrl} 
-                            className="w-full h-full object-cover rounded-full noir-silhouette"
+                            className="w-full h-full object-cover rounded-full stencil-silhouette" // <--- Applied new class
                             alt="Mystery Artist"
                         />
-                        {/* Vignette Overlay to hide square edges of source image if any */}
-                        <div className="absolute inset-0 rounded-full bg-radial-gradient-vignette pointer-events-none" />
                     </div>
                 </div>
             </div>
@@ -260,9 +251,6 @@ export default function PsyDle() {
                         <span className="bg-green-900/40 text-green-400 px-4 py-1 rounded-full text-sm font-bold border border-green-500/30">
                             {solution.genre}
                         </span>
-                        <span className="bg-green-900/40 text-green-400 px-4 py-1 rounded-full text-sm font-bold border border-green-500/30">
-                            {solution.country}
-                        </span>
                     </div>
                     <button onClick={handleShare} className="w-full btn-primary py-4 rounded-xl text-lg font-bold flex items-center justify-center gap-2 shadow-xl hover:shadow-purple-500/40 hover:scale-[1.02] transition-all">
                         <FaShareAlt /> שתף ניצחון
@@ -277,7 +265,6 @@ export default function PsyDle() {
             {guesses.length > 0 && <HeaderRow />}
 
             <div className="space-y-3 mb-32">
-                {/* Past Guesses */}
                 {guesses.map((g, i) => (
                     <div key={i} className="grid grid-cols-7 gap-1 md:gap-2">
                         <Cell item={g.name} delay={0} isText />
@@ -290,7 +277,6 @@ export default function PsyDle() {
                     </div>
                 ))}
 
-                {/* Empty Slots */}
                 {!isWon && Array.from({ length: Math.max(0, MAX_GUESSES - guesses.length) }).map((_, i) => (
                     <div key={`empty-${i}`} className="grid grid-cols-7 gap-1 md:gap-2 opacity-30">
                         {Array.from({ length: 7 }).map((_, j) => (
@@ -303,7 +289,7 @@ export default function PsyDle() {
             </div>
         </div>
 
-        {/* --- STICKY INPUT AREA --- */}
+        {/* --- STICKY INPUT --- */}
         {!isWon && (
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent z-40 pb-8">
                 <div className="max-w-lg mx-auto relative">
@@ -316,7 +302,6 @@ export default function PsyDle() {
                         autoFocus
                     />
                     
-                    {/* Autocomplete */}
                     {suggestions.length > 0 && (
                         <div className="absolute bottom-full left-0 right-0 mb-4 bg-[#18181b] rounded-2xl border border-gray-700 shadow-2xl overflow-hidden max-h-60 overflow-y-auto animate-in slide-in-from-bottom-2">
                             {suggestions.map(s => (
