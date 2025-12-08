@@ -9,7 +9,7 @@ import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Navigation from "../components/Navigation";
 import {
-  getArtistProfile,
+  getArtistProfile, 
   getArtistTopTracks,
   getArtistDiscography,
 } from "../lib/spotify";

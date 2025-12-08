@@ -1,246 +1,208 @@
-import React from "react";
-import Script from "next/script";
+import React, { useState, useEffect, useRef, useContext, createContext, useCallback } from "react";
+
+// --- Types ---
+type TrackData = {
+  url: string;
+  title: string;
+  image: string;
+  artist?: string;
+};
 
 type PlayerAPI = {
-  playUrl: (url: string) => void;
+  playTrack: (data: TrackData) => void;
+  playUrl: (url: string) => void; // <--- Restored this property
   toggle: () => void;
-  seek: (seconds: number) => void;
+  seek: (percentage: number) => void;
+  activeUrl: string | null;
+  isPlaying: boolean;
+  progress: number;
 };
 
-const PlayerContext = React.createContext<PlayerAPI>({
-  playUrl: () => {},
+const PlayerContext = createContext<PlayerAPI>({
+  playTrack: () => {},
+  playUrl: () => {}, // <--- Restored this default
   toggle: () => {},
-  seek: () => {},
+  seek: () => {}, 
+  activeUrl: null,
+  isPlaying: false,
+  progress: 0,
 });
 
-export const usePlayer = () => React.useContext(PlayerContext);
+export const usePlayer = () => useContext(PlayerContext);
 
-type SoundMeta = {
-  title?: string;
-  permalink_url?: string;
-  artwork_url?: string;
-  user?: { username?: string };
+// --- Helper: Extract YouTube ID ---
+const getYouTubeId = (url: string) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
 };
 
+// --- Main Provider ---
 export default function PlayerProvider({ children }: { children: React.ReactNode }) {
-  const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
-  const widgetRef = React.useRef<any>(null);
-  const pollTimer = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const [activeUrl, setActiveUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  
+  const playerRef = useRef<any>(null); // The raw YT Player instance
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isSeekingRef = useRef(false);
 
-  const [apiReady, setApiReady] = React.useState(false);
-  const [visible, setVisible] = React.useState(false);
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const [url, setUrl] = React.useState<string | null>(null);
+  // 1. Initialize YouTube API
+  useEffect(() => {
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
 
-  const [duration, setDuration] = React.useState(0); // seconds
-  const [position, setPosition] = React.useState(0); // seconds
-  const [meta, setMeta] = React.useState<SoundMeta>({});
+    // Define the global callback
+    window.onYouTubeIframeAPIReady = () => {
+      // API is ready
+    };
 
-  // --- Initialize the SoundCloud widget ---
-  function setupWidget() {
-    if (!iframeRef.current) return;
-    // @ts-ignore
-    const SC = (window as any).SC;
-    if (!SC || !SC.Widget) return;
-    // @ts-ignore
-    const w = SC.Widget(iframeRef.current);
-    widgetRef.current = w;
-    setApiReady(true);
-
-    w.bind("play", () => setIsPlaying(true));
-    w.bind("pause", () => setIsPlaying(false));
-    w.bind("finish", () => setIsPlaying(false));
-    w.bind("playProgress", (e: any) => {
-      if (typeof e?.currentPosition === "number") {
-        setPosition(Math.max(0, Math.round(e.currentPosition / 1000)));
-      }
-    });
-  }
-
-  // --- Load and play a SoundCloud track ---
-  function loadAndPlay(scUrl: string) {
-    const clean = scUrl.split("?")[0]; // remove tracking params
-    setUrl(clean);
-    setVisible(true);
-
-    widgetRef.current.load(clean, {
-      auto_play: true,
-      visual: false,
-      show_user: false,
-      show_comments: false,
-      show_teaser: false,
-      show_reposts: false,
-      hide_related: true,
-    });
-
-    // fetch metadata & duration
-    setTimeout(() => {
-      const w = widgetRef.current;
-      if (!w) return;
-
-      w.getDuration((ms: number) => setDuration(Math.round((ms || 0) / 1000)));
-      w.getCurrentSound((snd: any) => {
-        if (snd) {
-          setMeta({
-            title: snd.title,
-            permalink_url: snd.permalink_url,
-            artwork_url: snd.artwork_url,
-            user: { username: snd.user?.username },
-          });
-        }
-      });
-
-      // start a polling timer for playback progress
-      if (pollTimer.current !== null) {
-        clearInterval(pollTimer.current);
-        pollTimer.current = null;
-      }
-      pollTimer.current = setInterval(() => {
-        w.getPosition((ms: number) => setPosition(Math.round((ms || 0) / 1000)));
-        w.getDuration((ms: number) => setDuration(Math.round((ms || 0) / 1000)));
-      }, 250);
-    }, 250);
-  }
-
-  // --- Cleanup on unmount ---
-  React.useEffect(() => {
     return () => {
-      if (pollTimer.current !== null) {
-        clearInterval(pollTimer.current);
-        pollTimer.current = null;
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
-  // --- Expose control API ---
-  const api: PlayerAPI = {
-    playUrl: (u: string) => {
-      if (!widgetRef.current) return;
-      loadAndPlay(u);
-    },
-    toggle: () => {
-      const w = widgetRef.current;
-      if (!w) return;
-      w.isPaused((paused: boolean) => (paused ? w.play() : w.pause()));
-    },
-    seek: (seconds: number) => {
-      const w = widgetRef.current;
-      if (!w) return;
-      const clamped = Math.max(0, Math.min(seconds, duration || seconds));
-      w.seekTo(clamped * 1000);
-      setPosition(clamped);
-    },
+  // 2. Setup/Update Player when URL changes
+  useEffect(() => {
+    if (!activeUrl) return;
+
+    const videoId = getYouTubeId(activeUrl);
+    if (!videoId) {
+        console.warn("PlayerProvider: Non-YouTube URL detected or invalid ID", activeUrl);
+        return;
+    }
+
+    if (!playerRef.current) {
+      // Create Player if it doesn't exist
+      if (window.YT && window.YT.Player) {
+        playerRef.current = new window.YT.Player('yt-player-target', {
+          height: '0',
+          width: '0',
+          videoId: videoId,
+          playerVars: {
+            'autoplay': 1,
+            'controls': 0,
+            'disablekb': 1,
+            'fs': 0,
+            'playsinline': 1,
+          },
+          events: {
+            'onReady': (event: any) => {
+              event.target.playVideo();
+              setIsPlaying(true);
+            },
+            'onStateChange': (event: any) => {
+              // 1 = Playing, 2 = Paused, 0 = Ended
+              if (event.data === 1) setIsPlaying(true);
+              if (event.data === 2) setIsPlaying(false);
+              if (event.data === 0) {
+                setIsPlaying(false);
+                setProgress(0);
+              }
+            }
+          }
+        });
+      }
+    } else {
+      // Player exists, just load new video
+      playerRef.current.loadVideoById(videoId);
+      setIsPlaying(true);
+    }
+  }, [activeUrl]);
+
+  // 3. Progress Loop (Manual Polling)
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      if (playerRef.current && playerRef.current.getCurrentTime && !isSeekingRef.current) {
+        const current = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
+        if (duration > 0) {
+          setProgress(current / duration);
+        }
+      }
+    }, 100); 
+
+    return () => { 
+      if (timerRef.current) clearInterval(timerRef.current); 
+    };
+  }, []);
+
+  // --- Controls ---
+
+  const playTrack = (data: TrackData) => {
+    if (activeUrl === data.url) {
+      toggle();
+    } else {
+      setActiveUrl(data.url);
+      setProgress(0);
+    }
   };
 
-  function formatTime(sec: number) {
-    if (!sec || !isFinite(sec)) return "0:00";
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
+  // --- RESTORED FUNCTION ---
+  const playUrl = (url: string) => {
+    playTrack({ url, title: "Unknown Track", image: "" });
+  };
+
+  const toggle = () => {
+    if (!playerRef.current || typeof playerRef.current.getPlayerState !== 'function') return;
+    
+    const state = playerRef.current.getPlayerState();
+    if (state === 1) { // Playing
+      playerRef.current.pauseVideo();
+      setIsPlaying(false);
+    } else {
+      playerRef.current.playVideo();
+      setIsPlaying(true);
+    }
+  };
+
+  const seek = useCallback((percentage: number) => {
+    if (!playerRef.current || typeof playerRef.current.seekTo !== 'function') return;
+
+    isSeekingRef.current = true;
+    setProgress(percentage);
+
+    const duration = playerRef.current.getDuration();
+    if (duration) {
+      const seekTime = duration * percentage;
+      playerRef.current.seekTo(seekTime, true);
+    }
+
+    setTimeout(() => {
+      isSeekingRef.current = false;
+    }, 500);
+  }, []);
 
   return (
-    <>
-      <Script
-        src="https://w.soundcloud.com/player/api.js"
-        strategy="afterInteractive"
-        onLoad={setupWidget}
+    <PlayerContext.Provider
+      value={{
+        playTrack,
+        playUrl, // <--- Exposed to Context
+        toggle,
+        seek,
+        activeUrl,
+        isPlaying,
+        progress,
+      }}
+    >
+      {children}
+      <div 
+        id="yt-player-target" 
+        className="fixed bottom-0 right-0 w-px h-px opacity-0 pointer-events-none z-[-1]" 
       />
-
-      <PlayerContext.Provider value={api}>
-        {children}
-
-        {visible && (
-          <div
-            className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/60 backdrop-blur"
-            dir="ltr"
-          >
-            <div className="mx-auto max-w-6xl px-3 py-2 flex items-center gap-3 text-white">
-              {/* Play / Pause */}
-              <button
-                onClick={api.toggle}
-                disabled={!apiReady}
-                className="shrink-0 border rounded-xl px-3 py-1 text-xs hover:bg-white/10"
-                aria-label={isPlaying ? "Pause" : "Play"}
-              >
-                {isPlaying ? "⏸" : "▶"}
-              </button>
-
-              {/* Current time */}
-              <div className="text-xs tabular-nums text-white/80 shrink-0">
-                {formatTime(position)}
-              </div>
-
-              {/* Seek slider */}
-              <input
-                type="range"
-                min={0}
-                max={Math.max(1, duration)}
-                value={Math.min(position, duration)}
-                onChange={(e) => api.seek(Number(e.target.value))}
-                className="mx-2 w-full"
-              />
-
-              {/* Duration */}
-              <div className="text-xs tabular-nums text-white/80 shrink-0">
-                {formatTime(duration)}
-              </div>
-
-              {/* Track info */}
-              <div className="min-w-0 pl-2">
-                <div className="text-xs font-medium truncate">
-                  {meta.title || url}
-                </div>
-                <div className="text-[11px] text-white/70 truncate">
-                  {meta.user?.username || "SoundCloud"}
-                </div>
-              </div>
-
-              {/* Open in SC */}
-              {meta.permalink_url && (
-                <a
-                  href={meta.permalink_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 border rounded-xl px-3 py-1 text-xs hover:bg-white/10"
-                >
-                  Open
-                </a>
-              )}
-
-              {/* Close */}
-              <button
-                onClick={() => {
-                  setVisible(false);
-                  setIsPlaying(false);
-                  setMeta({});
-                  setDuration(0);
-                  setPosition(0);
-                  if (pollTimer.current !== null) {
-                    clearInterval(pollTimer.current);
-                    pollTimer.current = null;
-                  }
-                }}
-                className="ml-1 shrink-0 border rounded-xl px-2 py-1 text-xs hover:bg-white/10"
-                title="Close Player"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Hidden SoundCloud iframe */}
-        <iframe
-          ref={iframeRef}
-          title="SoundCloud Player"
-          allow="autoplay"
-          className="fixed -bottom-[2000px] left-0"
-          width="100%"
-          height="166"
-          src="https://w.soundcloud.com/player/?url=https://soundcloud.com/stream&auto_play=false&visual=false&show_user=false&show_comments=false&show_reposts=false&hide_related=true"
-        />
-      </PlayerContext.Provider>
-    </>
+    </PlayerContext.Provider>
   );
+}
+
+// Add types for global YT object
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: any;
+  }
 }

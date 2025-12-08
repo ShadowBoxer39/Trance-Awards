@@ -5,6 +5,7 @@ import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
 import SEO from "@/components/SEO";
 import Navigation from "../components/Navigation";
+import DailyDuel from "../components/DailyDuel";
 import { default as episodeApiHandler } from "./api/episodes";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
@@ -583,6 +584,10 @@ export default function Home({
 
       <div className="trance-backdrop min-h-screen text-gray-100">
         <Navigation currentPage="home" />
+
+        <div className="pt-24 pb-8 px-4 relative z-20">
+          <DailyDuel />
+        </div>
 
         {/* HERO */}
         <header className="relative overflow-hidden">
