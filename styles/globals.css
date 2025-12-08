@@ -91,3 +91,16 @@
   padding-bottom: 0.2em; /* Prevents descender clipping */
   line-height: 1.4;
 }
+
+/* High Contrast "Noir" Silhouette for JPEGs */
+.noir-silhouette {
+  filter: grayscale(100%) contrast(200%) brightness(0.7) blur(4px);
+  mix-blend-mode: hard-light;
+  transition: all 0.5s ease;
+}
+
+/* Fix for clipped gradients on text */
+.text-clip-fix {
+  padding-bottom: 0.1em;
+  line-height: 1.2;
+}
