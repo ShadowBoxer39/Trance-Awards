@@ -1,6 +1,9 @@
 // components/CountdownTimer.tsx
 import React, { useEffect, useState } from "react";
 
+// Voting deadline - December 10, 2025 at 23:59:59 Israel Time
+const VOTING_DEADLINE = new Date("2025-12-10T23:59:59+02:00").getTime();
+
 export default function CountdownTimer() {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -9,14 +12,14 @@ export default function CountdownTimer() {
     seconds: 0,
   });
   const [isExpired, setIsExpired] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Set deadline to December 1st, 2025 at 23:59:59
-    const deadline = new Date("2025-12-10T23:59:59").getTime();
-
+    setIsClient(true);
+    
     const updateTimer = () => {
       const now = new Date().getTime();
-      const distance = deadline - now;
+      const distance = VOTING_DEADLINE - now;
 
       if (distance < 0) {
         setIsExpired(true);
@@ -40,17 +43,60 @@ export default function CountdownTimer() {
     return () => clearInterval(interval);
   }, []);
 
+  // Don't render anything until client-side hydration is complete
+  if (!isClient) {
+    return (
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-orange-500/20 blur-xl animate-pulse-slow" />
+        <div className="relative glass rounded-2xl p-4 sm:p-6 border-2 border-pink-500/30 overflow-hidden min-h-[180px]" />
+      </div>
+    );
+  }
+
+  // Voting has ended - show closed message
   if (isExpired) {
     return (
-      <div className="glass rounded-2xl p-6 border-2 border-red-500/30">
-        <div className="text-center">
-          <div className="text-4xl mb-2">⏰</div>
-          <div className="text-xl font-bold text-red-400">ההצבעה הסתיימה!</div>
+      <div className="relative">
+        {/* Glowing background effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 blur-xl animate-pulse-slow" />
+
+        {/* Closed message card */}
+        <div className="relative glass rounded-2xl p-6 sm:p-8 border-2 border-purple-500/30 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-cyan-500/10 to-pink-500/10 animate-gradient" />
+
+          <div className="relative z-10 text-center">
+            {/* Trophy/celebration icon */}
+            <div className="text-5xl sm:text-6xl mb-4 animate-bounce">🏆</div>
+            
+            {/* Main message */}
+            <h3 className="text-2xl sm:text-3xl font-bold mb-2">
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+                ההצבעה הסתיימה!
+              </span>
+            </h3>
+            
+            <p className="text-white/80 text-base sm:text-lg mb-4">
+              תודה לכל מי שהשתתף 🙏
+            </p>
+
+            {/* Results teaser */}
+            <div className="glass rounded-xl p-4 border border-white/10">
+              <div className="flex items-center justify-center gap-2 text-sm sm:text-base">
+                <span className="text-yellow-400">⭐</span>
+                <span className="text-white/90 font-medium">התוצאות יפורסמו בקרוב!</span>
+                <span className="text-yellow-400">⭐</span>
+              </div>
+              <p className="text-white/60 text-xs sm:text-sm mt-2">
+                עקבו אחרינו ברשתות לעדכונים
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Voting is still open - show countdown
   return (
     <div className="relative">
       {/* Glowing background effect */}
@@ -131,7 +177,7 @@ export default function CountdownTimer() {
           </div>
         </div>
 
-        {/* Animated pulse effect */}
+        {/* Animated pulse effect when less than 1 day remaining */}
         {timeLeft.days === 0 && (
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full border-4 border-red-400/20 rounded-2xl animate-ping" />
