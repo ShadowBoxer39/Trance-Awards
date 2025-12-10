@@ -3,7 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import Navigation from "../../components/Navigation";
+// import Navigation from "../../components/Navigation";
 
 // Showcase lineups - placeholder artists (replace IDs with real ones later)
 const SHOWCASE_LINEUPS = [
@@ -132,7 +132,21 @@ export default function LineupLanding() {
       </Head>
 
       <div className="min-h-screen bg-[#0a0a1f] text-white">
-        <Navigation currentPage="lineup" />
+        {/* Simple Header */}
+        <header className="fixed top-0 inset-x-0 z-50 border-b border-white/10 bg-black/60 backdrop-blur-lg">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/images/logo.png" alt="יוצאים לטראק" className="w-9 h-9 rounded-full" />
+              <span className="text-sm font-medium hidden sm:inline">יוצאים לטראק</span>
+            </Link>
+            <Link
+              href="/lineup/create"
+              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-sm font-medium"
+            >
+              צרו לייאנפ
+            </Link>
+          </div>
+        </header>
 
         {/* Hero Section */}
         <section className="relative pt-24 pb-16 overflow-hidden">
