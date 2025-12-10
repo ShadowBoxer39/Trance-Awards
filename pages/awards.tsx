@@ -16,6 +16,10 @@ import { usePlayer } from "../components/PlayerProvider";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import { CATEGORIES } from "@/data/awards-data";
+import { FaInstagram } from "react-icons/fa";
+
+// Voting deadline - December 10, 2025 at 23:59:59 Israel Time
+const VOTING_DEADLINE = new Date("2025-12-10T23:59:59+02:00").getTime();
 
 /** ───────────────── BRAND ───────────────── */
 const BRAND = {
@@ -93,10 +97,70 @@ class GlobalAudio {
   }
 }
 
+/** ─────────────── VOTING CLOSED OVERLAY ─────────────── */
+function VotingClosedOverlay() {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="glass rounded-3xl p-8 max-w-lg w-full text-center border-2 border-purple-500/30">
+        {/* Trophy animation */}
+        <div className="text-7xl mb-6 animate-bounce">🏆</div>
+        
+        <h1 className="text-3xl sm:text-4xl font-bold mb-4">
+          <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+            ההצבעה הסתיימה!
+          </span>
+        </h1>
+        
+        <p className="text-white/80 text-lg mb-6">
+          תודה לכל מי שהשתתף בנבחרי השנה 2025 🙏
+        </p>
+        
+        <div className="glass rounded-xl p-4 mb-6 border border-yellow-500/30">
+          <div className="flex items-center justify-center gap-2 text-yellow-400 font-medium">
+            <span>⭐</span>
+            <span>התוצאות יפורסמו בקרוב!</span>
+            <span>⭐</span>
+          </div>
+          <p className="text-white/60 text-sm mt-2">
+            עקבו אחרינו ברשתות החברתיות לעדכונים
+          </p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <a
+            href="https://www.instagram.com/track_trip.trance/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary rounded-xl px-6 py-3 inline-flex items-center justify-center gap-2"
+          >
+            <FaInstagram className="w-5 h-5" />
+            עקבו לעדכונים
+          </a>
+          <Link
+            href="/vote"
+            className="btn-ghost rounded-xl px-6 py-3 border border-white/20"
+          >
+            חזרה לדף הראשי
+          </Link>
+        </div>
+        
+        {/* Decorative elements */}
+        <div className="mt-8 flex justify-center gap-2">
+          <span className="text-2xl">🎵</span>
+          <span className="text-2xl">🎶</span>
+          <span className="text-2xl">🎧</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** ─────────────── PAGE ─────────────── */
 export default function Awards() {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVotingClosed, setIsVotingClosed] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const captchaRef = React.useRef<HTMLDivElement | null>(null);
   const widgetId = React.useRef<number | null>(null);
   const router = useRouter();
@@ -104,6 +168,18 @@ export default function Awards() {
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", "rtl");
+    setIsClient(true);
+    
+    // Check if voting has ended
+    const checkVotingStatus = () => {
+      const closed = new Date().getTime() > VOTING_DEADLINE;
+      setIsVotingClosed(closed);
+    };
+    
+    checkVotingStatus();
+    // Re-check every minute
+    const interval = setInterval(checkVotingStatus, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   // re-render when global audio state changes
@@ -113,8 +189,10 @@ export default function Awards() {
     return () => unsub();
   }, []);
 
-  // Initialize hCaptcha widget (invisible)
+  // Initialize hCaptcha widget (invisible) - only if voting is open
   useEffect(() => {
+    if (isVotingClosed) return;
+    
     const sitekey = process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY as string;
     
     const interval = setInterval(() => {
@@ -132,17 +210,26 @@ export default function Awards() {
     }, 200);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isVotingClosed]);
 
   const canSubmit = useMemo(
     () => CATEGORIES.every((c) => !!selections[c.id]),
     [selections]
   );
 
-  const choose = (categoryId: string, nomineeId: string) =>
+  const choose = (categoryId: string, nomineeId: string) => {
+    // Don't allow selection if voting is closed
+    if (isVotingClosed) return;
     setSelections((prev) => ({ ...prev, [categoryId]: nomineeId }));
+  };
 
   const submitVote = async () => {
+    // Block submission if voting is closed
+    if (isVotingClosed) {
+      alert("ההצבעה הסתיימה. תודה על ההשתתפות!");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -178,13 +265,16 @@ export default function Awards() {
 
       const j = await r.json().catch(() => ({}));
 
-    if (r.status === 403) {
-  alert("שגיאה בהצבעה. נסו שוב.");
+      if (r.status === 403) {
+        alert("שגיאה בהצבעה. נסו שוב.");
       } else if (r.status === 409 || j?.error === "duplicate_vote") {
         alert("כבר הצבעת מהמכשיר הזה עבור נבחרי השנה.");
       } else if (r.status === 400) {
         if (j?.error === "captcha_failed") {
           alert("אימות נכשל. אנא נסו שוב.");
+        } else if (j?.error === "voting_closed") {
+          alert("ההצבעה הסתיימה. תודה על ההשתתפות!");
+          setIsVotingClosed(true);
         } else {
           alert("נראה שחסר מידע להצבעה. נסו שוב.");
         }
@@ -200,10 +290,15 @@ export default function Awards() {
 
   return (
     <>
-      {/* Load hCaptcha */}
-      <Script src="https://js.hcaptcha.com/1/api.js" strategy="afterInteractive" />
+      {/* Load hCaptcha - only if voting is open */}
+      {!isVotingClosed && (
+        <Script src="https://js.hcaptcha.com/1/api.js" strategy="afterInteractive" />
+      )}
       
-      <main className="neon-backdrop min-h-screen text-white">
+      {/* Voting Closed Overlay */}
+      {isClient && isVotingClosed && <VotingClosedOverlay />}
+      
+      <main className={`neon-backdrop min-h-screen text-white ${isVotingClosed ? 'blur-sm' : ''}`}>
         {/* Header */}
         <header className="sticky top-0 z-10 border-b border-white/10 bg-black/40 backdrop-blur">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -254,32 +349,29 @@ export default function Awards() {
 
                       {/* Track play button */}
                       {isTrack && n.soundcloudUrl && (
-  <>
-    {/* Big center play button */}
-  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
-      player.playUrl(n.soundcloudUrl!);
-    }}
-    className="pointer-events-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full
-  bg-gradient-to-br from-cyan-400/60 via-green-400/60 to-lime-500/60
-  flex items-center justify-center shadow-md transition-transform
-  animate-pulse-subtle
-  opacity-90 md:opacity-0 md:group-hover:opacity-100
-  hover:scale-105 backdrop-blur-sm"
-    title="השמע טראק"
-  >
-    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white/90 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M8 5v14l11-7z"/>
-    </svg>
-  </button>
-</div>
-
-{/* Small badge at top */}
-
-  </>
-)}
+                        <>
+                          {/* Big center play button */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                player.playUrl(n.soundcloudUrl!);
+                              }}
+                              className="pointer-events-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full
+                                bg-gradient-to-br from-cyan-400/60 via-green-400/60 to-lime-500/60
+                                flex items-center justify-center shadow-md transition-transform
+                                animate-pulse-subtle
+                                opacity-90 md:opacity-0 md:group-hover:opacity-100
+                                hover:scale-105 backdrop-blur-sm"
+                              title="השמע טראק"
+                            >
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white/90 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            </button>
+                          </div>
+                        </>
+                      )}
 
                       {/* Nominee info */}
                       <div className="p-3 space-y-2">
@@ -298,6 +390,7 @@ export default function Awards() {
                             (selected ? "btn-primary border-0" : "btn-ghost border")
                           }
                           aria-pressed={selected}
+                          disabled={isVotingClosed}
                         >
                           {selected ? "נבחר ✓" : "בחר"}
                         </button>
@@ -313,17 +406,25 @@ export default function Awards() {
           <div className="glass rounded-2xl p-3 sm:p-4">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="text-white/80 text-xs sm:text-sm">
-                ודאו שבחרתם בכל הקטגוריות. תמיד אפשר לשנות לפני שליחה.
+                {isVotingClosed 
+                  ? "ההצבעה הסתיימה. תודה על ההשתתפות!"
+                  : "ודאו שבחרתם בכל הקטגוריות. תמיד אפשר לשנות לפני שליחה."
+                }
               </div>
               <button
                 onClick={submitVote}
-                disabled={!canSubmit || isSubmitting}
+                disabled={!canSubmit || isSubmitting || isVotingClosed}
                 className={
                   "rounded-2xl px-5 py-2.5 text-sm font-semibold " +
-                  (canSubmit ? "btn-primary" : "btn-ghost cursor-not-allowed")
+                  (canSubmit && !isVotingClosed ? "btn-primary" : "btn-ghost cursor-not-allowed")
                 }
               >
-                {isSubmitting ? "שולח..." : "שליחת ההצבעה"}
+                {isVotingClosed 
+                  ? "ההצבעה נסגרה" 
+                  : isSubmitting 
+                    ? "שולח..." 
+                    : "שליחת ההצבעה"
+                }
               </button>
             </div>
           </div>
