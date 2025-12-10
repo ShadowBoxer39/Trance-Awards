@@ -1,14 +1,17 @@
 // components/LiveVoteCounter.tsx
 import React, { useEffect, useRef, useState } from "react";
 
+// Voting deadline - December 10, 2025 at 23:59:59 Israel Time
+const VOTING_DEADLINE = new Date("2025-12-10T23:59:59+02:00").getTime();
+
 export default function LiveVoteCounter() {
-  // null = not yet fetched; we won't show a number until we have one
   const [count, setCount] = useState<number | null>(null);
   const [displayCount, setDisplayCount] = useState<number | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const fetchTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  // REMOVED: const minuteTimer = useRef... (The fake voter timer)
 
   async function fetchCount() {
     try {
@@ -29,15 +32,28 @@ export default function LiveVoteCounter() {
     }
   }
 
+  // Check if voting has expired
+  useEffect(() => {
+    setIsClient(true);
+    const checkExpired = () => {
+      setIsExpired(new Date().getTime() > VOTING_DEADLINE);
+    };
+    checkExpired();
+    
+    // Check every minute if not expired
+    const interval = setInterval(checkExpired, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   // First fetch + re-sync every 15s
   useEffect(() => {
     fetchCount();
     fetchTimer.current = setInterval(fetchCount, 15000);
-    return () => { if (fetchTimer.current) clearInterval(fetchTimer.current); };
+    return () => {
+      if (fetchTimer.current) clearInterval(fetchTimer.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // REMOVED: The useEffect that added +1 every minute
 
   // Smoothly animate `displayCount` toward `count`
   useEffect(() => {
@@ -57,6 +73,57 @@ export default function LiveVoteCounter() {
   const shown = displayCount ?? count;
   const formatted = shown != null ? shown.toLocaleString("he-IL") : "…";
 
+  // Don't render until client-side
+  if (!isClient) {
+    return (
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 blur-xl animate-pulse-slow" />
+        <div className="relative glass rounded-2xl p-6 border-2 border-cyan-500/30 overflow-hidden min-h-[180px] sm:min-h-[200px]" />
+      </div>
+    );
+  }
+
+  // Voting closed - show final count with different styling
+  if (isExpired) {
+    return (
+      <div className="relative">
+        {/* Glowing background effect - golden/celebration colors */}
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 to-purple-500/20 blur-xl animate-pulse-slow" />
+
+        {/* Counter card */}
+        <div className="relative glass rounded-2xl p-6 border-2 border-yellow-500/30 overflow-hidden min-h-[180px] sm:min-h-[200px]">
+          <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-orange-500/10 to-purple-500/10 animate-gradient" />
+
+          <div className="relative z-10 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="text-sm sm:text-base text-white/70">סה״כ הצבעות</span>
+              <span className="text-lg">🎉</span>
+            </div>
+
+            <div className="relative">
+              <div className="text-4xl sm:text-5xl md:text-6xl font-black tabular-nums">
+                <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent">
+                  {formatted}
+                </span>
+              </div>
+            </div>
+
+            <div className="text-xs sm:text-sm text-white/60 mt-3 flex items-center justify-center gap-1">
+              <span>🙏</span>
+              <span>תודה לכל המצביעים!</span>
+            </div>
+
+            {/* Final badge */}
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30">
+              <span className="text-yellow-400 text-sm font-medium">✓ תוצאות סופיות</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Voting still open - show live counter
   return (
     <div className="relative">
       {/* Glowing background effect */}
