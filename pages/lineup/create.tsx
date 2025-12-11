@@ -386,76 +386,89 @@ export default function CreateLineup({ artists }: Props) {
     }
 
     // ============================================
-    // HEADER - Festival Style
+    // HEADER - Hebrew Festival Style
     // ============================================
     
     // Top branding - small
     ctx.textAlign = "center";
     ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
     ctx.font = "400 24px Arial, sans-serif";
-    ctx.fillText("יוצאים לטראק מגישים", W / 2, 80);
+    ctx.fillText("יוצאים לטראק מגישים", W / 2, 70);
 
-    // Main title - BIG and stylized
+    // Main title - HEBREW
     ctx.save();
     ctx.shadowColor = isNight ? "rgba(138, 43, 226, 0.8)" : "rgba(255, 150, 0, 0.8)";
     ctx.shadowBlur = 40;
     ctx.fillStyle = "#ffffff";
-    ctx.font = "900 90px Arial, sans-serif";
-    ctx.fillText("DREAM", W / 2, 200);
-    ctx.fillText("LINEUP", W / 2, 300);
+    ctx.font = "900 72px Arial, sans-serif";
+    ctx.fillText("לייאנפ החלומות", W / 2, 170);
+    
+    if (creatorName) {
+      ctx.font = "700 48px Arial, sans-serif";
+      ctx.fillText("של", W / 2, 240);
+      ctx.fillStyle = isNight ? "#c4b5fd" : "#fcd34d";
+      ctx.font = "800 56px Arial, sans-serif";
+      ctx.fillText(creatorName, W / 2, 310);
+    }
     ctx.restore();
 
-    // Creator name with style
-    if (creatorName) {
-      ctx.fillStyle = isNight ? "#c4b5fd" : "#fcd34d";
-      ctx.font = "600 42px Arial, sans-serif";
-      ctx.fillText(`✦ ${creatorName} ✦`, W / 2, 380);
-    }
-
     // Party type badge
-    const badgeY = creatorName ? 440 : 380;
+    const badgeY = creatorName ? 380 : 280;
     ctx.fillStyle = isNight ? "rgba(138, 43, 226, 0.3)" : "rgba(255, 150, 0, 0.3)";
     ctx.beginPath();
-    ctx.roundRect(W/2 - 140, badgeY - 25, 280, 50, 25);
+    ctx.roundRect(W/2 - 130, badgeY - 22, 260, 44, 22);
     ctx.fill();
     ctx.strokeStyle = isNight ? "rgba(167, 139, 250, 0.6)" : "rgba(251, 191, 36, 0.6)";
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.fillStyle = isNight ? "#a78bfa" : "#fbbf24";
-    ctx.font = "700 28px Arial, sans-serif";
-    ctx.fillText(isNight ? "🌙 מסיבת לילה 🌙" : "☀️ מסיבת יום ☀️", W / 2, badgeY + 8);
+    ctx.font = "700 26px Arial, sans-serif";
+    ctx.fillText(isNight ? "🌙 מסיבת לילה 🌙" : "☀️ מסיבת יום ☀️", W / 2, badgeY + 7);
 
     // ============================================
-    // LINEUP - Festival Poster Style (no times!)
+    // LINEUP - With hours, using full space
     // ============================================
-    const lineupStartY = badgeY + 100;
-    
-    // "LINE-UP" label
-    ctx.fillStyle = isNight ? "#a78bfa" : "#fbbf24";
-    ctx.font = "600 24px Arial, sans-serif";
-    ctx.fillText("LINE-UP", W / 2, lineupStartY);
-
-    // Decorative line
-    ctx.strokeStyle = isNight ? "rgba(167, 139, 250, 0.4)" : "rgba(251, 191, 36, 0.4)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(W/2 - 200, lineupStartY + 15);
-    ctx.lineTo(W/2 + 200, lineupStartY + 15);
-    ctx.stroke();
-
-    // Artist names - BIG, BOLD, Festival style
+    const times = TIME_SLOTS[partyType];
+    const lineupStartY = badgeY + 70;
     const artists = selectedArtists.filter(a => a !== null) as Artist[];
-    const artistStartY = lineupStartY + 80;
-    const lineHeight = 140;
-
+    const availableHeight = H - lineupStartY - 220; // Leave room for footer
+    const rowHeight = Math.min(180, availableHeight / 6);
+    
     for (let i = 0; i < artists.length; i++) {
       const artist = artists[i];
-      const y = artistStartY + i * lineHeight;
+      const y = lineupStartY + i * rowHeight;
+      const centerY = y + rowHeight / 2;
       
-      // Artist photo - circular, larger
-      const imgSize = 100;
-      const imgX = 80;
-      const imgY = y - imgSize/2 + 10;
+      // Row background - subtle gradient
+      const rowGradient = ctx.createLinearGradient(0, y, 0, y + rowHeight);
+      if (i % 2 === 0) {
+        rowGradient.addColorStop(0, "rgba(255,255,255,0.02)");
+        rowGradient.addColorStop(0.5, "rgba(255,255,255,0.05)");
+        rowGradient.addColorStop(1, "rgba(255,255,255,0.02)");
+      } else {
+        rowGradient.addColorStop(0, "rgba(0,0,0,0.1)");
+        rowGradient.addColorStop(0.5, "rgba(0,0,0,0.15)");
+        rowGradient.addColorStop(1, "rgba(0,0,0,0.1)");
+      }
+      ctx.fillStyle = rowGradient;
+      ctx.fillRect(0, y, W, rowHeight);
+
+      // Time - styled prominently on left
+      ctx.textAlign = "right";
+      ctx.fillStyle = isNight ? "#a78bfa" : "#fbbf24";
+      ctx.font = "900 44px monospace";
+      ctx.fillText(times[i], 140, centerY + 15);
+
+      // Decorative dot separator
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.beginPath();
+      ctx.arc(160, centerY, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Artist photo - BIG circular
+      const imgSize = Math.min(130, rowHeight - 20);
+      const imgX = 185;
+      const imgY = centerY - imgSize/2;
       
       if (artist) {
         try {
@@ -463,18 +476,18 @@ export default function CreateLineup({ artists }: Props) {
           
           // Glow behind
           ctx.save();
-          ctx.shadowColor = isNight ? "rgba(138, 43, 226, 0.6)" : "rgba(255, 150, 0, 0.6)";
-          ctx.shadowBlur = 20;
+          ctx.shadowColor = isNight ? "rgba(138, 43, 226, 0.7)" : "rgba(255, 150, 0, 0.7)";
+          ctx.shadowBlur = 25;
           ctx.fillStyle = isNight ? "#8b5cf6" : "#f59e0b";
           ctx.beginPath();
-          ctx.arc(imgX + imgSize/2, imgY + imgSize/2, imgSize/2 + 4, 0, Math.PI * 2);
+          ctx.arc(imgX + imgSize/2, centerY, imgSize/2 + 5, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
           
           // Photo
           ctx.save();
           ctx.beginPath();
-          ctx.arc(imgX + imgSize/2, imgY + imgSize/2, imgSize/2, 0, Math.PI * 2);
+          ctx.arc(imgX + imgSize/2, centerY, imgSize/2, 0, Math.PI * 2);
           ctx.clip();
           const scale = Math.max(imgSize / img.width, imgSize / img.height);
           const w = img.width * scale;
@@ -482,33 +495,31 @@ export default function CreateLineup({ artists }: Props) {
           ctx.drawImage(img, imgX + (imgSize - w)/2, imgY + (imgSize - h)/2, w, h);
           ctx.restore();
 
-          // Border
-          ctx.strokeStyle = isNight ? "#a78bfa" : "#fbbf24";
-          ctx.lineWidth = 3;
+          // Border ring
+          ctx.strokeStyle = isNight ? "#c4b5fd" : "#fcd34d";
+          ctx.lineWidth = 4;
           ctx.beginPath();
-          ctx.arc(imgX + imgSize/2, imgY + imgSize/2, imgSize/2 + 1, 0, Math.PI * 2);
+          ctx.arc(imgX + imgSize/2, centerY, imgSize/2 + 2, 0, Math.PI * 2);
           ctx.stroke();
         } catch (e) {
-          // Placeholder
           ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
           ctx.beginPath();
-          ctx.arc(imgX + imgSize/2, imgY + imgSize/2, imgSize/2, 0, Math.PI * 2);
+          ctx.arc(imgX + imgSize/2, centerY, imgSize/2, 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
-      // Artist name - BIG
+      // Artist name - BIG and BOLD
       ctx.textAlign = "left";
       ctx.fillStyle = "#ffffff";
-      ctx.font = "800 52px Arial, sans-serif";
-      
-      const nameX = 200;
-      ctx.fillText(artist.stage_name.toUpperCase(), nameX, y + 20);
+      ctx.font = "800 54px Arial, sans-serif";
+      const nameX = imgX + imgSize + 25;
+      ctx.fillText(artist.stage_name.toUpperCase(), nameX, centerY + 18);
 
       // Flag for international artists
       if (!artist.is_israeli && artist.country_code) {
         const nameWidth = ctx.measureText(artist.stage_name.toUpperCase()).width;
-        drawFlag(artist.country_code, nameX + nameWidth + 15, y - 12, 48, 32);
+        drawFlag(artist.country_code, nameX + nameWidth + 20, centerY - 18, 52, 36);
       }
     }
 
@@ -520,17 +531,17 @@ export default function CreateLineup({ artists }: Props) {
     // CTA
     ctx.fillStyle = "#ffffff";
     ctx.font = "600 28px Arial, sans-serif";
-    ctx.fillText("צרו את הלייאנפ שלכם", W / 2, H - 180);
+    ctx.fillText("צרו את הלייאנפ שלכם", W / 2, H - 150);
 
     // Website - prominent
     ctx.fillStyle = isNight ? "#a78bfa" : "#fbbf24";
     ctx.font = "800 36px Arial, sans-serif";
-    ctx.fillText("tracktrip.co.il/lineup", W / 2, H - 130);
+    ctx.fillText("tracktrip.co.il/lineup", W / 2, H - 100);
 
     // Branding
     ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
     ctx.font = "400 22px Arial, sans-serif";
-    ctx.fillText("יוצאים לטראק © 2025", W / 2, H - 80);
+    ctx.fillText("יוצאים לטראק © 2025", W / 2, H - 55);
 
     setGeneratedImage(canvas.toDataURL("image/png"));
     setIsGenerating(false);
