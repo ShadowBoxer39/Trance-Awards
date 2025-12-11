@@ -308,20 +308,23 @@ export default function CreateLineup({ artists }: Props) {
     }
     ctx.shadowBlur = 30;
     ctx.fillStyle = "#ffffff";
-    ctx.font = "900 72px Arial, sans-serif";
-    ctx.fillText("הלייאנפ", W / 2, 250);
-    ctx.fillText("של החלומות", W / 2, 330);
+    
+    if (creatorName) {
+      // With creator name
+      ctx.font = "900 58px Arial, sans-serif";
+      ctx.fillText("לייאנפ החלומות של", W / 2, 260);
+      ctx.font = "700 52px Arial, sans-serif";
+      ctx.fillStyle = isNight ? "#c4b5fd" : "#fcd34d";
+      ctx.fillText(creatorName, W / 2, 330);
+    } else {
+      // Without name
+      ctx.font = "900 68px Arial, sans-serif";
+      ctx.fillText("לייאנפ החלומות", W / 2, 290);
+    }
     ctx.restore();
 
-    // Creator name
-    if (creatorName) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-      ctx.font = "500 40px Arial, sans-serif";
-      ctx.fillText(`של ${creatorName}`, W / 2, 390);
-    }
-
     // Party type badge - HEBREW
-    const badgeY = creatorName ? 450 : 410;
+    const badgeY = creatorName ? 400 : 370;
     ctx.save();
     ctx.fillStyle = isNight ? "rgba(139, 92, 246, 0.2)" : "rgba(251, 191, 36, 0.2)";
     const badgeWidth = 300;
@@ -337,89 +340,197 @@ export default function CreateLineup({ artists }: Props) {
     ctx.restore();
 
     // ============================================
-    // LINEUP CARDS
+    // LINEUP CARDS - Redesigned
     // ============================================
-    const startY = badgeY + 80;
-    const cardHeight = 180;
-    const cardGap = 16;
-    const cardMargin = 50;
+    const startY = badgeY + 70;
+    const cardHeight = 160;
+    const cardGap = 12;
+    const cardMargin = 40;
     const cardWidth = W - cardMargin * 2;
+
+    // Helper function to draw flags manually
+    const drawFlag = (code: string, x: number, y: number, w: number, h: number) => {
+      const c = code.toLowerCase();
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 4);
+      ctx.clip();
+      
+      // Draw flags for common countries
+      if (c === 'gb' || c === 'uk') {
+        // UK flag - simplified
+        ctx.fillStyle = '#012169';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + w/2 - 3, y, 6, h);
+        ctx.fillRect(x, y + h/2 - 3, w, 6);
+        ctx.fillStyle = '#C8102E';
+        ctx.fillRect(x + w/2 - 2, y, 4, h);
+        ctx.fillRect(x, y + h/2 - 2, w, 4);
+      } else if (c === 'de') {
+        // Germany
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(x, y, w, h/3);
+        ctx.fillStyle = '#DD0000';
+        ctx.fillRect(x, y + h/3, w, h/3);
+        ctx.fillStyle = '#FFCE00';
+        ctx.fillRect(x, y + h*2/3, w, h/3);
+      } else if (c === 'fr') {
+        // France
+        ctx.fillStyle = '#0055A4';
+        ctx.fillRect(x, y, w/3, h);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(x + w/3, y, w/3, h);
+        ctx.fillStyle = '#EF4135';
+        ctx.fillRect(x + w*2/3, y, w/3, h);
+      } else if (c === 'nl') {
+        // Netherlands
+        ctx.fillStyle = '#AE1C28';
+        ctx.fillRect(x, y, w, h/3);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(x, y + h/3, w, h/3);
+        ctx.fillStyle = '#21468B';
+        ctx.fillRect(x, y + h*2/3, w, h/3);
+      } else if (c === 'it') {
+        // Italy
+        ctx.fillStyle = '#009246';
+        ctx.fillRect(x, y, w/3, h);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(x + w/3, y, w/3, h);
+        ctx.fillStyle = '#CE2B37';
+        ctx.fillRect(x + w*2/3, y, w/3, h);
+      } else if (c === 'se') {
+        // Sweden
+        ctx.fillStyle = '#006AA7';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#FECC00';
+        ctx.fillRect(x + w*0.3 - 3, y, 8, h);
+        ctx.fillRect(x, y + h/2 - 3, w, 8);
+      } else if (c === 'jp') {
+        // Japan
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#BC002D';
+        ctx.beginPath();
+        ctx.arc(x + w/2, y + h/2, h/3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (c === 'us') {
+        // USA simplified
+        ctx.fillStyle = '#B22234';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#FFFFFF';
+        for (let i = 1; i < 7; i += 2) {
+          ctx.fillRect(x, y + (h/7)*i, w, h/7);
+        }
+        ctx.fillStyle = '#3C3B6E';
+        ctx.fillRect(x, y, w*0.4, h*0.55);
+      } else if (c === 'pl') {
+        // Poland
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(x, y, w, h/2);
+        ctx.fillStyle = '#DC143C';
+        ctx.fillRect(x, y + h/2, w, h/2);
+      } else if (c === 'es') {
+        // Spain
+        ctx.fillStyle = '#AA151B';
+        ctx.fillRect(x, y, w, h/4);
+        ctx.fillStyle = '#F1BF00';
+        ctx.fillRect(x, y + h/4, w, h/2);
+        ctx.fillStyle = '#AA151B';
+        ctx.fillRect(x, y + h*3/4, w, h/4);
+      } else {
+        // Generic fallback - grey with country code
+        ctx.fillStyle = '#666666';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(code.toUpperCase(), x + w/2, y + h/2 + 5);
+      }
+      ctx.restore();
+      
+      // Border
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 4);
+      ctx.stroke();
+    };
 
     for (let i = 0; i < 6; i++) {
       const artist = selectedArtists[i];
       const y = startY + i * (cardHeight + cardGap);
 
-      // Card background
+      // Card background with gradient
       const cardGradient = ctx.createLinearGradient(cardMargin, y, cardMargin + cardWidth, y);
       if (isNight) {
-        cardGradient.addColorStop(0, "rgba(30, 20, 50, 0.8)");
-        cardGradient.addColorStop(1, "rgba(20, 15, 35, 0.8)");
+        cardGradient.addColorStop(0, "rgba(40, 25, 70, 0.85)");
+        cardGradient.addColorStop(1, "rgba(25, 20, 45, 0.85)");
       } else {
-        cardGradient.addColorStop(0, "rgba(40, 35, 25, 0.8)");
-        cardGradient.addColorStop(1, "rgba(30, 40, 30, 0.8)");
+        cardGradient.addColorStop(0, "rgba(50, 45, 30, 0.85)");
+        cardGradient.addColorStop(1, "rgba(35, 50, 35, 0.85)");
       }
       ctx.fillStyle = cardGradient;
       ctx.beginPath();
-      ctx.roundRect(cardMargin, y, cardWidth, cardHeight, 20);
+      ctx.roundRect(cardMargin, y, cardWidth, cardHeight, 16);
       ctx.fill();
 
-      // Card border
-      ctx.strokeStyle = isNight ? "rgba(139, 92, 246, 0.3)" : "rgba(251, 191, 36, 0.3)";
-      ctx.lineWidth = 1;
+      // Glow border
+      ctx.strokeStyle = isNight ? "rgba(139, 92, 246, 0.4)" : "rgba(251, 191, 36, 0.4)";
+      ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Accent line
+      // Accent line on left
       ctx.fillStyle = isNight ? "#8b5cf6" : "#f59e0b";
       ctx.beginPath();
-      ctx.roundRect(cardMargin, y, 6, cardHeight, [20, 0, 0, 20]);
+      ctx.roundRect(cardMargin, y, 5, cardHeight, [16, 0, 0, 16]);
       ctx.fill();
 
-      // Time slot
-      ctx.fillStyle = isNight ? "#a78bfa" : "#fbbf24";
-      ctx.font = "900 56px monospace";
+      // Time slot - centered vertically
+      ctx.fillStyle = isNight ? "#c4b5fd" : "#fcd34d";
+      ctx.font = "900 52px monospace";
       ctx.textAlign = "left";
-      ctx.fillText(times[i], cardMargin + 30, y + 70);
+      ctx.fillText(times[i], cardMargin + 25, y + cardHeight/2 + 18);
 
-      // Separator
-      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-      ctx.beginPath();
-      ctx.arc(cardMargin + 200, y + 55, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Artist name with flag for international (flag AFTER name)
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "700 44px Arial, sans-serif";
-      ctx.textAlign = "left";
-      
+      // Artist name - BIG and centered
       const artistName = artist?.stage_name || "—";
-      ctx.fillText(artistName, cardMargin + 230, y + 70);
-      
-      // Flag AFTER artist name for international artists
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 42px Arial, sans-serif";
+      ctx.textAlign = "left";
+      const nameX = cardMargin + 200;
+      ctx.fillText(artistName, nameX, y + cardHeight/2 + 15);
+
+      // Flag for international artists - right after name
       if (artist && !artist.is_israeli && artist.country_code) {
         const nameWidth = ctx.measureText(artistName).width;
-        ctx.font = "48px Arial";
-        const flag = getFlagEmoji(artist.country_code);
-        ctx.fillText(flag, cardMargin + 245 + nameWidth, y + 72);
+        const flagX = nameX + nameWidth + 15;
+        const flagY = y + cardHeight/2 - 15;
+        drawFlag(artist.country_code, flagX, flagY, 44, 30);
       }
 
-      // Duration - Hebrew
-      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-      ctx.font = "400 24px Arial, sans-serif";
-      ctx.fillText("סט של שעתיים", cardMargin + 230, y + 120);
-
-      // Artist image
+      // Artist image - larger, with nice border
       if (artist) {
-        const imgSize = 130;
-        const imgX = cardMargin + cardWidth - imgSize - 25;
+        const imgSize = 120;
+        const imgX = cardMargin + cardWidth - imgSize - 20;
         const imgY = y + (cardHeight - imgSize) / 2;
 
         try {
           const img = await loadImage(getImageSrc(artist.photo_url));
+          
+          // Glow behind image
           ctx.save();
-          ctx.shadowColor = isNight ? "rgba(139, 92, 246, 0.5)" : "rgba(251, 191, 36, 0.5)";
-          ctx.shadowBlur = 20;
+          ctx.shadowColor = isNight ? "rgba(139, 92, 246, 0.6)" : "rgba(251, 191, 36, 0.6)";
+          ctx.shadowBlur = 25;
+          ctx.fillStyle = isNight ? "#8b5cf6" : "#f59e0b";
           ctx.beginPath();
-          ctx.arc(imgX + imgSize / 2, imgY + imgSize / 2, imgSize / 2, 0, Math.PI * 2);
+          ctx.arc(imgX + imgSize/2, imgY + imgSize/2, imgSize/2 + 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          
+          // Clip and draw image
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(imgX + imgSize/2, imgY + imgSize/2, imgSize/2, 0, Math.PI * 2);
           ctx.clip();
           const scale = Math.max(imgSize / img.width, imgSize / img.height);
           const w = img.width * scale;
@@ -429,15 +540,17 @@ export default function CreateLineup({ artists }: Props) {
           ctx.drawImage(img, drawX, drawY, w, h);
           ctx.restore();
 
-          ctx.strokeStyle = isNight ? "#8b5cf6" : "#f59e0b";
+          // Border ring
+          ctx.strokeStyle = isNight ? "#a78bfa" : "#fbbf24";
           ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.arc(imgX + imgSize / 2, imgY + imgSize / 2, imgSize / 2, 0, Math.PI * 2);
+          ctx.arc(imgX + imgSize/2, imgY + imgSize/2, imgSize/2 + 1, 0, Math.PI * 2);
           ctx.stroke();
         } catch (e) {
+          // Placeholder
           ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
           ctx.beginPath();
-          ctx.arc(imgX + imgSize / 2, imgY + imgSize / 2, imgSize / 2, 0, Math.PI * 2);
+          ctx.arc(imgX + imgSize/2, imgY + imgSize/2, imgSize/2, 0, Math.PI * 2);
           ctx.fill();
         }
       }
