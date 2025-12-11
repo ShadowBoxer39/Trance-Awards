@@ -281,16 +281,17 @@ export default function Admin() {
       if (v.is_israel) israelVisits++;
       if (v.country_code) countries[v.country_code] = (countries[v.country_code] || 0) + 1;
       
-      if (v.referrer) {
-        try {
-          const host = new URL(v.referrer).hostname.replace('www.', '');
-          if (host.includes('instagram')) sources['📸 Instagram'] = (sources['📸 Instagram'] || 0) + 1;
-          else if (host.includes('facebook')) sources['👥 Facebook'] = (sources['👥 Facebook'] || 0) + 1;
-          else if (host.includes('google')) sources['🔍 Google'] = (sources['🔍 Google'] || 0) + 1;
-          else if (host.includes('youtube')) sources['📺 YouTube'] = (sources['📺 YouTube'] || 0) + 1;
-          else sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1;
-        } catch { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
-      } else { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
+    if (v.referrer) {
+  try {
+    const host = new URL(v.referrer).hostname.replace('www.', '');
+    if (host.includes('instagram') || host.includes('l.instagram')) sources['📸 Instagram'] = (sources['📸 Instagram'] || 0) + 1;
+    else if (host.includes('facebook') || host.includes('l.facebook') || host.includes('lm.facebook')) sources['👥 Facebook'] = (sources['👥 Facebook'] || 0) + 1;
+    else if (host.includes('google')) sources['🔍 Google'] = (sources['🔍 Google'] || 0) + 1;
+    else if (host.includes('youtube')) sources['📺 YouTube'] = (sources['📺 YouTube'] || 0) + 1;
+    else if (host.includes('t.co') || host.includes('twitter') || host.includes('x.com')) sources['🐦 Twitter/X'] = (sources['🐦 Twitter/X'] || 0) + 1;
+    else sources[`🌐 ${host.slice(0, 20)}`] = (sources[`🌐 ${host.slice(0, 20)}`] || 0) + 1;
+  } catch { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
+} else { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
     });
 
     const avgDuration = validDurations > 0 ? totalDuration / validDurations : 0;
@@ -738,7 +739,7 @@ export default function Admin() {
                             <div className="flex justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-pink-500/20 text-pink-400'}`}>{i + 1}</span>
-                                <span className="font-medium">{s.source}</span>
+                                <span className="font-medium truncate max-w-[200px]" title={s.source}>{s.source}</span>
                               </div>
                               <div className="text-left"><div className="font-bold text-pink-400">{s.count}</div><div className="text-xs text-white/50">{s.percentage}%</div></div>
                             </div>
