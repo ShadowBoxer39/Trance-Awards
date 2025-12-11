@@ -386,15 +386,21 @@ export default function CreateLineup({ artists }: Props) {
       ctx.arc(cardMargin + 200, y + 55, 4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Artist name
+      // Artist name with flag for international
       ctx.fillStyle = "#ffffff";
       ctx.font = "700 48px Arial, sans-serif";
-      ctx.fillText(artist?.stage_name || "—", cardMargin + 230, y + 70);
-
-      // Flag
+      
       if (artist && !artist.is_israeli && artist.country_code) {
-        ctx.font = "40px Arial";
-        ctx.fillText(getFlagEmoji(artist.country_code), cardMargin + 30, y + 130);
+        // Draw flag first (big!)
+        ctx.font = "52px Arial";
+        const flag = getFlagEmoji(artist.country_code);
+        ctx.fillText(flag, cardMargin + 230, y + 70);
+        // Then artist name after flag
+        ctx.font = "700 48px Arial, sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(artist?.stage_name || "—", cardMargin + 300, y + 70);
+      } else {
+        ctx.fillText(artist?.stage_name || "—", cardMargin + 230, y + 70);
       }
 
       // Duration
@@ -589,12 +595,10 @@ export default function CreateLineup({ artists }: Props) {
                     </button>
                   </div>
 
-                  {/* Disclaimer */}
-                  {!showIsraeli && (
-                    <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-sm text-purple-300/80 text-center">
-                      ✦ חלק מהאמנים הבינלאומיים כבר אינם איתנו, אבל המוזיקה שלהם חיה לנצח ✦
-                    </div>
-                  )}
+                  {/* Disclaimer - shows on both tabs */}
+                  <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-sm text-purple-300/80 text-center">
+                    ✦ חלק מהאמנים כבר אינם איתנו, אבל המוזיקה שלהם חיה לנצח ✦
+                  </div>
 
                   {/* Artist grid */}
                   <div className="h-[calc(100vh-340px)] overflow-y-auto rounded-xl border border-white/10 bg-black/20 p-3">
