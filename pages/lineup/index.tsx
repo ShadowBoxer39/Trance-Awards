@@ -118,12 +118,12 @@ export default function LineupLanding() {
   return (
     <>
       <Head>
-        <title>Dream Lineup | יוצאים לטראק</title>
+        <title>הלייאנפ של החלומות | יוצאים לטראק</title>
         <meta
           name="description"
           content="בנו את הלייאנפ החלומי שלכם עם האמנים האהובים עליכם"
         />
-        <meta property="og:title" content="Dream Lineup | יוצאים לטראק" />
+        <meta property="og:title" content="הלייאנפ של החלומות | יוצאים לטראק" />
         <meta
           property="og:description"
           content="בנו את הלייאנפ החלומי שלכם ושתפו עם חברים"
@@ -169,7 +169,7 @@ export default function LineupLanding() {
               {/* Title */}
               <h1 className="text-5xl sm:text-7xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400 bg-clip-text text-transparent">
-                  Dream Lineup
+                  הלייאנפ של החלומות
                 </span>
               </h1>
 
