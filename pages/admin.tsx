@@ -240,15 +240,16 @@ export default function Admin() {
     }));
 
     // Landing pages
-    const visitorLandingPage: Record<string, { page: string; time: Date }> = {};
-    filtered.forEach(v => {
-      if (v.visitor_id) {
-        const visitTime = new Date(v.timestamp);
-        if (!visitorLandingPage[v.visitor_id] || visitTime < visitorLandingPage[v.visitor_id].time) {
-          visitorLandingPage[v.visitor_id] = { page: v.page, time: visitTime };
-        }
-      }
-    });
+   const visitorLandingPage: Record<string, { page: string; time: Date }> = {};
+filtered.forEach(v => {
+  if (v.visitor_id) {
+    const visitTime = new Date(v.timestamp);
+    const cleanPage = v.page.split('?')[0]; // Remove query parameters
+    if (!visitorLandingPage[v.visitor_id] || visitTime < visitorLandingPage[v.visitor_id].time) {
+      visitorLandingPage[v.visitor_id] = { page: cleanPage, time: visitTime };
+    }
+  }
+});
     const landingPages: Record<string, number> = {};
     Object.values(visitorLandingPage).forEach(({ page }) => {
       landingPages[page] = (landingPages[page] || 0) + 1;
@@ -275,22 +276,24 @@ export default function Admin() {
     const countries: Record<string, number> = {};
 
     filtered.forEach(v => {
-      pageVisits[v.page] = (pageVisits[v.page] || 0) + 1;
+     const cleanPage = v.page.split('?')[0]; // Remove query parameters
+pageVisits[cleanPage] = (pageVisits[cleanPage] || 0) + 1;
       hourlyTraffic[new Date(v.timestamp).getHours()] = (hourlyTraffic[new Date(v.timestamp).getHours()] || 0) + 1;
       if (v.duration && v.duration > 0) { totalDuration += v.duration; validDurations++; if (v.duration < 5) bounces++; }
       if (v.is_israel) israelVisits++;
       if (v.country_code) countries[v.country_code] = (countries[v.country_code] || 0) + 1;
       
-      if (v.referrer) {
-        try {
-          const host = new URL(v.referrer).hostname.replace('www.', '');
-          if (host.includes('instagram')) sources['📸 Instagram'] = (sources['📸 Instagram'] || 0) + 1;
-          else if (host.includes('facebook')) sources['👥 Facebook'] = (sources['👥 Facebook'] || 0) + 1;
-          else if (host.includes('google')) sources['🔍 Google'] = (sources['🔍 Google'] || 0) + 1;
-          else if (host.includes('youtube')) sources['📺 YouTube'] = (sources['📺 YouTube'] || 0) + 1;
-          else sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1;
-        } catch { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
-      } else { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
+    if (v.referrer) {
+  try {
+    const host = new URL(v.referrer).hostname.replace('www.', '');
+    if (host.includes('instagram') || host.includes('l.instagram')) sources['📸 Instagram'] = (sources['📸 Instagram'] || 0) + 1;
+    else if (host.includes('facebook') || host.includes('l.facebook') || host.includes('lm.facebook')) sources['👥 Facebook'] = (sources['👥 Facebook'] || 0) + 1;
+    else if (host.includes('google')) sources['🔍 Google'] = (sources['🔍 Google'] || 0) + 1;
+    else if (host.includes('youtube')) sources['📺 YouTube'] = (sources['📺 YouTube'] || 0) + 1;
+    else if (host.includes('t.co') || host.includes('twitter') || host.includes('x.com')) sources['🐦 Twitter/X'] = (sources['🐦 Twitter/X'] || 0) + 1;
+    else sources[`🌐 ${host.slice(0, 20)}`] = (sources[`🌐 ${host.slice(0, 20)}`] || 0) + 1;
+  } catch { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
+} else { sources['🏠 ישיר'] = (sources['🏠 ישיר'] || 0) + 1; }
     });
 
     const avgDuration = validDurations > 0 ? totalDuration / validDurations : 0;
@@ -701,7 +704,7 @@ export default function Admin() {
                             <div className="flex justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-cyan-500/20 text-cyan-400'}`}>{i + 1}</span>
-                                <span className="font-medium">{p.page}</span>
+                                <span className="font-medium truncate max-w-[250px] block" title={p.page}>{p.page}</span>
                               </div>
                               <div className="text-left"><div className="font-bold text-cyan-400">{p.count}</div><div className="text-xs text-white/50">{p.percentage}%</div></div>
                             </div>
@@ -718,7 +721,7 @@ export default function Admin() {
                             <div className="flex justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-purple-500/20 text-purple-400'}`}>{i + 1}</span>
-                                <span className="font-medium">{p.page}</span>
+                                <span className="font-medium truncate max-w-[250px] block" title={p.page}>{p.page}</span>
                               </div>
                               <div className="text-left"><div className="font-bold text-purple-400">{p.count}</div><div className="text-xs text-white/50">{p.percentage}%</div></div>
                             </div>
@@ -738,7 +741,7 @@ export default function Admin() {
                             <div className="flex justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-pink-500/20 text-pink-400'}`}>{i + 1}</span>
-                                <span className="font-medium">{s.source}</span>
+                                <span className="font-medium truncate max-w-[200px]" title={s.source}>{s.source}</span>
                               </div>
                               <div className="text-left"><div className="font-bold text-pink-400">{s.count}</div><div className="text-xs text-white/50">{s.percentage}%</div></div>
                             </div>
@@ -774,7 +777,7 @@ export default function Admin() {
                               </div>
                               <div className="text-left"><div className="font-bold text-purple-400">{stat.visits} ביקורים</div></div>
                             </div>
-                            <div className="text-xs text-white/50 text-right pr-8">נתיב אחרון: {stat.page}</div>
+                            <div className="text-xs text-white/50 text-right pr-8 truncate max-w-full">נתיב אחרון: {stat.page?.split('?')[0]}</div>
                           </div>
                         ))}
                       </div>
