@@ -299,7 +299,7 @@ export default function CreateLineup({ artists }: Props) {
     ctx.fillText("יוצאים לטראק", W / 2, 130);
     ctx.fillText("מגישים", W / 2, 160);
 
-    // Main title with glow
+    // Main title with glow - HEBREW
     ctx.save();
     if (isNight) {
       ctx.shadowColor = "rgba(139, 92, 246, 0.5)";
@@ -308,23 +308,23 @@ export default function CreateLineup({ artists }: Props) {
     }
     ctx.shadowBlur = 30;
     ctx.fillStyle = "#ffffff";
-    ctx.font = "900 84px Arial, sans-serif";
-    ctx.fillText("DREAM", W / 2, 250);
-    ctx.fillText("LINEUP", W / 2, 340);
+    ctx.font = "900 72px Arial, sans-serif";
+    ctx.fillText("הלייאנפ", W / 2, 250);
+    ctx.fillText("של החלומות", W / 2, 330);
     ctx.restore();
 
     // Creator name
     if (creatorName) {
       ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-      ctx.font = "400 36px Arial, sans-serif";
-      ctx.fillText(`✦ ${creatorName} ✦`, W / 2, 400);
+      ctx.font = "500 40px Arial, sans-serif";
+      ctx.fillText(`של ${creatorName}`, W / 2, 390);
     }
 
-    // Party type badge
-    const badgeY = creatorName ? 460 : 420;
+    // Party type badge - HEBREW
+    const badgeY = creatorName ? 450 : 410;
     ctx.save();
     ctx.fillStyle = isNight ? "rgba(139, 92, 246, 0.2)" : "rgba(251, 191, 36, 0.2)";
-    const badgeWidth = 280;
+    const badgeWidth = 300;
     ctx.beginPath();
     ctx.roundRect(W / 2 - badgeWidth / 2, badgeY - 30, badgeWidth, 50, 25);
     ctx.fill();
@@ -333,7 +333,7 @@ export default function CreateLineup({ artists }: Props) {
     ctx.stroke();
     ctx.fillStyle = isNight ? "#a78bfa" : "#fbbf24";
     ctx.font = "700 32px Arial, sans-serif";
-    ctx.fillText(isNight ? "🌙  NIGHT PARTY  🌙" : "☀️  DAY PARTY  ☀️", W / 2, badgeY + 5);
+    ctx.fillText(isNight ? "🌙  מסיבת לילה  🌙" : "☀️  מסיבת יום  ☀️", W / 2, badgeY + 5);
     ctx.restore();
 
     // ============================================
@@ -386,27 +386,26 @@ export default function CreateLineup({ artists }: Props) {
       ctx.arc(cardMargin + 200, y + 55, 4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Artist name with flag for international
+      // Artist name with flag for international (flag AFTER name)
       ctx.fillStyle = "#ffffff";
-      ctx.font = "700 48px Arial, sans-serif";
+      ctx.font = "700 44px Arial, sans-serif";
+      ctx.textAlign = "left";
       
+      const artistName = artist?.stage_name || "—";
+      ctx.fillText(artistName, cardMargin + 230, y + 70);
+      
+      // Flag AFTER artist name for international artists
       if (artist && !artist.is_israeli && artist.country_code) {
-        // Draw flag first (big!)
-        ctx.font = "52px Arial";
+        const nameWidth = ctx.measureText(artistName).width;
+        ctx.font = "48px Arial";
         const flag = getFlagEmoji(artist.country_code);
-        ctx.fillText(flag, cardMargin + 230, y + 70);
-        // Then artist name after flag
-        ctx.font = "700 48px Arial, sans-serif";
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(artist?.stage_name || "—", cardMargin + 300, y + 70);
-      } else {
-        ctx.fillText(artist?.stage_name || "—", cardMargin + 230, y + 70);
+        ctx.fillText(flag, cardMargin + 245 + nameWidth, y + 72);
       }
 
-      // Duration
+      // Duration - Hebrew
       ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
       ctx.font = "400 24px Arial, sans-serif";
-      ctx.fillText("2 HOURS SET", cardMargin + 230, y + 120);
+      ctx.fillText("סט של שעתיים", cardMargin + 230, y + 120);
 
       // Artist image
       if (artist) {
