@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 // Voting deadline - December 10, 2025 at 23:59:59 Israel Time
 const VOTING_DEADLINE = new Date("2025-12-10T23:59:59+02:00").getTime();
 
-// Final vote count (manually set)
+// Final vote count (manually set) - this is the number shown when voting is closed
 const FINAL_VOTE_COUNT = 22105;
 
 export default function LiveVoteCounter() {
@@ -42,7 +42,7 @@ export default function LiveVoteCounter() {
       const expired = new Date().getTime() > VOTING_DEADLINE;
       setIsExpired(expired);
       
-      // Set final count when expired
+      // Set final count when expired - use hardcoded value, don't fetch from API
       if (expired) {
         setCount(FINAL_VOTE_COUNT);
         setDisplayCount(FINAL_VOTE_COUNT);
@@ -67,8 +67,9 @@ export default function LiveVoteCounter() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpired]);
 
-  // Smoothly animate `displayCount` toward `count`
+  // Smoothly animate `displayCount` toward `count` - but NOT when expired
   useEffect(() => {
+    if (isExpired) return; // Don't animate when voting is closed
     if (count === null || displayCount === null) return;
     if (displayCount === count) return;
 
@@ -80,9 +81,10 @@ export default function LiveVoteCounter() {
     }, 30);
 
     return () => clearTimeout(t);
-  }, [displayCount, count]);
+  }, [displayCount, count, isExpired]);
 
-  const shown = displayCount ?? count;
+  // When expired, always show the final count directly
+  const shown = isExpired ? FINAL_VOTE_COUNT : (displayCount ?? count);
   const formatted = shown != null ? shown.toLocaleString("he-IL") : "…";
 
   // Don't render until client-side
@@ -163,7 +165,7 @@ export default function LiveVoteCounter() {
 
           <div className="text-xs sm:text-sm text-white/60 mt-2 flex items-center justify-center gap-1">
             <span>🔥</span>
-            <span>הצטרפו עכשיו!</span>
+            <span>הצצטרפו עכשיו!</span>
           </div>
         </div>
 
