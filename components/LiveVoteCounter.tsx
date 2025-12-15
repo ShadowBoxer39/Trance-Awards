@@ -4,6 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 // Voting deadline - December 10, 2025 at 23:59:59 Israel Time
 const VOTING_DEADLINE = new Date("2025-12-10T23:59:59+02:00").getTime();
 
+// Final vote count (manually set)
+const FINAL_VOTE_COUNT = 22105;
+
 export default function LiveVoteCounter() {
   const [count, setCount] = useState<number | null>(null);
   const [displayCount, setDisplayCount] = useState<number | null>(null);
@@ -36,7 +39,14 @@ export default function LiveVoteCounter() {
   useEffect(() => {
     setIsClient(true);
     const checkExpired = () => {
-      setIsExpired(new Date().getTime() > VOTING_DEADLINE);
+      const expired = new Date().getTime() > VOTING_DEADLINE;
+      setIsExpired(expired);
+      
+      // Set final count when expired
+      if (expired) {
+        setCount(FINAL_VOTE_COUNT);
+        setDisplayCount(FINAL_VOTE_COUNT);
+      }
     };
     checkExpired();
     
@@ -45,15 +55,17 @@ export default function LiveVoteCounter() {
     return () => clearInterval(interval);
   }, []);
 
-  // First fetch + re-sync every 15s
+  // First fetch + re-sync every 15s (only if voting is still open)
   useEffect(() => {
-    fetchCount();
-    fetchTimer.current = setInterval(fetchCount, 15000);
+    if (!isExpired) {
+      fetchCount();
+      fetchTimer.current = setInterval(fetchCount, 15000);
+    }
     return () => {
       if (fetchTimer.current) clearInterval(fetchTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isExpired]);
 
   // Smoothly animate `displayCount` toward `count`
   useEffect(() => {
