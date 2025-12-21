@@ -1,6 +1,6 @@
 // pages/admin.tsx
 import React from "react";
-import Link from "next/link"; // <--- Added missing import
+import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
 
@@ -8,14 +8,6 @@ const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   const match = url.match(regex);
   return match ? match[1] : null;
-};
-
-const getDeviceType = (userAgent: string | null): 'mobile' | 'tablet' | 'desktop' => {
-  if (!userAgent) return 'desktop';
-  const ua = userAgent.toLowerCase();
-  if (/ipad|tablet|playbook|silk|(android(?!.*mobile))/i.test(ua)) return 'tablet';
-  if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile|wpdesktop/i.test(ua)) return 'mobile';
-  return 'desktop';
 };
 
 type Tally = Record<string, Record<string, number>>;
@@ -41,18 +33,6 @@ interface TrackSubmission {
   description: string;
   created_at: string;
   is_approved: boolean;
-}
-
-interface VisitData {
-  id: string;
-  timestamp: string;
-  page: string;
-  referrer: string | null;
-  user_agent: string | null;
-  duration: number | null;
-  country_code: string | null;
-  is_israel: boolean | null;
-  visitor_id: string | null;
 }
 
 interface AdminArtist {
@@ -89,8 +69,6 @@ function formatDuration(seconds: number | null): string {
   const s = seconds % 60;
   return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
 }
-
-const DEVICE_COLORS = { mobile: '#06b6d4', desktop: '#8b5cf6', tablet: '#10b981' };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -133,7 +111,10 @@ export default function Admin() {
   const [artistsLoading, setArtistsLoading] = React.useState(false);
   const [currentArtist, setCurrentArtist] = React.useState<AdminArtist | null>(null);
   const [primaryEpisodeId, setPrimaryEpisodeId] = React.useState<string>("");
+  const [savingArtist, setSavingArtist] = React.useState(false);
 
+  React.useEffect(() => {
+    document.documentElement.setAttribute("dir", "rtl");
     const savedKey = localStorage.getItem("ADMIN_KEY");
     if (savedKey) setKey(savedKey);
   }, []);
@@ -142,14 +123,14 @@ export default function Admin() {
     if (key && !tally && !loading && !error) fetchStats();
   }, [key]);
 
- React.useEffect(() => {
-  if (tally) {
-    if (activeTab === "signups") fetchSignups();
-    else if (activeTab === "analytics") fetchAnalytics();
-    else if (activeTab === "track-submissions") fetchTrackSubmissions();
-    else if (activeTab === "artists") fetchArtists();
-  }
-}, [tally, activeTab, dateRange]);
+  React.useEffect(() => {
+    if (tally) {
+      if (activeTab === "signups") fetchSignups();
+      else if (activeTab === "analytics") fetchAnalytics();
+      else if (activeTab === "track-submissions") fetchTrackSubmissions();
+      else if (activeTab === "artists") fetchArtists();
+    }
+  }, [tally, activeTab, dateRange]);
 
   const fetchStats = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -165,17 +146,17 @@ export default function Admin() {
     finally { setLoading(false); }
   };
 
-const fetchAnalytics = async () => {
-  if (!key) return;
-  setAnalyticsLoading(true);
-  try {
-    const r = await fetch(`/api/analytics-data?key=${encodeURIComponent(key)}&range=${dateRange}&_t=${Date.now()}`);
-    const j = await r.json();
-    if (!r.ok || !j?.ok) throw new Error(j?.error);
-    setAnalytics(j.analytics);
-  } catch { alert("שגיאה בטעינת סטטיסטיקות"); }
-  finally { setAnalyticsLoading(false); }
-};
+  const fetchAnalytics = async () => {
+    if (!key) return;
+    setAnalyticsLoading(true);
+    try {
+      const r = await fetch(`/api/analytics-data?key=${encodeURIComponent(key)}&range=${dateRange}&_t=${Date.now()}`);
+      const j = await r.json();
+      if (!r.ok || !j?.ok) throw new Error(j?.error);
+      setAnalytics(j.analytics);
+    } catch { alert("שגיאה בטעינת סטטיסטיקות"); }
+    finally { setAnalyticsLoading(false); }
+  };
 
   const fetchSignups = async () => {
     if (!key) return;
@@ -357,7 +338,7 @@ const fetchAnalytics = async () => {
                 { id: "signups", label: `🌟 הרשמות (${signups.length})` },
                 { id: "track-submissions", label: `💬 טרקים (${trackSubs.length})` },
                 { id: "artists", label: `🎧 אמנים (${adminArtists.length})` },
-               { id: "analytics", label: `📊 סטטיסטיקות` },
+                { id: "analytics", label: `📊 סטטיסטיקות` },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                   className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${activeTab === tab.id ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"}`}>
@@ -457,7 +438,7 @@ const fetchAnalytics = async () => {
                     </div>
                   </div>
 
-                  {dateRange !== "today" && (
+                  {dateRange !== "today" && analytics.trendData && analytics.trendData.length > 0 && (
                     <div className="glass rounded-2xl p-6">
                       <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📈 מגמת ביקורים</h3>
                       <div className="h-64">
@@ -467,16 +448,9 @@ const fetchAnalytics = async () => {
                             <YAxis stroke="#6b7280" fontSize={12} />
                             <Tooltip content={<CustomTooltip />} />
                             <Line type="monotone" dataKey="visits" stroke="#06b6d4" strokeWidth={3} dot={{ fill: '#06b6d4', r: 4 }} name="ביקורים" />
-                            {showComparison && <Line type="monotone" dataKey="previousVisits" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} name="תקופה קודמת" />}
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
-                      {showComparison && (
-                        <div className="flex justify-center gap-6 mt-4 text-sm">
-                          <div className="flex items-center gap-2"><div className="w-4 h-1 bg-cyan-500 rounded" /><span>תקופה נוכחית</span></div>
-                          <div className="flex items-center gap-2"><div className="w-4 h-1 bg-yellow-500 rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f59e0b 0, #f59e0b 5px, transparent 5px, transparent 10px)' }} /><span>תקופה קודמת</span></div>
-                        </div>
-                      )}
                     </div>
                   )}
 
@@ -484,7 +458,7 @@ const fetchAnalytics = async () => {
                     <div className="glass rounded-2xl p-6">
                       <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🚪 דפי נחיתה</h3>
                       <div className="space-y-3">
-                        {analytics.topLandingPages.map((p: any, i: number) => (
+                        {analytics.topLandingPages?.map((p: any, i: number) => (
                           <div key={i} className="bg-white/5 rounded-lg p-3">
                             <div className="flex justify-between mb-2">
                               <div className="flex items-center gap-2">
@@ -501,7 +475,7 @@ const fetchAnalytics = async () => {
                     <div className="glass rounded-2xl p-6">
                       <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📄 דפים פופולריים</h3>
                       <div className="space-y-3">
-                        {analytics.topPages.map((p: any, i: number) => (
+                        {analytics.topPages?.map((p: any, i: number) => (
                           <div key={i} className="bg-white/5 rounded-lg p-3">
                             <div className="flex justify-between mb-2">
                               <div className="flex items-center gap-2">
@@ -521,7 +495,7 @@ const fetchAnalytics = async () => {
                     <div className="glass rounded-2xl p-6">
                       <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔗 מקורות תנועה</h3>
                       <div className="space-y-3">
-                        {analytics.topSources.map((s: any, i: number) => (
+                        {analytics.topSources?.map((s: any, i: number) => (
                           <div key={i} className="bg-white/5 rounded-lg p-3">
                             <div className="flex justify-between mb-2">
                               <div className="flex items-center gap-2">
@@ -538,7 +512,7 @@ const fetchAnalytics = async () => {
                     <div className="glass rounded-2xl p-6">
                       <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🕐 שעות שיא</h3>
                       <div className="grid grid-cols-5 gap-3">
-                        {analytics.peakHours.map((h: any, i: number) => (
+                        {analytics.peakHours?.map((h: any, i: number) => (
                           <div key={i} className="bg-white/5 rounded-xl p-3 text-center">
                             <div className="text-2xl mb-1">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📊"}</div>
                             <div className="text-lg font-bold text-cyan-400">{h.hour}</div>
@@ -549,7 +523,7 @@ const fetchAnalytics = async () => {
                     </div>
                   </div>
 
-                   {analytics?.topArtists?.length > 0 && (
+                  {analytics.topArtists && analytics.topArtists.length > 0 && (
                     <div className="glass rounded-2xl p-6 mt-4">
                       <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔥 עמודי האמנים החמים ביותר</h3>
                       <div className="space-y-3">
@@ -562,13 +536,11 @@ const fetchAnalytics = async () => {
                               </div>
                               <div className="text-left"><div className="font-bold text-purple-400">{stat.visits} ביקורים</div></div>
                             </div>
-                            <div className="text-xs text-white/50 text-right pr-8 truncate max-w-full">נתיב אחרון: {stat.page?.split('?')[0]}</div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-
                 </div>
               )
             )}
@@ -707,317 +679,160 @@ const fetchAnalytics = async () => {
                       ))}
                     </div>
                     <div className="glass rounded-2xl p-4 lg:col-span-2">
-                  {/* Replace the entire artists form section (inside the lg:col-span-2 div) with this: */}
+                      {!currentArtist ? <div className="text-white/50">בחר אמן</div> : (
+                        <div className="space-y-6 text-sm max-h-[70vh] overflow-y-auto pr-2">
+                          {/* Basic Info */}
+                          <div className="border-b border-white/10 pb-4">
+                            <h4 className="text-lg font-semibold text-cyan-400 mb-3">פרטים בסיסיים</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-white/60 text-xs">Slug (לכתובת URL)</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.slug || ""} onChange={e => setCurrentArtist({ ...currentArtist, slug: e.target.value })} placeholder="artist-name" />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">שם מלא</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.name || ""} onChange={e => setCurrentArtist({ ...currentArtist, name: e.target.value })} placeholder="שם מלא" />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">שם אמן (Stage Name)</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.stage_name || ""} onChange={e => setCurrentArtist({ ...currentArtist, stage_name: e.target.value })} placeholder="שם במה" />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">שנת התחלה</label>
+                                <input type="number" className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.started_year || ""} onChange={e => setCurrentArtist({ ...currentArtist, started_year: e.target.value ? Number(e.target.value) : null })} placeholder="2015" />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">פרק ראשי (Episode ID)</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={primaryEpisodeId} onChange={e => setPrimaryEpisodeId(e.target.value)} placeholder="49" />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">צבע ראשי</label>
+                                <div className="flex gap-2">
+                                  <input type="color" className="w-12 h-10 rounded-lg bg-black/40 border border-white/15 cursor-pointer" value={currentArtist.primary_color || "#00e0ff"} onChange={e => setCurrentArtist({ ...currentArtist, primary_color: e.target.value })} />
+                                  <input className="flex-1 rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.primary_color || ""} onChange={e => setCurrentArtist({ ...currentArtist, primary_color: e.target.value })} placeholder="#00e0ff" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-{!currentArtist ? <div className="text-white/50">בחר אמן</div> : (
-  <div className="space-y-6 text-sm max-h-[70vh] overflow-y-auto pr-2">
-    {/* Basic Info */}
-    <div className="border-b border-white/10 pb-4">
-      <h4 className="text-lg font-semibold text-cyan-400 mb-3">פרטים בסיסיים</h4>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-white/60 text-xs">Slug (לכתובת URL)</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.slug || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, slug: e.target.value })} 
-            placeholder="artist-name"
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">שם מלא</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.name || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, name: e.target.value })} 
-            placeholder="שם מלא"
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">שם אמן (Stage Name)</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.stage_name || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, stage_name: e.target.value })} 
-            placeholder="שם במה"
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">שנת התחלה</label>
-          <input type="number" className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.started_year || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, started_year: e.target.value ? Number(e.target.value) : null })} 
-            placeholder="2015"
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">פרק ראשי (Episode ID)</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={primaryEpisodeId} 
-            onChange={e => setPrimaryEpisodeId(e.target.value)} 
-            placeholder="49"
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">צבע ראשי</label>
-          <div className="flex gap-2">
-            <input type="color" className="w-12 h-10 rounded-lg bg-black/40 border border-white/15 cursor-pointer" 
-              value={currentArtist.primary_color || "#00e0ff"} 
-              onChange={e => setCurrentArtist({ ...currentArtist, primary_color: e.target.value })} 
-            />
-            <input className="flex-1 rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-              value={currentArtist.primary_color || ""} 
-              onChange={e => setCurrentArtist({ ...currentArtist, primary_color: e.target.value })} 
-              placeholder="#00e0ff"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+                          {/* Media */}
+                          <div className="border-b border-white/10 pb-4">
+                            <h4 className="text-lg font-semibold text-purple-400 mb-3">מדיה</h4>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-white/60 text-xs">תמונת פרופיל (URL)</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.profile_photo_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, profile_photo_url: e.target.value })} placeholder="https://..." />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">ביוגרפיה קצרה</label>
+                                <textarea className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2 min-h-[100px]" value={currentArtist.short_bio || ""} onChange={e => setCurrentArtist({ ...currentArtist, short_bio: e.target.value })} placeholder="תיאור קצר על האמן..." />
+                              </div>
+                            </div>
+                          </div>
 
-    {/* Media */}
-    <div className="border-b border-white/10 pb-4">
-      <h4 className="text-lg font-semibold text-purple-400 mb-3">מדיה</h4>
-      <div className="space-y-3">
-        <div>
-          <label className="text-white/60 text-xs">תמונת פרופיל (URL)</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.profile_photo_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, profile_photo_url: e.target.value })} 
-            placeholder="https://..."
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">ביוגרפיה קצרה</label>
-          <textarea className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2 min-h-[100px]" 
-            value={currentArtist.short_bio || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, short_bio: e.target.value })} 
-            placeholder="תיאור קצר על האמן..."
-          />
-        </div>
-      </div>
-    </div>
+                          {/* Social Links */}
+                          <div className="border-b border-white/10 pb-4">
+                            <h4 className="text-lg font-semibold text-pink-400 mb-3">רשתות חברתיות</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-white/60 text-xs">🎵 Spotify URL</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.spotify_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, spotify_url: e.target.value })} placeholder="https://open.spotify.com/artist/..." />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">🎵 Spotify Artist ID</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.spotify_artist_id || ""} onChange={e => setCurrentArtist({ ...currentArtist, spotify_artist_id: e.target.value })} placeholder="4Z8W4fKeB5YxbusRsdQVPb" />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">📺 YouTube URL</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.youtube_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, youtube_url: e.target.value })} placeholder="https://youtube.com/@..." />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">☁️ SoundCloud URL</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.soundcloud_profile_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, soundcloud_profile_url: e.target.value })} placeholder="https://soundcloud.com/..." />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">📸 Instagram URL</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.instagram_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, instagram_url: e.target.value })} placeholder="https://instagram.com/..." />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">🎵 TikTok URL</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.tiktok_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, tiktok_url: e.target.value })} placeholder="https://tiktok.com/@..." />
+                              </div>
+                              <div className="col-span-2">
+                                <label className="text-white/60 text-xs">🌐 Website URL</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.website_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, website_url: e.target.value })} placeholder="https://..." />
+                              </div>
+                            </div>
+                          </div>
 
-    {/* Social Links */}
-    <div className="border-b border-white/10 pb-4">
-      <h4 className="text-lg font-semibold text-pink-400 mb-3">רשתות חברתיות</h4>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-white/60 text-xs">🎵 Spotify URL</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.spotify_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, spotify_url: e.target.value })} 
-            placeholder="https://open.spotify.com/artist/..."
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">🎵 Spotify Artist ID</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.spotify_artist_id || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, spotify_artist_id: e.target.value })} 
-            placeholder="4Z8W4fKeB5YxbusRsdQVPb"
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">📺 YouTube URL</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.youtube_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, youtube_url: e.target.value })} 
-            placeholder="https://youtube.com/@..."
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">☁️ SoundCloud URL</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.soundcloud_profile_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, soundcloud_profile_url: e.target.value })} 
-            placeholder="https://soundcloud.com/..."
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">📸 Instagram URL</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.instagram_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, instagram_url: e.target.value })} 
-            placeholder="https://instagram.com/..."
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">🎵 TikTok URL</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.tiktok_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, tiktok_url: e.target.value })} 
-            placeholder="https://tiktok.com/@..."
-          />
-        </div>
-        <div className="col-span-2">
-          <label className="text-white/60 text-xs">🌐 Website URL</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.website_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, website_url: e.target.value })} 
-            placeholder="https://..."
-          />
-        </div>
-      </div>
-    </div>
+                          {/* Business Info */}
+                          <div className="border-b border-white/10 pb-4">
+                            <h4 className="text-lg font-semibold text-yellow-400 mb-3">פרטי עסקים</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-white/60 text-xs">🏢 סוכנות הזמנות - שם</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.booking_agency_name || ""} onChange={e => setCurrentArtist({ ...currentArtist, booking_agency_name: e.target.value })} placeholder="Agency Name" />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">📧 סוכנות הזמנות - אימייל</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.booking_agency_email || ""} onChange={e => setCurrentArtist({ ...currentArtist, booking_agency_email: e.target.value })} placeholder="booking@agency.com" />
+                              </div>
+                              <div className="col-span-2">
+                                <label className="text-white/60 text-xs">🔗 סוכנות הזמנות - URL</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.booking_agency_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, booking_agency_url: e.target.value })} placeholder="https://..." />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">💿 לייבל - שם</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.record_label_name || ""} onChange={e => setCurrentArtist({ ...currentArtist, record_label_name: e.target.value })} placeholder="Label Name" />
+                              </div>
+                              <div>
+                                <label className="text-white/60 text-xs">🔗 לייבל - URL</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.record_label_url || ""} onChange={e => setCurrentArtist({ ...currentArtist, record_label_url: e.target.value })} placeholder="https://..." />
+                              </div>
+                              <div className="col-span-2">
+                                <label className="text-white/60 text-xs">📧 ניהול - אימייל</label>
+                                <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={currentArtist.management_email || ""} onChange={e => setCurrentArtist({ ...currentArtist, management_email: e.target.value })} placeholder="management@email.com" />
+                              </div>
+                            </div>
+                          </div>
 
-    {/* Business Info */}
-    <div className="border-b border-white/10 pb-4">
-      <h4 className="text-lg font-semibold text-yellow-400 mb-3">פרטי עסקים</h4>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-white/60 text-xs">🏢 סוכנות הזמנות - שם</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.booking_agency_name || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, booking_agency_name: e.target.value })} 
-            placeholder="Agency Name"
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">📧 סוכנות הזמנות - אימייל</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.booking_agency_email || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, booking_agency_email: e.target.value })} 
-            placeholder="booking@agency.com"
-          />
-        </div>
-        <div className="col-span-2">
-          <label className="text-white/60 text-xs">🔗 סוכנות הזמנות - URL</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.booking_agency_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, booking_agency_url: e.target.value })} 
-            placeholder="https://..."
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">💿 לייבל - שם</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.record_label_name || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, record_label_name: e.target.value })} 
-            placeholder="Label Name"
-          />
-        </div>
-        <div>
-          <label className="text-white/60 text-xs">🔗 לייבל - URL</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.record_label_url || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, record_label_url: e.target.value })} 
-            placeholder="https://..."
-          />
-        </div>
-        <div className="col-span-2">
-          <label className="text-white/60 text-xs">📧 ניהול - אימייל</label>
-          <input className="w-full rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-            value={currentArtist.management_email || ""} 
-            onChange={e => setCurrentArtist({ ...currentArtist, management_email: e.target.value })} 
-            placeholder="management@email.com"
-          />
-        </div>
-      </div>
-    </div>
+                          {/* Festival Sets */}
+                          <div className="border-b border-white/10 pb-4">
+                            <h4 className="text-lg font-semibold text-green-400 mb-3">🎪 סטים מפסטיבלים</h4>
+                            <div className="space-y-2">
+                              {(currentArtist.festival_sets || []).map((set, idx) => (
+                                <div key={idx} className="flex gap-2 items-center bg-white/5 p-2 rounded-lg">
+                                  <input className="flex-1 rounded bg-black/40 border border-white/15 px-2 py-1 text-xs" value={set.youtube_id || ""} onChange={e => { const newSets = [...(currentArtist.festival_sets || [])]; newSets[idx] = { ...newSets[idx], youtube_id: e.target.value }; setCurrentArtist({ ...currentArtist, festival_sets: newSets }); }} placeholder="YouTube ID" />
+                                  <input className="w-32 rounded bg-black/40 border border-white/15 px-2 py-1 text-xs" value={set.festival || ""} onChange={e => { const newSets = [...(currentArtist.festival_sets || [])]; newSets[idx] = { ...newSets[idx], festival: e.target.value }; setCurrentArtist({ ...currentArtist, festival_sets: newSets }); }} placeholder="Festival" />
+                                  <input type="number" className="w-20 rounded bg-black/40 border border-white/15 px-2 py-1 text-xs" value={set.year || ""} onChange={e => { const newSets = [...(currentArtist.festival_sets || [])]; newSets[idx] = { ...newSets[idx], year: e.target.value ? Number(e.target.value) : null }; setCurrentArtist({ ...currentArtist, festival_sets: newSets }); }} placeholder="Year" />
+                                  <button onClick={() => { const newSets = (currentArtist.festival_sets || []).filter((_, i) => i !== idx); setCurrentArtist({ ...currentArtist, festival_sets: newSets }); }} className="text-red-400 hover:text-red-300 px-2">✕</button>
+                                </div>
+                              ))}
+                              <button onClick={() => setCurrentArtist({ ...currentArtist, festival_sets: [...(currentArtist.festival_sets || []), { youtube_id: "", festival: "", year: null, location: "" }] })} className="w-full py-2 border border-dashed border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 transition">+ הוסף סט</button>
+                            </div>
+                          </div>
 
-    {/* Festival Sets */}
-    <div className="border-b border-white/10 pb-4">
-      <h4 className="text-lg font-semibold text-green-400 mb-3">🎪 סטים מפסטיבלים</h4>
-      <div className="space-y-2">
-        {(currentArtist.festival_sets || []).map((set, idx) => (
-          <div key={idx} className="flex gap-2 items-center bg-white/5 p-2 rounded-lg">
-            <input className="flex-1 rounded bg-black/40 border border-white/15 px-2 py-1 text-xs" 
-              value={set.youtube_id || ""} 
-              onChange={e => {
-                const newSets = [...(currentArtist.festival_sets || [])];
-                newSets[idx] = { ...newSets[idx], youtube_id: e.target.value };
-                setCurrentArtist({ ...currentArtist, festival_sets: newSets });
-              }} 
-              placeholder="YouTube ID"
-            />
-            <input className="w-32 rounded bg-black/40 border border-white/15 px-2 py-1 text-xs" 
-              value={set.festival || ""} 
-              onChange={e => {
-                const newSets = [...(currentArtist.festival_sets || [])];
-                newSets[idx] = { ...newSets[idx], festival: e.target.value };
-                setCurrentArtist({ ...currentArtist, festival_sets: newSets });
-              }} 
-              placeholder="Festival"
-            />
-            <input type="number" className="w-20 rounded bg-black/40 border border-white/15 px-2 py-1 text-xs" 
-              value={set.year || ""} 
-              onChange={e => {
-                const newSets = [...(currentArtist.festival_sets || [])];
-                newSets[idx] = { ...newSets[idx], year: e.target.value ? Number(e.target.value) : null };
-                setCurrentArtist({ ...currentArtist, festival_sets: newSets });
-              }} 
-              placeholder="Year"
-            />
-            <button 
-              onClick={() => {
-                const newSets = (currentArtist.festival_sets || []).filter((_, i) => i !== idx);
-                setCurrentArtist({ ...currentArtist, festival_sets: newSets });
-              }}
-              className="text-red-400 hover:text-red-300 px-2"
-            >✕</button>
-          </div>
-        ))}
-        <button 
-          onClick={() => setCurrentArtist({ 
-            ...currentArtist, 
-            festival_sets: [...(currentArtist.festival_sets || []), { youtube_id: "", festival: "", year: null, location: "" }] 
-          })}
-          className="w-full py-2 border border-dashed border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 transition"
-        >
-          + הוסף סט
-        </button>
-      </div>
-    </div>
+                          {/* Instagram Reels */}
+                          <div className="border-b border-white/10 pb-4">
+                            <h4 className="text-lg font-semibold text-orange-400 mb-3">📱 Instagram Reels</h4>
+                            <div className="space-y-2">
+                              {(currentArtist.instagram_reels || []).map((reel, idx) => (
+                                <div key={idx} className="flex gap-2 items-center">
+                                  <input className="flex-1 rounded-lg bg-black/40 border border-white/15 px-3 py-2" value={reel} onChange={e => { const newReels = [...(currentArtist.instagram_reels || [])]; newReels[idx] = e.target.value; setCurrentArtist({ ...currentArtist, instagram_reels: newReels }); }} placeholder="https://instagram.com/reel/..." />
+                                  <button onClick={() => { const newReels = (currentArtist.instagram_reels || []).filter((_, i) => i !== idx); setCurrentArtist({ ...currentArtist, instagram_reels: newReels }); }} className="text-red-400 hover:text-red-300 px-2">✕</button>
+                                </div>
+                              ))}
+                              <button onClick={() => setCurrentArtist({ ...currentArtist, instagram_reels: [...(currentArtist.instagram_reels || []), ""] })} className="w-full py-2 border border-dashed border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 transition">+ הוסף ריל</button>
+                            </div>
+                          </div>
 
-    {/* Instagram Reels */}
-    <div className="border-b border-white/10 pb-4">
-      <h4 className="text-lg font-semibold text-orange-400 mb-3">📱 Instagram Reels</h4>
-      <div className="space-y-2">
-        {(currentArtist.instagram_reels || []).map((reel, idx) => (
-          <div key={idx} className="flex gap-2 items-center">
-            <input className="flex-1 rounded-lg bg-black/40 border border-white/15 px-3 py-2" 
-              value={reel} 
-              onChange={e => {
-                const newReels = [...(currentArtist.instagram_reels || [])];
-                newReels[idx] = e.target.value;
-                setCurrentArtist({ ...currentArtist, instagram_reels: newReels });
-              }} 
-              placeholder="https://instagram.com/reel/..."
-            />
-            <button 
-              onClick={() => {
-                const newReels = (currentArtist.instagram_reels || []).filter((_, i) => i !== idx);
-                setCurrentArtist({ ...currentArtist, instagram_reels: newReels });
-              }}
-              className="text-red-400 hover:text-red-300 px-2"
-            >✕</button>
-          </div>
-        ))}
-        <button 
-          onClick={() => setCurrentArtist({ 
-            ...currentArtist, 
-            instagram_reels: [...(currentArtist.instagram_reels || []), ""] 
-          })}
-          className="w-full py-2 border border-dashed border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 transition"
-        >
-          + הוסף ריל
-        </button>
-      </div>
-    </div>
-
-    {/* Save Button */}
-    <div className="flex justify-between items-center pt-4 sticky bottom-0 bg-black/80 backdrop-blur py-3 -mx-2 px-2">
-      {currentArtist.id > 0 && (
-        <div className="text-xs text-white/40">ID: {currentArtist.id}</div>
-      )}
-      <button 
-        onClick={saveArtist} 
-        className="btn-primary rounded-xl px-8 py-3 font-semibold text-base" 
-        disabled={savingArtist}
-      >
-        {savingArtist ? "שומר..." : "💾 שמור אמן"}
-      </button>
-    </div>
-  </div>
-)}
+                          {/* Save Button */}
+                          <div className="flex justify-between items-center pt-4 sticky bottom-0 bg-black/80 backdrop-blur py-3 -mx-2 px-2">
+                            {currentArtist.id > 0 && (<div className="text-xs text-white/40">ID: {currentArtist.id}</div>)}
+                            <button onClick={saveArtist} className="btn-primary rounded-xl px-8 py-3 font-semibold text-base" disabled={savingArtist}>{savingArtist ? "שומר..." : "💾 שמור אמן"}</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
