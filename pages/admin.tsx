@@ -121,8 +121,7 @@ export default function Admin() {
   const [trackSubsLoading, setTrackSubsLoading] = React.useState(false);
   const [selectedTrackSub, setSelectedTrackSub] = React.useState<TrackSubmission | null>(null);
 
-  const [visits, setVisits] = React.useState<VisitData[]>([]);
-  const [artistStats, setArtistStats] = React.useState<any[]>([]); 
+  const [analytics, setAnalytics] = React.useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = React.useState(false);
   
   const [dateRange, setDateRange] = React.useState<"today" | "7d" | "30d" | "all">("today");
@@ -136,8 +135,7 @@ export default function Admin() {
   const [primaryEpisodeId, setPrimaryEpisodeId] = React.useState<string>("");
   const [savingArtist, setSavingArtist] = React.useState(false);
 
-  const analytics = React.useMemo(() => {
-    if (!visits || visits.length === 0) return null;
+ 
     
     const now = new Date();
     
@@ -351,14 +349,14 @@ pageVisits[cleanPage] = (pageVisits[cleanPage] || 0) + 1;
     if (key && !tally && !loading && !error) fetchStats();
   }, [key]);
 
-  React.useEffect(() => {
-    if (tally) {
-      if (activeTab === "signups") fetchSignups();
-      else if (activeTab === "analytics") fetchAnalytics();
-      else if (activeTab === "track-submissions") fetchTrackSubmissions();
-      else if (activeTab === "artists") fetchArtists();
-    }
-  }, [tally, activeTab]);
+ React.useEffect(() => {
+  if (tally) {
+    if (activeTab === "signups") fetchSignups();
+    else if (activeTab === "analytics") fetchAnalytics();
+    else if (activeTab === "track-submissions") fetchTrackSubmissions();
+    else if (activeTab === "artists") fetchArtists();
+  }
+}, [tally, activeTab, dateRange]);
 
   const fetchStats = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -374,23 +372,17 @@ pageVisits[cleanPage] = (pageVisits[cleanPage] || 0) + 1;
     finally { setLoading(false); }
   };
 
-  const fetchAnalytics = async () => {
-    if (!key) return;
-    setAnalyticsLoading(true);
-    try {
-      const r = await fetch(`/api/analytics-data?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
-      const j = await r.json();
-      if (!r.ok || !j?.ok) throw new Error(j?.error);
-      
-      setVisits(j.visits || []);
-      
-      if (j.artistPageVisits) {
-        const sortedArtists = Object.values(j.artistPageVisits).sort((a: any, b: any) => b.visits - a.visits);
-        setArtistStats(sortedArtists);
-      }
-    } catch { alert("שגיאה בטעינת סטטיסטיקות"); }
-    finally { setAnalyticsLoading(false); }
-  };
+const fetchAnalytics = async () => {
+  if (!key) return;
+  setAnalyticsLoading(true);
+  try {
+    const r = await fetch(`/api/analytics-data?key=${encodeURIComponent(key)}&range=${dateRange}&_t=${Date.now()}`);
+    const j = await r.json();
+    if (!r.ok || !j?.ok) throw new Error(j?.error);
+    setAnalytics(j.analytics);
+  } catch { alert("שגיאה בטעינת סטטיסטיקות"); }
+  finally { setAnalyticsLoading(false); }
+};
 
   const fetchSignups = async () => {
     if (!key) return;
@@ -764,11 +756,11 @@ pageVisits[cleanPage] = (pageVisits[cleanPage] || 0) + 1;
                     </div>
                   </div>
 
-                   {artistStats.length > 0 && (
+                   {analytics?.topArtists?.length > 0 && (
                     <div className="glass rounded-2xl p-6 mt-4">
                       <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔥 עמודי האמנים החמים ביותר</h3>
                       <div className="space-y-3">
-                        {artistStats.slice(0, 10).map((stat: any, i: number) => (
+                        {analytics.topArtists.map((stat: any, i: number) => (
                           <div key={i} className="bg-white/5 rounded-lg p-3">
                             <div className="flex justify-between mb-1">
                               <div className="flex items-center gap-2">
