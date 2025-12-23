@@ -31,8 +31,6 @@ const ARTIST_QUOTES: { [key: string]: string } = {
   tanoma: "חוויה שלא אשכח לעולם",
 };
 
-const ARTISTS_WITH_REELS = ["nardia", "modulation", "shaprut"];
-
 const FAQ_ITEMS = [
   { question: "מתי הפרק מוקלט?", answer: "הפרק יוקלט באביב 2025, התאריך המדויק יפורסם בקרוב לאמנים שייבחרו." },
   { question: "איך תהליך הבחירה עובד?", answer: "אנחנו מאזינים לכל הטראקים שנשלחים, ובוחרים 4 אמנים שהמוזיקה שלהם מדברת אלינו. אנחנו מחפשים מקוריות, איכות הפקה ופוטנציאל." },
@@ -146,14 +144,14 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
                 <div className="text-gray-400">צפיות והאזנות</div>
               </div>
               <div className="glass-card rounded-2xl p-8 text-center border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300 hover:scale-105">
-                <div className="text-5xl mb-3">💬</div>
-                <div className="text-4xl font-black text-cyan-400 mb-2">מדהים</div>
-                <div className="text-gray-400">פידבק מהקהילה</div>
+                <div className="text-5xl mb-3">🎤</div>
+                <div className="text-4xl font-black text-cyan-400 mb-2">4</div>
+                <div className="text-gray-400">אמנים שקיבלו במה</div>
               </div>
               <div className="glass-card rounded-2xl p-8 text-center border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300 hover:scale-105">
-                <div className="text-5xl mb-3">🎪</div>
-                <div className="text-4xl font-black text-pink-400 mb-2">הופעות</div>
-                <div className="text-gray-400">האמנים מתחילים להזמין</div>
+                <div className="text-5xl mb-3">📸</div>
+                <div className="text-4xl font-black text-pink-400 mb-2">3</div>
+                <div className="text-gray-400">רילס באינסטגרם</div>
               </div>
             </div>
 
@@ -186,34 +184,29 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {alumniArtists.map((artist) => (
-                <div key={artist.id} className="group relative">
+                <Link key={artist.id} href={`/artist/${artist.artist_id}`} className="group relative block">
                   <div className="absolute -inset-1 bg-gradient-to-br from-purple-600/50 to-cyan-600/50 rounded-3xl blur-lg opacity-0 group-hover:opacity-30 transition duration-500" />
                   <div className="relative glass-card rounded-2xl overflow-hidden border border-gray-800 group-hover:border-purple-500/50 transition-all duration-300">
                     <div className="flex flex-col sm:flex-row">
                       <div className="relative w-full sm:w-48 h-64 sm:h-auto flex-shrink-0 overflow-hidden">
-                        <img src={artist.profile_photo_url} alt={artist.stage_name} className="w-full h-full object-cover" />
+                        <img src={artist.profile_photo_url} alt={artist.stage_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-black/60 via-transparent to-transparent" />
                       </div>
                       <div className="flex-1 p-6 flex flex-col">
                         <div className="mb-4">
-                          <Link href={`/artist/${artist.artist_id}`} className="text-2xl font-bold text-white hover:text-purple-400 transition">{artist.stage_name}</Link>
+                          <span className="text-2xl font-bold text-white group-hover:text-purple-400 transition">{artist.stage_name}</span>
                           <p className="text-gray-400 text-sm">{artist.name}</p>
                         </div>
                         <blockquote className="text-gray-300 italic mb-4 flex-1">&ldquo;{ARTIST_QUOTES[artist.artist_id] || "חוויה מדהימה להיות חלק מהפרק"}&rdquo;</blockquote>
-                        <div className="flex items-center gap-3 mb-4">
-                          {artist.instagram_url && <a href={artist.instagram_url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center hover:scale-110 transition"><FaInstagram className="text-white" /></a>}
-                          {artist.spotify_url && <a href={artist.spotify_url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center hover:scale-110 transition"><FaSpotify className="text-white" /></a>}
-                          {artist.soundcloud_profile_url && <a href={artist.soundcloud_profile_url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center hover:scale-110 transition"><FaSoundcloud className="text-white" /></a>}
+                        <div className="flex items-center gap-3">
+                          {artist.soundcloud_profile_url && <div className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center"><FaSoundcloud className="text-white" /></div>}
+                          {artist.spotify_url && <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center"><FaSpotify className="text-white" /></div>}
+                          {artist.instagram_url && <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center"><FaInstagram className="text-white" /></div>}
                         </div>
-                        {ARTISTS_WITH_REELS.includes(artist.artist_id) && (
-                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-full text-purple-300 text-xs w-fit">
-                            <FaInstagram /><span>קיבל ריל מיוצאים לטראק</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 
