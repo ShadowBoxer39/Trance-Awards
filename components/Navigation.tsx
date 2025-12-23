@@ -1,11 +1,11 @@
-// components/Navigation.tsx - Updated with Artists and Legends pages
+// components/Navigation.tsx - Updated with better spread and featured-artists
 
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 
 interface NavigationProps {
-  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist" | "artists" | "legends"; 
+  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist" | "featured-artists" | "artists" | "legends"; 
 }
 
 export default function Navigation({ currentPage }: NavigationProps) {
@@ -14,16 +14,19 @@ export default function Navigation({ currentPage }: NavigationProps) {
 
   const isActive = (page: string) => currentPage === page;
   
+  // Featured artists pages (both singular and plural should highlight the same nav item)
+  const isFeaturedActive = currentPage === "featured-artist" || currentPage === "featured-artists";
+  
   // Check if any "More" menu page is active
   const isMoreActive = ["episodes", "young-artists", "track-of-the-week", "submit-track", "about", "advertisers"].includes(currentPage || "");
 
   return (
     <nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-20">
+      <div className="w-full px-4 sm:px-6 lg:px-10">
+        <div className="flex items-center justify-between h-20 max-w-[1800px] mx-auto">
           
           {/* Logo & Brand */}
-          <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition flex-shrink-0">
             <Image
               src="/images/logo.png"
               alt="יוצאים לטראק"
@@ -34,141 +37,144 @@ export default function Navigation({ currentPage }: NavigationProps) {
             <span className="text-xl font-semibold hidden sm:block">יוצאים לטראק</span>
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-6">
-            
-            {/* Main Pages */}
-            <Link
-              href="/"
-              className={`text-base font-medium transition ${
-                isActive("home") ? "text-white" : "text-gray-300 hover:text-white"
-              }`}
-            >
-              בית
-            </Link>
-
-            <Link
-              href="/artists"
-              className={`text-base font-medium transition ${
-                isActive("artists") ? "text-white" : "text-gray-300 hover:text-white"
-              }`}
-            >
-              האמנים
-            </Link>
-
-            <Link
-              href="/legends"
-              className={`text-base font-medium transition ${
-                isActive("legends") ? "text-white" : "text-gray-300 hover:text-white"
-              }`}
-            >
-              אגדות
-            </Link>
-
-            <Link
-              href="/featured-artist"
-              className={`text-base font-medium transition ${
-                isActive("featured-artist") ? "text-white" : "text-gray-300 hover:text-white"
-              }`}
-            >
-              האמן המומלץ
-            </Link>
-
-            {/* More Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setMoreOpen(true)}
-              onMouseLeave={() => setMoreOpen(false)}
-            >
-              <button
-                className={`text-base font-medium transition flex items-center gap-1 ${
-                  isMoreActive ? "text-white" : "text-gray-300 hover:text-white"
+          {/* Desktop Menu - Centered with good spacing */}
+          <div className="hidden md:flex items-center justify-center flex-1 px-8">
+            <div className="flex items-center gap-8 lg:gap-12">
+              
+              <Link
+                href="/"
+                className={`text-base font-medium transition whitespace-nowrap ${
+                  isActive("home") ? "text-white" : "text-gray-300 hover:text-white"
                 }`}
               >
-                עוד
-                <svg 
-                  className={`w-4 h-4 transition-transform ${moreOpen ? 'rotate-180' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
+                בית
+              </Link>
+
+              <Link
+                href="/artists"
+                className={`text-base font-medium transition whitespace-nowrap ${
+                  isActive("artists") ? "text-white" : "text-gray-300 hover:text-white"
+                }`}
+              >
+                האמנים
+              </Link>
+
+              <Link
+                href="/legends"
+                className={`text-base font-medium transition whitespace-nowrap ${
+                  isActive("legends") ? "text-white" : "text-gray-300 hover:text-white"
+                }`}
+              >
+                אגדות
+              </Link>
+
+              <Link
+                href="/featured-artists"
+                className={`text-base font-medium transition whitespace-nowrap ${
+                  isFeaturedActive ? "text-white" : "text-gray-300 hover:text-white"
+                }`}
+              >
+                אמנים צעירים
+              </Link>
+
+              {/* More Dropdown */}
+              <div 
+                className="relative"
+                onMouseEnter={() => setMoreOpen(true)}
+                onMouseLeave={() => setMoreOpen(false)}
+              >
+                <button
+                  className={`text-base font-medium transition flex items-center gap-1 whitespace-nowrap ${
+                    isMoreActive ? "text-white" : "text-gray-300 hover:text-white"
+                  }`}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+                  עוד
+                  <svg 
+                    className={`w-4 h-4 transition-transform ${moreOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-              {moreOpen && (
-                <div className="absolute right-0 top-full pt-1 w-64 z-50">
-                  <div className="rounded-xl shadow-xl bg-gray-900 border border-gray-800 py-2">
-                    <Link
-                      href="/episodes"
-                      className={`block px-4 py-3 text-sm transition ${
-                        isActive("episodes")
-                          ? "text-purple-400 bg-gray-800"
-                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }`}
-                    >
-                      🎧 פרקים
-                    </Link>
-                    <Link
-                      href="/young-artists"
-                      className={`block px-4 py-3 text-sm transition ${
-                        isActive("young-artists")
-                          ? "text-purple-400 bg-gray-800"
-                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }`}
-                    >
-                      🌟 אמנים צעירים
-                    </Link>
-                    <Link
-                      href="/track-of-the-week"
-                      className={`block px-4 py-3 text-sm transition ${
-                        isActive("track-of-the-week")
-                          ? "text-purple-400 bg-gray-800"
-                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }`}
-                    >
-                      🎵 הטראק השבועי
-                    </Link>
-                    <div className="border-t border-gray-800 my-1"></div>
-                    <Link
-                      href="/submit-track"
-                      className={`block px-4 py-3 text-sm transition ${
-                        isActive("submit-track")
-                          ? "text-purple-400 bg-gray-800"
-                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }`}
-                    >
-                      הגישו טראק
-                    </Link>
-                    <Link
-                      href="/about"
-                      className={`block px-4 py-3 text-sm transition ${
-                        isActive("about")
-                          ? "text-purple-400 bg-gray-800"
-                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }`}
-                    >
-                      אודות
-                    </Link>
-                    <Link
-                      href="/advertisers"
-                      className={`block px-4 py-3 text-sm transition ${
-                        isActive("advertisers")
-                          ? "text-purple-400 bg-gray-800"
-                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                      }`}
-                    >
-                      למפרסמים
-                    </Link>
+                {moreOpen && (
+                  <div className="absolute right-0 top-full pt-1 w-64 z-50">
+                    <div className="rounded-xl shadow-xl bg-gray-900 border border-gray-800 py-2">
+                      <Link
+                        href="/episodes"
+                        className={`block px-4 py-3 text-sm transition ${
+                          isActive("episodes")
+                            ? "text-purple-400 bg-gray-800"
+                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }`}
+                      >
+                        🎧 פרקים
+                      </Link>
+                      <Link
+                        href="/young-artists"
+                        className={`block px-4 py-3 text-sm transition ${
+                          isActive("young-artists")
+                            ? "text-purple-400 bg-gray-800"
+                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }`}
+                      >
+                        🌟 הרשמה לאמנים צעירים
+                      </Link>
+                      <Link
+                        href="/track-of-the-week"
+                        className={`block px-4 py-3 text-sm transition ${
+                          isActive("track-of-the-week")
+                            ? "text-purple-400 bg-gray-800"
+                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }`}
+                      >
+                        🎵 הטראק השבועי
+                      </Link>
+                      <div className="border-t border-gray-800 my-1"></div>
+                      <Link
+                        href="/submit-track"
+                        className={`block px-4 py-3 text-sm transition ${
+                          isActive("submit-track")
+                            ? "text-purple-400 bg-gray-800"
+                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }`}
+                      >
+                        הגישו טראק
+                      </Link>
+                      <Link
+                        href="/about"
+                        className={`block px-4 py-3 text-sm transition ${
+                          isActive("about")
+                            ? "text-purple-400 bg-gray-800"
+                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }`}
+                      >
+                        אודות
+                      </Link>
+                      <Link
+                        href="/advertisers"
+                        className={`block px-4 py-3 text-sm transition ${
+                          isActive("advertisers")
+                            ? "text-purple-400 bg-gray-800"
+                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        }`}
+                      >
+                        למפרסמים
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
+          </div>
 
-            {/* CTA Button */}
+          {/* CTA Button - Right side */}
+          <div className="hidden md:block flex-shrink-0">
             <Link
               href="/vote"
-              className="btn-primary px-5 py-2 rounded-lg text-sm font-semibold"
+              className="btn-primary px-5 py-2 rounded-lg text-sm font-semibold whitespace-nowrap"
             >
               נבחרי השנה 2025
             </Link>
@@ -232,15 +238,15 @@ export default function Navigation({ currentPage }: NavigationProps) {
             </Link>
 
             <Link
-              href="/featured-artist"
+              href="/featured-artists"
               className={`block px-4 py-3 rounded-lg transition ${
-                isActive("featured-artist") 
+                isFeaturedActive 
                   ? "text-white bg-gray-800" 
                   : "text-gray-300 hover:bg-gray-800 hover:text-white"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              ⭐ האמן המומלץ
+              ⭐ אמנים צעירים
             </Link>
 
             {/* More Section */}
@@ -270,7 +276,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                🌟 אמנים צעירים
+                🌟 הרשמה לאמנים צעירים
               </Link>
 
               <Link
