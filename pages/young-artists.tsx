@@ -26,7 +26,7 @@ interface PageProps {
 
 const ARTIST_QUOTES: { [key: string]: string } = {
   nardia: "ההזדמנות הזו פתחה לי דלתות שלא ידעתי שקיימות",
-  modulation: "הפרק היה נקודת מפנה בקריירה שלי",
+  modulation: "הפרק היה נקודת מפנה בקריירה שלנו",
   shaprut: "הקהילה של יוצאים לטראק היא משפחה אמיתית",
   tanoma: "חוויה שלא אשכח לעולם",
 };
@@ -34,7 +34,7 @@ const ARTIST_QUOTES: { [key: string]: string } = {
 const FAQ_ITEMS = [
   { question: "מתי הפרק מוקלט?", answer: "הפרק יוקלט באביב 2025, התאריך המדויק יפורסם בקרוב לאמנים שייבחרו." },
   { question: "איך תהליך הבחירה עובד?", answer: "אנחנו מאזינים לכל הטראקים שנשלחים, ובוחרים 4 אמנים שהמוזיקה שלהם מדברת אלינו. אנחנו מחפשים מקוריות, איכות הפקה ופוטנציאל." },
-  { question: "איך אדע אם התקבלתי?", answer: "ניצור איתכם קשר ישירות דרך הטלפון או הוואטסאפ. אם לא שמעתם מאיתנו תוך חודש, אתם מוזמנים לשלוח הודעה בקהילה." },
+  { question: "איך אדע אם התקבלתי?", answer: "ניצור איתכם קשר ישירות דרך הטלפון או הוואטסאפ. אם לא שמעתם מאיתנו אתם מוזמנים לשלוח הודעה בקהילה." },
   { question: "איפה מקליטים את הפרק?", answer: "ההקלטה מתבצעת באולפן מקצועי באזור המרכז. הפרטים המדויקים יימסרו לאמנים שייבחרו." },
   { question: "האם אני צריך כמות מסוימת של טראקים בחוץ?", answer: "לא! אנחנו מחפשים פוטנציאל ואיכות, לא כמות. גם אם יש לכם רק טראק אחד או שניים, שלחו אותם." },
 ];
@@ -134,7 +134,7 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
             <div className="text-center mb-16">
               <span className="text-4xl mb-4 block">🎉</span>
               <h2 className="text-3xl md:text-5xl font-bold mb-4"><span className="bg-gradient-to-l from-purple-400 to-cyan-400 bg-clip-text text-transparent">הפרק הראשון היה הצלחה אדירה</span></h2>
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">בפרק הראשון אירחנו 4 אמנים מוכשרים שקיבלו במה והתחילו את המסע שלהם</p>
+              <p className="text-gray-400 text-lg max-w-2xl mx-auto">בפרק הראשון אירחנו 4 אמנים מוכשרים שקיבלו במה וסיפרו לנו ולקהל על המסע שלהם</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
@@ -150,8 +150,8 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
               </div>
               <div className="glass-card rounded-2xl p-8 text-center border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300 hover:scale-105">
                 <div className="text-5xl mb-3">📸</div>
-                <div className="text-4xl font-black text-pink-400 mb-2">3</div>
-                <div className="text-gray-400">רילס באינסטגרם</div>
+                <div className="text-4xl font-black text-pink-400 mb-2">אלפי צפיות</div>
+                <div className="text-gray-400">ברשתות החברתיות</div>
               </div>
             </div>
 
@@ -179,7 +179,7 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
             <div className="text-center mb-16">
               <span className="text-4xl mb-4 block">⭐</span>
               <h2 className="text-3xl md:text-5xl font-bold mb-4"><span className="bg-gradient-to-l from-amber-400 to-orange-400 bg-clip-text text-transparent">הכירו את האמנים מהפרק הראשון</span></h2>
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">4 אמנים מוכשרים שקיבלו במה והיום כבר מופיעים ומשחררים מוזיקה</p>
+              <p className="text-gray-400 text-lg max-w-2xl mx-auto">4 אמנים מוכשרים שקיבלו במה והפכו לחלק מהמשפחה</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -231,9 +231,9 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
-                { icon: "🎙️", title: "הקלטה מקצועית", description: "תקליטו באולפן מקצועי עם ציוד ברמה הגבוהה ביותר, בליווי צוות מנוסה", gradient: "from-purple-500/20 to-purple-600/20", border: "border-purple-500/30 hover:border-purple-500/60" },
+                { icon: "🎙️", title: "פרק שלם", description: "תהיו חלק מפרק שלם של תכנית הטראנס הגדולה בישראל", gradient: "from-purple-500/20 to-purple-600/20", border: "border-purple-500/30 hover:border-purple-500/60" },
                 { icon: "📺", title: "חשיפה לאלפי אנשים", description: "הפרק יעלה ליוטיוב, ספוטיפיי ולכל הפלטפורמות עם חשיפה לקהילה ענקית", gradient: "from-cyan-500/20 to-cyan-600/20", border: "border-cyan-500/30 hover:border-cyan-500/60" },
-                { icon: "📸", title: "תוכן לרשתות", description: "תקבלו ריל מקצועי לאינסטגרם שלכם שיעזור לכם להגיע לעוד אנשים", gradient: "from-pink-500/20 to-pink-600/20", border: "border-pink-500/30 hover:border-pink-500/60" },
+                { icon: "📸", title: "תוכן לרשתות", description: "חלקים נבחרים מהפרק יעלו בכל הרשתות החברתיות בשיתוף איתכם", gradient: "from-pink-500/20 to-pink-600/20", border: "border-pink-500/30 hover:border-pink-500/60" },
                 { icon: "🤝", title: "קשרים בקהילה", description: "תהפכו לחלק מהמשפחה של יוצאים לטראק ותיצרו קשרים עם אמנים ואנשי תעשייה", gradient: "from-amber-500/20 to-amber-600/20", border: "border-amber-500/30 hover:border-amber-500/60" }
               ].map((benefit, index) => (
                 <div key={index} className={`glass-card rounded-2xl p-8 bg-gradient-to-br ${benefit.gradient} border ${benefit.border} transition-all duration-300 hover:scale-[1.02]`}>
