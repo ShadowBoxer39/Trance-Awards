@@ -585,9 +585,10 @@ export default function Home({
       <div className="trance-backdrop min-h-screen text-gray-100">
         <Navigation currentPage="home" />
 
-        <div className="pt-24 pb-8 px-4 relative z-20">
-          <DailyDuel />
-        </div>
+        {/* <div className="pt-24 pb-8 px-4 relative z-20">
+  <DailyDuel />
+</div> 
+*/}
 
         {/* HERO */}
         <header className="relative overflow-hidden">
