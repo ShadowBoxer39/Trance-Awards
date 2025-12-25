@@ -39,15 +39,50 @@ const FAQ_ITEMS = [
   { question: "האם אני צריך כמות מסוימת של טראקים בחוץ?", answer: "לא! אנחנו מחפשים פוטנציאל ואיכות, לא כמות. גם אם יש לכם רק טראק אחד או שניים, שלחו אותם." },
 ];
 
-const DEADLINE_DATE: string | null = null;
+const DEADLINE_DATE = new Date('2026-01-31T23:59:59');
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
 
 export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
   const [formData, setFormData] = React.useState({ fullName: "", stageName: "", age: "", phone: "", experienceYears: "", inspirations: "", trackLink: "" });
   const [formSubmitted, setFormSubmitted] = React.useState(false);
   const [formLoading, setFormLoading] = React.useState(false);
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = React.useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [isExpired, setIsExpired] = React.useState(false);
 
   React.useEffect(() => { document.documentElement.setAttribute("dir", "rtl"); }, []);
+
+  React.useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const difference = DEADLINE_DATE.getTime() - now.getTime();
+
+      if (difference <= 0) {
+        setIsExpired(true);
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / (1000 * 60)) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,16 +145,54 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
             <p className="text-xl md:text-2xl text-gray-300 mb-4 font-light">4 אמנים. במה אחת. הזדמנות אמיתית.</p>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">קהילת יוצאים לטראק מזמינה אמנים צעירים ומבטיחים להצטרף לפרק מיוחד שיתן לכם במה להציג את המוזיקה שלכם בפני אלפי אנשים</p>
 
+            {/* Countdown Timer */}
+            {!isExpired && (
+              <div className="mb-10">
+                <p className="text-gray-400 text-sm mb-4">⏰ ההגשות נסגרות בעוד:</p>
+                <div className="inline-flex items-center gap-3 md:gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-purple-600/30 to-purple-800/30 border border-purple-500/40 flex items-center justify-center">
+                      <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
+                    </div>
+                    <span className="text-xs text-gray-500 mt-2">ימים</span>
+                  </div>
+                  <span className="text-2xl text-purple-400 font-bold mb-5">:</span>
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-pink-600/30 to-pink-800/30 border border-pink-500/40 flex items-center justify-center">
+                      <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    </div>
+                    <span className="text-xs text-gray-500 mt-2">שעות</span>
+                  </div>
+                  <span className="text-2xl text-pink-400 font-bold mb-5">:</span>
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-cyan-600/30 to-cyan-800/30 border border-cyan-500/40 flex items-center justify-center">
+                      <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                    </div>
+                    <span className="text-xs text-gray-500 mt-2">דקות</span>
+                  </div>
+                  <span className="text-2xl text-cyan-400 font-bold mb-5">:</span>
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-amber-600/30 to-amber-800/30 border border-amber-500/40 flex items-center justify-center">
+                      <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                    </div>
+                    <span className="text-xs text-gray-500 mt-2">שניות</span>
+                  </div>
+                </div>
+                <p className="text-gray-500 text-xs mt-4">תאריך אחרון להגשה: 31 בינואר 2026</p>
+              </div>
+            )}
+
+            {isExpired && (
+              <div className="mb-10 inline-flex items-center gap-2 px-6 py-3 bg-red-500/20 border border-red-500/50 rounded-full text-red-300 text-lg font-medium">
+                <span>⏰</span>
+                <span>ההגשות נסגרו</span>
+              </div>
+            )}
+
             <button onClick={scrollToForm} className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105">
               להגשת מועמדות
               <svg className="w-5 h-5 transform group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
             </button>
-
-            {DEADLINE_DATE && (
-              <div className="mt-8 inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-full text-red-300 text-sm">
-                <span>⏰</span><span>הגשות עד {DEADLINE_DATE}</span>
-              </div>
-            )}
           </div>
 
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
@@ -315,8 +388,8 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
                     <input type="url" id="trackLink" name="trackLink" required value={formData.trackLink} onChange={handleChange} className="w-full px-5 py-4 bg-black/50 border-2 border-gray-700 focus:border-purple-500 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors" placeholder="https://soundcloud.com/... או https://youtube.com/..." />
                     <p className="text-xs text-gray-500 mt-2">SoundCloud, YouTube, Spotify או כל פלטפורמה אחרת</p>
                   </div>
-                  <button type="submit" disabled={formLoading} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-lg py-5 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3">
-                    {formLoading ? (<><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>שולח...</>) : (<>שלח מועמדות<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></>)}
+                  <button type="submit" disabled={formLoading || isExpired} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-lg py-5 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3">
+                    {formLoading ? (<><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>שולח...</>) : isExpired ? (<>ההגשות נסגרו</>) : (<>שלח מועמדות<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></>)}
                   </button>
                 </form>
               ) : (
