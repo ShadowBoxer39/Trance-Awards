@@ -1,8 +1,8 @@
 // pages/admin.tsx
 import React from "react";
 import Link from "next/link";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { CATEGORIES } from "@/data/awards-data";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 
 const getYouTubeVideoId = (url: string): string | null => {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -63,34 +63,12 @@ interface AdminArtist {
   artist_episodes?: { episode_id: number; is_primary: boolean }[];
 }
 
-function formatDuration(seconds: number | null): string {
-  if (!seconds || seconds < 0) return '00:00:00';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
-}
-
 const formatDate = (dateString: string): string => {
   try {
     return new Date(dateString).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
   } catch {
     return dateString;
   }
-};
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="glass p-3 rounded-lg text-sm border border-purple-500/50">
-        <p className="font-semibold text-cyan-400 mb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} style={{ color: entry.color }}>{entry.name}: {entry.value}</p>
-        ))}
-      </div>
-    );
-  }
-  return null;
 };
 
 export default function Admin() {
@@ -107,12 +85,6 @@ export default function Admin() {
   const [trackSubs, setTrackSubs] = React.useState<TrackSubmission[]>([]);
   const [trackSubsLoading, setTrackSubsLoading] = React.useState(false);
   const [selectedTrackSub, setSelectedTrackSub] = React.useState<TrackSubmission | null>(null);
-
-  const [analytics, setAnalytics] = React.useState<any>(null);
-  const [analyticsLoading, setAnalyticsLoading] = React.useState(false);
-  
-  const [dateRange, setDateRange] = React.useState<"today" | "7d" | "30d" | "all">("today");
-  const [showComparison, setShowComparison] = React.useState(false);
   
   const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "track-submissions" | "artists">("signups");
   const [showVotesArchive, setShowVotesArchive] = React.useState(false);
@@ -153,11 +125,10 @@ export default function Admin() {
   React.useEffect(() => {
     if (tally) {
       if (activeTab === "signups") fetchSignups();
-      else if (activeTab === "analytics") fetchAnalytics();
       else if (activeTab === "track-submissions") fetchTrackSubmissions();
       else if (activeTab === "artists") fetchArtists();
     }
-  }, [tally, activeTab, dateRange]);
+  }, [tally, activeTab]);
 
   const fetchStats = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -171,18 +142,6 @@ export default function Admin() {
       localStorage.setItem("ADMIN_KEY", key);
     } catch (err: any) { setError(err.message); }
     finally { setLoading(false); }
-  };
-
-  const fetchAnalytics = async () => {
-    if (!key) return;
-    setAnalyticsLoading(true);
-    try {
-      const r = await fetch(`/api/analytics-data?key=${encodeURIComponent(key)}&range=${dateRange}&_t=${Date.now()}`);
-      const j = await r.json();
-      if (!r.ok || !j?.ok) throw new Error(j?.error);
-      setAnalytics(j.analytics);
-    } catch { alert("שגיאה בטעינת סטטיסטיקות"); }
-    finally { setAnalyticsLoading(false); }
   };
 
   const fetchSignups = async () => {
@@ -305,16 +264,6 @@ export default function Admin() {
     return cat?.nominees.find(n => n.id === nomineeId)?.name || nomineeId;
   };
 
-  const ChangeIndicator = ({ value }: { value: number }) => {
-    if (!showComparison) return null;
-    const isPositive = value > 0;
-    return (
-      <div className={`text-xs mt-1 font-medium ${value === 0 ? 'text-gray-400' : isPositive ? 'text-green-400' : 'text-red-400'}`}>
-        {value === 0 ? '=' : isPositive ? '↑' : '↓'} {Math.abs(value).toFixed(1)}%
-      </div>
-    );
-  };
-
   if (!tally && key && !loading && !error) {
     return <main className="min-h-screen neon-backdrop text-white flex items-center justify-center"><div className="text-6xl animate-pulse">⏳</div></main>;
   }
@@ -362,204 +311,12 @@ export default function Admin() {
               ))}
             </div>
 
+            {/* ===== ANALYTICS TAB - NEW COMPONENT ===== */}
             {activeTab === "analytics" && (
-              analyticsLoading ? (
-                <div className="p-12 text-center"><div className="text-4xl animate-spin">⏳</div></div>
-              ) : !analytics ? (
-                <div className="p-12 text-center text-white/50">📊 אין נתונים</div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="glass rounded-2xl p-4 flex flex-wrap gap-4 justify-between items-center">
-                    <h2 className="text-2xl font-semibold">סטטיסטיקות אתר</h2>
-                    <div className="flex flex-wrap gap-2 items-center">
-                      {(["today", "7d", "30d", "all"] as const).map(range => (
-                        <button key={range} onClick={() => setDateRange(range)}
-                          className={`px-4 py-2 rounded-xl font-medium transition ${dateRange === range ? "bg-gradient-to-r from-cyan-500 to-purple-500" : "bg-white/5 text-white/60 hover:text-white"}`}>
-                          {range === "today" ? "היום" : range === "7d" ? "7 ימים" : range === "30d" ? "30 ימים" : "הכל"}
-                        </button>
-                      ))}
-                      <div className="h-6 w-px bg-white/20 mx-2" />
-                      <button onClick={() => setShowComparison(!showComparison)}
-                        className={`px-4 py-2 rounded-xl font-medium transition ${showComparison ? "bg-gradient-to-r from-yellow-500 to-orange-500" : "bg-white/5 text-white/60"}`}>
-                        📊 השוואה
-                      </button>
-                      <button onClick={fetchAnalytics} className="bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl">🔄</button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <div className="glass rounded-2xl p-5 border-r-4 border-cyan-500">
-                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">סה״כ ביקורים</span><span className="text-2xl">👥</span></div>
-                      <div className="text-3xl font-bold text-cyan-400">{analytics.totalVisits}</div>
-                      <ChangeIndicator value={analytics.comparison.visitsChange} />
-                    </div>
-                    <div className="glass rounded-2xl p-5 border-r-4 border-emerald-500">
-                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">מבקרים ייחודיים</span><span className="text-2xl">🧑‍💻</span></div>
-                      <div className="text-3xl font-bold text-emerald-400">{analytics.uniqueVisitors}</div>
-                      <ChangeIndicator value={analytics.comparison.uniqueChange} />
-                    </div>
-                    <div className="glass rounded-2xl p-5 border-r-4 border-purple-500">
-                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">זמן שהייה</span><span className="text-2xl">⏱️</span></div>
-                      <div className="text-3xl font-bold text-purple-400">{formatDuration(analytics.avgDuration)}</div>
-                      <ChangeIndicator value={analytics.comparison.durationChange} />
-                    </div>
-                    <div className="glass rounded-2xl p-5 border-r-4 border-green-500">
-                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">מישראל</span><span className="text-2xl">🇮🇱</span></div>
-                      <div className="text-3xl font-bold text-green-400">{analytics.israelPercentage}%</div>
-                    </div>
-                    <div className="glass rounded-2xl p-5 border-r-4 border-orange-500">
-                      <div className="flex justify-between mb-2"><span className="text-white/60 text-sm">נטישה</span><span className="text-2xl">📉</span></div>
-                      <div className="text-3xl font-bold text-orange-400">{analytics.bounceRate}%</div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔄 חוזרים מול חדשים</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-blue-500/20 rounded-xl p-4 text-center">
-                          <div className="text-4xl mb-2">🔁</div>
-                          <div className="text-3xl font-bold text-blue-400">{analytics.returningVisitors}</div>
-                          <div className="text-sm text-white/60">חוזרים</div>
-                          <div className="text-xs text-blue-300">{analytics.uniqueVisitors > 0 ? ((analytics.returningVisitors / analytics.uniqueVisitors) * 100).toFixed(0) : 0}%</div>
-                        </div>
-                        <div className="bg-green-500/20 rounded-xl p-4 text-center">
-                          <div className="text-4xl mb-2">✨</div>
-                          <div className="text-3xl font-bold text-green-400">{analytics.newVisitors}</div>
-                          <div className="text-sm text-white/60">חדשים</div>
-                          <div className="text-xs text-green-300">{analytics.uniqueVisitors > 0 ? ((analytics.newVisitors / analytics.uniqueVisitors) * 100).toFixed(0) : 0}%</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📱 מכשירים</h3>
-                      <div className="flex items-center justify-around">
-                        <div className="w-32 h-32">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart><Pie data={analytics.deviceData} cx="50%" cy="50%" innerRadius={35} outerRadius={50} dataKey="value">
-                              {analytics.deviceData.map((entry: any, i: number) => <Cell key={i} fill={entry.color} />)}
-                            </Pie></PieChart>
-                          </ResponsiveContainer>
-                        </div>
-                        <div className="space-y-2">
-                          {analytics.deviceData.map((d: any, i: number) => (
-                            <div key={i} className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
-                              <span className="text-sm">{d.name}: {d.value} ({analytics.totalVisits > 0 ? ((d.value / analytics.totalVisits) * 100).toFixed(0) : 0}%)</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {dateRange !== "today" && analytics.trendData && analytics.trendData.length > 0 && (
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📈 מגמת ביקורים</h3>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={analytics.trendData}>
-                            <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                            <YAxis stroke="#6b7280" fontSize={12} />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Line type="monotone" dataKey="visits" stroke="#06b6d4" strokeWidth={3} dot={{ fill: '#06b6d4', r: 4 }} name="ביקורים" />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🚪 דפי נחיתה</h3>
-                      <div className="space-y-3">
-                        {analytics.topLandingPages?.map((p: any, i: number) => (
-                          <div key={i} className="bg-white/5 rounded-lg p-3">
-                            <div className="flex justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-cyan-500/20 text-cyan-400'}`}>{i + 1}</span>
-                                <span className="font-medium truncate max-w-[250px] block" title={p.page}>{p.page}</span>
-                              </div>
-                              <div className="text-left"><div className="font-bold text-cyan-400">{p.count}</div><div className="text-xs text-white/50">{p.percentage}%</div></div>
-                            </div>
-                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-cyan-500 to-purple-500 h-full rounded-full" style={{ width: `${p.percentage}%` }} /></div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">📄 דפים פופולריים</h3>
-                      <div className="space-y-3">
-                        {analytics.topPages?.map((p: any, i: number) => (
-                          <div key={i} className="bg-white/5 rounded-lg p-3">
-                            <div className="flex justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-purple-500/20 text-purple-400'}`}>{i + 1}</span>
-                                <span className="font-medium truncate max-w-[250px] block" title={p.page}>{p.page}</span>
-                              </div>
-                              <div className="text-left"><div className="font-bold text-purple-400">{p.count}</div><div className="text-xs text-white/50">{p.percentage}%</div></div>
-                            </div>
-                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full" style={{ width: `${p.percentage}%` }} /></div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔗 מקורות תנועה</h3>
-                      <div className="space-y-3">
-                        {analytics.topSources?.map((s: any, i: number) => (
-                          <div key={i} className="bg-white/5 rounded-lg p-3">
-                            <div className="flex justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-pink-500/20 text-pink-400'}`}>{i + 1}</span>
-                                <span className="font-medium truncate max-w-[200px]" title={s.source}>{s.source}</span>
-                              </div>
-                              <div className="text-left"><div className="font-bold text-pink-400">{s.count}</div><div className="text-xs text-white/50">{s.percentage}%</div></div>
-                            </div>
-                            <div className="w-full bg-gray-800 rounded-full h-2"><div className="bg-gradient-to-r from-pink-500 to-orange-500 h-full rounded-full" style={{ width: `${s.percentage}%` }} /></div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="glass rounded-2xl p-6">
-                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🕐 שעות שיא</h3>
-                      <div className="grid grid-cols-5 gap-3">
-                        {analytics.peakHours?.map((h: any, i: number) => (
-                          <div key={i} className="bg-white/5 rounded-xl p-3 text-center">
-                            <div className="text-2xl mb-1">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📊"}</div>
-                            <div className="text-lg font-bold text-cyan-400">{h.hour}</div>
-                            <div className="text-xs text-white/60">{h.count}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {analytics.topArtists && analytics.topArtists.length > 0 && (
-                    <div className="glass rounded-2xl p-6 mt-4">
-                      <h3 className="text-xl font-semibold mb-4 border-b border-white/10 pb-3">🔥 עמודי האמנים החמים ביותר</h3>
-                      <div className="space-y-3">
-                        {analytics.topArtists.map((stat: any, i: number) => (
-                          <div key={i} className="bg-white/5 rounded-lg p-3">
-                            <div className="flex justify-between mb-1">
-                              <div className="flex items-center gap-2">
-                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500/30 text-yellow-400' : 'bg-purple-500/20 text-purple-400'}`}>{i + 1}</span>
-                                <span className="font-medium text-lg text-cyan-300">{stat.slug}</span>
-                              </div>
-                              <div className="text-left"><div className="font-bold text-purple-400">{stat.visits} ביקורים</div></div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
+              <AnalyticsDashboard adminKey={key} />
             )}
 
+            {/* ===== SIGNUPS TAB - UNCHANGED ===== */}
             {activeTab === "signups" && (
               <div className="space-y-4">
                 <div className="glass rounded-2xl p-4 flex justify-between items-center">
@@ -619,6 +376,7 @@ export default function Admin() {
               </div>
             )}
 
+            {/* ===== TRACK SUBMISSIONS TAB - UNCHANGED ===== */}
             {activeTab === "track-submissions" && (
               <div className="space-y-4">
                 <div className="glass rounded-2xl p-4 flex justify-between items-center">
@@ -664,6 +422,7 @@ export default function Admin() {
               </div>
             )}
 
+            {/* ===== ARTISTS TAB - UNCHANGED ===== */}
             {activeTab === "artists" && (
               <div className="space-y-4">
                 <div className="glass rounded-2xl p-4 flex justify-between items-center">
@@ -766,6 +525,7 @@ export default function Admin() {
               </div>
             )}
 
+            {/* ===== VOTES ARCHIVE MODAL - UNCHANGED ===== */}
             {showVotesArchive && tally && (
               <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4" onClick={() => setShowVotesArchive(false)}>
                 <div className="glass rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
