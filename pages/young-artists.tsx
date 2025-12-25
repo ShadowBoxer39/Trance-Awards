@@ -149,7 +149,7 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
             {!isExpired && (
               <div className="mb-10">
                 <p className="text-gray-400 text-sm mb-4">⏰ ההגשות נסגרות בעוד:</p>
-                <div className="inline-flex items-center gap-3 md:gap-4">
+                <div className="inline-flex items-center gap-3 md:gap-4" dir="ltr">
                   <div className="flex flex-col items-center">
                     <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-purple-600/30 to-purple-800/30 border border-purple-500/40 flex items-center justify-center">
                       <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
