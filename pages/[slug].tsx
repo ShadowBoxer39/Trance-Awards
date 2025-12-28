@@ -826,10 +826,10 @@ const seoDescription = buildMetaDescription(
 
              <div className={`grid grid-cols-1 ${mainFestivalSet ? 'md:grid-cols-2' : ''} gap-4`}>
                   {/* Festival set */}
-                  {mainFestivalSet && (
-                    <div className="bg-black/40 border border-white/10 rounded-lg p-3">
-                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-1 text-pink-200">
-                        סט פסטיבל נבחר
+                  {mainFestivalSet && mainFestivalSet.youtube_id && (
+  <div className="bg-black/40 border border-white/10 rounded-lg p-3">
+    <h3 className="text-sm font-semibold mb-2 flex items-center gap-1 text-pink-200">
+   סט פסטיבל נבחר
                         <FaStar className="text-yellow-400 text-xs" />
                       </h3>
                       <div className="aspect-video rounded-md overflow-hidden border border-white/10 mb-2">
