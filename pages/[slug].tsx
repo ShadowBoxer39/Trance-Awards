@@ -471,12 +471,7 @@ const totalAlbums = spotifyDiscography.filter(
 ).length;
 
   const seoTitle = buildMetaTitle(artist);
-const seoDescription = buildMetaDescription(
-  artist,
-  totalTracksOut,
-  totalAlbums,
-  firstMusicYear
-);
+const seoDescription = bioText.slice(0, 155) + (bioText.length > 155 ? '...' : '');
 
 
 
