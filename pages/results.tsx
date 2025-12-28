@@ -95,35 +95,33 @@ const TOTAL_VOTES = "22,105";
 // ANIMATED COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Floating particles background
+// Floating particles background - using CSS for smoother mobile performance
 function ParticleField() {
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([]);
-  
-  useEffect(() => {
-    const newParticles = [...Array(40)].map((_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-    }));
-    setParticles(newParticles);
-  }, []);
-
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          className="absolute w-1 h-1 bg-purple-400/30 rounded-full"
-          style={{ left: `${p.x}%`, top: `${p.y}%` }}
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.2, 0.6, 0.2],
-          }}
-          transition={{
-            duration: 4 + Math.random() * 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: Math.random() * 2,
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0); opacity: 0.2; }
+          50% { transform: translateY(-20px); opacity: 0.5; }
+        }
+        .particle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: rgba(168, 85, 247, 0.3);
+          border-radius: 50%;
+          animation: float 4s ease-in-out infinite;
+        }
+      `}</style>
+      {[...Array(15)].map((_, i) => (
+        <div
+          key={i}
+          className="particle"
+          style={{
+            left: `${10 + (i * 6)}%`,
+            top: `${15 + (i * 5) % 70}%`,
+            animationDelay: `${i * 0.3}s`,
+            animationDuration: `${4 + (i % 3)}s`,
           }}
         />
       ))}
@@ -131,34 +129,44 @@ function ParticleField() {
   );
 }
 
-// Glowing orbs
+// Glowing orbs - using CSS for smoother mobile performance
 function GlowingOrbs() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      <motion.div
-        className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px]"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/15 rounded-full blur-[100px]"
-        animate={{
-          scale: [1.2, 1, 1.2],
-          opacity: [0.2, 0.4, 0.2],
-        }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-      />
-      <motion.div
-        className="absolute top-1/2 right-1/3 w-64 h-64 bg-pink-500/15 rounded-full blur-[80px]"
-        animate={{
-          scale: [1, 1.3, 1],
-          opacity: [0.2, 0.35, 0.2],
-        }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-      />
+      <style jsx>{`
+        @keyframes pulse1 {
+          0%, 100% { transform: scale(1); opacity: 0.15; }
+          50% { transform: scale(1.1); opacity: 0.25; }
+        }
+        @keyframes pulse2 {
+          0%, 100% { transform: scale(1.1); opacity: 0.1; }
+          50% { transform: scale(1); opacity: 0.2; }
+        }
+        .orb1 {
+          position: absolute;
+          top: 25%;
+          left: 25%;
+          width: 300px;
+          height: 300px;
+          background: rgba(147, 51, 234, 0.2);
+          border-radius: 50%;
+          filter: blur(80px);
+          animation: pulse1 8s ease-in-out infinite;
+        }
+        .orb2 {
+          position: absolute;
+          bottom: 25%;
+          right: 25%;
+          width: 250px;
+          height: 250px;
+          background: rgba(6, 182, 212, 0.15);
+          border-radius: 50%;
+          filter: blur(70px);
+          animation: pulse2 6s ease-in-out infinite;
+        }
+      `}</style>
+      <div className="orb1" />
+      <div className="orb2" />
     </div>
   );
 }
@@ -167,13 +175,9 @@ function GlowingOrbs() {
 function PlaceBadge({ place }: { place: number }) {
   if (place === 1) {
     return (
-      <motion.div
-        className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14"
-        animate={{ rotate: [0, -5, 5, 0], scale: [1, 1.05, 1] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      >
+      <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14">
         <FaTrophy className="text-3xl sm:text-4xl text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" />
-      </motion.div>
+      </div>
     );
   }
   if (place === 2) {
@@ -261,13 +265,9 @@ function ResultCard({
           transition={{ duration: 0.6 }}
         />
 
-        {/* Winner pulse effect */}
+        {/* Winner highlight - static glow instead of animation */}
         {isWinner && (
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-transparent to-yellow-400/10"
-            animate={{ opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
+          <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-transparent to-yellow-400/10" />
         )}
 
         <div className="relative p-4 sm:p-5 flex items-center gap-4">
@@ -492,16 +492,9 @@ function HeroSection() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-7xl sm:text-8xl mb-6"
         >
-          <motion.span
-            animate={{ 
-              rotate: [0, -5, 5, 0],
-              scale: [1, 1.05, 1],
-            }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="inline-block"
-          >
+          <span className="inline-block text-7xl sm:text-8xl">
             🏆
-          </motion.span>
+          </span>
         </motion.div>
 
         {/* Subtitle */}
@@ -525,14 +518,11 @@ function HeroSection() {
           <span className="text-white font-bold text-lg">{TOTAL_VOTES} הצבעות</span>
         </motion.div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator - static */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1, y: [0, 10, 0] }}
-          transition={{ 
-            opacity: { delay: 1.2, duration: 0.5 },
-            y: { delay: 1.2, duration: 1.5, repeat: Infinity }
-          }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.5 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40"
         >
           <div className="flex flex-col items-center gap-2">
