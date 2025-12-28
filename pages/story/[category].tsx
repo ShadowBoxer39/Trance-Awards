@@ -80,28 +80,37 @@ function StoryCard({ winner }: { winner: typeof WINNERS[string] }) {
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-between py-12 px-6">
         
-        {/* Top: Brand logos */}
+        {/* Top: Track Trip branding - prominent */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex items-center gap-3"
+          className="flex flex-col items-center gap-3"
         >
-          <Image
-            src="/images/logo.png"
-            alt="Track Trip"
-            width={28}
-            height={28}
-            className="rounded-lg opacity-50"
-          />
-          <div className="w-px h-5 bg-white/15" />
-          <Image
-            src="/images/musikroom.png"
-            alt="Musikroom"
-            width={28}
-            height={28}
-            className="rounded-lg opacity-50 bg-white/5 p-0.5"
-          />
+          <div className="flex items-center gap-3">
+            <Image
+              src="/images/logo.png"
+              alt="יוצאים לטראק"
+              width={40}
+              height={40}
+              className="rounded-xl border border-white/20"
+            />
+            <div className="flex flex-col items-start">
+              <span className="text-white/90 text-sm font-medium">יוצאים לטראק</span>
+              <span className="text-white/40 text-[10px] tracking-wide">TRACK TRIP</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-white/30 text-[9px]">בשיתוף</span>
+            <Image
+              src="/images/musikroom.png"
+              alt="Musikroom"
+              width={20}
+              height={20}
+              className="rounded"
+            />
+            <span className="text-white/30 text-[9px]">Musikroom</span>
+          </div>
         </motion.div>
 
         {/* Middle: Main content */}
@@ -205,13 +214,17 @@ function StoryCard({ winner }: { winner: typeof WINNERS[string] }) {
           </motion.div>
         </div>
 
-        {/* Bottom: URL */}
+        {/* Bottom: Track Trip branding */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 1.1 }}
+          className="flex flex-col items-center gap-1"
         >
-          <p className="text-[9px] tracking-[0.15em] text-white/25 font-light">
+          <p className="text-white/50 text-[10px] tracking-wide">
+            נבחרי השנה בטראנס 2025
+          </p>
+          <p className="text-[9px] tracking-[0.15em] text-white/30 font-light">
             TRACKTRIP.CO.IL/RESULTS
           </p>
         </motion.div>
