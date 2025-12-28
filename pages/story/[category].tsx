@@ -1,10 +1,9 @@
 // pages/story/[category].tsx - Elegant Instagram Story optimized winner pages
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
-import html2canvas from "html2canvas";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // WINNERS DATA
@@ -65,9 +64,9 @@ const WINNERS: Record<string, {
 // ELEGANT STORY CARD - Optimized for 9:16 with LARGER elements
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StoryCard({ winner, cardRef }: { winner: typeof WINNERS[string]; cardRef: React.RefObject<HTMLDivElement | null> }) {
+function StoryCard({ winner }: { winner: typeof WINNERS[string] }) {
   return (
-    <div ref={cardRef as React.RefObject<HTMLDivElement>} className="relative w-full h-full bg-[#0a0a0a] overflow-hidden">
+    <div className="relative w-full h-full bg-[#0a0a0a] overflow-hidden">
       
       {/* Subtle gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a]" />
@@ -244,8 +243,6 @@ export default function StoryPage() {
   const router = useRouter();
   const { category } = router.query;
   const [isClient, setIsClient] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const cardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -255,27 +252,6 @@ export default function StoryPage() {
       document.body.style.overflow = "auto";
     };
   }, []);
-
-  const handleDownload = async () => {
-    if (!cardRef.current || !winner) return;
-    
-    setIsDownloading(true);
-    try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3, // High resolution for Instagram
-        backgroundColor: "#0a0a0a",
-        useCORS: true,
-      });
-      
-      const link = document.createElement("a");
-      link.download = `${winner.name.replace(/\s+/g, "-")}-${category}-winner-2025.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    } catch (error) {
-      console.error("Download failed:", error);
-    }
-    setIsDownloading(false);
-  };
 
   const winner = category ? WINNERS[category as string] : null;
 
@@ -318,63 +294,9 @@ export default function StoryPage() {
         <link rel="icon" type="image/png" href="/images/logo.png" />
       </Head>
 
-      {/* Instagram Story aspect ratio container */}
-      <main className="w-screen h-screen flex flex-col items-center justify-center bg-black gap-4">
-        
-        {/* Download button */}
-        <motion.button
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5 }}
-          onClick={handleDownload}
-          disabled={isDownloading}
-          className="px-6 py-3 rounded-full text-sm font-medium tracking-wide transition-all flex items-center gap-2"
-          style={{ 
-            backgroundColor: isDownloading ? "#1a1a1a" : winner.accentColor,
-            color: isDownloading ? "#666" : "#000"
-          }}
-        >
-          {isDownloading ? (
-            <>
-              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              <span>מוריד...</span>
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              <span>הורד לאינסטגרם</span>
-            </>
-          )}
-        </motion.button>
-
-        {/* Story card */}
-        <div 
-          className="relative bg-[#0a0a0a] shadow-2xl"
-          style={{
-            // Perfect 9:16 aspect ratio for Instagram Stories
-            width: "min(90vw, 50.625vh)", // slightly smaller to fit with button
-            height: "min(85vh, 160vw)",
-            maxWidth: "400px",
-            maxHeight: "711px",
-          }}
-        >
-          <StoryCard winner={winner} cardRef={cardRef} />
-        </div>
-
-        {/* Tip text */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          className="text-white/30 text-xs text-center"
-        >
-          או צלם מסך ושתף ישירות לסטורי 📱
-        </motion.p>
+      {/* Full screen for easy screenshot */}
+      <main className="w-screen h-screen bg-[#0a0a0a]">
+        <StoryCard winner={winner} />
       </main>
     </>
   );
