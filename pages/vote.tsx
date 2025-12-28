@@ -176,7 +176,7 @@ export default function Landing() {
 
             {/* Dynamic subtitle based on voting status */}
             {isClient && isVotingClosed ? (
-              <p className="text-white/80 text-lg mb-8">
+              <p className="text-white/80 text-lg mb-6">
                 תודה לכל מי שהשתתף! התוצאות נחשפות 🏆
               </p>
             ) : (
@@ -185,10 +185,27 @@ export default function Landing() {
               </p>
             )}
 
-            {/* Countdown Timer / Closed Message */}
-            <div className="mb-8">
-              <CountdownTimer />
-            </div>
+            {/* BIG Results CTA - show when voting closed */}
+            {isClient && isVotingClosed && (
+              <div className="mb-8">
+                <Link
+                  href="/results"
+                  className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 text-xl font-bold rounded-2xl bg-gradient-to-r from-yellow-500 via-orange-500 to-pink-500 text-white shadow-2xl shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-105 transition-all duration-300"
+                >
+                  <span className="text-3xl">🏆</span>
+                  <span>צפו בתוצאות!</span>
+                  <span className="text-3xl">🏆</span>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 blur opacity-30 group-hover:opacity-50 transition-opacity" />
+                </Link>
+              </div>
+            )}
+
+            {/* Countdown Timer - only show if voting is open */}
+            {isClient && !isVotingClosed && (
+              <div className="mb-8">
+                <CountdownTimer />
+              </div>
+            )}
 
             {/* Live Counter / Final Count */}
             <div className="mb-8">
@@ -203,35 +220,6 @@ export default function Landing() {
               >
                 המשך להצבעה
               </Link>
-            )}
-
-            {/* Results Card - link to results page */}
-            {isClient && isVotingClosed && (
-              <div className="glass rounded-2xl p-6 border-2 border-yellow-500/40">
-                <div className="text-center">
-                  <div className="text-5xl mb-3">🏆</div>
-                  <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                    התוצאות כאן!
-                  </h3>
-                  <p className="text-white/70 text-sm mb-4">
-                    גלו מי ניצח בכל קטגוריה בנבחרי השנה 2025
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <Link
-                      href="/results"
-                      className="btn-primary rounded-xl px-6 py-3 text-base inline-flex items-center gap-2 font-bold"
-                    >
-                      ✓ תוצאות סופיות
-                    </Link>
-                    <Link
-                      href="/"
-                      className="btn-ghost rounded-xl px-4 py-2 text-sm border border-white/20"
-                    >
-                      לאתר הראשי
-                    </Link>
-                  </div>
-                </div>
-              </div>
             )}
           </div>
         </section>
