@@ -194,16 +194,19 @@ function StoryCard({ winner, cardRef }: { winner: typeof WINNERS[string]; cardRe
             {winner.name}
           </motion.h1>
 
-          {/* Winner badge - styled */}
+          {/* Winner badge - solid background for better rendering */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.85 }}
-            className="px-6 py-2 rounded-full border"
-            style={{ borderColor: `${winner.accentColor}50` }}
+            className="px-8 py-2.5 rounded-full"
+            style={{ 
+              backgroundColor: "rgba(212, 175, 55, 0.15)",
+              border: "2px solid rgba(212, 175, 55, 0.5)"
+            }}
           >
             <span 
-              className="text-sm tracking-[0.25em] font-medium uppercase"
+              className="text-sm tracking-[0.25em] font-semibold uppercase"
               style={{ color: winner.accentColor }}
             >
               Winner
