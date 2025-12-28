@@ -101,7 +101,7 @@ function StoryCard({ winner, cardRef }: { winner: typeof WINNERS[string]; cardRe
               <span className="text-white/40 text-[9px] tracking-wider">TRACK TRIP</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" dir="rtl">
             <span className="text-white/30 text-[8px]">בשיתוף</span>
             <Image
               src="/images/musikroom.png"
@@ -194,23 +194,26 @@ function StoryCard({ winner, cardRef }: { winner: typeof WINNERS[string]; cardRe
             {winner.name}
           </motion.h1>
 
-          {/* Winner badge - solid background for better rendering */}
+          {/* Winner badge - simple solid design for clean rendering */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.85 }}
-            className="px-8 py-2.5 rounded-full"
-            style={{ 
-              backgroundColor: "rgba(212, 175, 55, 0.15)",
-              border: "2px solid rgba(212, 175, 55, 0.5)"
-            }}
+            className="mt-2"
           >
-            <span 
-              className="text-sm tracking-[0.25em] font-semibold uppercase"
-              style={{ color: winner.accentColor }}
+            <div 
+              className="px-10 py-3 rounded-full"
+              style={{ 
+                backgroundColor: "#D4AF37",
+              }}
             >
-              Winner
-            </span>
+              <span 
+                className="text-base tracking-[0.2em] font-bold uppercase"
+                style={{ color: "#0a0a0a" }}
+              >
+                Winner
+              </span>
+            </div>
           </motion.div>
         </div>
 
