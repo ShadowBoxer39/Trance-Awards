@@ -130,9 +130,12 @@ export default function Landing() {
                   התחילו הצבעה
                 </Link>
               ) : isClient ? (
-                <span className="text-white/60 text-sm px-4 py-2">
-                  ההצבעה הסתיימה
-                </span>
+                <Link
+                  href="/results"
+                  className="btn-primary rounded-2xl px-4 py-2 inline-flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 overflow-hidden"
+                >
+                  צפו בתוצאות 🏆
+                </Link>
               ) : null}
             </div>
           </div>
@@ -174,7 +177,7 @@ export default function Landing() {
             {/* Dynamic subtitle based on voting status */}
             {isClient && isVotingClosed ? (
               <p className="text-white/80 text-lg mb-8">
-                תודה לכל מי שהשתתף! התוצאות יפורסמו בקרוב 🏆
+                תודה לכל מי שהשתתף! התוצאות נחשפות 🏆
               </p>
             ) : (
               <p className="text-white/80 text-lg mb-8">
@@ -202,27 +205,24 @@ export default function Landing() {
               </Link>
             )}
 
-            {/* Results Coming Soon Card - show when voting closed */}
+            {/* Results Card - link to results page */}
             {isClient && isVotingClosed && (
-              <div className="glass rounded-2xl p-6 border-2 border-purple-500/30">
+              <div className="glass rounded-2xl p-6 border-2 border-yellow-500/40">
                 <div className="text-center">
-                  <div className="text-4xl mb-3">📊</div>
-                  <h3 className="text-xl font-bold mb-2 text-purple-400">
-                    התוצאות בדרך!
+                  <div className="text-5xl mb-3">🏆</div>
+                  <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                    התוצאות כאן!
                   </h3>
                   <p className="text-white/70 text-sm mb-4">
-                    אנחנו עובדים על עיבוד התוצאות ויפורסמו בקרוב
+                    גלו מי ניצח בכל קטגוריה בנבחרי השנה 2025
                   </p>
                   <div className="flex flex-wrap justify-center gap-3">
-                    <a
-                      href="https://www.instagram.com/track_trip.trance/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary rounded-xl px-4 py-2 text-sm inline-flex items-center gap-2"
+                    <Link
+                      href="/results"
+                      className="btn-primary rounded-xl px-6 py-3 text-base inline-flex items-center gap-2 font-bold"
                     >
-                      <FaInstagram className="w-4 h-4" />
-                      עקבו לעדכונים
-                    </a>
+                      ✓ תוצאות סופיות
+                    </Link>
                     <Link
                       href="/"
                       className="btn-ghost rounded-xl px-4 py-2 text-sm border border-white/20"
@@ -382,14 +382,23 @@ export default function Landing() {
               </div>
               <div className="glass rounded-3xl p-8 text-center">
                 <div className="text-5xl mb-4">🗳️</div>
-                <h3 className="text-xl font-bold mb-2 text-white">הקהילה בחרה</h3>
+                <h3 className="text-xl font-bold mb-2 text-white">22,105 הצבעות</h3>
                 <p className="text-white/70">מאות מצביעים מכל רחבי הארץ</p>
               </div>
               <div className="glass rounded-3xl p-8 text-center">
                 <div className="text-5xl mb-4">🏆</div>
-                <h3 className="text-xl font-bold mb-2 text-white">התוצאות בקרוב</h3>
-                <p className="text-white/70">עקבו אחרינו לפרסום המנצחים</p>
+                <h3 className="text-xl font-bold mb-2 text-white">המנצחים נבחרו</h3>
+                <p className="text-white/70">גלו את התוצאות עכשיו!</p>
               </div>
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                href="/results"
+                className="btn-primary rounded-2xl px-8 py-4 text-lg font-bold inline-flex items-center justify-center gap-2 hover:scale-105 transition-transform"
+              >
+                <span>צפו בתוצאות</span>
+                <span>🏆</span>
+              </Link>
             </div>
           </section>
         )}
@@ -413,18 +422,15 @@ export default function Landing() {
             ) : isClient ? (
               <>
                 <div>
-                  <div className="text-base md:text-lg font-[700]">ההצבעה הסתיימה</div>
-                  <div className="text-white/70 text-sm">תודה לכל המשתתפים! התוצאות בקרוב.</div>
+                  <div className="text-base md:text-lg font-[700]">התוצאות נחשפו!</div>
+                  <div className="text-white/70 text-sm">גלו מי ניצח בכל קטגוריה.</div>
                 </div>
-                <a
-                  href="https://www.instagram.com/track_trip.trance/"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/results"
                   className="btn-primary rounded-2xl px-6 py-3 text-base inline-flex items-center justify-center gap-2"
                 >
-                  <FaInstagram className="w-5 h-5" />
-                  עקבו לתוצאות
-                </a>
+                  🏆 צפו בתוצאות
+                </Link>
               </>
             ) : null}
           </div>
