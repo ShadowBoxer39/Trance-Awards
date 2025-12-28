@@ -726,7 +726,7 @@ const seoDescription = buildMetaDescription(
         </span>
         {firstMusicYear && (
           <span className="inline-flex items-center gap-2 px-3 py-1 bg-black/40 border border-white/15 rounded-full text-[11px]">
-            יוצר מאז {firstMusicYear}
+         {artist.slug === 'amigdala' ? 'יוצרת' : 'יוצר'} מאז {firstMusicYear}
           </span>
         )}
       </div>
@@ -824,7 +824,7 @@ const seoDescription = buildMetaDescription(
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className={`grid grid-cols-1 ${mainFestivalSet ? 'md:grid-cols-2' : ''} gap-4`}>
                   {/* Festival set */}
                   {mainFestivalSet && (
                     <div className="bg-black/40 border border-white/10 rounded-lg p-3">
