@@ -176,7 +176,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
               href="/vote"
               className="btn-primary px-5 py-2 rounded-lg text-sm font-semibold whitespace-nowrap"
             >
-              נבחרי השנה 2025
+              תוצאות נבחרי השנה
             </Link>
           </div>
 
@@ -335,7 +335,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                 className="block btn-primary px-4 py-3 rounded-lg text-center font-semibold"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                נבחרי השנה 2025
+                תוצאות נבחרי השנה
               </Link>
             </div>
           </div>
