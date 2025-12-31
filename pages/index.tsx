@@ -1280,7 +1280,7 @@ export async function getServerSideProps() {
       .from('track_of_the_week_submissions')
       .select('*')
       .eq('is_approved', true)
-      .order('created_at', { ascending: false })
+      .order('approved_at', { ascending: false })
       .limit(1)
       .single();
 
