@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { getGoogleUserInfo } from '@/lib/googleAuthHelpers';
-import { FaMicrophoneAlt, FaInstagram, FaUser, FaEnvelope } from 'react-icons/fa';
+import { FaMicrophoneAlt, FaInstagram, FaUser, FaEnvelope, FaSoundcloud } from 'react-icons/fa';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,6 +24,7 @@ export default function RadioRegisterPage() {
   const [formData, setFormData] = useState({
     name: '',
     instagram: '',
+    soundcloud: '',
     bio: '',
   });
 
@@ -50,11 +51,11 @@ export default function RadioRegisterPage() {
 
       if (currentUser) {
         // Check if already has artist profile
-const { data: existingArtist } = await supabase
-  .from('radio_artists')
-  .select('id')
-  .eq('user_id', currentUser.id)
-  .maybeSingle();
+        const { data: existingArtist } = await supabase
+          .from('radio_artists')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
 
         if (existingArtist) {
           // Already registered, redirect to dashboard
@@ -82,12 +83,12 @@ const { data: existingArtist } = await supabase
       setUser(currentUser);
       
       if (currentUser) {
-    const { data: existingArtist } = await supabase
-  .from('radio_artists')
-  .select('id')
-  .eq('user_id', currentUser.id)
-  .maybeSingle();
-        
+        const { data: existingArtist } = await supabase
+          .from('radio_artists')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+
         if (existingArtist) {
           router.push('/radio/dashboard');
           return;
@@ -129,11 +130,11 @@ const { data: existingArtist } = await supabase
       const slug = generateSlug(formData.name);
 
       // Check if slug is unique
- const { data: existingSlug } = await supabase
-  .from('radio_artists')
-  .select('id')
-  .eq('slug', slug)
-  .maybeSingle();
+      const { data: existingSlug } = await supabase
+        .from('radio_artists')
+        .select('id')
+        .eq('slug', slug)
+        .maybeSingle();
 
       if (existingSlug) {
         setError('השם הזה כבר תפוס, נסה שם אחר');
@@ -149,6 +150,7 @@ const { data: existingArtist } = await supabase
           slug: slug,
           email: userInfo?.email || user.email,
           instagram: formData.instagram.trim() || null,
+          soundcloud: formData.soundcloud.trim() || null,
           image_url: userInfo?.photoUrl || null,
           bio: formData.bio.trim() || null,
           approved: false,
@@ -259,6 +261,22 @@ const { data: existingArtist } = await supabase
                     value={formData.instagram}
                     onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
                     placeholder="@username"
+                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:outline-none text-white placeholder-gray-500"
+                    dir="ltr"
+                  />
+                </div>
+
+                {/* SoundCloud */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <FaSoundcloud className="inline ml-2" />
+                    SoundCloud (אופציונלי)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.soundcloud}
+                    onChange={(e) => setFormData({ ...formData, soundcloud: e.target.value })}
+                    placeholder="soundcloud.com/username"
                     className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:outline-none text-white placeholder-gray-500"
                     dir="ltr"
                   />
