@@ -1,11 +1,11 @@
-// pages/radio/submit.tsx - Track Submission Form
+// pages/radio/submit.tsx - Track Submission Form (UPDATED)
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';
-import { FaMusic, FaCloudUploadAlt, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
+import { FaMusic, FaCloudUploadAlt, FaArrowRight, FaCheckCircle, FaImage } from 'react-icons/fa';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,10 +38,11 @@ export default function RadioSubmitPage() {
     trackName: '',
     bpm: '',
     genre: '',
-    downloadLink: '', // External download link (SoundCloud, Google Drive, etc.)
   });
 
   const [mp3File, setMp3File] = useState<File | null>(null);
+  const [artFile, setArtFile] = useState<File | null>(null);
+  const [artPreview, setArtPreview] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('dir', 'rtl');
@@ -75,7 +76,7 @@ export default function RadioSubmitPage() {
     checkAuth();
   }, [router]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMp3Change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -101,13 +102,40 @@ export default function RadioSubmitPage() {
     }
   };
 
+  const handleArtChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.includes('image/')) {
+      setError('יש להעלות קובץ תמונה בלבד (JPG, PNG)');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('התמונה גדולה מדי. מקסימום 5MB');
+      return;
+    }
+
+    setArtFile(file);
+    setError('');
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setArtPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!artistId) return;
 
-    // Require either file upload OR download link
-    if (!mp3File && !formData.downloadLink.trim()) {
-      setError('יש להעלות קובץ MP3 או לספק קישור להורדה');
+    // Require MP3 file
+    if (!mp3File) {
+      setError('יש להעלות קובץ MP3');
       return;
     }
 
@@ -115,37 +143,59 @@ export default function RadioSubmitPage() {
     setError('');
 
     try {
-      let mp3Url = formData.downloadLink.trim();
+      const timestamp = Date.now();
+      const safeName = formData.trackName.replace(/[^a-zA-Z0-9]/g, '_');
 
-      // Upload file if provided
-      if (mp3File) {
-        setUploadProgress(10);
-        
-        const fileExt = 'mp3';
-        const fileName = `${artistId}/${Date.now()}_${formData.trackName.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
+      // Upload MP3
+      setUploadProgress(10);
+      const mp3FileName = `${artistId}/${timestamp}_${safeName}.mp3`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: mp3Error } = await supabase.storage
+        .from('radio')
+        .upload(mp3FileName, mp3File, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (mp3Error) {
+        console.error('MP3 upload error:', mp3Error);
+        setError('שגיאה בהעלאת קובץ ה-MP3: ' + mp3Error.message);
+        setSubmitting(false);
+        return;
+      }
+
+      setUploadProgress(50);
+
+      // Get MP3 public URL
+      const { data: mp3UrlData } = supabase.storage
+        .from('radio')
+        .getPublicUrl(mp3FileName);
+
+      const mp3Url = mp3UrlData.publicUrl;
+
+      // Upload art if provided
+      let artUrl: string | null = null;
+      if (artFile) {
+        setUploadProgress(60);
+        const artExt = artFile.name.split('.').pop() || 'jpg';
+        const artFileName = `${artistId}/${timestamp}_${safeName}_art.${artExt}`;
+
+        const { error: artError } = await supabase.storage
           .from('radio')
-          .upload(fileName, mp3File, {
+          .upload(artFileName, artFile, {
             cacheControl: '3600',
             upsert: false,
           });
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          setError('שגיאה בהעלאת הקובץ: ' + uploadError.message);
-          setSubmitting(false);
-          return;
+        if (artError) {
+          console.error('Art upload error:', artError);
+          // Don't fail the whole submission, just skip the art
+        } else {
+          const { data: artUrlData } = supabase.storage
+            .from('radio')
+            .getPublicUrl(artFileName);
+          artUrl = artUrlData.publicUrl;
         }
-
-        setUploadProgress(70);
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('radio')
-          .getPublicUrl(fileName);
-
-        mp3Url = urlData.publicUrl;
       }
 
       setUploadProgress(80);
@@ -159,7 +209,7 @@ export default function RadioSubmitPage() {
           bpm: formData.bpm ? parseInt(formData.bpm) : null,
           genre: formData.genre || null,
           mp3_url: mp3Url,
-          download_link: formData.downloadLink.trim() || null,
+          art_url: artUrl,
           status: 'pending',
         });
 
@@ -310,16 +360,16 @@ export default function RadioSubmitPage() {
                 </select>
               </div>
 
-              {/* File Upload */}
+              {/* MP3 File Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  קובץ MP3
+                  קובץ MP3 *
                 </label>
                 <div className="relative">
                   <input
                     type="file"
                     accept=".mp3,audio/mpeg"
-                    onChange={handleFileChange}
+                    onChange={handleMp3Change}
                     className="hidden"
                     id="mp3-upload"
                   />
@@ -346,27 +396,45 @@ export default function RadioSubmitPage() {
                 </div>
               </div>
 
-              {/* OR divider */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1 border-t border-gray-700"></div>
-                <span className="text-gray-500 text-sm">או</span>
-                <div className="flex-1 border-t border-gray-700"></div>
-              </div>
-
-              {/* Download Link */}
+              {/* Track Art Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  קישור להורדה (SoundCloud, Google Drive, Dropbox)
+                  תמונת עטיפה (אופציונלי)
                 </label>
-                <input
-                  type="url"
-                  value={formData.downloadLink}
-                  onChange={(e) => setFormData({ ...formData, downloadLink: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:outline-none text-white placeholder-gray-500"
-                  dir="ltr"
-                />
-                <p className="text-xs text-gray-500 mt-1">ודאו שהקישור מאפשר הורדה ישירה</p>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleArtChange}
+                    className="hidden"
+                    id="art-upload"
+                  />
+                  <label
+                    htmlFor="art-upload"
+                    className={`flex items-center justify-center gap-3 w-full px-6 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                      artFile
+                        ? 'border-green-500 bg-green-500/10'
+                        : 'border-gray-700 hover:border-purple-500 bg-black/30'
+                    }`}
+                  >
+                    {artPreview ? (
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={artPreview}
+                          alt="Track art preview"
+                          className="w-16 h-16 rounded-lg object-cover"
+                        />
+                        <span className="text-green-400">{artFile?.name}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <FaImage className="text-gray-500 text-2xl" />
+                        <span className="text-gray-400">לחצו להעלאת תמונה (עד 5MB)</span>
+                      </>
+                    )}
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">מומלץ: תמונה ריבועית 500x500 פיקסלים</p>
               </div>
 
               {/* Progress bar */}
@@ -382,7 +450,7 @@ export default function RadioSubmitPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={submitting || !formData.trackName.trim()}
+                disabled={submitting || !formData.trackName.trim() || !mp3File}
                 className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting ? (
