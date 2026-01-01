@@ -381,10 +381,10 @@ function SubmissionCard({
           )}
         </div>
 
-        {/* Actions */}
+      {/* Actions */}
         <div className="flex items-center gap-2">
           {/* Download Button */}
-          
+          <a
             href={submission.mp3_url}
             target="_blank"
             rel="noopener noreferrer"
