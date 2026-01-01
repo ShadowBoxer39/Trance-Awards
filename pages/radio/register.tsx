@@ -50,11 +50,11 @@ export default function RadioRegisterPage() {
 
       if (currentUser) {
         // Check if already has artist profile
-        const { data: existingArtist } = await supabase
-          .from('radio_artists')
-          .select('id')
-          .eq('user_id', currentUser.id)
-          .single();
+const { data: existingArtist } = await supabase
+  .from('radio_artists')
+  .select('id')
+  .eq('user_id', currentUser.id)
+  .maybeSingle();
 
         if (existingArtist) {
           // Already registered, redirect to dashboard
@@ -82,12 +82,12 @@ export default function RadioRegisterPage() {
       setUser(currentUser);
       
       if (currentUser) {
-        const { data: existingArtist } = await supabase
-          .from('radio_artists')
-          .select('id')
-          .eq('user_id', currentUser.id)
-          .single();
-
+    const { data: existingArtist } = await supabase
+  .from('radio_artists')
+  .select('id')
+  .eq('user_id', currentUser.id)
+  .maybeSingle();
+        
         if (existingArtist) {
           router.push('/radio/dashboard');
           return;
@@ -129,11 +129,11 @@ export default function RadioRegisterPage() {
       const slug = generateSlug(formData.name);
 
       // Check if slug is unique
-      const { data: existingSlug } = await supabase
-        .from('radio_artists')
-        .select('id')
-        .eq('slug', slug)
-        .single();
+ const { data: existingSlug } = await supabase
+  .from('radio_artists')
+  .select('id')
+  .eq('slug', slug)
+  .maybeSingle();
 
       if (existingSlug) {
         setError('השם הזה כבר תפוס, נסה שם אחר');
