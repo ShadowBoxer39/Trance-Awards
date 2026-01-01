@@ -1,4 +1,4 @@
-// pages/radio/submit.tsx - Track Submission Form (UPDATED)
+// pages/Radio/submit.tsx - Track Submission Form (UPDATED)
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -51,7 +51,7 @@ export default function RadioSubmitPage() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        router.push('/radio/register');
+        router.push('/Radio/register');
         return;
       }
 
@@ -59,13 +59,13 @@ export default function RadioSubmitPage() {
 
       // Check if has artist profile
       const { data: artist } = await supabase
-        .from('radio_artists')
+        .from('Radio_artists')
         .select('id')
         .eq('user_id', session.user.id)
         .single();
 
       if (!artist) {
-        router.push('/radio/register');
+        router.push('/Radio/register');
         return;
       }
 
@@ -151,7 +151,7 @@ export default function RadioSubmitPage() {
       const mp3FileName = `${artistId}/${timestamp}_${safeName}.mp3`;
 
       const { error: mp3Error } = await supabase.storage
-        .from('radio')
+        .from('Radio')
         .upload(mp3FileName, mp3File, {
           cacheControl: '3600',
           upsert: false,
@@ -168,7 +168,7 @@ export default function RadioSubmitPage() {
 
       // Get MP3 public URL
       const { data: mp3UrlData } = supabase.storage
-        .from('radio')
+        .from('Radio')
         .getPublicUrl(mp3FileName);
 
       const mp3Url = mp3UrlData.publicUrl;
@@ -181,7 +181,7 @@ export default function RadioSubmitPage() {
         const artFileName = `${artistId}/${timestamp}_${safeName}_art.${artExt}`;
 
         const { error: artError } = await supabase.storage
-          .from('radio')
+          .from('Radio')
           .upload(artFileName, artFile, {
             cacheControl: '3600',
             upsert: false,
@@ -192,7 +192,7 @@ export default function RadioSubmitPage() {
           // Don't fail the whole submission, just skip the art
         } else {
           const { data: artUrlData } = supabase.storage
-            .from('radio')
+            .from('Radio')
             .getPublicUrl(artFileName);
           artUrl = artUrlData.publicUrl;
         }
@@ -202,7 +202,7 @@ export default function RadioSubmitPage() {
 
       // Create submission record
       const { error: insertError } = await supabase
-        .from('radio_submissions')
+        .from('Radio_submissions')
         .insert({
           artist_id: artistId,
           track_name: formData.trackName.trim(),
@@ -225,7 +225,7 @@ export default function RadioSubmitPage() {
 
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
-        router.push('/radio/dashboard');
+        router.push('/Radio/dashboard');
       }, 2000);
 
     } catch (err: any) {
@@ -256,7 +256,7 @@ export default function RadioSubmitPage() {
             <h1 className="text-4xl font-bold mb-4 text-green-400">הטראק נשלח בהצלחה!</h1>
             <p className="text-gray-400 mb-8">נבדוק את הטראק ונעדכן אותך בהקדם</p>
             <Link
-              href="/radio/dashboard"
+              href="/Radio/dashboard"
               className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-3 px-6 rounded-xl transition-all"
             >
               <FaArrowRight className="rotate-180" />
@@ -280,7 +280,7 @@ export default function RadioSubmitPage() {
         <div className="max-w-2xl mx-auto px-6 py-12">
           {/* Back link */}
           <Link
-            href="/radio/dashboard"
+            href="/Radio/dashboard"
             className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 mb-8 transition-colors"
           >
             <FaArrowRight />
