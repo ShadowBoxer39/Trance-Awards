@@ -25,13 +25,15 @@ export default function RadioPage() {
       
       if (session?.user) {
         // Check if user has a radio artist profile
-        const { data: artist } = await supabase
+        // Using maybeSingle() instead of single() to avoid error when no row exists
+        const { data: artist, error } = await supabase
           .from('radio_artists')
           .select('id')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
         
-        setHasArtistProfile(!!artist);
+        // Only set true if we got data without error
+        setHasArtistProfile(!error && !!artist);
       }
       setLoading(false);
     };
@@ -41,12 +43,13 @@ export default function RadioPage() {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        const { data: artist } = await supabase
+        const { data: artist, error } = await supabase
           .from('radio_artists')
           .select('id')
           .eq('user_id', session.user.id)
-          .single();
-        setHasArtistProfile(!!artist);
+          .maybeSingle();
+        
+        setHasArtistProfile(!error && !!artist);
       } else {
         setHasArtistProfile(false);
       }
