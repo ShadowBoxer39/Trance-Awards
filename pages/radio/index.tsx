@@ -1,63 +1,13 @@
-// pages/radio/index.tsx - Radio Landing Page
+// pages/radio/index.tsx - Radio Landing Page (SIMPLIFIED)
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';
 import { FaHeadphones, FaMicrophoneAlt, FaMusic, FaUsers } from 'react-icons/fa';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export default function RadioPage() {
-  const [user, setUser] = useState<any>(null);
-  const [hasArtistProfile, setHasArtistProfile] = useState(false);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     document.documentElement.setAttribute('dir', 'rtl');
-    
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Check if user has a radio artist profile
-        // Using maybeSingle() instead of single() to avoid error when no row exists
-        const { data: artist, error } = await supabase
-          .from('radio_artists')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        // Only set true if we got data without error
-        setHasArtistProfile(!error && !!artist);
-      }
-      setLoading(false);
-    };
-
-    checkUser();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const { data: artist, error } = await supabase
-          .from('radio_artists')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        setHasArtistProfile(!error && !!artist);
-      } else {
-        setHasArtistProfile(false);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
   }, []);
 
   return (
@@ -110,27 +60,15 @@ export default function RadioPage() {
               </div>
             </div>
 
-            {/* CTA Buttons */}
+            {/* CTA Button - Always show register, it will redirect if already registered */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {loading ? (
-                <div className="text-gray-500">טוען...</div>
-              ) : hasArtistProfile ? (
-                <Link
-                  href="/radio/dashboard"
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 hover:scale-105"
-                >
-                  <FaMicrophoneAlt />
-                  <span>לאזור האישי</span>
-                </Link>
-              ) : (
-                <Link
-                  href="/radio/register"
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 hover:scale-105"
-                >
-                  <FaMicrophoneAlt />
-                  <span>הרשמה לאמנים</span>
-                </Link>
-              )}
+              <Link
+                href="/radio/register"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 hover:scale-105"
+              >
+                <FaMicrophoneAlt />
+                <span>כניסה לאמנים</span>
+              </Link>
             </div>
           </div>
         </section>
