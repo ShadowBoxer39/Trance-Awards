@@ -1,11 +1,11 @@
-// pages/radio/submit.tsx - Track Submission Form (UPDATED)
+// pages/radio/submit.tsx - Track Submission Form with Consent
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation'; 
-import { FaMusic, FaCloudUploadAlt, FaArrowRight, FaCheckCircle, FaImage } from 'react-icons/fa';
+import { FaMusic, FaCloudUploadAlt, FaArrowRight, FaCheckCircle, FaImage, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +23,7 @@ const GENRES = [
   'אחר'
 ];
 
-export default function radioSubmitPage() {
+export default function RadioSubmitPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [artistId, setArtistId] = useState<string | null>(null);
@@ -32,6 +32,10 @@ export default function radioSubmitPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Consent state
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -62,7 +66,7 @@ export default function radioSubmitPage() {
         .from('radio_artists')
         .select('id')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (!artist) {
         router.push('/radio/register');
@@ -139,6 +143,12 @@ export default function radioSubmitPage() {
       return;
     }
 
+    // Require consent
+    if (!agreedToTerms) {
+      setError('יש לאשר את תנאי השימוש');
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
@@ -200,7 +210,7 @@ export default function radioSubmitPage() {
 
       setUploadProgress(80);
 
-      // Create submission record
+      // Create submission record with consent timestamp
       const { error: insertError } = await supabase
         .from('radio_submissions')
         .insert({
@@ -211,6 +221,8 @@ export default function radioSubmitPage() {
           mp3_url: mp3Url,
           art_url: artUrl,
           status: 'pending',
+          agreed_to_terms: true,
+          agreed_at: new Date().toISOString(),
         });
 
       if (insertError) {
@@ -437,6 +449,85 @@ export default function radioSubmitPage() {
                 <p className="text-xs text-gray-500 mt-1">מומלץ: תמונה ריבועית 500x500 פיקסלים</p>
               </div>
 
+              {/* Consent Section */}
+              <div className="border border-gray-700 rounded-xl overflow-hidden">
+                {/* Expandable Terms Header */}
+                <button
+                  type="button"
+                  onClick={() => setShowTerms(!showTerms)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-800/50 hover:bg-gray-800/70 transition-colors text-right"
+                >
+                  <span className="text-sm text-gray-300">תנאי שימוש להגשת טראקים</span>
+                  {showTerms ? (
+                    <FaChevronUp className="text-gray-500" />
+                  ) : (
+                    <FaChevronDown className="text-gray-500" />
+                  )}
+                </button>
+
+                {/* Expandable Terms Content */}
+                {showTerms && (
+                  <div className="px-4 py-4 bg-black/30 text-sm text-gray-400 space-y-3 border-t border-gray-700">
+                    <p><strong className="text-gray-300">1. בעלות על הזכויות</strong><br />
+                    אני מצהיר/ה שאני בעל/ת הזכויות המלאות על הטראק המוגש, או שקיבלתי אישור מפורש מבעל/ת הזכויות להגיש אותו.</p>
+                    
+                    <p><strong className="text-gray-300">2. רישיון שימוש</strong><br />
+                    אני מעניק/ה לרדיו יוצאים לטראק רישיון לא-בלעדי לנגן את הטראק בשידורי הרדיו, כולל באתר, באפליקציות, וברשתות החברתיות.</p>
+                    
+                    <p><strong className="text-gray-300">3. ללא תשלום</strong><br />
+                    אני מבין/ה שהגשת הטראק והשמעתו ברדיו הינם ללא תמורה כספית, ומטרתם היא חשיפה וקידום האמן/ית.</p>
+                    
+                    <p><strong className="text-gray-300">4. שמירת זכויות</strong><br />
+                    כל הזכויות על הטראק נשארות בבעלותי המלאה. אני רשאי/ת להמשיך להשתמש בטראק בכל דרך שאבחר.</p>
+                    
+                    <p><strong className="text-gray-300">5. הסרת טראק</strong><br />
+                    אני רשאי/ת לבקש את הסרת הטראק מהרדיו בכל עת על ידי פנייה לצוות.</p>
+                    
+                    <p><strong className="text-gray-300">6. אישור הגשות</strong><br />
+                    צוות הרדיו שומר לעצמו את הזכות לאשר או לדחות הגשות על פי שיקול דעתו.</p>
+                  </div>
+                )}
+
+                {/* Checkbox */}
+                <div className="px-4 py-4 bg-black/20">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="relative mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                        agreedToTerms 
+                          ? 'bg-purple-600 border-purple-600' 
+                          : 'border-gray-600 group-hover:border-purple-500'
+                      }`}>
+                        {agreedToTerms && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-300 leading-relaxed">
+                      קראתי ואני מסכים/ה ל
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setShowTerms(true);
+                        }}
+                        className="text-purple-400 hover:text-purple-300 underline mx-1"
+                      >
+                        תנאי השימוש
+                      </button>
+                      להגשת טראקים לרדיו יוצאים לטראק *
+                    </span>
+                  </label>
+                </div>
+              </div>
+
               {/* Progress bar */}
               {submitting && uploadProgress > 0 && (
                 <div className="w-full bg-gray-800 rounded-full h-2">
@@ -450,7 +541,7 @@ export default function radioSubmitPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={submitting || !formData.trackName.trim() || !mp3File}
+                disabled={submitting || !formData.trackName.trim() || !mp3File || !agreedToTerms}
                 className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting ? (
