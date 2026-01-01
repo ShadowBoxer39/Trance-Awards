@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
-import Navigation from '@/components/Navigation';
+import Navigation from '@/components/Navigation'; 
 import { FaMusic, FaCloudUploadAlt, FaArrowRight, FaCheckCircle, FaImage } from 'react-icons/fa';
 
 const supabase = createClient(
