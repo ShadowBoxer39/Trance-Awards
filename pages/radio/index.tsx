@@ -61,8 +61,8 @@ const mockData: NowPlayingData = {
   },
   now_playing: {
     song: {
-      title: 'Waiting for stream...',
-      artist: 'Track Trip Radio',
+     title: 'ממתין לשידור...',
+artist: 'יוצאים לטראק',
       art: '',
     },
     elapsed: 0,
@@ -319,7 +319,7 @@ export default function RadioPage() {
   return (
     <>
       <Head>
-        <title>רדיו יוצאים לטראק | Track Trip Radio</title>
+        <title>הרדיו של יוצאים לטראק</title>
         <meta name="description" content="רדיו טראנס ישראלי - האזינו לטראקים הכי טריים מאמנים ישראלים" />
       </Head>
 
@@ -483,7 +483,8 @@ export default function RadioPage() {
                         <div className={`text-lg font-medium transition-colors duration-500 ${
                           isPlaying ? 'text-purple-300' : 'text-purple-400/50'
                         }`}>
-                          Track Trip Radio
+                         יוצאים לטראק
+
                         </div>
                       </div>
                     </div>
@@ -508,17 +509,17 @@ export default function RadioPage() {
                   animation: isPlaying ? 'shimmer 3s linear infinite' : 'none',
                 }}
               >
-                {currentSong?.title || 'Track Trip Radio'}
+               {currentSong?.title || 'הרדיו של יוצאים לטראק'}
               </h1>
               <p className={`text-lg md:text-xl transition-colors duration-500 ${
                 isPlaying ? 'text-gray-300' : 'text-gray-500'
               }`}>
-                {currentSong?.artist || 'רדיו טראנס ישראלי'}
+               {currentSong?.artist || 'טראנס ישראלי 24/7'}
               </p>
             </div>
 
             {/* Artist Social Links */}
-            {currentSong?.artist && currentSong.artist !== 'Track Trip Radio' && (
+            {currentSong?.artist && currentSong.artist !== 'יוצאים לטראק' && (
               <div className="flex justify-center gap-3 mb-8">
                 <button className="flex items-center gap-2 bg-gradient-to-r from-pink-600/80 to-purple-600/80 hover:from-pink-500 hover:to-purple-500 text-white px-4 py-2 rounded-full transition-all text-sm backdrop-blur-sm border border-pink-500/30 hover:scale-105">
                   <FaInstagram />
