@@ -286,7 +286,7 @@ function ResultCard({
           {/* Name and progress bar */}
           <div className="flex-grow min-w-0">
             <motion.h3
-              className={`font-bold text-lg sm:text-xl truncate ${isWinner ? "text-yellow-400" : "text-white"}`}
+              className={`font-bold text-sm sm:text-lg md:text-xl leading-tight ${isWinner ? "text-yellow-400" : "text-white"}`}
               dir="ltr"
             >
               {result.name}
