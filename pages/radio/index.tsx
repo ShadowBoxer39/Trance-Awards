@@ -1,5 +1,5 @@
 // pages/radio/index.tsx - Radio Player Page with Trance/Festival Vibes
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -13,7 +13,9 @@ import {
   FaSoundcloud,
   FaMusic,
   FaHeadphones,
-  FaUsers
+  FaUsers,
+  FaUpload,
+  FaArrowLeft
 } from 'react-icons/fa';
 
 // Azuracast API URL - update this when station is ready
@@ -80,7 +82,7 @@ const mockData: NowPlayingData = {
 const Particles = ({ isPlaying }: { isPlaying: boolean }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<any[]>([]);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -191,41 +193,37 @@ const Particles = ({ isPlaying }: { isPlaying: boolean }) => {
 
 // Audio Visualizer Bars
 const Visualizer = ({ isPlaying }: { isPlaying: boolean }) => {
-  const bars = 20;
+  const [heights, setHeights] = useState<number[]>(Array(20).fill(8));
+  
+  useEffect(() => {
+    if (!isPlaying) {
+      setHeights(Array(20).fill(8));
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      setHeights(Array(20).fill(0).map(() => Math.random() * 40 + 10));
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isPlaying]);
   
   return (
     <div className="flex items-end justify-center gap-1 h-16 mb-6">
-      {[...Array(bars)].map((_, i) => {
-        const delay = i * 0.05;
-        const baseHeight = 20 + Math.sin(i * 0.5) * 15;
-        
-        return (
-          <div
-            key={i}
-            className={`w-2 rounded-full transition-all duration-150 ${
-              isPlaying 
-                ? 'bg-gradient-to-t from-purple-600 to-cyan-400' 
-                : 'bg-gray-700'
-            }`}
-            style={{
-              height: isPlaying ? `${baseHeight + Math.random() * 30}px` : '8px',
-              animation: isPlaying ? `visualizer 0.5s ease-in-out infinite alternate` : 'none',
-              animationDelay: `${delay}s`,
-              boxShadow: isPlaying ? '0 0 10px rgba(147, 51, 234, 0.5)' : 'none',
-            }}
-          />
-        );
-      })}
-      <style jsx>{`
-        @keyframes visualizer {
-          0% {
-            height: 15px;
-          }
-          100% {
-            height: ${Math.random() * 40 + 20}px;
-          }
-        }
-      `}</style>
+      {heights.map((height, i) => (
+        <div
+          key={i}
+          className={`w-2 rounded-full transition-all duration-100 ${
+            isPlaying 
+              ? 'bg-gradient-to-t from-purple-600 to-cyan-400' 
+              : 'bg-gray-700'
+          }`}
+          style={{
+            height: `${height}px`,
+            boxShadow: isPlaying ? '0 0 10px rgba(147, 51, 234, 0.5)' : 'none',
+          }}
+        />
+      ))}
     </div>
   );
 };
@@ -237,21 +235,7 @@ export default function RadioPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [visualizerHeights, setVisualizerHeights] = useState<number[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Randomize visualizer bars
-  useEffect(() => {
-    if (!isPlaying) return;
-    
-    const interval = setInterval(() => {
-      setVisualizerHeights(
-        [...Array(20)].map(() => Math.random() * 40 + 10)
-      );
-    }, 150);
-
-    return () => clearInterval(interval);
-  }, [isPlaying]);
 
   // Fetch now playing data
   const fetchNowPlaying = async () => {
@@ -349,7 +333,6 @@ export default function RadioPage() {
             radial-gradient(ellipse at 50% 50%, rgba(147, 51, 234, 0.05) 0%, transparent 70%),
             linear-gradient(to bottom, #050814, #0a0a1f, #000)
           `,
-          animation: isPlaying ? 'gradientPulse 4s ease-in-out infinite' : 'none',
         }}
       />
 
@@ -357,15 +340,6 @@ export default function RadioPage() {
       <Particles isPlaying={isPlaying} />
 
       <style jsx global>{`
-        @keyframes gradientPulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.8;
-          }
-        }
-        
         @keyframes glow {
           0%, 100% {
             box-shadow: 0 0 20px rgba(147, 51, 234, 0.5), 0 0 40px rgba(147, 51, 234, 0.3), 0 0 60px rgba(147, 51, 234, 0.1);
@@ -376,32 +350,28 @@ export default function RadioPage() {
         }
 
         @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 0.5;
-          }
-          50% {
-            transform: scale(1.05);
-            opacity: 0.8;
-          }
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.05); opacity: 0.8; }
         }
 
         @keyframes borderGlow {
-          0%, 100% {
-            border-color: rgba(147, 51, 234, 0.5);
-          }
-          50% {
-            border-color: rgba(6, 182, 212, 0.5);
-          }
+          0%, 100% { border-color: rgba(147, 51, 234, 0.5); }
+          50% { border-color: rgba(6, 182, 212, 0.5); }
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
         }
       `}</style>
 
@@ -534,8 +504,8 @@ export default function RadioPage() {
                     : 'text-gray-300'
                 }`}
                 style={{
-                  backgroundSize: isPlaying ? '200% auto' : '100% auto',
-                  animation: isPlaying ? 'gradientShift 3s ease infinite' : 'none',
+                  backgroundSize: '200% auto',
+                  animation: isPlaying ? 'shimmer 3s linear infinite' : 'none',
                 }}
               >
                 {currentSong?.title || 'Track Trip Radio'}
@@ -546,17 +516,6 @@ export default function RadioPage() {
                 {currentSong?.artist || 'רדיו טראנס ישראלי'}
               </p>
             </div>
-
-            <style jsx>{`
-              @keyframes gradientShift {
-                0%, 100% {
-                  background-position: 0% center;
-                }
-                50% {
-                  background-position: 100% center;
-                }
-              }
-            `}</style>
 
             {/* Artist Social Links */}
             {currentSong?.artist && currentSong.artist !== 'Track Trip Radio' && (
@@ -683,18 +642,66 @@ export default function RadioPage() {
             </div>
           )}
 
-          {/* Artist Portal Link */}
-          <div className="mt-8 text-center">
-            <Link
-              href="/radio/register"
-              className={`inline-flex items-center gap-2 transition-all px-6 py-3 rounded-full border ${
-                isPlaying 
-                  ? 'text-purple-300 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20' 
-                  : 'text-purple-400 border-gray-800 hover:border-purple-500/30'
-              }`}
-            >
-              <FaMusic className={isPlaying ? 'animate-bounce' : ''} />
-              אמן/ית? שלחו את המוזיקה שלכם לרדיו
+          {/* EPIC Artist CTA Section */}
+          <div className="mt-12">
+            <Link href="/radio/register">
+              <div 
+                className="relative group overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/30 via-black/50 to-cyan-900/30 p-8 md:p-10 cursor-pointer transition-all duration-500 hover:border-purple-500/60 hover:shadow-2xl hover:shadow-purple-500/20"
+                style={{ animation: 'float 6s ease-in-out infinite' }}
+              >
+                {/* Background glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-transparent to-cyan-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                {/* Animated border gradient */}
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(147, 51, 234, 0.3), transparent)',
+                  animation: 'shimmer 2s linear infinite',
+                  backgroundSize: '200% 100%',
+                }} />
+
+                {/* Content */}
+                <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-8">
+                  {/* Icon */}
+                  <div className="flex-shrink-0">
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 transition-all duration-500 group-hover:scale-110">
+                      <FaUpload className="text-3xl md:text-4xl text-white" />
+                    </div>
+                  </div>
+
+                  {/* Text */}
+                  <div className="text-center md:text-right flex-1">
+                    <h3 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                      אמן/ית? הצטרפו לרדיו!
+                    </h3>
+                    <p className="text-gray-400 text-lg mb-4">
+                      שלחו את הטראקים שלכם ותקבלו חשיפה לקהילת הטראנס הישראלית
+                    </p>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-3 text-sm">
+                      <span className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">
+                        ✓ חשיפה לאלפי מאזינים
+                      </span>
+                      <span className="bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full border border-cyan-500/30">
+                        ✓ קרדיט מלא לאמן
+                      </span>
+                      <span className="bg-pink-500/20 text-pink-300 px-3 py-1 rounded-full border border-pink-500/30">
+                        ✓ קישור לסושיאל
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex-shrink-0 hidden md:block">
+                    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all duration-500 group-hover:-translate-x-2">
+                      <FaArrowLeft className="text-xl text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating particles decoration */}
+                <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-purple-500/50 animate-ping" style={{ animationDuration: '3s' }} />
+                <div className="absolute bottom-4 left-4 w-2 h-2 rounded-full bg-cyan-500/50 animate-ping" style={{ animationDuration: '4s' }} />
+                <div className="absolute top-1/2 left-8 w-1.5 h-1.5 rounded-full bg-pink-500/50 animate-ping" style={{ animationDuration: '5s' }} />
+              </div>
             </Link>
           </div>
 
