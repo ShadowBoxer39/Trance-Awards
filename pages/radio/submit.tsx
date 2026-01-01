@@ -1,4 +1,4 @@
-// pages/Radio/submit.tsx - Track Submission Form (UPDATED)
+// pages/radio/submit.tsx - Track Submission Form (UPDATED)
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -23,7 +23,7 @@ const GENRES = [
   'אחר'
 ];
 
-export default function RadioSubmitPage() {
+export default function radioSubmitPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [artistId, setArtistId] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export default function RadioSubmitPage() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        router.push('/Radio/register');
+        router.push('/radio/register');
         return;
       }
 
@@ -59,13 +59,13 @@ export default function RadioSubmitPage() {
 
       // Check if has artist profile
       const { data: artist } = await supabase
-        .from('Radio_artists')
+        .from('radio_artists')
         .select('id')
         .eq('user_id', session.user.id)
         .single();
 
       if (!artist) {
-        router.push('/Radio/register');
+        router.push('/radio/register');
         return;
       }
 
@@ -202,7 +202,7 @@ export default function RadioSubmitPage() {
 
       // Create submission record
       const { error: insertError } = await supabase
-        .from('Radio_submissions')
+        .from('radio_submissions')
         .insert({
           artist_id: artistId,
           track_name: formData.trackName.trim(),
@@ -225,7 +225,7 @@ export default function RadioSubmitPage() {
 
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
-        router.push('/Radio/dashboard');
+        router.push('/radio/dashboard');
       }, 2000);
 
     } catch (err: any) {
@@ -256,7 +256,7 @@ export default function RadioSubmitPage() {
             <h1 className="text-4xl font-bold mb-4 text-green-400">הטראק נשלח בהצלחה!</h1>
             <p className="text-gray-400 mb-8">נבדוק את הטראק ונעדכן אותך בהקדם</p>
             <Link
-              href="/Radio/dashboard"
+              href="/radio/dashboard"
               className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-3 px-6 rounded-xl transition-all"
             >
               <FaArrowRight className="rotate-180" />
@@ -280,7 +280,7 @@ export default function RadioSubmitPage() {
         <div className="max-w-2xl mx-auto px-6 py-12">
           {/* Back link */}
           <Link
-            href="/Radio/dashboard"
+            href="/radio/dashboard"
             className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 mb-8 transition-colors"
           >
             <FaArrowRight />
