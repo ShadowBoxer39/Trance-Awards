@@ -29,85 +29,77 @@ export default function RadioRegisterPage() {
   });
 
   useEffect(() => {
+    // 1. Only run logic once the router is ready for redirects
+    if (!router.isReady) return;
+
     document.documentElement.setAttribute('dir', 'rtl');
 
-    const handleOAuthCallback = async () => {
-      const url = window.location.href;
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const queryParams = new URLSearchParams(window.location.search);
-
-      if (hashParams.get('access_token') || queryParams.get('code')) {
-        await supabase.auth.exchangeCodeForSession(url);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    };
-
     const checkUser = async () => {
-      await handleOAuthCallback();
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        // Check if already has artist profile
-        const { data: existingArtist } = await supabase
-          .from('radio_artists')
-          .select('id')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
-
-        if (existingArtist) {
-          // Already registered, redirect to dashboard
-          router.push('/radio/dashboard');
-          return;
+      let isRedirecting = false;
+      try {
+        // 2. Handle Google OAuth Callback
+        const url = window.location.href;
+        if (url.includes('code=') || url.includes('access_token=')) {
+          await supabase.auth.exchangeCodeForSession(url);
+          // Clean the URL to avoid processing the same code twice
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // Pre-fill form with Google info
-        const userInfo = getGoogleUserInfo(currentUser);
-        if (userInfo) {
-          setFormData(prev => ({
-            ...prev,
-            name: userInfo.name || '',
-          }));
+        // 3. Get the current session
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          // 4. Check if user already has an artist profile
+          const { data: existingArtist } = await supabase
+            .from('radio_artists')
+            .select('id')
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
+
+          if (existingArtist) {
+            isRedirecting = true;
+            router.push('/radio/dashboard');
+            return; // Exit to let the router handle the push
+          }
+
+          // Pre-fill form with Google info if no artist profile found
+          const userInfo = getGoogleUserInfo(currentUser);
+          if (userInfo) {
+            setFormData(prev => ({
+              ...prev,
+              name: prev.name || userInfo.name || '',
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("CheckUser logic failed:", err);
+      } finally {
+        // 5. Only hide the loader if we are STAYING on this page
+        if (!isRedirecting) {
+          setLoading(false);
         }
       }
-
-      setLoading(false);
     };
 
     checkUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      
-      if (currentUser) {
-        const { data: existingArtist } = await supabase
-          .from('radio_artists')
-          .select('id')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
-
-        if (existingArtist) {
-          router.push('/radio/dashboard');
-          return;
-        }
-
-        const userInfo = getGoogleUserInfo(currentUser);
-        if (userInfo) {
-          setFormData(prev => ({
-            ...prev,
-            name: prev.name || userInfo.name || '',
-          }));
-        }
+    // 6. Simplified Auth Listener to avoid redundant redirects
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        checkUser(); // Re-run the main logic on sign-in
+      }
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setLoading(false);
       }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router.isReady]); // Updated dependency to isReady
 
   const generateSlug = (name: string) => {
     return name
