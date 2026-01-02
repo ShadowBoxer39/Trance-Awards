@@ -11,11 +11,10 @@ const supabase = createClient(
 
 // Azuracast API configuration
 const AZURACAST_URL = 'https://a12.asurahosting.com';
-const AZURACAST_API_KEY = process.env.AZURACAST_API_KEY || '2e1c6f287db8175a:fecba3f9e596a740a1215114443e2aa0';
+const AZURACAST_API_KEY = process.env.AZURACAST_API_KEY;
 const STATION_ID = '1'; // Station ID (usually 1 for first station)
 
-// Admin emails allowed to use this endpoint
-const ADMIN_EMAILS = ['tracktripil@gmail.com'];
+
 
 export default async function handler(
   req: NextApiRequest,
@@ -26,12 +25,15 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const { submissionId, userEmail } = req.body;
+try {
+    // 1. Get the adminKey and submissionId from the request
+    const { submissionId, adminKey } = req.body;
+    const SYSTEM_ADMIN_KEY = process.env.ADMIN_KEY;
 
-    // Check admin authentication
-    if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    // 2. Validate using your master Admin Key
+    if (!adminKey || adminKey !== SYSTEM_ADMIN_KEY) {
+      console.error('Invalid admin key attempt');
+      return res.status(401).json({ error: 'Unauthorized: Invalid Admin Key' });
     }
 
     if (!submissionId) {
