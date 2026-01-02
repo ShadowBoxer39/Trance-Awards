@@ -1,4 +1,4 @@
-// pages/radio/dashboard.tsx - Safe Artist Dashboard
+// pages/radio/dashboard.tsx - Safe & High-Visibility Artist Dashboard
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -83,25 +83,15 @@ export default function RadioDashboard() {
     window.location.href = '/radio/register';
   };
 
-  // Safe deletion logic
   const handleDeleteSubmission = async (submissionId: string) => {
     const track = submissions.find(s => s.id === submissionId);
-    
-    // Prevent deleting approved tracks
     if (track?.status === 'approved') {
       alert('לא ניתן למחוק טראק שאושר ונמצא בשידור. לביטול השמעה יש ליצור קשר עם הנהלת הרדיו.');
       return;
     }
-
     if (!artist || !confirm('בטוח שברצונך למחוק את הטראק מהרשימה?')) return;
-
     try {
-      const { error } = await supabase
-        .from('radio_submissions')
-        .delete()
-        .eq('id', submissionId)
-        .eq('artist_id', artist.id);
-
+      const { error } = await supabase.from('radio_submissions').delete().eq('id', submissionId).eq('artist_id', artist.id);
       if (error) throw error;
       setSubmissions(prev => prev.filter(s => s.id !== submissionId));
     } catch (err) {
@@ -164,7 +154,7 @@ export default function RadioDashboard() {
             </div>
           </div>
 
-          {/* Stats Grid */}
+          {/* Stats Grid - CORRECTED TEXT */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-10">
             <div className="glass-warm rounded-2xl p-4 sm:p-5 flex sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0"><FaMusic className="text-purple-400" /></div>
@@ -172,7 +162,7 @@ export default function RadioDashboard() {
             </div>
             <div className="glass-warm rounded-2xl p-4 sm:p-5 flex sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0"><FaHeadphones className="text-green-400" /></div>
-              <div className="flex-1 sm:flex-none text-right sm:text-left"><div className="text-2xl sm:text-3xl font-bold text-white mb-1">{approvedCount}</div><div className="text-xs sm:text-sm text-gray-400">משודרים ברדיו</div></div>
+              <div className="flex-1 sm:flex-none text-right sm:text-left"><div className="text-2xl sm:text-3xl font-bold text-white mb-1">{approvedCount}</div><div className="text-xs sm:text-sm text-gray-400">טראקים מאושרים</div></div>
             </div>
             <div className="glass-warm rounded-2xl p-4 sm:p-5 flex sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center flex-shrink-0"><FaClock className="text-yellow-400" /></div>
@@ -201,9 +191,7 @@ export default function RadioDashboard() {
                 {submissions.map((submission) => (
                   <div key={submission.id} className="group relative bg-white/[0.02] hover:bg-white/[0.04] rounded-2xl p-4 sm:p-5 border border-white/5 transition-all">
                     <div className="flex items-center gap-3 sm:gap-4">
-                      {/* Artwork Icon */}
                       <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-purple-600/30 to-pink-600/30 flex items-center justify-center text-purple-400/60"><FaMusic /></div>
-
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm sm:text-base font-medium text-white truncate">{submission.track_name}</h3>
                         <div className="mt-1 text-[10px] sm:text-sm text-gray-500 flex items-center gap-2">
@@ -214,17 +202,9 @@ export default function RadioDashboard() {
                            <span>{new Date(submission.submitted_at).toLocaleDateString('he-IL')}</span>
                         </div>
                       </div>
-
                       <div className="flex items-center gap-2">
-                        {/* Only show delete button for non-approved tracks */}
                         {submission.status !== 'approved' ? (
-                          <button 
-                            onClick={() => handleDeleteSubmission(submission.id)}
-                            className="p-2 sm:p-3 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
-                            title="מחק טראק"
-                          >
-                            <FaTrash className="text-xs sm:text-sm" />
-                          </button>
+                          <button onClick={() => handleDeleteSubmission(submission.id)} className="p-2 sm:p-3 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30" title="מחק טראק"><FaTrash className="text-xs sm:text-sm" /></button>
                         ) : (
                           <div className="p-2 text-gray-700" title="טראק פעיל ברדיו"><FaCheckCircle className="text-green-500/50" /></div>
                         )}
@@ -239,9 +219,10 @@ export default function RadioDashboard() {
             )}
           </div>
 
-          <div className="mt-8 flex items-center justify-center gap-2 text-gray-600 text-xs sm:text-sm bg-white/5 py-3 rounded-2xl border border-white/5">
-            <FaInfoCircle className="text-purple-500/50" />
-            <span>טראקים שאושרו נמצאים בסבב השידורים. להסרה, צור קשר עם הצוות.</span>
+          {/* HIGH-VISIBILITY DISCLAIMER */}
+          <div className="mt-8 flex items-center justify-center gap-3 text-gray-400 text-xs sm:text-sm bg-white/10 backdrop-blur-md py-4 px-6 rounded-3xl border border-white/10 shadow-lg">
+            <FaInfoCircle className="text-purple-400 flex-shrink-0 text-base" />
+            <span className="leading-relaxed">טראקים שאושרו נמצאים בסבב השידורים. להסרה מהרדיו, יש ליצור קשר עם הצוות.</span>
           </div>
         </div>
       </div>
