@@ -96,7 +96,7 @@ export default function Admin() {
   const [trackSubsLoading, setTrackSubsLoading] = React.useState(false);
   const [selectedTrackSub, setSelectedTrackSub] = React.useState<TrackSubmission | null>(null);
   
-  const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "track-submissions" | "artists">("signups");
+const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "track-submissions" | "artists" | "radio">("signups");
   const [showVotesArchive, setShowVotesArchive] = React.useState(false);
 
   const [adminArtists, setAdminArtists] = React.useState<AdminArtist[]>([]);
