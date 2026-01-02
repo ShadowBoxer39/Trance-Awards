@@ -52,25 +52,41 @@ export default function RadioRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!router.isReady) return;
     document.documentElement.setAttribute('dir', 'rtl');
 
     const checkUser = async () => {
       try {
+        // Use getSession but follow up with a user check
         const { data: { session } } = await supabase.auth.getSession();
+        
+        // If we have a session AND a valid user, only then redirect
         if (session?.user) {
-          router.push('/radio/dashboard');
+          router.replace('/radio/dashboard');
           return;
         }
+        
+        // If no session, stop loading and show the landing page
         setLoading(false);
       } catch (err) {
         setLoading(false);
       }
     };
-    checkUser();
-  }, [router.isReady]);
 
+    checkUser();
+
+    // Listen for auth changes, specifically SIGNED_OUT
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [router.isReady]);
   const scrollToSignup = () => {
     document.getElementById('signup-section')?.scrollIntoView({ behavior: 'smooth' });
   };
