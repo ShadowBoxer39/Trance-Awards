@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { createClient } from '@supabase/supabase-js';
+import Navigation from '@/components/Navigation';
+import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { FaMusic, FaCheck, FaTimes, FaDownload, FaPlay, FaPause, FaUpload, FaSpinner } from 'react-icons/fa';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
@@ -41,6 +43,7 @@ export default function AdminRadioPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
+    document.documentElement.setAttribute('dir', 'rtl');
     checkAuth();
   }, []);
 
@@ -51,9 +54,24 @@ export default function AdminRadioPage() {
   }, [user, filter]);
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setUser(session?.user || null);
-    setLoading(false);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    } catch (error) {
+      console.error('Auth error:', error);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   };
 
   const fetchSubmissions = async () => {
@@ -74,7 +92,10 @@ export default function AdminRadioPage() {
     }
 
     const { data, error } = await query;
-    if (!error && data) {
+    if (error) {
+      console.error('Fetch error:', error);
+    }
+    if (data) {
       setSubmissions(data);
     }
   };
@@ -153,11 +174,41 @@ export default function AdminRadioPage() {
     );
   }
 
-  if (!user || !ADMIN_EMAILS.includes(user.email)) {
+  // Not logged in
+  if (!user) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-xl text-red-500">אין הרשאה</div>
-      </div>
+      <>
+        <Head>
+          <title>ניהול רדיו | יוצאים לטראק</title>
+        </Head>
+        <div className="min-h-screen bg-gradient-to-b from-[#050814] via-[#0a0a1f] to-black text-white">
+          <Navigation />
+          <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6">
+            <div className="text-5xl">🔐</div>
+            <h1 className="text-2xl font-bold">התחברות נדרשת</h1>
+            <GoogleLoginButton />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Not admin
+  if (!ADMIN_EMAILS.includes(user.email)) {
+    return (
+      <>
+        <Head>
+          <title>ניהול רדיו | יוצאים לטראק</title>
+        </Head>
+        <div className="min-h-screen bg-gradient-to-b from-[#050814] via-[#0a0a1f] to-black text-white">
+          <Navigation />
+          <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
+            <div className="text-5xl">🚫</div>
+            <h1 className="text-2xl font-bold text-red-500">אין הרשאה</h1>
+            <p className="text-gray-400">המשתמש {user.email} אינו מורשה לגשת לדף זה</p>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -167,8 +218,10 @@ export default function AdminRadioPage() {
         <title>ניהול רדיו | יוצאים לטראק</title>
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-b from-[#050814] via-[#0a0a1f] to-black text-white p-8" dir="rtl">
-        <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-b from-[#050814] via-[#0a0a1f] to-black text-white">
+        <Navigation />
+        
+        <div className="max-w-6xl mx-auto p-8">
           <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
             <FaMusic className="text-purple-500" />
             ניהול הגשות לרדיו
@@ -201,15 +254,17 @@ export default function AdminRadioPage() {
                 {f === 'approved' && 'אושרו'}
                 {f === 'rejected' && 'נדחו'}
                 {f === 'all' && 'הכל'}
-                {f === filter && ` (${submissions.length})`}
               </button>
             ))}
+            <span className="text-gray-500 self-center mr-4">
+              ({submissions.length} הגשות)
+            </span>
           </div>
 
           {/* Submissions list */}
           <div className="space-y-4">
             {submissions.length === 0 ? (
-              <div className="text-center text-gray-500 py-12">
+              <div className="text-center text-gray-500 py-12 bg-gray-900/30 rounded-xl">
                 אין הגשות {filter === 'pending' ? 'ממתינות' : ''}
               </div>
             ) : (
@@ -274,7 +329,7 @@ export default function AdminRadioPage() {
                       <a
                         href={submission.mp3_url}
                         download
-                        className="p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                        className="p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors text-center"
                         title="הורד"
                       >
                         <FaDownload className="text-blue-400" />
