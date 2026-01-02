@@ -1,4 +1,4 @@
-// pages/radio/register.tsx - Epic Landing Page for Radio Artist Registration
+// pages/radio/register.tsx - Landing Page for Radio Artist Registration
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -9,42 +9,13 @@ import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { getGoogleUserInfo } from '@/lib/googleAuthHelpers';
 import { 
   FaMicrophoneAlt, FaInstagram, FaUser, FaEnvelope, FaSoundcloud, 
-  FaHeadphones, FaUsers, FaGlobe, FaChevronDown, FaPlay, FaCheck,
-  FaYoutube, FaSpotify, FaWhatsapp
+  FaHeadphones, FaChevronDown, FaPlay, FaCheck, FaYoutube
 } from 'react-icons/fa';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-// Benefits for artists
-const BENEFITS = [
-  {
-    icon: FaHeadphones,
-    title: 'שידור 24/7',
-    description: 'המוזיקה שלך תתנגן ברדיו סביב השעון, בישראל ובעולם',
-    gradient: 'from-purple-500 to-purple-600',
-  },
-  {
-    icon: FaUsers,
-    title: 'קהילה של 600+ חברים',
-    description: 'חשיפה לקהילת הטראנס הכי פעילה בישראל',
-    gradient: 'from-cyan-500 to-cyan-600',
-  },
-  {
-    icon: FaYoutube,
-    title: 'שידור חי ביוטיוב',
-    description: 'הרדיו משודר גם ביוטיוב עם קרדיט מלא לאמן',
-    gradient: 'from-red-500 to-red-600',
-  },
-  {
-    icon: FaGlobe,
-    title: 'פרופיל אמן באתר',
-    description: 'דף אמן אישי עם כל הלינקים והמוזיקה שלך',
-    gradient: 'from-pink-500 to-pink-600',
-  },
-];
 
 // FAQ items
 const FAQ_ITEMS = [
@@ -68,14 +39,6 @@ const FAQ_ITEMS = [
     question: 'האם אני שומר על הזכויות?',
     answer: 'כמובן! כל הזכויות נשארות שלך. אנחנו רק מקבלים רשות לנגן את הטראק ברדיו.',
   },
-];
-
-// Stats
-const STATS = [
-  { number: '24/7', label: 'שידור רציף' },
-  { number: '600+', label: 'חברי קהילה' },
-  { number: '94+', label: 'פרקי פודקאסט' },
-  { number: '∞', label: 'אהבה לטראנס' },
 ];
 
 export default function RadioRegisterPage() {
@@ -119,10 +82,8 @@ export default function RadioRegisterPage() {
             .maybeSingle();
 
           if (existingArtist) {
-            // User has profile - show landing page with different CTA
             setHasProfile(true);
           } else {
-            // User logged in but no profile - pre-fill form
             setHasProfile(false);
             const userInfo = getGoogleUserInfo(currentUser);
             if (userInfo) {
@@ -215,8 +176,7 @@ export default function RadioRegisterPage() {
         return;
       }
 
-      // Success! Redirect to dashboard with welcome message
-      // Use window.location for a full page navigation to avoid state issues
+      // Success! Redirect to dashboard
       window.location.href = '/radio/dashboard?welcome=1';
     } catch (err: any) {
       console.error('Error:', err);
@@ -254,7 +214,7 @@ export default function RadioRegisterPage() {
         <Navigation />
 
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
           {/* Animated Background */}
           <div className="absolute inset-0">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-black to-cyan-900/30" />
@@ -280,15 +240,6 @@ export default function RadioRegisterPage() {
           </div>
 
           <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/40 rounded-full text-purple-300 text-sm font-medium mb-8 animate-fade-in">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </span>
-              <span>משדרים עכשיו 24/7</span>
-            </div>
-
             {/* Main Title */}
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight animate-fade-in-up">
               <span className="block text-white">הרדיו של</span>
@@ -297,18 +248,33 @@ export default function RadioRegisterPage() {
               </span>
             </h1>
 
-            {/* Subtitle */}
+            {/* Subtitle - emphasis on 24/7 and FREE */}
             <p className="text-xl md:text-2xl text-gray-300 mb-4 font-light animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               🎵 במה לאמני טראנס ישראלים 🎵
             </p>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-              שלחו את המוזיקה שלכם והגיעו לאלפי מאזינים בישראל ובעולם.
-              <br className="hidden md:block" />
-              שידור 24/7, קרדיט מלא לאמן, והכל <strong className="text-white">בחינם</strong>.
+            
+            {/* Key selling points */}
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 mb-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+              <div className="flex items-center gap-2 text-lg md:text-xl">
+                <span className="text-green-400 font-bold">✓</span>
+                <span className="text-white font-semibold">שידור 24/7</span>
+              </div>
+              <div className="flex items-center gap-2 text-lg md:text-xl">
+                <span className="text-green-400 font-bold">✓</span>
+                <span className="text-white font-semibold">קרדיט מלא לאמן</span>
+              </div>
+              <div className="flex items-center gap-2 text-lg md:text-xl">
+                <span className="text-green-400 font-bold">✓</span>
+                <span className="text-white font-semibold">בחינם לגמרי</span>
+              </div>
+            </div>
+
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              שלחו את המוזיקה שלכם והגיעו לאלפי מאזינים בישראל ובעולם
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
               {hasProfile ? (
                 /* Registered user CTAs */
                 <>
@@ -339,7 +305,7 @@ export default function RadioRegisterPage() {
                     className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
                   >
                     <FaMicrophoneAlt className="text-xl" />
-                    הצטרפו עכשיו
+                    הצטרפו עכשיו - בחינם
                     <svg className="w-5 h-5 transform group-hover:translate-x-[-4px] transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
@@ -355,18 +321,6 @@ export default function RadioRegisterPage() {
                 </>
               )}
             </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-              {STATS.map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-3xl md:text-4xl font-black bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                    {stat.number}
-                  </div>
-                  <div className="text-sm text-gray-500">{stat.label}</div>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Scroll indicator */}
@@ -375,36 +329,81 @@ export default function RadioRegisterPage() {
           </div>
         </section>
 
-        {/* Benefits Section */}
+        {/* YouTube Section */}
         <section className="py-20 px-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/10 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-red-950/10 to-black" />
           
-          <div className="relative max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <span className="text-4xl mb-4 block">🎁</span>
+          <div className="relative max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 mb-6">
+                <FaYoutube className="text-4xl text-white" />
+              </div>
               <h2 className="text-3xl md:text-5xl font-bold mb-4">
-                <span className="bg-gradient-to-l from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                  מה מקבלים?
+                <span className="bg-gradient-to-l from-red-400 to-pink-400 bg-clip-text text-transparent">
+                  גם ביוטיוב!
                 </span>
               </h2>
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                הצטרפות לרדיו יוצאים לטראק פותחת דלתות לחשיפה אמיתית
+              <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-8">
+                הרדיו משודר בשידור חי 24/7 גם ביוטיוב - עם קרדיט מלא לכל אמן שמתנגן
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {BENEFITS.map((benefit, i) => (
-                <div
-                  key={i}
-                  className="group relative bg-gray-900/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]"
-                >
-                  <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${benefit.gradient} mb-4`}>
-                    <benefit.icon className="text-2xl text-white" />
+            {/* YouTube Embed Placeholder - Replace with actual embed when live */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-pink-600 to-purple-600 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition duration-500" />
+              <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-800">
+                <div className="aspect-video flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+                  {/* Placeholder - Replace with iframe when YouTube stream is live */}
+                  <div className="text-center p-8">
+                    <div className="w-24 h-24 rounded-full bg-red-600/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
+                      <FaYoutube className="text-5xl text-red-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">השידור החי בקרוב!</h3>
+                    <p className="text-gray-400 mb-6">הרדיו יעלה ליוטיוב בקרוב מאוד</p>
+                    <div className="flex flex-wrap items-center justify-center gap-4">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-full">
+                        <span className="text-red-400">🔴</span>
+                        <span className="text-gray-300">24/7 Live</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-full">
+                        <span className="text-purple-400">🎵</span>
+                        <span className="text-gray-300">Now Playing Display</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-full">
+                        <span className="text-cyan-400">👤</span>
+                        <span className="text-gray-300">Artist Credits</span>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">{benefit.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{benefit.description}</p>
+                  
+                  {/* 
+                  When YouTube stream is live, replace the above div with:
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src="https://www.youtube.com/embed/live_stream?channel=YOUR_CHANNEL_ID" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                  />
+                  */}
                 </div>
-              ))}
+              </div>
+            </div>
+
+            <div className="text-center mt-8">
+              <a 
+                href="https://youtube.com/@tracktrip" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-red-400 hover:text-red-300 font-medium transition-colors"
+              >
+                <FaYoutube />
+                עקבו אחרינו ביוטיוב
+                <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </a>
             </div>
           </div>
         </section>
@@ -424,12 +423,16 @@ export default function RadioRegisterPage() {
 
             <div className="space-y-6">
               {[
-                { step: 1, title: 'צרו פרופיל אמן', description: 'התחברו עם Google ומלאו את הפרטים שלכם', icon: FaUser, color: 'purple' },
-                { step: 2, title: 'העלו את המוזיקה', description: 'שלחו את הטראקים שלכם דרך הדשבורד האישי', icon: FaMicrophoneAlt, color: 'pink' },
-                { step: 3, title: 'אתם ברדיו!', description: 'אחרי אישור, הטראק נכנס לרוטציה ומתנגן 24/7', icon: FaHeadphones, color: 'cyan' },
+                { step: 1, title: 'צרו פרופיל אמן', description: 'התחברו עם Google ומלאו את הפרטים שלכם', color: 'purple' },
+                { step: 2, title: 'העלו את המוזיקה', description: 'שלחו את הטראקים שלכם דרך הדשבורד האישי', color: 'pink' },
+                { step: 3, title: 'אתם ברדיו!', description: 'אחרי אישור, הטראק נכנס לרוטציה ומתנגן 24/7', color: 'cyan' },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-6 group">
-                  <div className={`flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-${item.color}-500/20 to-${item.color}-600/20 border border-${item.color}-500/30 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <div className={`flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br ${
+                    item.color === 'purple' ? 'from-purple-500/20 to-purple-600/20 border-purple-500/30' :
+                    item.color === 'pink' ? 'from-pink-500/20 to-pink-600/20 border-pink-500/30' :
+                    'from-cyan-500/20 to-cyan-600/20 border-cyan-500/30'
+                  } border flex items-center justify-center group-hover:scale-110 transition-transform`}>
                     <span className="text-2xl font-black text-white">{item.step}</span>
                   </div>
                   <div className="flex-1 pt-2">
@@ -614,7 +617,7 @@ export default function RadioRegisterPage() {
                       ) : (
                         <>
                           <FaCheck />
-                          צור פרופיל אמן
+                          צור פרופיל אמן - בחינם
                         </>
                       )}
                     </button>
@@ -670,7 +673,7 @@ export default function RadioRegisterPage() {
                 <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
                   {hasProfile 
                     ? 'שלחו אותו עכשיו ותגיעו לאלפי מאזינים' 
-                    : 'הצטרפו למאות אמנים שכבר משדרים ברדיו יוצאים לטראק'
+                    : 'הצטרפו עכשיו - בחינם לגמרי!'
                   }
                 </p>
                 {hasProfile ? (
@@ -687,7 +690,7 @@ export default function RadioRegisterPage() {
                     className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
                   >
                     <FaMicrophoneAlt />
-                    בואו נתחיל
+                    בואו נתחיל - בחינם
                   </button>
                 )}
               </div>
@@ -719,11 +722,6 @@ export default function RadioRegisterPage() {
           75% { transform: translateY(-30px) translateX(5px); }
         }
         
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
         @keyframes fade-in-up {
           from { 
             opacity: 0; 
@@ -737,10 +735,6 @@ export default function RadioRegisterPage() {
         
         .animate-float {
           animation: float 10s ease-in-out infinite;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out forwards;
         }
         
         .animate-fade-in-up {
