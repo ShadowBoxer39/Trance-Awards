@@ -6,10 +6,8 @@ import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
-import { getGoogleUserInfo } from '@/lib/googleAuthHelpers';
 import { 
-  FaMicrophoneAlt, FaInstagram, FaUser, FaEnvelope, FaSoundcloud, 
-  FaHeadphones, FaChevronDown, FaPlay, FaCheck, FaYoutube
+  FaMicrophoneAlt, FaChevronDown, FaPlay, FaYoutube
 } from 'react-icons/fa';
 
 const supabase = createClient(
@@ -44,19 +42,8 @@ const FAQ_ITEMS = [
 export default function RadioRegisterPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [hasProfile, setHasProfile] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    instagram: '',
-    soundcloud: '',
-    bio: '',
-  });
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -72,9 +59,9 @@ export default function RadioRegisterPage() {
 
         const { data: { session } } = await supabase.auth.getSession();
         const currentUser = session?.user ?? null;
-        setUser(currentUser);
 
         if (currentUser) {
+          // User is logged in - check if they have a profile
           const { data: existingArtist } = await supabase
             .from('radio_artists')
             .select('id')
@@ -82,21 +69,21 @@ export default function RadioRegisterPage() {
             .maybeSingle();
 
           if (existingArtist) {
-            setHasProfile(true);
+            // Has profile - redirect to dashboard
+            window.location.href = '/radio/dashboard';
+            return;
           } else {
-            setHasProfile(false);
-            const userInfo = getGoogleUserInfo(currentUser);
-            if (userInfo) {
-              setFormData(prev => ({
-                ...prev,
-                name: prev.name || userInfo.name || '',
-              }));
-            }
+            // No profile - redirect to dashboard to create one
+            window.location.href = '/radio/dashboard';
+            return;
           }
         }
+        
+        // No user logged in - show landing page
+        setUser(null);
+        setLoading(false);
       } catch (err) {
         console.error("CheckUser logic failed:", err);
-      } finally {
         setLoading(false);
       }
     };
@@ -105,11 +92,11 @@ export default function RadioRegisterPage() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        checkUser();
+        // Redirect to dashboard on login
+        window.location.href = '/radio/dashboard';
       }
       if (event === 'SIGNED_OUT') {
         setUser(null);
-        setHasProfile(false);
         setLoading(false);
       }
     });
@@ -118,72 +105,6 @@ export default function RadioRegisterPage() {
       authListener.subscription.unsubscribe();
     };
   }, [router.isReady]);
-
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    setSubmitting(true);
-    setError('');
-
-    try {
-      const userInfo = getGoogleUserInfo(user);
-      const slug = generateSlug(formData.name);
-
-      const { data: existingSlug } = await supabase
-        .from('radio_artists')
-        .select('id')
-        .eq('slug', slug)
-        .maybeSingle();
-
-      if (existingSlug) {
-        setError('השם הזה כבר תפוס, נסה שם אחר');
-        setSubmitting(false);
-        return;
-      }
-
-      const { error: insertError } = await supabase
-        .from('radio_artists')
-        .insert({
-          user_id: user.id,
-          name: formData.name.trim(),
-          slug: slug,
-          email: userInfo?.email || user.email,
-          instagram: formData.instagram.trim() || null,
-          soundcloud: formData.soundcloud.trim() || null,
-          image_url: userInfo?.photoUrl || null,
-          bio: formData.bio.trim() || null,
-          approved: false,
-        });
-
-      if (insertError) {
-        console.error('Insert error:', insertError);
-        if (insertError.code === '23505') {
-          setError('כבר יש לך פרופיל אמן');
-        } else {
-          setError('שגיאה ביצירת הפרופיל: ' + insertError.message);
-        }
-        setSubmitting(false);
-        return;
-      }
-
-      // Success! Redirect to dashboard
-      window.location.href = '/radio/dashboard?welcome=1';
-    } catch (err: any) {
-      console.error('Error:', err);
-      setError('שגיאה בשרת');
-      setSubmitting(false);
-    }
-  };
 
   const scrollToSignup = () => {
     document.getElementById('signup-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -275,51 +196,24 @@ export default function RadioRegisterPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-              {hasProfile ? (
-                /* Registered user CTAs */
-                <>
-                  <Link
-                    href="/radio/submit"
-                    className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
-                  >
-                    <FaMicrophoneAlt className="text-xl" />
-                    שלחו טראק חדש
-                    <svg className="w-5 h-5 transform group-hover:translate-x-[-4px] transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </Link>
-                  
-                  <Link
-                    href="/radio/dashboard"
-                    className="inline-flex items-center gap-2 text-gray-300 hover:text-white font-medium py-4 px-6 rounded-2xl border border-gray-700 hover:border-gray-500 transition-all"
-                  >
-                    <FaUser className="text-sm" />
-                    לדשבורד שלי
-                  </Link>
-                </>
-              ) : (
-                /* Non-registered user CTAs */
-                <>
-                  <button
-                    onClick={scrollToSignup}
-                    className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
-                  >
-                    <FaMicrophoneAlt className="text-xl" />
-                    הצטרפו עכשיו - בחינם
-                    <svg className="w-5 h-5 transform group-hover:translate-x-[-4px] transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </button>
-                  
-                  <Link
-                    href="/radio"
-                    className="inline-flex items-center gap-2 text-gray-300 hover:text-white font-medium py-4 px-6 rounded-2xl border border-gray-700 hover:border-gray-500 transition-all"
-                  >
-                    <FaPlay className="text-sm" />
-                    האזינו לרדיו
-                  </Link>
-                </>
-              )}
+              <button
+                onClick={scrollToSignup}
+                className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
+              >
+                <FaMicrophoneAlt className="text-xl" />
+                הצטרפו עכשיו - בחינם
+                <svg className="w-5 h-5 transform group-hover:translate-x-[-4px] transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </button>
+              
+              <Link
+                href="/radio"
+                className="inline-flex items-center gap-2 text-gray-300 hover:text-white font-medium py-4 px-6 rounded-2xl border border-gray-700 hover:border-gray-500 transition-all"
+              >
+                <FaPlay className="text-sm" />
+                האזינו לרדיו
+              </Link>
             </div>
           </div>
 
@@ -454,11 +348,11 @@ export default function RadioRegisterPage() {
               <span className="text-4xl mb-4 block">✨</span>
               <h2 className="text-3xl md:text-5xl font-bold mb-4">
                 <span className="bg-gradient-to-l from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  {hasProfile ? 'אתם כבר חלק מהמשפחה!' : user ? 'השלימו את הפרופיל' : 'הצטרפו עכשיו'}
+                  הצטרפו עכשיו
                 </span>
               </h2>
               <p className="text-gray-400 text-lg">
-                {hasProfile ? 'תודה שאתם חלק מהקהילה שלנו' : user ? 'עוד רגע ואתם חלק מהמשפחה' : 'התחברו עם Google ותתחילו לשדר'}
+                התחברו עם Google ותתחילו לשדר
               </p>
             </div>
 
@@ -466,163 +360,22 @@ export default function RadioRegisterPage() {
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition duration-500" />
               
               <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
-                {hasProfile ? (
-                  /* Already registered - show dashboard links */
-                  <div className="text-center py-8">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-6">
-                      <FaCheck className="text-4xl text-white" />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4">יש לכם פרופיל אמן!</h3>
-                    <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-                      אתם יכולים לשלוח טראקים חדשים או לנהל את הפרופיל שלכם מהדשבורד
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                      <Link
-                        href="/radio/submit"
-                        className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl transition-all"
-                      >
-                        <FaMicrophoneAlt />
-                        שלחו טראק חדש
-                      </Link>
-                      <Link
-                        href="/radio/dashboard"
-                        className="inline-flex items-center gap-2 text-gray-300 hover:text-white font-medium py-4 px-6 rounded-xl border border-gray-700 hover:border-gray-500 transition-all"
-                      >
-                        <FaUser />
-                        לדשבורד
-                      </Link>
-                    </div>
+                {/* Login prompt */}
+                <div className="text-center py-8">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center mx-auto mb-6">
+                    <FaMicrophoneAlt className="text-4xl text-white" />
                   </div>
-                ) : !user ? (
-                  /* Login prompt */
-                  <div className="text-center py-8">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center mx-auto mb-6">
-                      <FaMicrophoneAlt className="text-4xl text-white" />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4">התחברו כדי להמשיך</h3>
-                    <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-                      לחצו על הכפתור למטה כדי להתחבר עם חשבון Google שלכם
-                    </p>
-                    <div className="flex justify-center">
-                      <GoogleLoginButton />
-                    </div>
-                    <p className="text-xs text-gray-600 mt-6">
-                      בלחיצה על התחברות אתם מסכימים לתנאי השימוש
-                    </p>
+                  <h3 className="text-2xl font-bold mb-4">התחברו כדי להמשיך</h3>
+                  <p className="text-gray-400 mb-8 max-w-sm mx-auto">
+                    לחצו על הכפתור למטה כדי להתחבר עם חשבון Google שלכם
+                  </p>
+                  <div className="flex justify-center">
+                    <GoogleLoginButton />
                   </div>
-                ) : (
-                  /* Registration Form */
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {error && (
-                      <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-300 text-center">
-                        {error}
-                      </div>
-                    )}
-
-                    {/* Artist Name */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        <FaUser className="inline ml-2" />
-                        שם אמן (באנגלית) *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Artist Name"
-                        className="w-full px-5 py-4 bg-black/50 border-2 border-gray-700 focus:border-purple-500 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors"
-                        dir="ltr"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">השם שיופיע ברדיו ובאתר</p>
-                    </div>
-
-                    {/* Instagram */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        <FaInstagram className="inline ml-2 text-pink-400" />
-                        אינסטגרם (אופציונלי)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.instagram}
-                        onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                        placeholder="@username"
-                        className="w-full px-5 py-4 bg-black/50 border-2 border-gray-700 focus:border-purple-500 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors"
-                        dir="ltr"
-                      />
-                    </div>
-
-                    {/* SoundCloud */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        <FaSoundcloud className="inline ml-2 text-orange-400" />
-                        SoundCloud (אופציונלי)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.soundcloud}
-                        onChange={(e) => setFormData({ ...formData, soundcloud: e.target.value })}
-                        placeholder="soundcloud.com/username"
-                        className="w-full px-5 py-4 bg-black/50 border-2 border-gray-700 focus:border-purple-500 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors"
-                        dir="ltr"
-                      />
-                    </div>
-
-                    {/* Bio */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        קצת על עצמך (אופציונלי)
-                      </label>
-                      <textarea
-                        value={formData.bio}
-                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                        placeholder="ספרו לנו קצת על המוזיקה שלכם, הסגנון, ההשראות..."
-                        rows={3}
-                        maxLength={500}
-                        className="w-full px-5 py-4 bg-black/50 border-2 border-gray-700 focus:border-purple-500 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors resize-none"
-                      />
-                    </div>
-
-                    {/* Email (readonly) */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        <FaEnvelope className="inline ml-2" />
-                        אימייל
-                      </label>
-                      <input
-                        type="email"
-                        value={user.email || ''}
-                        disabled
-                        className="w-full px-5 py-4 bg-black/30 border-2 border-gray-800 rounded-xl text-gray-500 cursor-not-allowed"
-                        dir="ltr"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">נלקח מחשבון Google שלך</p>
-                    </div>
-
-                    {/* Submit Button */}
-                    <button
-                      type="submit"
-                      disabled={submitting || !formData.name.trim()}
-                      className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-5 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                    >
-                      {submitting ? (
-                        <>
-                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          יוצר פרופיל...
-                        </>
-                      ) : (
-                        <>
-                          <FaCheck />
-                          צור פרופיל אמן - בחינם
-                        </>
-                      )}
-                    </button>
-                  </form>
-                )}
+                  <p className="text-xs text-gray-600 mt-6">
+                    בלחיצה על התחברות אתם מסכימים לתנאי השימוש
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -668,31 +421,18 @@ export default function RadioRegisterPage() {
               <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-3xl p-12 border border-gray-800">
                 <div className="text-6xl mb-6">🎧</div>
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                  {hasProfile ? 'יש לכם טראק חדש?' : 'מוכנים להשמיע את המוזיקה שלכם?'}
+                  מוכנים להשמיע את המוזיקה שלכם?
                 </h2>
                 <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
-                  {hasProfile 
-                    ? 'שלחו אותו עכשיו ותגיעו לאלפי מאזינים' 
-                    : 'הצטרפו עכשיו - בחינם לגמרי!'
-                  }
+                  הצטרפו עכשיו - בחינם לגמרי!
                 </p>
-                {hasProfile ? (
-                  <Link
-                    href="/radio/submit"
-                    className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
-                  >
-                    <FaMicrophoneAlt />
-                    שלחו טראק
-                  </Link>
-                ) : (
-                  <button
-                    onClick={scrollToSignup}
-                    className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
-                  >
-                    <FaMicrophoneAlt />
-                    בואו נתחיל - בחינם
-                  </button>
-                )}
+                <button
+                  onClick={scrollToSignup}
+                  className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
+                >
+                  <FaMicrophoneAlt />
+                  בואו נתחיל - בחינם
+                </button>
               </div>
             </div>
           </div>
