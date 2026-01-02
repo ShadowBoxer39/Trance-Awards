@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { FaMusic, FaCheck, FaTimes, FaDownload, FaPlay, FaPause, FaUpload, FaSpinner } from 'react-icons/fa';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
