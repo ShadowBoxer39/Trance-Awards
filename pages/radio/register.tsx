@@ -81,11 +81,11 @@ const STATS = [
 export default function RadioRegisterPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [hasProfile, setHasProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [showForm, setShowForm] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -100,7 +100,6 @@ export default function RadioRegisterPage() {
     document.documentElement.setAttribute('dir', 'rtl');
 
     const checkUser = async () => {
-      let isRedirecting = false;
       try {
         const url = window.location.href;
         if (url.includes('code=') || url.includes('access_token=')) {
@@ -120,26 +119,24 @@ export default function RadioRegisterPage() {
             .maybeSingle();
 
           if (existingArtist) {
-            isRedirecting = true;
-            router.push('/radio/dashboard');
-            return;
+            // User has profile - show landing page with different CTA
+            setHasProfile(true);
+          } else {
+            // User logged in but no profile - pre-fill form
+            setHasProfile(false);
+            const userInfo = getGoogleUserInfo(currentUser);
+            if (userInfo) {
+              setFormData(prev => ({
+                ...prev,
+                name: prev.name || userInfo.name || '',
+              }));
+            }
           }
-
-          const userInfo = getGoogleUserInfo(currentUser);
-          if (userInfo) {
-            setFormData(prev => ({
-              ...prev,
-              name: prev.name || userInfo.name || '',
-            }));
-          }
-          setShowForm(true);
         }
       } catch (err) {
         console.error("CheckUser logic failed:", err);
       } finally {
-        if (!isRedirecting) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
@@ -151,7 +148,7 @@ export default function RadioRegisterPage() {
       }
       if (event === 'SIGNED_OUT') {
         setUser(null);
-        setShowForm(false);
+        setHasProfile(false);
         setLoading(false);
       }
     });
@@ -310,24 +307,51 @@ export default function RadioRegisterPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              <button
-                onClick={scrollToSignup}
-                className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
-              >
-                <FaMicrophoneAlt className="text-xl" />
-                הצטרפו עכשיו
-                <svg className="w-5 h-5 transform group-hover:translate-x-[-4px] transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </button>
-              
-              <Link
-                href="/radio"
-                className="inline-flex items-center gap-2 text-gray-300 hover:text-white font-medium py-4 px-6 rounded-2xl border border-gray-700 hover:border-gray-500 transition-all"
-              >
-                <FaPlay className="text-sm" />
-                האזינו לרדיו
-              </Link>
+              {hasProfile ? (
+                /* Registered user CTAs */
+                <>
+                  <Link
+                    href="/radio/submit"
+                    className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
+                  >
+                    <FaMicrophoneAlt className="text-xl" />
+                    שלחו טראק חדש
+                    <svg className="w-5 h-5 transform group-hover:translate-x-[-4px] transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
+                  
+                  <Link
+                    href="/radio/dashboard"
+                    className="inline-flex items-center gap-2 text-gray-300 hover:text-white font-medium py-4 px-6 rounded-2xl border border-gray-700 hover:border-gray-500 transition-all"
+                  >
+                    <FaUser className="text-sm" />
+                    לדשבורד שלי
+                  </Link>
+                </>
+              ) : (
+                /* Non-registered user CTAs */
+                <>
+                  <button
+                    onClick={scrollToSignup}
+                    className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
+                  >
+                    <FaMicrophoneAlt className="text-xl" />
+                    הצטרפו עכשיו
+                    <svg className="w-5 h-5 transform group-hover:translate-x-[-4px] transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </button>
+                  
+                  <Link
+                    href="/radio"
+                    className="inline-flex items-center gap-2 text-gray-300 hover:text-white font-medium py-4 px-6 rounded-2xl border border-gray-700 hover:border-gray-500 transition-all"
+                  >
+                    <FaPlay className="text-sm" />
+                    האזינו לרדיו
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Stats */}
@@ -425,11 +449,11 @@ export default function RadioRegisterPage() {
               <span className="text-4xl mb-4 block">✨</span>
               <h2 className="text-3xl md:text-5xl font-bold mb-4">
                 <span className="bg-gradient-to-l from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  {user ? 'השלימו את הפרופיל' : 'הצטרפו עכשיו'}
+                  {hasProfile ? 'אתם כבר חלק מהמשפחה!' : user ? 'השלימו את הפרופיל' : 'הצטרפו עכשיו'}
                 </span>
               </h2>
               <p className="text-gray-400 text-lg">
-                {user ? 'עוד רגע ואתם חלק מהמשפחה' : 'התחברו עם Google ותתחילו לשדר'}
+                {hasProfile ? 'תודה שאתם חלק מהקהילה שלנו' : user ? 'עוד רגע ואתם חלק מהמשפחה' : 'התחברו עם Google ותתחילו לשדר'}
               </p>
             </div>
 
@@ -437,7 +461,34 @@ export default function RadioRegisterPage() {
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition duration-500" />
               
               <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
-                {!user ? (
+                {hasProfile ? (
+                  /* Already registered - show dashboard links */
+                  <div className="text-center py-8">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-6">
+                      <FaCheck className="text-4xl text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4">יש לכם פרופיל אמן!</h3>
+                    <p className="text-gray-400 mb-8 max-w-sm mx-auto">
+                      אתם יכולים לשלוח טראקים חדשים או לנהל את הפרופיל שלכם מהדשבורד
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                      <Link
+                        href="/radio/submit"
+                        className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-xl transition-all"
+                      >
+                        <FaMicrophoneAlt />
+                        שלחו טראק חדש
+                      </Link>
+                      <Link
+                        href="/radio/dashboard"
+                        className="inline-flex items-center gap-2 text-gray-300 hover:text-white font-medium py-4 px-6 rounded-xl border border-gray-700 hover:border-gray-500 transition-all"
+                      >
+                        <FaUser />
+                        לדשבורד
+                      </Link>
+                    </div>
+                  </div>
+                ) : !user ? (
                   /* Login prompt */
                   <div className="text-center py-8">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center mx-auto mb-6">
@@ -612,18 +663,31 @@ export default function RadioRegisterPage() {
               <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-3xl p-12 border border-gray-800">
                 <div className="text-6xl mb-6">🎧</div>
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                  מוכנים להשמיע את המוזיקה שלכם?
+                  {hasProfile ? 'יש לכם טראק חדש?' : 'מוכנים להשמיע את המוזיקה שלכם?'}
                 </h2>
                 <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
-                  הצטרפו למאות אמנים שכבר משדרים ברדיו יוצאים לטראק
+                  {hasProfile 
+                    ? 'שלחו אותו עכשיו ותגיעו לאלפי מאזינים' 
+                    : 'הצטרפו למאות אמנים שכבר משדרים ברדיו יוצאים לטראק'
+                  }
                 </p>
-                <button
-                  onClick={scrollToSignup}
-                  className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
-                >
-                  <FaMicrophoneAlt />
-                  בואו נתחיל
-                </button>
+                {hasProfile ? (
+                  <Link
+                    href="/radio/submit"
+                    className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
+                  >
+                    <FaMicrophoneAlt />
+                    שלחו טראק
+                  </Link>
+                ) : (
+                  <button
+                    onClick={scrollToSignup}
+                    className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
+                  >
+                    <FaMicrophoneAlt />
+                    בואו נתחיל
+                  </button>
+                )}
               </div>
             </div>
           </div>
