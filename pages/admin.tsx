@@ -36,16 +36,6 @@ interface TrackSubmission {
   is_approved: boolean;
 }
 
-interface RadioArtistProfile {
-  id: string; name: string; email: string; image_url: string | null; approved: boolean; created_at: string;
-}
-
-interface RadioSubmission {
-  id: string; artist_id: string; track_name: string; mp3_url: string; status: 'pending' | 'approved' | 'declined';
-  admin_notes: string | null; submitted_at: string; description?: string; is_premiere?: boolean;
-  radio_artists: { name: string; email: string; image_url: string | null; };
-}
-
 interface AdminArtist {
   id: number;
   slug: string;
@@ -96,7 +86,7 @@ export default function Admin() {
   const [trackSubsLoading, setTrackSubsLoading] = React.useState(false);
   const [selectedTrackSub, setSelectedTrackSub] = React.useState<TrackSubmission | null>(null);
   
-const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "track-submissions" | "artists" | "radio">("signups");
+  const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "track-submissions" | "artists">("signups");
   const [showVotesArchive, setShowVotesArchive] = React.useState(false);
 
   const [adminArtists, setAdminArtists] = React.useState<AdminArtist[]>([]);
@@ -104,63 +94,6 @@ const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "trac
   const [currentArtist, setCurrentArtist] = React.useState<AdminArtist | null>(null);
   const [primaryEpisodeId, setPrimaryEpisodeId] = React.useState<string>("");
   const [savingArtist, setSavingArtist] = React.useState(false);
-  // --- Radio Admin State ---
-  const [radioArtists, setRadioArtists] = React.useState<RadioArtistProfile[]>([]);
-  const [radioSubmissions, setRadioSubmissions] = React.useState<RadioSubmission[]>([]);
-  const [radioLoading, setRadioLoading] = React.useState(false);
-  const [radioFilter, setRadioFilter] = React.useState<'all' | 'pending' | 'approved' | 'declined'>('pending');
-  const [uploadingId, setUploadingId] = React.useState<string | null>(null);
-
-  const fetchRadioData = async () => {
-    if (!key) return;
-    setRadioLoading(true);
-    try {
-      const r = await fetch(`/api/admin/radio?key=${encodeURIComponent(key)}`);
-      const j = await r.json();
-      if (j.ok) {
-        setRadioArtists(j.artists || []);
-        setRadioSubmissions(j.submissions || []);
-      }
-    } catch (err) { console.error("Radio fetch error", err); }
-    finally { setRadioLoading(false); }
-  };
-
-  // Update the Tab union type in your state (around line 85) to include "radio"
-  // const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "track-submissions" | "artists" | "radio">("signups");
-
-  // Add this to your useEffect that handles tab switching (around line 125)
-  React.useEffect(() => {
-    if (tally && activeTab === "radio") fetchRadioData();
-  }, [tally, activeTab]);
-
-  // Handlers for Radio Actions
-  const handleRadioSubmission = async (submissionId: string, action: 'approve' | 'decline' | 'delete', notes?: string) => {
-    if (action === 'delete' && !confirm('למחוק לצמיתות?')) return;
-    try {
-      const res = await fetch('/api/admin/radio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, action: action === 'delete' ? 'deleteSubmission' : 'updateSubmission', submissionId, status: action === 'approve' ? 'approved' : 'declined', adminNotes: notes }),
-      });
-      if ((await res.json()).ok) fetchRadioData();
-    } catch (err) { alert('שגיאה בעדכון'); }
-  };
-
-  const handleRadioUpload = async (submissionId: string) => {
-    setUploadingId(submissionId);
-    try {
-      const res = await fetch('/api/admin/upload-to-azuracast', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminKey: key, submissionId }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) { alert("✅ הועלה לאזורה!"); fetchRadioData(); }
-      else alert("❌ " + data.error);
-    } catch (err) { alert("שגיאה בהעלאה"); }
-    setUploadingId(null);
-  };
-  
 
   const duplicatePhones = React.useMemo(() => {
     const phoneCount: Record<string, number> = {};
@@ -359,25 +292,27 @@ const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "trac
               <Link href="/admin/duels" className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-purple-500/50 text-purple-300 hover:bg-purple-500/20 flex items-center gap-2 transition hover:scale-105">
                  ⚔️ ניהול דואל יומי
               </Link>
+              <Link href="/admin/radio" className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-pink-500/50 text-pink-300 hover:bg-pink-500/20 flex items-center gap-2 transition hover:scale-105">
+                 📻 ניהול רדיו
+              </Link>
               <button onClick={() => setShowVotesArchive(true)} className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-amber-500/50 text-amber-300 hover:bg-amber-500/20 flex items-center gap-2 transition hover:scale-105">
                 📊 ארכיון הצבעות 2025 ({totalVotes.toLocaleString()})
               </button>
             </div>
 
-           <div className="glass rounded-2xl p-1 flex gap-2 overflow-x-auto">
-  {[
-    { id: "signups", label: `🌟 הרשמות (${signups.length})` },
-    { id: "track-submissions", label: `💬 טרקים (${trackSubs.length})` },
-    { id: "artists", label: `🎧 אמנים (${adminArtists.length})` },
-    { id: "radio", label: `📻 רדיו (${radioSubmissions.length})` }, // <-- Added this line
-    { id: "analytics", label: `📊 סטטיסטיקות` },
-  ].map(tab => (
-    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
-      className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${activeTab === tab.id ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"}`}>
-      {tab.label}
-    </button>
-  ))}
-</div>
+            <div className="glass rounded-2xl p-1 flex gap-2 overflow-x-auto">
+              {[
+                { id: "signups", label: `🌟 הרשמות (${signups.length})` },
+                { id: "track-submissions", label: `💬 טרקים (${trackSubs.length})` },
+                { id: "artists", label: `🎧 אמנים (${adminArtists.length})` },
+                { id: "analytics", label: `📊 סטטיסטיקות` },
+              ].map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex-1 rounded-xl px-6 py-3 font-semibold transition whitespace-nowrap ${activeTab === tab.id ? "bg-gradient-to-r from-cyan-500 to-purple-500 text-white" : "text-white/60 hover:text-white"}`}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
             {/* ===== ANALYTICS TAB - NEW COMPONENT ===== */}
             {activeTab === "analytics" && (
@@ -588,55 +523,6 @@ const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "trac
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-       
-
-            {/* ===== PASTE STEP 4 HERE ===== */}
-            {activeTab === "radio" && (
-              <div className="space-y-6">
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {(['pending', 'approved', 'declined', 'all'] as const).map(f => (
-                    <button key={f} onClick={() => setRadioFilter(f)} className={`px-4 py-2 rounded-xl text-xs border ${radioFilter === f ? 'bg-white/10 border-white/20' : 'border-transparent text-white/50'}`}>
-                      {f === 'pending' ? '⏳ ממתין' : f === 'approved' ? '✅ מאושר' : f === 'declined' ? '❌ נדחה' : '📋 הכל'}
-                    </button>
-                  ))}
-                  <button onClick={fetchRadioData} className="mr-auto text-white/40 hover:text-white">🔄</button>
-                </div>
-
-                {radioLoading ? <div className="text-center p-20 animate-pulse text-4xl">⏳</div> : (
-                  <div className="grid grid-cols-1 gap-4">
-                    {radioSubmissions.filter(s => radioFilter === 'all' || s.status === radioFilter).map(sub => (
-                      <div key={sub.id} className="glass rounded-3xl p-5 border border-white/5 hover:border-white/10 transition-all">
-                        <div className="flex flex-col md:flex-row md:items-center gap-5">
-                          <div className="flex-1 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {sub.is_premiere && <span className="text-[10px] bg-purple-500/20 text-purple-400 px-2 rounded-full font-bold">PREMIERE</span>}
-                              <h3 className="text-xl font-bold text-cyan-400">{sub.track_name}</h3>
-                            </div>
-                            <p className="text-sm text-white/50">{sub.radio_artists?.name} • {formatDate(sub.submitted_at)}</p>
-                            {sub.description && <p className="text-xs text-white/40 italic mt-2 bg-black/20 p-2 rounded-lg">{sub.description}</p>}
-                          </div>
-
-                          <div className="flex items-center gap-3">
-                            <a href={sub.mp3_url} target="_blank" className="p-3 bg-white/5 rounded-xl hover:bg-white/10">📥</a>
-                            {sub.status === 'pending' && (
-                              <>
-                                <button onClick={() => handleRadioUpload(sub.id)} disabled={uploadingId === sub.id} className="p-3 bg-green-600/20 text-green-400 rounded-xl hover:bg-green-600 hover:text-white transition">
-                                  {uploadingId === sub.id ? "..." : "☁️ העלה"}
-                                </button>
-                                <button onClick={() => handleRadioSubmission(sub.id, 'approve')} className="p-3 bg-white/5 rounded-xl hover:bg-green-600 text-green-400">⭐</button>
-                                <button onClick={() => { const n = prompt("הערות?"); handleRadioSubmission(sub.id, 'decline', n || undefined); }} className="p-3 bg-white/5 rounded-xl hover:bg-red-600 text-red-400">❌</button>
-                              </>
-                            )}
-                            <button onClick={() => handleRadioSubmission(sub.id, 'delete')} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-600 hover:text-white">🗑️</button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>
