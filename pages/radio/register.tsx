@@ -52,22 +52,27 @@ export default function RadioRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
- useEffect(() => {
+  useEffect(() => {
     if (!router.isReady) return;
     document.documentElement.setAttribute('dir', 'rtl');
 
     const checkUser = async () => {
       try {
-        // Use getSession but follow up with a user check
+        // Handle potential Google callback first
+        const url = window.location.href;
+        if (url.includes('code=') || url.includes('access_token=')) {
+          await supabase.auth.exchangeCodeForSession(url);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         
-        // If we have a session AND a valid user, only then redirect
         if (session?.user) {
+          // If logged in, replace current history entry so "Back" doesn't loop
           router.replace('/radio/dashboard');
           return;
         }
         
-        // If no session, stop loading and show the landing page
         setLoading(false);
       } catch (err) {
         setLoading(false);
@@ -76,8 +81,10 @@ export default function RadioRegisterPage() {
 
     checkUser();
 
-    // Listen for auth changes, specifically SIGNED_OUT
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        router.replace('/radio/dashboard');
+      }
       if (event === 'SIGNED_OUT') {
         setLoading(false);
       }
@@ -87,6 +94,7 @@ export default function RadioRegisterPage() {
       authListener.subscription.unsubscribe();
     };
   }, [router.isReady]);
+
   const scrollToSignup = () => {
     document.getElementById('signup-section')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -163,7 +171,7 @@ export default function RadioRegisterPage() {
           </div>
         </section>
 
-        {/* YouTube Cross Promo */}
+        {/* YouTube Promo */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto">
             <div className="glass-warm rounded-[3rem] p-8 md:p-16 relative overflow-hidden border border-red-500/10">
@@ -179,7 +187,7 @@ export default function RadioRegisterPage() {
                       <div className="w-20 h-20 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <FaPlay className="text-red-600 ml-1" />
                       </div>
-                      <span className="text-gray-500 font-medium">השידור החי יעלה בקרוב</span>
+                      <span className="text-gray-500 font-medium text-sm">השידור החי יעלה בקרוב</span>
                    </div>
                 </div>
               </div>
@@ -187,28 +195,7 @@ export default function RadioRegisterPage() {
           </div>
         </section>
 
-        {/* Three Steps */}
-        <section className="py-24 px-6 bg-white/[0.02]">
-          <div className="max-w-5xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">איך זה עובד?</h2>
-            <p className="text-gray-400">הדרך המהירה ביותר להביא את המוזיקה שלך לאלפי אוזניים</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {[
-              { step: '01', title: 'פרופיל אמן', desc: 'מתחברים עם Google וממלאים את פרטי האמן והסושיאל.' },
-              { step: '02', title: 'הגשת טראק', desc: 'מעלים קובץ MP3 עם Metadata תקין ומוסיפים את הסיפור שמאחורי הטראק.' },
-              { step: '03', title: 'שידור חי', desc: 'אחרי אישור מהיר, הטראק נכנס לרוטציה ומתחיל להתנגן ברחבי הרשת.' }
-            ].map((s, i) => (
-              <div key={i} className="glass-warm rounded-[2.5rem] p-10 relative group border border-white/5">
-                <div className="text-4xl font-black text-white/10 absolute top-8 right-10 group-hover:text-purple-500/20 transition-colors">{s.step}</div>
-                <h3 className="text-xl font-bold text-white mb-4">{s.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* FAQ */}
+        {/* FAQ Section with updated answers */}
         <section className="py-24 px-6">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-16">
@@ -229,7 +216,7 @@ export default function RadioRegisterPage() {
           </div>
         </section>
 
-        {/* Final CTA */}
+        {/* Final CTA with Signup Anchor */}
         <section id="signup-section" className="py-32 px-6">
           <div className="max-w-2xl mx-auto text-center">
             <div className="glass-warm rounded-[3rem] p-12 border border-purple-500/20 shadow-2xl shadow-purple-500/10">
@@ -243,17 +230,6 @@ export default function RadioRegisterPage() {
             </div>
           </div>
         </section>
-
-        <footer className="border-t border-white/5 py-12 px-6">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-gray-600">
-             <div>© 2025 יוצאים לטראק • כל הזכויות שמורות</div>
-             <div className="flex gap-8">
-                <Link href="/" className="hover:text-white transition">בית</Link>
-                <Link href="/radio" className="hover:text-white transition">רדיו</Link>
-                <Link href="/episodes" className="hover:text-white transition">פודקאסט</Link>
-             </div>
-          </div>
-        </footer>
       </div>
     </>
   );
