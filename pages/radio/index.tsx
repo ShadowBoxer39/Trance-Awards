@@ -20,7 +20,7 @@ import {
 
 // Azuracast API URL - update this when station is ready
 const AZURACAST_API_URL = 'https://a12.asurahosting.com/api/nowplaying/track_trip_radio';
-const STREAM_URL = 'https://a12.asurahosting.com:9430/stream';
+const STREAM_URL = 'https://a12.asurahosting.com/listen/track_trip_radio/radio.mp3';
 
 interface NowPlayingData {
   station: {
