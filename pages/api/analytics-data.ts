@@ -86,6 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .gte("timestamp", current.start.toISOString())
       .lt("timestamp", current.end.toISOString())
       .order("timestamp", { ascending: false });
+    .limit(50000);
 
     if (currentError) throw currentError;
 
