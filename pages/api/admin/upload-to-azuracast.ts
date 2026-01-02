@@ -11,77 +11,66 @@ const AZURACAST_URL = 'https://a12.asurahosting.com';
 const STATION_ID = '1';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    // 1. Authenticate using the adminKey from your dashboard
     const { submissionId, adminKey } = req.body;
     const SYSTEM_ADMIN_KEY = process.env.ADMIN_KEY;
 
+    // 1. Authenticate
     if (!adminKey || adminKey !== SYSTEM_ADMIN_KEY) {
-      console.error('Auth failed: adminKey mismatch');
       return res.status(401).json({ error: 'Unauthorized: Invalid Admin Key' });
     }
 
-    if (!submissionId) {
-      return res.status(400).json({ error: 'Missing submissionId' });
-    }
-
-    // 2. Fetch track details from Supabase
+    // 2. Fetch data from Supabase
     const { data: submission, error: fetchError } = await supabase
       .from('radio_submissions')
       .select('*, radio_artists(name)')
       .eq('id', submissionId)
       .single();
 
-    if (fetchError || !submission) {
-      return res.status(404).json({ error: 'Submission not found' });
-    }
+    if (fetchError || !submission) return res.status(404).json({ error: 'Submission not found' });
 
-    // 3. Download the MP3 file into a Buffer
+    // 3. Download MP3 and convert to Base64
     const mp3Response = await fetch(submission.mp3_url);
     if (!mp3Response.ok) throw new Error('Failed to download MP3 from storage');
-    const mp3ArrayBuffer = await mp3Response.arrayBuffer();
+    
+    // Convert the file to a Base64 string
+    const arrayBuffer = await mp3Response.arrayBuffer();
+    const base64File = Buffer.from(arrayBuffer).toString('base64');
 
-    // 4. Create a clean filename
+    // 4. Clean filename for the "path" parameter
     const artistName = submission.radio_artists?.name || 'Artist';
     const trackName = submission.track_name || 'Track';
     const filename = `${artistName} - ${trackName}.mp3`.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
 
-    // 5. Use FormData (Modern & Reliable)
-    const formData = new FormData();
-    // 'path' is the directory in Azuracast (empty string or "/" for root)
-    formData.append('path', ''); 
-    // 'file' is the actual audio data as a Blob
-    formData.append('file', new Blob([mp3ArrayBuffer], { type: 'audio/mpeg' }), filename);
-
-    // 6. Upload to Azuracast
-    const uploadResponse = await fetch(
+    // 5. POST to Azuracast as JSON (The "RESTful" way)
+    const azuraResponse = await fetch(
       `${AZURACAST_URL}/api/station/${STATION_ID}/files`,
       {
         method: 'POST',
         headers: {
           'X-API-Key': process.env.AZURACAST_API_KEY!,
-          // IMPORTANT: Do NOT set 'Content-Type' header here. 
-          // Fetch will set it automatically with the correct boundary.
+          'Content-Type': 'application/json',
         },
-        body: formData as any,
+        body: JSON.stringify({
+          path: filename, // Destination filename in the root folder
+          file: base64File, // Raw base64 encoded file data
+        }),
       }
     );
 
-    const responseText = await uploadResponse.text();
+    const resultText = await azuraResponse.text();
 
-    if (!uploadResponse.ok) {
-      console.error('Azuracast Error:', responseText);
-      return res.status(uploadResponse.status).json({ 
+    if (!azuraResponse.ok) {
+      console.error('Azuracast Error Details:', resultText);
+      return res.status(azuraResponse.status).json({ 
         error: 'Azuracast Upload Failed', 
-        details: responseText 
+        details: resultText 
       });
     }
 
-    // 7. Update Supabase status on success
+    // 6. Update status in Supabase
     await supabase
       .from('radio_submissions')
       .update({ 
@@ -90,21 +79,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .eq('id', submissionId);
 
-    return res.status(200).json({ 
-      success: true, 
-      message: `Successfully uploaded: ${filename}` 
-    });
+    return res.status(200).json({ success: true, message: `Uploaded: ${filename}` });
 
   } catch (error: any) {
-    console.error('Final Upload Error:', error);
+    console.error('Upload Process Error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
 
 export const config = {
   api: {
-    bodyParser: { sizeLimit: '50mb' },
-    responseLimit: false,
+    bodyParser: { sizeLimit: '50mb' }, // Necessary for Base64 overhead
   },
   maxDuration: 60,
 };
