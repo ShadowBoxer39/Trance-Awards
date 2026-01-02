@@ -378,13 +378,13 @@ export default function RadioSubmitPage() {
                   קובץ MP3 *
                 </label>
                 <div className="relative">
-                  <input
-                    type="file"
-                    accept=".mp3,audio/mpeg"
-                    onChange={handleMp3Change}
-                    className="hidden"
-                    id="mp3-upload"
-                  />
+                <input
+  type="file"
+  accept="audio/*,.mp3,audio/mpeg"
+  onChange={handleMp3Change}
+  className="hidden"
+  id="mp3-upload"
+/>
                   <label
                     htmlFor="mp3-upload"
                     className={`flex items-center justify-center gap-3 w-full px-6 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
