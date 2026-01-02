@@ -215,7 +215,9 @@ export default function RadioRegisterPage() {
         return;
       }
 
-      router.push('/radio/dashboard?welcome=1');
+      // Success! Redirect to dashboard with welcome message
+      // Use window.location for a full page navigation to avoid state issues
+      window.location.href = '/radio/dashboard?welcome=1';
     } catch (err: any) {
       console.error('Error:', err);
       setError('שגיאה בשרת');
