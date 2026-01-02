@@ -83,7 +83,14 @@ try {
     
     // Build multipart body manually
     const bodyParts: Buffer[] = [];
-    
+
+  // ADDED: The "path" part (required by Azuracast)
+bodyParts.push(Buffer.from(
+  `--${boundary}\r\n` +
+  `Content-Disposition: form-data; name="path"\r\n\r\n` +
+  `/\r\n` // This tells Azuracast to upload to the root music folder
+));
+  
     // Add file part
     bodyParts.push(Buffer.from(
       `--${boundary}\r\n` +
