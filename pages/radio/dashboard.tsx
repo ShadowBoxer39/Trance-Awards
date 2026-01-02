@@ -143,9 +143,21 @@ export default function RadioDashboard() {
     };
   }, [router]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/radio');
+ const handleLogout = async () => {
+    try {
+      // 1. Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // 2. Clear any local storage manually to be safe on mobile
+      localStorage.removeItem('supabase.auth.token');
+      
+      // 3. Hard redirect to the register page. 
+      // This is more reliable than router.push for clearing session state.
+      window.location.href = '/radio/register';
+    } catch (err) {
+      console.error("Logout error:", err);
+      window.location.href = '/radio/register';
+    }
   };
 
   const approvedCount = submissions.filter(s => s.status === 'approved').length;
