@@ -143,23 +143,26 @@ export default function RadioDashboard() {
     };
   }, [router]);
 
- const handleLogout = async () => {
+const handleLogout = async () => {
     try {
-      // 1. Sign out from Supabase
+      // 1. Force the sign out and wait for it to complete
       await supabase.auth.signOut();
       
-      // 2. Clear any local storage manually to be safe on mobile
-      localStorage.removeItem('supabase.auth.token');
+      // 2. Manually clear any leftover auth keys just in case (fixes mobile persistence)
+      for (const key in localStorage) {
+        if (key.includes('supabase.auth.token')) {
+          localStorage.removeItem(key);
+        }
+      }
       
-      // 3. Hard redirect to the register page. 
-      // This is more reliable than router.push for clearing session state.
+      // 3. HARD REDIRECT to the register page. 
+      // This is much more reliable than router.push for clearing session state.
       window.location.href = '/radio/register';
     } catch (err) {
       console.error("Logout error:", err);
       window.location.href = '/radio/register';
     }
   };
-
   const approvedCount = submissions.filter(s => s.status === 'approved').length;
   const pendingCount = submissions.filter(s => s.status === 'pending').length;
 
