@@ -79,15 +79,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const current = getDateBounds(range, 0);
     const previous = getDateBounds(range, 1);
 
-  const { data: currentVisits, error: currentError } = await supabase
-      .from("site_visits")
-      .select("visitor_id, page, referrer, user_agent, duration, is_israel, timestamp")
-      .gte("timestamp", current.start.toISOString())
-      .lt("timestamp", current.end.toISOString())
-      .order("timestamp", { ascending: false })
-      .limit(50000);
-
-    if (currentError) throw currentError;
+  let currentVisits: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    
+    while (true) {
+      const { data, error } = await supabase
+        .from("site_visits")
+        .select("visitor_id, page, referrer, user_agent, duration, is_israel, timestamp")
+        .gte("timestamp", current.start.toISOString())
+        .lt("timestamp", current.end.toISOString())
+        .order("timestamp", { ascending: false })
+        .range(from, from + pageSize - 1);
+      
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      
+      currentVisits.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
 
     // Fetch previous period data (only what we need for comparison)
     const { data: previousVisits, error: previousError } = await supabase
