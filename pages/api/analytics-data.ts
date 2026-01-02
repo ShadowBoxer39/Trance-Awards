@@ -85,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .select("visitor_id, page, referrer, user_agent, duration, is_israel, timestamp")
       .gte("timestamp", current.start.toISOString())
       .lt("timestamp", current.end.toISOString())
-      .order("timestamp", { ascending: false });
+      .order("timestamp", { ascending: false })
     .limit(50000);
 
     if (currentError) throw currentError;
