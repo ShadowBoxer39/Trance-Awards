@@ -41,7 +41,7 @@ export default function AdminRadioPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    const storedKey = localStorage.getItem('adminKey');
+    const storedKey = localStorage.getItem('adminKey') || localStorage.getItem('ADMIN_KEY');
     if (storedKey) { setAdminKey(storedKey); handleAuth(storedKey); }
   }, []);
 
@@ -52,7 +52,8 @@ export default function AdminRadioPage() {
       const data = await res.json();
       if (data.ok) { 
         setIsAuthed(true); 
-        localStorage.setItem('adminKey', key); 
+        localStorage.setItem('adminKey', key);
+        localStorage.setItem('ADMIN_KEY', key); // Sync both keys
         setArtists(data.artists || []); 
         setSubmissions(data.submissions || []); 
       }
@@ -101,7 +102,6 @@ export default function AdminRadioPage() {
     setUploadingId(null);
   };
 
-  // ADDED BACK: Function to handle artist approval
   const handleArtistApproval = async (artistId: string, approved: boolean) => {
     try {
       const res = await fetch('/api/admin/radio', {
@@ -143,11 +143,14 @@ export default function AdminRadioPage() {
     return (
       <div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center font-['Rubik']" dir="rtl">
         <div className="glass-warm rounded-3xl p-10 max-w-md w-full mx-4 border border-white/10 shadow-2xl">
-          <h1 className="text-2xl font-bold mb-8 text-center">ניהול רדיו</h1>
+          <h1 className="text-2xl font-bold mb-8 text-center">📻 ניהול רדיו</h1>
           <input type="password" value={adminKey} onChange={(e) => setAdminKey(e.target.value)} placeholder="מפתח אדמין" className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl mb-6 text-white focus:border-purple-500/50 outline-none" onKeyDown={(e) => e.key === 'Enter' && handleAuth(adminKey)} />
           <button onClick={() => handleAuth(adminKey)} disabled={loading} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-2xl font-bold transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50">
             {loading ? 'מתחבר...' : 'כניסה למערכת'}
           </button>
+          <Link href="/admin" className="block text-center mt-6 text-gray-500 hover:text-white transition text-sm">
+            ← חזרה לדף ניהול ראשי
+          </Link>
         </div>
       </div>
     );
@@ -170,12 +173,26 @@ export default function AdminRadioPage() {
         <FloatingNotes />
 
         <div className="relative z-10">
+          {/* Header with Back Link */}
           <div className="bg-white/5 border-b border-white/5 px-6 py-5">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <h1 className="text-2xl font-bold flex items-center gap-3"><HiSparkles className="text-purple-500" /> ניהול הסטודיו</h1>
+              <div className="flex items-center gap-4">
+                <Link href="/admin" className="text-gray-500 hover:text-white transition text-sm flex items-center gap-2">
+                  ← חזרה לניהול
+                </Link>
+                <div className="w-px h-5 bg-white/10" />
+                <h1 className="text-2xl font-bold flex items-center gap-3">
+                  <HiSparkles className="text-purple-500" /> 
+                  ניהול רדיו
+                </h1>
+              </div>
               <div className="flex items-center gap-6">
-                <Link href="/radio" className="text-sm text-purple-400 hover:underline">לרדיו →</Link>
-                <button onClick={() => { localStorage.removeItem('adminKey'); setIsAuthed(false); }} className="text-sm text-gray-500 hover:text-white">התנתק</button>
+                <Link href="/radio" className="text-sm text-purple-400 hover:text-purple-300 transition">
+                  לרדיו →
+                </Link>
+                <button onClick={() => { localStorage.removeItem('adminKey'); setIsAuthed(false); }} className="text-sm text-gray-500 hover:text-white transition">
+                  התנתק
+                </button>
               </div>
             </div>
           </div>
@@ -183,6 +200,7 @@ export default function AdminRadioPage() {
           <div className="max-w-7xl mx-auto px-6 py-10">
             {message && <div className={`mb-8 p-5 rounded-2xl border ${message.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>{message.text}</div>}
 
+            {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
               <div className="glass-warm rounded-2xl p-6">
                 <div className="text-3xl font-bold text-purple-400">{artists.length}</div>
@@ -202,6 +220,7 @@ export default function AdminRadioPage() {
               </div>
             </div>
 
+            {/* Tabs and Filters */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
               <div className="flex gap-4 p-1 bg-white/5 rounded-2xl">
                 <button onClick={() => setActiveTab('submissions')} className={`px-8 py-3 rounded-xl transition ${activeTab === 'submissions' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:text-white'}`}>הגשות</button>
@@ -225,6 +244,7 @@ export default function AdminRadioPage() {
               )}
             </div>
 
+            {/* Submissions Tab */}
             {activeTab === 'submissions' && (
               <div className="space-y-12">
                 {Object.keys(groupedSubmissions).length === 0 ? (
@@ -246,6 +266,7 @@ export default function AdminRadioPage() {
               </div>
             )}
 
+            {/* Artists Tab */}
             {activeTab === 'artists' && (
               <div className="grid grid-cols-1 gap-4">
                 {artists.map(a => <ArtistCard key={a.id} artist={a} onToggleApproval={() => handleArtistApproval(a.id, !a.approved)} />)}
@@ -290,9 +311,9 @@ function SubmissionCard({ submission, uploadingId, onApprove, onApproveAndUpload
           
           {submission.status === 'pending' && (
             <>
-              <button onClick={onApproveAndUpload} disabled={isUploading} className="p-3 bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white rounded-xl transition disabled:opacity-50">{isUploading ? <FaSpinner className="animate-spin" /> : <FaUpload />}</button>
-              <button onClick={onApprove} className="p-3 bg-white/5 hover:bg-green-600 text-gray-400 hover:text-white rounded-xl transition"><FaCheck /></button>
-              <button onClick={() => setShowNotes(!showNotes)} className="p-3 bg-white/5 hover:bg-yellow-600 text-gray-400 hover:text-white rounded-xl transition"><FaClock /></button>
+              <button onClick={onApproveAndUpload} disabled={isUploading} className="p-3 bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white rounded-xl transition disabled:opacity-50" title="אשר והעלה לרדיו">{isUploading ? <FaSpinner className="animate-spin" /> : <FaUpload />}</button>
+              <button onClick={onApprove} className="p-3 bg-white/5 hover:bg-green-600 text-gray-400 hover:text-white rounded-xl transition" title="אשר בלבד"><FaCheck /></button>
+              <button onClick={() => setShowNotes(!showNotes)} className="p-3 bg-white/5 hover:bg-yellow-600 text-gray-400 hover:text-white rounded-xl transition" title="דחה עם הערה"><FaClock /></button>
             </>
           )}
           
