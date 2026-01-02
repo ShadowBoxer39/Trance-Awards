@@ -1,11 +1,11 @@
-// pages/radio/dashboard.tsx - Responsive Artist Dashboard
+// pages/radio/dashboard.tsx - Responsive Artist Dashboard with Delete
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js'; 
 import Navigation from '@/components/Navigation';
-import { FaMusic, FaPlus, FaClock, FaCheckCircle, FaTimesCircle, FaSignOutAlt, FaUser, FaHeadphones } from 'react-icons/fa';
+import { FaMusic, FaPlus, FaClock, FaCheckCircle, FaTimesCircle, FaSignOutAlt, FaUser, FaHeadphones, FaTrash } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const supabase = createClient(
@@ -37,26 +37,15 @@ interface Submission {
   art_url: string | null;
 }
 
-const FloatingNotes = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(6)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute text-purple-500/10 animate-float-slow"
-          style={{
-            left: `${15 + i * 15}%`,
-            top: `${20 + (i % 3) * 25}%`,
-            animationDelay: `${i * 0.8}s`,
-            fontSize: `${24 + i * 8}px`,
-          }}
-        >
-          ♪
-        </div>
-      ))}
-    </div>
-  );
-};
+const FloatingNotes = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {[...Array(6)].map((_, i) => (
+      <div key={i} className="absolute text-purple-500/10 animate-float-slow"
+        style={{ left: `${15 + i * 15}%`, top: `${20 + (i % 3) * 25}%`, animationDelay: `${i * 0.8}s`, fontSize: `${24 + i * 8}px` }}
+      > ♪ </div>
+    ))}
+  </div>
+);
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -82,10 +71,7 @@ export default function RadioDashboard() {
 
     const handleOAuthCallback = async () => {
       const url = window.location.href;
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const queryParams = new URLSearchParams(window.location.search);
-
-      if (hashParams.get('access_token') || queryParams.get('code')) {
+      if (url.includes('code=') || url.includes('access_token=')) {
         await supabase.auth.exchangeCodeForSession(url);
         window.history.replaceState({}, document.title, '/radio/dashboard');
       }
@@ -106,7 +92,7 @@ export default function RadioDashboard() {
         .from('radio_artists')
         .select('*')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (artistError || !artistData) {
         router.push('/radio/register');
@@ -143,26 +129,31 @@ export default function RadioDashboard() {
     };
   }, [router]);
 
-const handleLogout = async () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/radio/register';
+  };
+
+  // NEW: Handle track deletion
+  const handleDeleteSubmission = async (submissionId: string) => {
+    if (!artist || !confirm('בטוח שברצונך למחוק את הטראק מהרשימה?')) return;
+
     try {
-      // 1. Force the sign out and wait for it to complete
-      await supabase.auth.signOut();
-      
-      // 2. Manually clear any leftover auth keys just in case (fixes mobile persistence)
-      for (const key in localStorage) {
-        if (key.includes('supabase.auth.token')) {
-          localStorage.removeItem(key);
-        }
-      }
-      
-      // 3. HARD REDIRECT to the register page. 
-      // This is much more reliable than router.push for clearing session state.
-      window.location.href = '/radio/register';
+      const { error } = await supabase
+        .from('radio_submissions')
+        .delete()
+        .eq('id', submissionId)
+        .eq('artist_id', artist.id); // Extra security: ensure it belongs to the artist
+
+      if (error) throw error;
+
+      // Update local state to remove the deleted track
+      setSubmissions(prev => prev.filter(s => s.id !== submissionId));
     } catch (err) {
-      console.error("Logout error:", err);
-      window.location.href = '/radio/register';
+      alert('שגיאה במחיקת הטראק. נסה שוב מאוחר יותר.');
     }
   };
+
   const approvedCount = submissions.filter(s => s.status === 'approved').length;
   const pendingCount = submissions.filter(s => s.status === 'pending').length;
 
@@ -188,20 +179,9 @@ const handleLogout = async () => {
       </Head>
 
       <style jsx global>{`
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
-          50% { transform: translateY(-30px) rotate(10deg); opacity: 0.2; }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes gradient-shift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
+        @keyframes float-slow { 0%, 100% { transform: translateY(0); opacity: 0.1; } 50% { transform: translateY(-30px); opacity: 0.2; } }
+        @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
-        .animate-shimmer { background-size: 200% auto; animation: shimmer 3s linear infinite; }
         .animate-gradient { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
         .glass-warm {
           background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(59, 130, 246, 0.05) 50%, rgba(236, 72, 153, 0.08) 100%);
@@ -235,9 +215,6 @@ const handleLogout = async () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
               <div className="flex items-center gap-4 sm:gap-5">
                 <div className="relative flex-shrink-0">
-                  {artist?.approved && (
-                    <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full opacity-60 blur-sm" />
-                  )}
                   <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 ${
                     artist?.approved ? 'border-green-500/50' : 'border-yellow-500/50'
                   }`}>
@@ -292,7 +269,7 @@ const handleLogout = async () => {
             </div>
           </div>
 
-          {/* Quick Stats - Responsive Grid */}
+          {/* Quick Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-10">
             <div className="glass-warm rounded-2xl p-4 sm:p-5 card-hover flex sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
@@ -325,7 +302,7 @@ const handleLogout = async () => {
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Main Content Area */}
           <div className="glass-warm rounded-3xl p-5 sm:p-8">
             <div className="flex items-center justify-between mb-6 sm:mb-8">
               <div className="flex items-center gap-3">
@@ -360,7 +337,7 @@ const handleLogout = async () => {
                 </p>
                 <Link
                   href="/radio/submit"
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-2xl transition-all shadow-lg shadow-purple-500/25"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-2xl transition-all shadow-lg"
                 >
                   <HiSparkles className="text-lg sm:text-xl" />
                   העלה את הטראק הראשון
@@ -377,15 +354,8 @@ const handleLogout = async () => {
                     <div className="flex items-center gap-3 sm:gap-4">
                       {/* Artwork */}
                       <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden flex-shrink-0">
-                        {submission.art_url ? (
-                          <img src={submission.art_url} alt={submission.track_name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-pink-600/30 flex items-center justify-center text-purple-400/60">
-                            <FaMusic />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                           <span className="text-white text-[10px]">▶</span>
+                        <div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-pink-600/30 flex items-center justify-center text-purple-400/60">
+                          <FaMusic />
                         </div>
                       </div>
 
@@ -411,26 +381,25 @@ const handleLogout = async () => {
                         </div>
                       </div>
 
-                      {/* Status */}
-                      <div className="flex-shrink-0 flex items-center">
-                        {submission.status === 'approved' && (
-                          <div className="flex items-center gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 rounded-full bg-green-500/10 border border-green-500/20">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-[10px] sm:text-sm text-green-400 font-medium">אושר</span>
-                          </div>
-                        )}
-                        {submission.status === 'pending' && (
-                          <div className="flex items-center gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20">
-                            <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                            <span className="text-[10px] sm:text-sm text-yellow-400 font-medium">ממתין</span>
-                          </div>
-                        )}
-                        {submission.status === 'declined' && (
-                          <div className="flex items-center gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 rounded-full bg-red-500/10 border border-red-500/20">
-                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                            <span className="text-[10px] sm:text-sm text-red-400 font-medium">נדחה</span>
-                          </div>
-                        )}
+                      {/* Actions (Delete) */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        {/* Status Badge */}
+                        <div className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] sm:text-xs font-bold ${
+                          submission.status === 'approved' ? 'bg-green-500/10 text-green-400' :
+                          submission.status === 'declined' ? 'bg-red-500/10 text-red-400' :
+                          'bg-yellow-500/10 text-yellow-400'
+                        }`}>
+                          {submission.status === 'approved' ? 'אושר' : submission.status === 'declined' ? 'נדחה' : 'ממתין'}
+                        </div>
+
+                        {/* Delete Button */}
+                        <button 
+                          onClick={() => handleDeleteSubmission(submission.id)}
+                          className="p-2 sm:p-3 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30"
+                          title="מחק טראק"
+                        >
+                          <FaTrash className="text-xs sm:text-sm" />
+                        </button>
                       </div>
                     </div>
 
@@ -449,7 +418,7 @@ const handleLogout = async () => {
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-gray-600 text-xs sm:text-sm">
+            <p className="text-gray-600 text-xs sm:text-sm font-light">
               🎧 המוזיקה שלך מגיעה לאוזניים חדשות כל יום
             </p>
           </div>
