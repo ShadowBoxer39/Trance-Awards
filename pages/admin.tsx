@@ -593,10 +593,7 @@ const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "trac
               </div>
             )}
 
-            {/* ===== EXISTING ARTISTS TAB ENDS ABOVE ===== */}
-            {activeTab === "artists" && (
-               // ... existing artist code ...
-            )}
+       
 
             {/* ===== PASTE STEP 4 HERE ===== */}
             {activeTab === "radio" && (
