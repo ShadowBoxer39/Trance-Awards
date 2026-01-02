@@ -35,7 +35,7 @@ export default function AdminRadioPage() {
   const [artists, setArtists] = useState<RadioArtist[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [activeTab, setActiveTab] = useState<'submissions' | 'artists'>('submissions');
-  const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped'); // Default to cascading view
+  const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped'); 
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'declined'>('pending');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -50,7 +50,12 @@ export default function AdminRadioPage() {
     try {
       const res = await fetch(`/api/admin/radio?key=${key}`);
       const data = await res.json();
-      if (data.ok) { setIsAuthed(true); localStorage.setItem('adminKey', key); setArtists(data.artists || []); setSubmissions(data.submissions || []); }
+      if (data.ok) { 
+        setIsAuthed(true); 
+        localStorage.setItem('adminKey', key); 
+        setArtists(data.artists || []); 
+        setSubmissions(data.submissions || []); 
+      }
       else { alert('מפתח שגוי'); localStorage.removeItem('adminKey'); }
     } catch (err) { alert('שגיאה בהתחברות'); }
     setLoading(false);
@@ -96,7 +101,32 @@ export default function AdminRadioPage() {
     setUploadingId(null);
   };
 
-  // Organizational Logic: Grouping Submissions by Artist
+  // ADDED BACK: Function to handle artist approval
+  const handleArtistApproval = async (artistId: string, approved: boolean) => {
+    try {
+      const res = await fetch('/api/admin/radio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: adminKey,
+          action: 'updateArtist',
+          artistId,
+          approved,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        await refreshData();
+      } else {
+        alert('שגיאה: ' + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('שגיאה בעדכון');
+    }
+  };
+
   const groupedSubmissions = useMemo(() => {
     const filtered = submissions.filter(s => filter === 'all' || s.status === filter);
     if (viewMode === 'list') return { flat: filtered };
@@ -305,8 +335,8 @@ function ArtistCard({ artist, onToggleApproval }: any) {
         <div className="px-6 pb-6 pt-2 border-t border-white/5 bg-black/20 text-sm space-y-4">
            {artist.bio && <p className="text-gray-400 leading-relaxed"><span className="text-white font-bold ml-2">ביו:</span>{artist.bio}</p>}
            <div className="flex gap-4">
-              {artist.instagram && <a href={`https://instagram.com/${artist.instagram}`} className="text-pink-400 flex items-center gap-2"><FaInstagram /> {artist.instagram}</a>}
-              {artist.soundcloud && <a href={artist.soundcloud} className="text-orange-400 flex items-center gap-2"><FaSoundcloud /> SoundCloud</a>}
+              {artist.instagram && <a href={`https://instagram.com/${artist.instagram}`} target="_blank" className="text-pink-400 flex items-center gap-2"><FaInstagram /> {artist.instagram}</a>}
+              {artist.soundcloud && <a href={artist.soundcloud} target="_blank" className="text-orange-400 flex items-center gap-2"><FaSoundcloud /> SoundCloud</a>}
            </div>
         </div>
       )}
