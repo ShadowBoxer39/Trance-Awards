@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 const AZURACAST_URL = 'https://a12.asurahosting.com';
-const STATION_ID = '1';
+const STATION_ID = '383'; // UPDATED: Matches your URL
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Unauthorized: Invalid Admin Key' });
     }
 
-    // 2. Fetch data from Supabase
+    // 2. Fetch submission
     const { data: submission, error: fetchError } = await supabase
       .from('radio_submissions')
       .select('*, radio_artists(name)')
@@ -31,20 +31,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (fetchError || !submission) return res.status(404).json({ error: 'Submission not found' });
 
-    // 3. Download MP3 and convert to Base64
+    // 3. Download and convert to Base64
     const mp3Response = await fetch(submission.mp3_url);
-    if (!mp3Response.ok) throw new Error('Failed to download MP3 from storage');
-    
-    // Convert the file to a Base64 string
     const arrayBuffer = await mp3Response.arrayBuffer();
     const base64File = Buffer.from(arrayBuffer).toString('base64');
 
-    // 4. Clean filename for the "path" parameter
+    // 4. Create destination path
     const artistName = submission.radio_artists?.name || 'Artist';
     const trackName = submission.track_name || 'Track';
     const filename = `${artistName} - ${trackName}.mp3`.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
 
-    // 5. POST to Azuracast as JSON (The "RESTful" way)
+    // 5. Upload to the correct station ID (383)
     const azuraResponse = await fetch(
       `${AZURACAST_URL}/api/station/${STATION_ID}/files`,
       {
@@ -54,8 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          path: filename, // Destination filename in the root folder
-          file: base64File, // Raw base64 encoded file data
+          path: filename, 
+          file: base64File,
         }),
       }
     );
@@ -63,33 +60,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const resultText = await azuraResponse.text();
 
     if (!azuraResponse.ok) {
-      console.error('Azuracast Error Details:', resultText);
       return res.status(azuraResponse.status).json({ 
         error: 'Azuracast Upload Failed', 
         details: resultText 
       });
     }
 
-    // 6. Update status in Supabase
+    // 6. Update status
     await supabase
       .from('radio_submissions')
-      .update({ 
-        status: 'approved',
-        reviewed_at: new Date().toISOString()
-      })
+      .update({ status: 'approved', reviewed_at: new Date().toISOString() })
       .eq('id', submissionId);
 
-    return res.status(200).json({ success: true, message: `Uploaded: ${filename}` });
+    return res.status(200).json({ success: true, message: `Uploaded to station 383: ${filename}` });
 
   } catch (error: any) {
-    console.error('Upload Process Error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
 
 export const config = {
-  api: {
-    bodyParser: { sizeLimit: '50mb' }, // Necessary for Base64 overhead
-  },
+  api: { bodyParser: { sizeLimit: '50mb' } },
   maxDuration: 60,
 };
