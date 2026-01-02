@@ -79,14 +79,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const current = getDateBounds(range, 0);
     const previous = getDateBounds(range, 1);
 
-    // Fetch current period data
-    const { data: currentVisits, error: currentError } = await supabase
+  const { data: currentVisits, error: currentError } = await supabase
       .from("site_visits")
       .select("visitor_id, page, referrer, user_agent, duration, is_israel, timestamp")
       .gte("timestamp", current.start.toISOString())
       .lt("timestamp", current.end.toISOString())
       .order("timestamp", { ascending: false })
-    .limit(50000);
+      .limit(50000);
 
     if (currentError) throw currentError;
 
