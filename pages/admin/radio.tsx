@@ -402,15 +402,15 @@ function SubmissionCard({ submission, uploadingId, audioPlayer, onApprove, onApp
           
           {/* Progress Bar - Only show when this track is active */}
           {isCurrentTrack && (
-            <div className="mt-4 flex items-center gap-3">
+           <div className="mt-4 flex items-center gap-3" dir="ltr">
               <span className="text-xs text-gray-500 w-10">{audioPlayer.formatTime(audioPlayer.progress)}</span>
               <div 
                 className="flex-1 h-1.5 bg-white/10 rounded-full cursor-pointer overflow-hidden"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const percentage = (e.clientX - rect.left) / rect.width;
-                  audioPlayer.seek(percentage * audioPlayer.duration);
-                }}
+               onClick={(e) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const percentage = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  audioPlayer.seek(percentage * audioPlayer.duration);
+}}
               >
                 <div 
                   className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
