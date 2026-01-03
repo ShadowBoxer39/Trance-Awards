@@ -54,7 +54,7 @@ const createTrackSubmittedEmailHTML = (artistName: string, trackName: string) =>
                 <ul style="color: #cbd5e1; font-size: 14px; line-height: 2; margin: 0; padding: 0 20px 0 0; list-style: none;">
                   <li style="margin-bottom: 8px;">👂 הצוות מאזין לטראק</li>
                   <li style="margin-bottom: 8px;">📝 בודקים התאמה לסגנון הרדיו</li>
-                  <li>📧 תקבל מייל עם התשובה תוך 24-48 שעות</li>
+                  <li>📧 תקבל מייל עם התשובה בכאשר הצוות יסיים להאזין</li>
                 </ul>
               </div>
               
