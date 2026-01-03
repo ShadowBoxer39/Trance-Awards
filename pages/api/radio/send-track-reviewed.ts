@@ -19,9 +19,9 @@ const createTrackApprovedEmailHTML = (artistName: string, trackName: string) => 
           <tr>
             <td style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%); border-radius: 24px 24px 0 0; padding: 40px 40px 30px; text-align: center; border: 1px solid rgba(34, 197, 94, 0.2); border-bottom: none;">
               <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
-              <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px; font-weight: 700;">
-                מזל טוב, ${artistName}!
-              </h1>
+             <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px; font-weight: 700;">
+  מזל טוב, ${artistName}!
+</h1>
               <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin: 0;">
                 הטראק שלך אושר לשידור 🔥
               </p>
@@ -118,7 +118,7 @@ const createTrackDeclinedEmailHTML = (artistName: string, trackName: string, rea
             <td style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(107, 114, 128, 0.15) 100%); border-radius: 24px 24px 0 0; padding: 40px 40px 30px; text-align: center; border: 1px solid rgba(255,255,255,0.1); border-bottom: none;">
               <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
               <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px; font-weight: 700;">
-                היי ${artistName},
+                ${artistName}, היי
               </h1>
               <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin: 0;">
                 יש לנו עדכון לגבי הטראק שהגשת
