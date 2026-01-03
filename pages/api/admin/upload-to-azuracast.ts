@@ -8,7 +8,41 @@ const supabase = createClient(
 );
 
 const AZURACAST_URL = 'https://a12.asurahosting.com';
-const STATION_ID = '383'; // UPDATED: Matches your URL
+const STATION_ID = '383';
+
+// Helper function to send approval email
+async function sendApprovalEmail(artistId: string, trackName: string) {
+  try {
+    // Fetch artist details
+    const { data: artist, error: artistError } = await supabase
+      .from('radio_artists')
+      .select('name, email')
+      .eq('id', artistId)
+      .single();
+    
+    if (artistError || !artist?.email) {
+      console.error('Could not fetch artist for email:', artistError);
+      return;
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracktrip.co.il';
+    
+    await fetch(`${baseUrl}/api/radio/send-track-reviewed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: artist.email,
+        artistName: artist.name,
+        trackName,
+        status: 'approved',
+      }),
+    });
+    
+    console.log(`✅ Approval email sent to ${artist.email} for track "${trackName}"`);
+  } catch (err) {
+    console.error('Failed to send approval email:', err);
+  }
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -71,6 +105,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('radio_submissions')
       .update({ status: 'approved', reviewed_at: new Date().toISOString() })
       .eq('id', submissionId);
+
+    // 7. Send approval email notification
+    await sendApprovalEmail(submission.artist_id, trackName);
 
     return res.status(200).json({ success: true, message: `Uploaded to station 383: ${filename}` });
 
