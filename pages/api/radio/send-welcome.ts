@@ -21,7 +21,7 @@ const createWelcomeEmailHTML = (artistName: string) => `
             <td style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border-radius: 24px 24px 0 0; padding: 40px 40px 30px; text-align: center; border: 1px solid rgba(255,255,255,0.1); border-bottom: none;">
               <div style="font-size: 48px; margin-bottom: 16px;">🎧</div>
               <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px; font-weight: 700;">
-                ברוך הבא לסטודיו, ${artistName}!
+                ברוך הבא למשפחה, ${artistName}!
               </h1>
               <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin: 0;">
                 המשפחה של יוצאים לטראק גדלה 💜
@@ -43,8 +43,8 @@ const createWelcomeEmailHTML = (artistName: string) => `
                 </h3>
                 <ul style="color: #cbd5e1; font-size: 14px; line-height: 2; margin: 0; padding: 0 20px 0 0; list-style: none;">
                   <li style="margin-bottom: 8px;">📤 העלה את הטראק הראשון שלך</li>
-                  <li style="margin-bottom: 8px;">⏳ נאזין ונאשר תוך 24-48 שעות</li>
-                  <li>🎵 הטראק שלך יכנס לרוטציה ברדיו!</li>
+                  <li style="margin-bottom: 8px;">⏳ נאזין ונחליט אם הוא מתאים לרדיו</li>
+                  <li>🎵 במידה ויתאים הטראק שלך יכנס לרוטציה ברדיו!</li>
                 </ul>
               </div>
               
@@ -73,7 +73,7 @@ const createWelcomeEmailHTML = (artistName: string) => `
                 יוצאים לטראק 🎧 הבית של הטראנס הישראלי
               </p>
               <div>
-                <a href="https://instagram.com/track.trip" style="color: #c084fc; text-decoration: none; font-size: 12px; margin: 0 8px;">Instagram</a>
+                <a href="https://www.instagram.com/track_trip.trance/" style="color: #c084fc; text-decoration: none; font-size: 12px; margin: 0 8px;">Instagram</a>
                 <span style="color: rgba(255,255,255,0.2);">•</span>
                 <a href="https://tracktrip.co.il/radio" style="color: #c084fc; text-decoration: none; font-size: 12px; margin: 0 8px;">Radio</a>
                 <span style="color: rgba(255,255,255,0.2);">•</span>
