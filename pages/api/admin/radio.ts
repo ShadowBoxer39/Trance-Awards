@@ -7,6 +7,48 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Helper function to send review email notification
+async function sendReviewEmail(
+  artistId: string, 
+  trackName: string, 
+  status: 'approved' | 'declined', 
+  reason?: string
+) {
+  try {
+    // Fetch artist details
+    const { data: artist, error: artistError } = await supabase
+      .from('radio_artists')
+      .select('name, email')
+      .eq('id', artistId)
+      .single();
+    
+    if (artistError || !artist?.email) {
+      console.error('Could not fetch artist for email:', artistError);
+      return;
+    }
+
+    // Send the email via our API
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracktrip.co.il';
+    
+    await fetch(`${baseUrl}/api/radio/send-track-reviewed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: artist.email,
+        artistName: artist.name,
+        trackName,
+        status,
+        reason: reason || undefined,
+      }),
+    });
+    
+    console.log(`✅ Review email sent to ${artist.email} for track "${trackName}" (${status})`);
+  } catch (err) {
+    console.error('Failed to send review email:', err);
+    // Don't throw - email failure shouldn't break the admin action
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Get key from query (GET) or body (POST)
   const key = req.method === 'GET' ? req.query.key : req.body?.key;
@@ -57,6 +99,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Update submission status
       if (action === 'updateSubmission' && submissionId) {
+        // First, fetch the submission to get track name and artist_id
+        const { data: submission, error: fetchError } = await supabase
+          .from('radio_submissions')
+          .select('track_name, artist_id, status')
+          .eq('id', submissionId)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const previousStatus = submission?.status;
+        
+        // Update the submission
         const { error } = await supabase
           .from('radio_submissions')
           .update({
@@ -67,6 +121,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .eq('id', submissionId);
 
         if (error) throw error;
+        
+        // Send email notification if status changed to approved or declined
+        // Only send if this is a NEW status change (not re-saving same status)
+        if (submission && (status === 'approved' || status === 'declined') && previousStatus !== status) {
+          await sendReviewEmail(
+            submission.artist_id,
+            submission.track_name,
+            status,
+            status === 'declined' ? adminNotes : undefined
+          );
+        }
+        
         return res.status(200).json({ ok: true });
       }
 
