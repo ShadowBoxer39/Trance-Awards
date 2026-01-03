@@ -1,9 +1,9 @@
 // pages/admin/radio.tsx - Aesthetic Admin Panel with Cascading View
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
-import { FaMusic, FaUser, FaCheck, FaTimes, FaDownload, FaClock, FaUpload, FaSpinner, FaInstagram, FaSoundcloud, FaEnvelope, FaChevronDown, FaChevronUp, FaTrash, FaLayerGroup, FaList } from 'react-icons/fa';
+import { FaMusic, FaUser, FaCheck, FaTimes, FaDownload, FaClock, FaUpload, FaSpinner, FaInstagram, FaSoundcloud, FaEnvelope, FaChevronDown, FaChevronUp, FaTrash, FaLayerGroup, FaList, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
@@ -28,6 +28,75 @@ const FloatingNotes = () => (
   </div>
 );
 
+// Global Audio Player State
+function useAudioPlayer() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentUrl, setCurrentUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    // Create audio element once
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.addEventListener('timeupdate', () => {
+        if (audioRef.current) {
+          setProgress(audioRef.current.currentTime);
+          setDuration(audioRef.current.duration || 0);
+        }
+      });
+      audioRef.current.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setProgress(0);
+      });
+      audioRef.current.addEventListener('play', () => setIsPlaying(true));
+      audioRef.current.addEventListener('pause', () => setIsPlaying(false));
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const play = (url: string) => {
+    if (!audioRef.current) return;
+    
+    if (currentUrl === url) {
+      // Toggle play/pause for same track
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+    } else {
+      // New track
+      audioRef.current.src = url;
+      audioRef.current.play();
+      setCurrentUrl(url);
+      setProgress(0);
+    }
+  };
+
+  const seek = (time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return { play, seek, currentUrl, isPlaying, progress, duration, formatTime };
+}
+
 export default function AdminRadioPage() {
   const [adminKey, setAdminKey] = useState('');
   const [isAuthed, setIsAuthed] = useState(false);
@@ -39,6 +108,8 @@ export default function AdminRadioPage() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'declined'>('pending');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  const audioPlayer = useAudioPlayer();
 
   useEffect(() => {
     const storedKey = localStorage.getItem('adminKey') || localStorage.getItem('ADMIN_KEY');
@@ -53,7 +124,7 @@ export default function AdminRadioPage() {
       if (data.ok) { 
         setIsAuthed(true); 
         localStorage.setItem('adminKey', key);
-        localStorage.setItem('ADMIN_KEY', key); // Sync both keys
+        localStorage.setItem('ADMIN_KEY', key);
         setArtists(data.artists || []); 
         setSubmissions(data.submissions || []); 
       }
@@ -257,7 +328,16 @@ export default function AdminRadioPage() {
                       )}
                       <div className="grid grid-cols-1 gap-4">
                         {tracks.map(sub => (
-                          <SubmissionCard key={sub.id} submission={sub} uploadingId={uploadingId} onApprove={() => handleSubmissionAction(sub.id, 'approve')} onApproveAndUpload={() => handleApproveAndUpload(sub)} onDecline={n => handleSubmissionAction(sub.id, 'decline', n)} onDelete={() => handleSubmissionAction(sub.id, 'delete')} />
+                          <SubmissionCard 
+                            key={sub.id} 
+                            submission={sub} 
+                            uploadingId={uploadingId} 
+                            audioPlayer={audioPlayer}
+                            onApprove={() => handleSubmissionAction(sub.id, 'approve')} 
+                            onApproveAndUpload={() => handleApproveAndUpload(sub)} 
+                            onDecline={n => handleSubmissionAction(sub.id, 'decline', n)} 
+                            onDelete={() => handleSubmissionAction(sub.id, 'delete')} 
+                          />
                         ))}
                       </div>
                     </div>
@@ -279,17 +359,38 @@ export default function AdminRadioPage() {
   );
 }
 
-function SubmissionCard({ submission, uploadingId, onApprove, onApproveAndUpload, onDecline, onDelete }: any) {
+function SubmissionCard({ submission, uploadingId, audioPlayer, onApprove, onApproveAndUpload, onDecline, onDelete }: any) {
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState('');
   const isUploading = uploadingId === submission.id;
+  
+  const isCurrentTrack = audioPlayer.currentUrl === submission.mp3_url;
+  const isPlaying = isCurrentTrack && audioPlayer.isPlaying;
 
   return (
     <div className="glass-warm rounded-[2rem] p-6 border border-white/5 hover:border-white/10 transition-all group">
       <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
-          {submission.art_url ? <img src={submission.art_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-700"><FaMusic /></div>}
-        </div>
+        {/* Play Button / Art */}
+        <button 
+          onClick={() => audioPlayer.play(submission.mp3_url)}
+          className="relative w-16 h-16 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0 group/play hover:scale-105 transition-transform"
+        >
+          {submission.art_url ? (
+            <img src={submission.art_url} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-700">
+              <FaMusic />
+            </div>
+          )}
+          {/* Play/Pause Overlay */}
+          <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${isCurrentTrack ? 'opacity-100' : 'opacity-0 group-hover/play:opacity-100'}`}>
+            {isPlaying ? (
+              <FaPause className="text-white text-xl" />
+            ) : (
+              <FaPlay className="text-white text-xl ml-1" />
+            )}
+          </div>
+        </button>
 
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
@@ -298,6 +399,27 @@ function SubmissionCard({ submission, uploadingId, onApprove, onApproveAndUpload
           </div>
           <p className="text-sm text-gray-500 mb-2">אמן: <span className="text-gray-300">{submission.radio_artists?.name}</span> • הוגש ב-{new Date(submission.submitted_at).toLocaleDateString('he-IL')}</p>
           {submission.description && <p className="text-xs text-gray-400 italic leading-relaxed bg-black/20 p-3 rounded-xl border border-white/5 max-w-2xl">{submission.description}</p>}
+          
+          {/* Progress Bar - Only show when this track is active */}
+          {isCurrentTrack && (
+            <div className="mt-4 flex items-center gap-3">
+              <span className="text-xs text-gray-500 w-10">{audioPlayer.formatTime(audioPlayer.progress)}</span>
+              <div 
+                className="flex-1 h-1.5 bg-white/10 rounded-full cursor-pointer overflow-hidden"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const percentage = (e.clientX - rect.left) / rect.width;
+                  audioPlayer.seek(percentage * audioPlayer.duration);
+                }}
+              >
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
+                  style={{ width: `${audioPlayer.duration ? (audioPlayer.progress / audioPlayer.duration) * 100 : 0}%` }}
+                />
+              </div>
+              <span className="text-xs text-gray-500 w-10">{audioPlayer.formatTime(audioPlayer.duration)}</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
