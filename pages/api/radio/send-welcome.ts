@@ -21,8 +21,8 @@ const createWelcomeEmailHTML = (artistName: string) => `
             <td style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border-radius: 24px 24px 0 0; padding: 40px 40px 30px; text-align: center; border: 1px solid rgba(255,255,255,0.1); border-bottom: none;">
               <div style="font-size: 48px; margin-bottom: 16px;">🎧</div>
               <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px; font-weight: 700;">
-                ברוך הבא למשפחה, ${artistName}!
-              </h1>
+  ${artistName}, ברוך הבא למשפחה!
+</h1>
               <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin: 0;">
                 המשפחה של יוצאים לטראק גדלה 💜
               </p>
