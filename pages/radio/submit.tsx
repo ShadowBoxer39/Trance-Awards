@@ -28,7 +28,7 @@ const FloatingNotes = () => {
 export default function RadioSubmitPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [artistId, setArtistId] = useState<string | null>(null);
+  const [artist, setArtist] = useState<{ id: string; name: string; email: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -48,9 +48,16 @@ export default function RadioSubmitPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) { router.push('/radio/register'); return; }
       setUser(session.user);
-      const { data: artist } = await supabase.from('radio_artists').select('id').eq('user_id', session.user.id).maybeSingle();
-      if (!artist) { router.push('/radio/register'); return; }
-      setArtistId(artist.id);
+      
+      // Fetch artist data including name and email for the notification
+      const { data: artistData } = await supabase
+        .from('radio_artists')
+        .select('id, name, email')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      
+      if (!artistData) { router.push('/radio/register'); return; }
+      setArtist(artistData);
       setLoading(false);
     };
     checkAuth();
@@ -68,14 +75,14 @@ export default function RadioSubmitPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!artistId || !mp3File || !agreedToTerms) return;
+    if (!artist || !mp3File || !agreedToTerms) return;
     setSubmitting(true);
     setError('');
 
     try {
       const timestamp = Date.now();
       const safeName = formData.trackName.replace(/[^a-zA-Z0-9]/g, '_');
-      const mp3FileName = `${artistId}/${timestamp}_${safeName}.mp3`;
+      const mp3FileName = `${artist.id}/${timestamp}_${safeName}.mp3`;
 
       setUploadProgress(20);
       const { error: mp3Error } = await supabase.storage.from('Radio').upload(mp3FileName, mp3File);
@@ -85,9 +92,9 @@ export default function RadioSubmitPage() {
       const { data: mp3UrlData } = supabase.storage.from('Radio').getPublicUrl(mp3FileName);
 
       const { error: insertError } = await supabase.from('radio_submissions').insert({
-        artist_id: artistId,
+        artist_id: artist.id,
         track_name: formData.trackName.trim(),
-        description: formData.description.trim(), // Ensure you have this column in your DB!
+        description: formData.description.trim(),
         is_premiere: formData.isPremiere,
         mp3_url: mp3UrlData.publicUrl,
         status: 'pending',
@@ -96,6 +103,25 @@ export default function RadioSubmitPage() {
       });
 
       if (insertError) throw insertError;
+      
+      setUploadProgress(90);
+      
+      // Send email notification (non-blocking - don't fail submission if email fails)
+      try {
+        await fetch('/api/radio/send-track-submitted', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: artist.email,
+            artistName: artist.name,
+            trackName: formData.trackName.trim(),
+          }),
+        });
+      } catch (emailErr) {
+        // Log but don't fail the submission
+        console.error('Email notification failed:', emailErr);
+      }
+      
       setUploadProgress(100);
       setSuccess(true);
       setTimeout(() => router.push('/radio/dashboard'), 2500);
