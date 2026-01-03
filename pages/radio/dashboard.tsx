@@ -71,12 +71,25 @@ export default function RadioDashboard() {
       const { data: submissionsData } = await supabase
         .from('radio_submissions').select('*').eq('artist_id', artistData.id).order('submitted_at', { ascending: false });
 
-      setSubmissions(submissionsData || []);
-      setLoading(false);
-      if (router.query.welcome === '1') { setShowWelcome(true); setTimeout(() => setShowWelcome(false), 5000); }
-    };
-    loadData();
-  }, [router.isReady]);
+     setSubmissions(submissionsData || []);
+setLoading(false);
+
+// If this is the artist's first time (redirected from register)
+if (router.query.welcome === '1') { 
+  setShowWelcome(true); 
+  
+  // Trigger Welcome Email
+  fetch('/api/radio/send-welcome', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      email: session.user.email, 
+      name: artistData.name 
+    }),
+  }).catch(err => console.error("Email error:", err));
+
+  setTimeout(() => setShowWelcome(false), 5000); 
+}
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
