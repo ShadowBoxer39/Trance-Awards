@@ -1,4 +1,4 @@
-// pages/radio/register.tsx - Aesthetic Artist Landing Page
+// pages/radio/register.tsx - Aesthetic Artist Landing Page with YouTube CTAs
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -6,13 +6,15 @@ import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
-import { FaMicrophoneAlt, FaChevronDown, FaPlay, FaYoutube, FaCheckCircle, FaRocket, FaQuestionCircle } from 'react-icons/fa';
+import { FaMicrophoneAlt, FaChevronDown, FaPlay, FaYoutube, FaCheckCircle, FaRocket, FaQuestionCircle, FaBell } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+const YOUTUBE_SUBSCRIBE_URL = 'https://www.youtube.com/@tracktripil?sub_confirmation=1';
 
 const FAQ_ITEMS = [
   {
@@ -117,8 +119,10 @@ export default function RadioRegisterPage() {
       <style jsx global>{`
         @keyframes float-slow { 0%, 100% { transform: translateY(0); opacity: 0.1; } 50% { transform: translateY(-30px); opacity: 0.2; } }
         @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.3); } 50% { box-shadow: 0 0 40px rgba(255, 0, 0, 0.6); } }
         .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
         .animate-gradient { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
         .glass-warm {
           background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(59, 130, 246, 0.05) 50%, rgba(236, 72, 153, 0.08) 100%);
           backdrop-filter: blur(20px);
@@ -158,7 +162,8 @@ export default function RadioRegisterPage() {
                ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {/* Main CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
               <button onClick={scrollToSignup} className="w-full sm:w-auto group inline-flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-5 px-10 rounded-[2rem] transition-all shadow-xl shadow-purple-500/20 active:scale-95">
                 <FaMicrophoneAlt />
                 <span>הצטרפו עכשיו</span>
@@ -168,34 +173,98 @@ export default function RadioRegisterPage() {
                 <span>האזינו לרדיו</span>
               </Link>
             </div>
+
+            {/* YouTube Subscribe CTA - Secondary */}
+            <a 
+              href={YOUTUBE_SUBSCRIBE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-3 text-gray-400 hover:text-white transition-all group"
+            >
+              <FaYoutube className="text-red-500 text-xl group-hover:scale-110 transition-transform" />
+              <span className="text-sm">עקבו אחרינו ביוטיוב לשידורים חיים</span>
+              <FaBell className="text-yellow-500 text-sm animate-bounce" />
+            </a>
           </div>
         </section>
 
-        {/* YouTube Promo */}
+        {/* YouTube Promo Section - Enhanced */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-warm rounded-[3rem] p-8 md:p-16 relative overflow-hidden border border-red-500/10">
+            <div className="glass-warm rounded-[3rem] p-8 md:p-16 relative overflow-hidden border border-red-500/20">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 blur-[80px]" />
-              <div className="relative z-10 text-center">
-                <FaYoutube className="text-6xl text-red-600 mx-auto mb-6" />
-                <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">גם ביוטיוב לייב!</h2>
-                <p className="text-gray-400 text-lg mb-10 leading-relaxed max-w-2xl mx-auto">
-                  הרדיו משודר בשידור חי 24/7 גם ביוטיוב, עם תצוגת Now Playing מתקדמת וקישורים ישירים לסושיאל של האמנים.
-                </p>
-                <div className="aspect-video bg-black rounded-3xl border border-white/5 flex items-center justify-center shadow-2xl">
-                   <div className="text-center">
-                      <div className="w-20 h-20 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FaPlay className="text-red-600 ml-1" />
-                      </div>
-                      <span className="text-gray-500 font-medium text-sm">השידור החי יעלה בקרוב</span>
-                   </div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-600/10 blur-[80px]" />
+              
+              <div className="relative z-10">
+                {/* Header */}
+                <div className="text-center mb-10">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-600/20 mb-6 animate-pulse-glow">
+                    <FaYoutube className="text-5xl text-red-500" />
+                  </div>
+                  <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">שידור חי 24/7 ביוטיוב</h2>
+                  <p className="text-gray-400 text-lg leading-relaxed max-w-2xl mx-auto">
+                    הטראקים שלכם משודרים עם <span className="text-white font-semibold">קרדיט מלא</span> וקישורים ישירים לסושיאל שלכם. 
+                    <br className="hidden md:block" />
+                    הירשמו לערוץ כדי לא לפספס!
+                  </p>
+                </div>
+
+                {/* Video Preview */}
+                <div className="aspect-video bg-black/60 rounded-3xl border border-white/10 flex items-center justify-center shadow-2xl mb-10 overflow-hidden relative group">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="relative text-center">
+                    <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-red-600/30">
+                      <FaPlay className="text-white text-2xl ml-1" />
+                    </div>
+                    <span className="text-gray-300 font-medium">השידור החי יעלה בקרוב</span>
+                  </div>
+                </div>
+
+                {/* Subscribe Button - Main CTA */}
+                <div className="text-center">
+                  <a 
+                    href={YOUTUBE_SUBSCRIBE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-4 bg-red-600 hover:bg-red-500 text-white font-bold py-5 px-12 rounded-full transition-all shadow-xl shadow-red-600/30 hover:shadow-red-500/40 active:scale-95 text-lg"
+                  >
+                    <FaYoutube className="text-2xl" />
+                    <span>הירשמו לערוץ היוטיוב</span>
+                    <FaBell className="text-lg" />
+                  </a>
+                  <p className="text-gray-500 text-sm mt-4">
+                    🔔 הפעילו התראות כדי לדעת מתי הטראק שלכם בשידור
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* FAQ Section with updated answers */}
+        {/* Benefits Section - NEW */}
+        <section className="py-16 px-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="glass-warm rounded-3xl p-8 text-center border border-purple-500/10 hover:border-purple-500/30 transition-all">
+                <div className="text-4xl mb-4">🎵</div>
+                <h3 className="text-xl font-bold text-white mb-2">רוטציה ברדיו</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">הטראקים שלכם משודרים 24/7 ברדיו עם אלפי מאזינים</p>
+              </div>
+              <div className="glass-warm rounded-3xl p-8 text-center border border-red-500/10 hover:border-red-500/30 transition-all">
+                <div className="text-4xl mb-4">📺</div>
+                <h3 className="text-xl font-bold text-white mb-2">חשיפה ביוטיוב</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">השם והלינקים שלכם מופיעים בשידור החי לכל הצופים</p>
+              </div>
+              <div className="glass-warm rounded-3xl p-8 text-center border border-cyan-500/10 hover:border-cyan-500/30 transition-all">
+                <div className="text-4xl mb-4">🚀</div>
+                <h3 className="text-xl font-bold text-white mb-2">קידום הקריירה</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">הצטרפו לקהילת האמנים שלנו וקבלו חשיפה לקהל חדש</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
         <section className="py-24 px-6">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-16">
@@ -216,7 +285,7 @@ export default function RadioRegisterPage() {
           </div>
         </section>
 
-        {/* Final CTA with Signup Anchor */}
+        {/* Final CTA with Signup */}
         <section id="signup-section" className="py-32 px-6">
           <div className="max-w-2xl mx-auto text-center">
             <div className="glass-warm rounded-[3rem] p-12 border border-purple-500/20 shadow-2xl shadow-purple-500/10">
@@ -228,6 +297,22 @@ export default function RadioRegisterPage() {
               </div>
               <p className="text-[10px] text-gray-600">בלחיצה על התחברות אתם מאשרים את תנאי השימוש</p>
             </div>
+          </div>
+        </section>
+
+        {/* Bottom YouTube CTA - For non-artists */}
+        <section className="py-16 px-6 border-t border-white/5">
+          <div className="max-w-3xl mx-auto text-center">
+            <p className="text-gray-500 mb-6">עדיין לא מוכנים להגיש מוזיקה? אפשר בינתיים לעקוב 👇</p>
+            <a 
+              href={YOUTUBE_SUBSCRIBE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-3 bg-white/5 hover:bg-red-600/20 border border-white/10 hover:border-red-500/30 text-white font-semibold py-4 px-8 rounded-full transition-all"
+            >
+              <FaYoutube className="text-red-500 text-xl" />
+              <span>הירשמו לערוץ היוטיוב</span>
+            </a>
           </div>
         </section>
       </div>
