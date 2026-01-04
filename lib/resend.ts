@@ -1,4 +1,4 @@
 import { Resend } from 'resend';
 
 export const resend = new Resend(process.env.RESEND_API_KEY);
-export const EMAIL_SENDER = "יוצאים לטראק | Studio <studio@tracktrip.co.il>";
+export const EMAIL_SENDER = "יוצאים לטראק | Studio <radio@tracktrip.co.il>";
