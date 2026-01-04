@@ -58,7 +58,7 @@ const createWelcomeEmailHTML = (artistName: string) => `
                   <td align="center">
                     <a href="https://tracktrip.co.il/radio/dashboard" 
                        style="display: inline-block; background: linear-gradient(135deg, #9333ea 0%, #db2777 100%); color: #ffffff; font-size: 16px; font-weight: 700; text-decoration: none; padding: 16px 40px; border-radius: 50px; box-shadow: 0 4px 24px rgba(147, 51, 234, 0.4);">
-                      כניסה לסטודיו שלי
+                      כניסה לאזור האישי שלי
                     </a>
                   </td>
                 </tr>
