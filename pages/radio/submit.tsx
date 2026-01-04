@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
-import Navigation from '@/components/Navigation'; 
+import Navigation from '@/components/Navigation';  
 import { FaMusic, FaCloudUploadAlt, FaArrowRight, FaCheckCircle, FaChevronDown, FaChevronUp, FaInfoCircle, FaPenNib, FaGem, FaLock } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 
