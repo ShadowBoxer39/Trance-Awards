@@ -386,7 +386,7 @@ export default function YouTubeBackground() {
             <FaComment className="text-3xl text-fuchsia-400" />
             <div className="text-right">
               <p className="text-2xl text-white font-bold">
-                כתבו <span className="text-fuchsia-400 font-mono bg-fuchsia-950/50 px-3 py-1 rounded-lg mx-2">!np</span> בצ'אט
+                כתבו <span className="text-fuchsia-400 font-mono bg-fuchsia-950/50 px-3 py-1 rounded-lg mx-2">np!</span> בצ'אט
               </p>
               <p className="text-lg text-gray-500">לקבלת שם הטראק הנוכחי</p>
             </div>
