@@ -124,7 +124,7 @@ export default function RadioDashboard() {
   return (
     <>
       <Head>
-        <title>הסטודיו שלי | רדיו יוצאים לטראק</title>
+        <title>האזור האישי שלי | רדיו יוצאים לטראק</title>
         <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
@@ -199,7 +199,7 @@ export default function RadioDashboard() {
             {submissions.length === 0 ? (
               <div className="text-center py-12 sm:py-16">
                 <div className="relative inline-block mb-6"><div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-2xl opacity-30 animate-pulse" /><div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/20 flex items-center justify-center text-3xl sm:text-4xl"><FaMusic className="text-purple-400" /></div></div>
-                <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2">הסטודיו ריק...</h3>
+                <h3 className="text-xl sm:text-2xl font-semibold text-white mb-2">ריק פה...</h3>
                 <p className="text-sm sm:text-base text-gray-400 mb-8 max-w-sm mx-auto leading-relaxed">עדיין לא העלית טראקים. זה הזמן להשמיע את המוזיקה שלך לעולם! 🎵</p>
                 <Link href="/radio/submit" className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-2xl transition-all shadow-lg">העלה את הטראק הראשון</Link>
               </div>
