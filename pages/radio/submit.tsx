@@ -174,7 +174,7 @@ export default function RadioSubmitPage() {
 
         <div className="relative max-w-2xl mx-auto px-6 py-12">
           <Link href="/radio/dashboard" className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 mb-8 transition-colors">
-            <FaArrowRight /> <span>חזרה לסטודיו</span>
+            <FaArrowRight /> <span>חזרה לאזור האישי</span>
           </Link>
 
           {/* Header with Quality Message */}
@@ -235,7 +235,7 @@ export default function RadioSubmitPage() {
                 בינתיים, אפשר לעבוד על הטראק הבא ולהכין אותו להגשה בחודש הבא 💪
               </p>
               <Link href="/radio/dashboard" className="inline-flex items-center gap-2 mt-8 text-purple-400 hover:text-purple-300 transition">
-                <FaArrowRight /> חזרה לסטודיו
+                <FaArrowRight /> חזרה לאזור האישי
               </Link>
             </div>
           )}
@@ -247,7 +247,7 @@ export default function RadioSubmitPage() {
                 <div className="text-center py-10 animate-fade-in">
                   <div className="text-6xl mb-6">✨</div>
                   <h2 className="text-2xl font-bold text-green-400 mb-4">הטראק הוגש בהצלחה!</h2>
-                  <p className="text-gray-400 leading-relaxed">אנחנו כבר מתים להקשיב.<br />מעביר אותך חזרה לסטודיו...</p>
+                  <p className="text-gray-400 leading-relaxed">אנחנו כבר מתים להקשיב.<br />מעביר אותך חזרה לאזור האישי...</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-8">
