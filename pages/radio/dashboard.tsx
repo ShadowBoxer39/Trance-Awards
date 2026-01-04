@@ -1,4 +1,3 @@
-// pages/radio/dashboard.tsx
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -50,7 +49,7 @@ export default function RadioDashboard() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // FORM STATE (Genre Removed)
+  // FORM STATE
   const [formData, setFormData] = useState({
     name: '',
     instagram: '',
@@ -82,6 +81,23 @@ export default function RadioDashboard() {
 
       setArtist(artistData);
 
+      // --- 📧 RESTORED WELCOME EMAIL TRIGGER ---
+      // This checks if the URL has ?welcome=1 (which we send after registration)
+      if (router.query.welcome === '1') {
+         fetch('/api/radio/send-welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              email: session.user.email, 
+              name: artistData.name 
+            }),
+         }).catch(err => console.error("Email error:", err));
+         
+         // Clean the URL so it doesn't fire again on refresh
+         router.replace('/radio/dashboard', undefined, { shallow: true });
+      }
+      // ----------------------------------------
+
       const { data: submissionsData } = await supabase
         .from('radio_submissions').select('*').eq('artist_id', artistData.id).order('submitted_at', { ascending: false });
 
@@ -90,7 +106,7 @@ export default function RadioDashboard() {
     };
 
     loadData();
-  }, [router.isReady]);
+  }, [router.isReady]); 
 
   // Handle Create Profile
   const handleCreateProfile = async (e: React.FormEvent) => {
@@ -124,7 +140,7 @@ export default function RadioDashboard() {
         publicUrl = url;
       }
 
-      // 2. Insert Profile (No Genre)
+      // 2. Insert Profile
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
       
       const { error } = await supabase
@@ -139,12 +155,13 @@ export default function RadioDashboard() {
             instagram: formData.instagram || null,
             soundcloud: formData.soundcloud || null,
             bio: formData.bio || null,
-            approved: false
+            approved: false // Default to pending
           }
         ]);
 
       if (error) throw error;
 
+      // Redirect with ?welcome=1 to trigger the email
       window.location.href = '/radio/dashboard?welcome=1';
       
     } catch (err: any) {
