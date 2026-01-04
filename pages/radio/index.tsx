@@ -204,12 +204,13 @@ export default function RadioPage() {
                   <button onClick={() => setIsMuted(!isMuted)} className="text-gray-400 hover:text-white transition-colors">
                     {isMuted || volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
                   </button>
-                  <input 
-                    type="range" min="0" max="1" step="0.01" 
-                    value={isMuted ? 0 : volume} 
-                    onChange={(e) => { setVolume(parseFloat(e.target.value)); setIsMuted(false); }}
-                    className="flex-1 accent-purple-500 h-1 bg-white/10 rounded-full cursor-pointer"
-                  />
+              <input 
+  type="range" min="0" max="1" step="0.01" 
+  value={isMuted ? 0 : volume} 
+  onChange={(e) => { setVolume(parseFloat(e.target.value)); setIsMuted(false); }}
+  className="flex-1 accent-purple-500 h-1 bg-white/10 rounded-full cursor-pointer"
+  dir="ltr"
+/>
                 </div>
               </div>
             </div>
