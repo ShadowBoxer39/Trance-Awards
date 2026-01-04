@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js'; 
 import Navigation from '@/components/Navigation'; 
-import { FaMusic, FaClock, FaCheckCircle, FaTrash, FaInfoCircle, FaSignOutAlt, FaRocket, FaHeadphones } from 'react-icons/fa'; // Added FaRocket
+import { FaMusic, FaClock, FaCheckCircle, FaTrash, FaInfoCircle, FaSignOutAlt, FaRocket, FaHeadphones, FaInstagram, FaSoundcloud, FaCamera } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const supabase = createClient(
@@ -13,7 +13,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// ... (Keep existing interfaces) ...
 interface RadioArtist {
   id: string; name: string; slug: string; email: string; instagram: string | null;
   soundcloud: string | null; bio: string | null; image_url: string | null; approved: boolean; created_at: string;
@@ -25,7 +24,6 @@ interface Submission {
   admin_notes: string | null; art_url: string | null;
 }
 
-// ... (Keep FloatingNotes and getGreeting) ...
 const FloatingNotes = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
     {[...Array(6)].map((_, i) => (
@@ -37,7 +35,6 @@ const FloatingNotes = () => (
 );
 
 const getGreeting = () => {
-  // ... (Keep existing greeting logic) ...
   const hour = new Date().getHours();
   if (hour < 6) return { text: 'לילה טוב', emoji: '🌙' };
   if (hour < 12) return { text: 'בוקר טוב', emoji: '☀️' };
@@ -53,8 +50,15 @@ export default function RadioDashboard() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // New state for the "Inline Registration" form
-  const [newArtistName, setNewArtistName] = useState('');
+  // FORM STATE (Genre Removed)
+  const [formData, setFormData] = useState({
+    name: '',
+    instagram: '',
+    soundcloud: '',
+    bio: '',
+    termsAgreed: false
+  });
+  const [file, setFile] = useState<File | null>(null);
   const [creatingProfile, setCreatingProfile] = useState(false);
 
   const greeting = getGreeting();
@@ -71,14 +75,10 @@ export default function RadioDashboard() {
       const { data: artistData, error: artistError } = await supabase
         .from('radio_artists').select('*').eq('user_id', session.user.id).maybeSingle();
 
-      // --- FIX STARTS HERE ---
-      // instead of redirecting, we just finish loading. 
-      // The Render section will handle the missing artist.
       if (!artistData) { 
         setLoading(false);
         return; 
       }
-      // --- FIX ENDS HERE ---
 
       setArtist(artistData);
 
@@ -87,46 +87,69 @@ export default function RadioDashboard() {
 
       setSubmissions(submissionsData || []);
       setLoading(false);
-      
-      // ... (Keep existing welcome email logic) ...
     };
 
     loadData();
   }, [router.isReady]);
 
-  // New function to handle profile creation
+  // Handle Create Profile
   const handleCreateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newArtistName.trim() || !user) return;
+    if (!formData.name.trim() || !user || !formData.termsAgreed) {
+        alert("נא למלא את כל שדות החובה ולאשר את התנאים");
+        return;
+    }
     
     setCreatingProfile(true);
     
     try {
-      // Create the slug
-      const slug = newArtistName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      let publicUrl = null;
+
+      // 1. Upload Image (If selected)
+      if (file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('artist-images')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl: url } } = supabase.storage
+          .from('artist-images')
+          .getPublicUrl(filePath);
+          
+        publicUrl = url;
+      }
+
+      // 2. Insert Profile (No Genre)
+      const slug = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('radio_artists')
         .insert([
           {
             user_id: user.id,
-            name: newArtistName,
+            name: formData.name,
             email: user.email,
             slug: slug,
-            approved: false // Default to pending
+            image_url: publicUrl,
+            instagram: formData.instagram || null,
+            soundcloud: formData.soundcloud || null,
+            bio: formData.bio || null,
+            approved: false
           }
-        ])
-        .select()
-        .single();
+        ]);
 
       if (error) throw error;
 
-      // Reload the page to trigger the "Welcome" flow
       window.location.href = '/radio/dashboard?welcome=1';
       
-    } catch (err) {
-      console.error('Error creating profile:', err);
-      alert('שגיאה ביצירת הפרופיל. נסה שנית.');
+    } catch (err: any) {
+      console.error('Error:', err);
+      alert('שגיאה: ' + (err.message || 'נסה שנית'));
       setCreatingProfile(false);
     }
   };
@@ -135,23 +158,21 @@ export default function RadioDashboard() {
     await supabase.auth.signOut();
     window.location.href = '/radio/register';
   };
-  
-  // ... (Keep handleDeleteSubmission) ...
+
   const handleDeleteSubmission = async (submissionId: string) => {
-      // ... same as your existing code ...
-      const track = submissions.find(s => s.id === submissionId);
-      if (track?.status === 'approved') {
-        alert('לא ניתן למחוק טראק שאושר ונמצא בשידור. לביטול השמעה יש ליצור קשר עם הנהלת הרדיו.');
-        return;
-      }
-      if (!artist || !confirm('בטוח שברצונך למחוק את הטראק מהרשימה?')) return;
-      try {
-        const { error } = await supabase.from('radio_submissions').delete().eq('id', submissionId).eq('artist_id', artist.id);
-        if (error) throw error;
-        setSubmissions(prev => prev.filter(s => s.id !== submissionId));
-      } catch (err) {
-        alert('שגיאה במחיקת הטראק.');
-      }
+    const track = submissions.find(s => s.id === submissionId);
+    if (track?.status === 'approved') {
+      alert('לא ניתן למחוק טראק שאושר ונמצא בשידור. לביטול השמעה יש ליצור קשר עם הנהלת הרדיו.');
+      return;
+    }
+    if (!artist || !confirm('בטוח שברצונך למחוק את הטראק מהרשימה?')) return;
+    try {
+      const { error } = await supabase.from('radio_submissions').delete().eq('id', submissionId).eq('artist_id', artist.id);
+      if (error) throw error;
+      setSubmissions(prev => prev.filter(s => s.id !== submissionId));
+    } catch (err) {
+      alert('שגיאה במחיקת הטראק.');
+    }
   };
 
   const approvedCount = submissions.filter(s => s.status === 'approved').length;
@@ -159,40 +180,110 @@ export default function RadioDashboard() {
 
   if (loading) return <div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center"><div className="w-16 h-16 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" /></div>;
 
-  // --- NEW RENDER LOGIC FOR MISSING ARTIST ---
+  // --- NEW USER ONBOARDING FORM ---
   if (!artist) {
     return (
-      <div className="min-h-screen bg-[#0a0a12] text-white font-['Rubik',sans-serif] flex items-center justify-center px-6">
-        <div className="glass-warm max-w-md w-full rounded-3xl p-10 border border-purple-500/20 text-center relative overflow-hidden">
+      <div className="min-h-screen bg-[#0a0a12] text-white font-['Rubik',sans-serif] flex items-center justify-center px-4 py-12">
+        <div className="glass-warm max-w-lg w-full rounded-3xl p-8 md:p-10 border border-purple-500/20 relative overflow-hidden">
            <FloatingNotes />
            <div className="relative z-10">
-             <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-500/30">
-               <FaRocket className="text-3xl text-white" />
+             <div className="text-center mb-8">
+               <h2 className="text-2xl md:text-3xl font-bold mb-2">הקמת פרופיל אמן</h2>
+               <p className="text-gray-400 text-sm">הצעד הראשון לשידור ברדיו</p>
              </div>
-             <h2 className="text-3xl font-bold mb-2">ברוכים הבאים!</h2>
-             <p className="text-gray-400 mb-8">כדי להתחיל לשדר, בוא נבחר את שם האמן שלך</p>
              
              <form onSubmit={handleCreateProfile} className="space-y-4">
+               
+               {/* Image Upload */}
+               <div className="flex justify-center mb-6">
+                 <label className="relative cursor-pointer group">
+                   <div className="w-24 h-24 rounded-full bg-white/10 border-2 border-dashed border-white/20 flex items-center justify-center overflow-hidden group-hover:border-purple-500 transition-all">
+                     {file ? (
+                       <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                     ) : (
+                       <div className="text-center">
+                         <FaCamera className="mx-auto mb-1 text-gray-400" />
+                         <span className="text-[10px] text-gray-500">העלה תמונה</span>
+                       </div>
+                     )}
+                   </div>
+                   <input 
+                     type="file" 
+                     className="hidden" 
+                     accept="image/*"
+                     onChange={(e) => setFile(e.target.files?.[0] || null)}
+                   />
+                 </label>
+               </div>
+
+               {/* Artist Name */}
                <div>
+                 <label className="block text-xs text-gray-500 mb-1 mr-1">שם האמן *</label>
                  <input 
                    type="text" 
-                   placeholder="שם האמן / הרכב" 
-                   className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors text-center text-lg"
-                   value={newArtistName}
-                   onChange={(e) => setNewArtistName(e.target.value)}
+                   className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none"
+                   value={formData.name}
+                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                    required
                  />
                </div>
+
+               {/* Bio */}
+               <div>
+                 <label className="block text-xs text-gray-500 mb-1 mr-1">ביוגרפיה קצרה</label>
+                 <textarea 
+                   className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none h-24 resize-none"
+                   placeholder="ספרו קצת על עצמכם..."
+                   value={formData.bio}
+                   onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                 />
+               </div>
+
+               {/* Socials */}
+               <div className="grid grid-cols-2 gap-4">
+                 <input 
+                    type="text" 
+                    placeholder="Instagram Link" 
+                    className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
+                    dir="ltr"
+                    value={formData.instagram}
+                    onChange={(e) => setFormData({...formData, instagram: e.target.value})}
+                 />
+                 <input 
+                    type="text" 
+                    placeholder="SoundCloud Link" 
+                    className="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
+                    dir="ltr"
+                    value={formData.soundcloud}
+                    onChange={(e) => setFormData({...formData, soundcloud: e.target.value})}
+                 />
+               </div>
+
+               {/* Legal Checkbox */}
+               <div className="flex items-start gap-3 mt-4 px-1">
+                 <input 
+                   type="checkbox" 
+                   id="terms"
+                   className="mt-1 accent-purple-500"
+                   checked={formData.termsAgreed}
+                   onChange={(e) => setFormData({...formData, termsAgreed: e.target.checked})}
+                 />
+                 <label htmlFor="terms" className="text-xs text-gray-400 cursor-pointer select-none">
+                   אני מאשר/ת שאני בעל/ת הזכויות במוזיקה שאעלה, ומאשר/ת לרדיו "יוצאים לטראק" לשדר את התכנים.
+                 </label>
+               </div>
+
                <button 
                  type="submit" 
-                 disabled={creatingProfile}
-                 className="w-full bg-white text-purple-900 font-bold py-4 rounded-xl hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                 disabled={creatingProfile || !formData.termsAgreed}
+                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6 shadow-lg shadow-purple-900/20"
                >
-                 {creatingProfile ? 'יוצר פרופיל...' : 'יצירת פרופיל והתחלה 🚀'}
+                 {creatingProfile ? 'יוצר פרופיל...' : 'יצירת פרופיל 🚀'}
                </button>
              </form>
-             <button onClick={handleLogout} className="mt-6 text-xs text-gray-500 hover:text-white transition-colors">
-               התנתק וחזור לדף הבית
+             
+             <button onClick={handleLogout} className="mt-4 w-full text-center text-xs text-gray-500 hover:text-white transition-colors">
+               התנתק
              </button>
            </div>
         </div>
@@ -202,15 +293,9 @@ export default function RadioDashboard() {
 
   // --- EXISTING DASHBOARD RENDER ---
   return (
-    // ... Copy your entire existing return (...) block here ...
-    // It starts with <> <Head> ... </Head> ...
-    // Since I cannot output the full file size in one go, 
-    // simply paste the original 'return' block from your file below this line.
-    
     <>
       <Head>
         <title>האזור האישי שלי | רדיו יוצאים לטראק</title>
-        {/* ... rest of your original dashboard JSX ... */}
         <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
@@ -257,7 +342,7 @@ export default function RadioDashboard() {
             </div>
           </div>
 
-          {/* Stats Grid - CORRECTED TEXT */}
+          {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-10">
             <div className="glass-warm rounded-2xl p-4 sm:p-5 flex sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0"><FaMusic className="text-purple-400" /></div>
