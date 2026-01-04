@@ -217,17 +217,21 @@ export default function RadioPage() {
 
           {/* Up Next & CTA Section */}
           <div className="grid md:grid-cols-2 gap-6 mt-8">
-             {/* Up Next */}
-             <div className="glass-warm rounded-3xl p-6 flex items-center gap-5 border border-white/5">
-                <div className="w-16 h-16 rounded-2xl bg-white/5 flex-shrink-0 overflow-hidden relative">
-                  {nextSong?.art ? <Image src={nextSong.art} alt="Next" fill className="object-cover" /> : <FaMusic className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-700" />}
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1">Up Next</div>
-                  <h3 className="font-bold text-white text-sm truncate max-w-[150px]">{nextSong?.title || 'טראק חדש בקרוב'}</h3>
-                  <p className="text-xs text-gray-500 truncate">{nextSong?.artist || 'יוצאים לטראק'}</p>
-                </div>
-             </div>
+          {/* Up Next */}
+<div className="glass-warm rounded-3xl p-6 flex items-center gap-5 border border-white/5">
+   <div className="w-16 h-16 rounded-2xl bg-white/5 flex-shrink-0 overflow-hidden relative">
+     {nextSong?.art && nextSong.art.length > 0 ? (
+       <Image src={nextSong.art} alt="Next" fill className="object-cover" unoptimized />
+     ) : (
+       <FaMusic className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-700" />
+     )}
+   </div>
+   <div>
+     <div className="text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1">Up Next</div>
+     <h3 className="font-bold text-white text-sm truncate max-w-[150px]">{nextSong?.title || 'טראק חדש בקרוב'}</h3>
+     <p className="text-xs text-gray-500 truncate">{nextSong?.artist || 'יוצאים לטראק'}</p>
+   </div>
+</div>
 
              {/* Artist CTA */}
              <Link href="/radio/register" className="glass-warm rounded-3xl p-6 flex items-center justify-between border border-purple-500/20 hover:border-purple-500/40 transition-all group">
