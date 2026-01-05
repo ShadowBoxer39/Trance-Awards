@@ -1,4 +1,3 @@
-// pages/radio/dashboard.tsx
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -186,8 +185,23 @@ export default function RadioDashboard() {
         setCreatingProfile(false);
         // Do not redirect, just close modal
       } else {
-        // === INSERT NEW ===
-        const slug = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        // === INSERT NEW (WITH DUPLICATE CHECK) ===
+        // Generate base slug
+        let slug = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        
+        // --- DUPLICATE CHECK START ---
+        // Check if slug already exists
+        const { data: existingArtist } = await supabase
+            .from('radio_artists')
+            .select('id')
+            .eq('slug', slug)
+            .maybeSingle();
+
+        // If it exists, append a random number (e.g., nova-4812)
+        if (existingArtist) {
+            slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+        }
+        // --- DUPLICATE CHECK END ---
         
         const { error } = await supabase
           .from('radio_artists')
