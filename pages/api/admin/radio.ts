@@ -95,9 +95,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // POST - Update actions
     if (req.method === 'POST') {
-      const { action, submissionId, artistId, status, adminNotes, approved } = req.body;
+      const { action, submissionId, artistId, status, adminNotes, approved, newName } = req.body;
 
-      // Update submission status
+      // --- ACTION: DELETE SUBMISSION (With Storage Cleanup) ---
+      if (action === 'deleteSubmission' && submissionId) {
+        // 1. Fetch the file path first so we can clean up storage
+        const { data: subToDelete } = await supabase
+          .from('radio_submissions')
+          .select('mp3_url')
+          .eq('id', submissionId)
+          .single();
+
+        // 2. Delete from Storage (Bucket: 'Radio')
+        if (subToDelete?.mp3_url) {
+          const fileName = subToDelete.mp3_url.split('/').pop();
+          if (fileName) {
+            const { error: storageError } = await supabase.storage
+              .from('Radio')
+              .remove([fileName]);
+              
+            if (storageError) console.error('Admin delete storage warning:', storageError);
+          }
+        }
+
+        // 3. Delete from DB
+        const { error: deleteError } = await supabase
+          .from('radio_submissions')
+          .delete()
+          .eq('id', submissionId);
+
+        if (deleteError) throw deleteError;
+        return res.status(200).json({ ok: true });
+      }
+
+      // --- ACTION: RENAME SUBMISSION ---
+      if (action === 'renameSubmission' && submissionId && newName) {
+         const { error } = await supabase
+           .from('radio_submissions')
+           .update({ track_name: newName })
+           .eq('id', submissionId);
+         
+         if (error) throw error;
+         return res.status(200).json({ ok: true });
+      }
+
+      // --- ACTION: UPDATE SUBMISSION STATUS ---
       if (action === 'updateSubmission' && submissionId) {
         // First, fetch the submission to get track name and artist_id
         const { data: submission, error: fetchError } = await supabase
@@ -123,7 +165,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (error) throw error;
         
         // Send email notification if status changed to approved or declined
-        // Only send if this is a NEW status change (not re-saving same status)
         if (submission && (status === 'approved' || status === 'declined') && previousStatus !== status) {
           await sendReviewEmail(
             submission.artist_id,
@@ -136,7 +177,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({ ok: true });
       }
 
-      // Update artist approval
+      // --- ACTION: UPDATE ARTIST APPROVAL ---
       if (action === 'updateArtist' && artistId) {
         const { error } = await supabase
           .from('radio_artists')
