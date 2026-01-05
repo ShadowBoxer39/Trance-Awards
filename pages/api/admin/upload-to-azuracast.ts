@@ -1,6 +1,7 @@
 // pages/api/admin/upload-to-azuracast.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import NodeID3 from 'node-id3';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,23 +11,18 @@ const supabase = createClient(
 const AZURACAST_URL = 'https://a12.asurahosting.com';
 const STATION_ID = '383';
 
-// Helper function to send approval email
+// Helper to send the "Your track is live!" email
 async function sendApprovalEmail(artistId: string, trackName: string) {
   try {
-    // Fetch artist details
-    const { data: artist, error: artistError } = await supabase
+    const { data: artist } = await supabase
       .from('radio_artists')
       .select('name, email')
       .eq('id', artistId)
       .single();
     
-    if (artistError || !artist?.email) {
-      console.error('Could not fetch artist for email:', artistError);
-      return;
-    }
+    if (!artist?.email) return;
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracktrip.co.il';
-    
     await fetch(`${baseUrl}/api/radio/send-track-reviewed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,26 +33,24 @@ async function sendApprovalEmail(artistId: string, trackName: string) {
         status: 'approved',
       }),
     });
-    
-    console.log(`✅ Approval email sent to ${artist.email} for track "${trackName}"`);
   } catch (err) {
-    console.error('Failed to send approval email:', err);
+    console.error('Email error:', err);
   }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Only allow POST requests
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { submissionId, adminKey } = req.body;
-    const SYSTEM_ADMIN_KEY = process.env.ADMIN_KEY;
-
-    // 1. Authenticate
-    if (!adminKey || adminKey !== SYSTEM_ADMIN_KEY) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid Admin Key' });
+    
+    // Security Check
+    if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // 2. Fetch submission
+    // 1. Fetch submission data (The "Source of Truth")
     const { data: submission, error: fetchError } = await supabase
       .from('radio_submissions')
       .select('*, radio_artists(name)')
@@ -65,17 +59,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (fetchError || !submission) return res.status(404).json({ error: 'Submission not found' });
 
-    // 3. Download and convert to Base64
+    console.log(`Processing upload for: ${submission.track_name} by ${submission.radio_artists?.name}`);
+
+    // 2. Download the original MP3 file
     const mp3Response = await fetch(submission.mp3_url);
+    if (!mp3Response.ok) throw new Error('Failed to download MP3 from storage');
+    
     const arrayBuffer = await mp3Response.arrayBuffer();
-    const base64File = Buffer.from(arrayBuffer).toString('base64');
+    let fileBuffer = Buffer.from(arrayBuffer);
 
-    // 4. Create destination path
-    const artistName = submission.radio_artists?.name || 'Artist';
-    const trackName = submission.track_name || 'Track';
-    const filename = `${artistName} - ${trackName}.mp3`.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
+    // 3. SANITIZE TAGS: Force the MP3 to match the Database
+    const artistName = submission.radio_artists?.name || 'Unknown Artist';
+    const trackName = submission.track_name || 'Unknown Track';
 
-    // 5. Upload to the correct station ID (383)
+    const tags = {
+      title: trackName,
+      artist: artistName,
+      album: 'TrackTrip Radio', // Optional branding
+      genre: 'Trance',
+    };
+
+    // Attempt to inject the new tags
+    const taggedBuffer = NodeID3.update(tags, fileBuffer);
+    
+    // SAFETY CHECK: If tagging failed, taggedBuffer will be 'false'. We fallback to fileBuffer.
+    let finalBuffer: Buffer;
+    if (taggedBuffer instanceof Buffer) {
+        finalBuffer = taggedBuffer;
+        console.log('✅ Tags updated successfully');
+    } else {
+        finalBuffer = fileBuffer;
+        console.warn('⚠️ Tag update failed, using original file (Process will continue)');
+    }
+
+    const base64File = finalBuffer.toString('base64');
+
+    // 4. Create a clean filename
+    // Removes special characters to prevent errors
+    const cleanFilename = `${artistName} - ${trackName}.mp3`.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
+
+    // 5. Upload to AzuraCast
     const azuraResponse = await fetch(
       `${AZURACAST_URL}/api/station/${STATION_ID}/files`,
       {
@@ -85,38 +108,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          path: filename, 
+          path: cleanFilename, 
           file: base64File,
         }),
       }
     );
 
-    const resultText = await azuraResponse.text();
-
     if (!azuraResponse.ok) {
-      return res.status(azuraResponse.status).json({ 
-        error: 'Azuracast Upload Failed', 
-        details: resultText 
-      });
+      const resultText = await azuraResponse.text();
+      console.error('AzuraCast Error:', resultText);
+      return res.status(azuraResponse.status).json({ error: 'Azuracast Upload Failed', details: resultText });
     }
 
-    // 6. Update status
+    // 6. Update Database Status & Send Email
     await supabase
       .from('radio_submissions')
       .update({ status: 'approved', reviewed_at: new Date().toISOString() })
       .eq('id', submissionId);
 
-    // 7. Send approval email notification
-    await sendApprovalEmail(submission.artist_id, trackName);
+    // Non-blocking email sending (so the admin doesn't wait for it)
+    sendApprovalEmail(submission.artist_id, trackName);
 
-    return res.status(200).json({ success: true, message: `Uploaded to station 383: ${filename}` });
+    return res.status(200).json({ success: true, message: `Uploaded & Tagged: ${cleanFilename}` });
 
   } catch (error: any) {
+    console.error('Upload error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
 
 export const config = {
-  api: { bodyParser: { sizeLimit: '50mb' } },
-  maxDuration: 60,
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb', // Allows large requests if needed
+    },
+  },
+  // maxDuration: 60, // Uncomment this line if you are on Vercel Pro to allow longer uploads
 };
