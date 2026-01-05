@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js'; 
 import Navigation from '@/components/Navigation'; 
-import { FaMusic, FaClock, FaCheckCircle, FaTrash, FaInfoCircle, FaSignOutAlt, FaRocket, FaHeadphones, FaInstagram, FaSoundcloud, FaCamera } from 'react-icons/fa';
+import { FaMusic, FaClock, FaCheckCircle, FaTrash, FaInfoCircle, FaSignOutAlt, FaRocket, FaHeadphones, FaInstagram, FaSoundcloud, FaCamera, FaEdit, FaTimes } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const supabase = createClient(
@@ -49,6 +49,9 @@ export default function RadioDashboard() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // EDIT MODE STATE
+  const [isEditing, setIsEditing] = useState(false);
+
   // FORM STATE
   const [formData, setFormData] = useState({
     name: '',
@@ -81,8 +84,7 @@ export default function RadioDashboard() {
 
       setArtist(artistData);
 
-      // --- 📧 RESTORED WELCOME EMAIL TRIGGER ---
-      // This checks if the URL has ?welcome=1 (which we send after registration)
+      // --- 📧 WELCOME EMAIL TRIGGER ---
       if (router.query.welcome === '1') {
          fetch('/api/radio/send-welcome', {
             method: 'POST',
@@ -93,7 +95,6 @@ export default function RadioDashboard() {
             }),
          }).catch(err => console.error("Email error:", err));
          
-         // Clean the URL so it doesn't fire again on refresh
          router.replace('/radio/dashboard', undefined, { shallow: true });
       }
       // ----------------------------------------
@@ -108,7 +109,21 @@ export default function RadioDashboard() {
     loadData();
   }, [router.isReady]); 
 
-  // Handle Create Profile
+  // Populate form when clicking Edit
+  const handleStartEdit = () => {
+    if (!artist) return;
+    setFormData({
+      name: artist.name,
+      instagram: artist.instagram || '',
+      soundcloud: artist.soundcloud || '',
+      bio: artist.bio || '',
+      termsAgreed: true // Already agreed on signup
+    });
+    setFile(null); // Reset file input
+    setIsEditing(true);
+  };
+
+  // Handle Create OR Update Profile
   const handleCreateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !user || !formData.termsAgreed) {
@@ -119,7 +134,7 @@ export default function RadioDashboard() {
     setCreatingProfile(true);
     
     try {
-      let publicUrl = null;
+      let publicUrl = artist?.image_url || null;
 
       // 1. Upload Image (If selected)
       if (file) {
@@ -140,29 +155,60 @@ export default function RadioDashboard() {
         publicUrl = url;
       }
 
-      // 2. Insert Profile
-      const slug = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      
-      const { error } = await supabase
-        .from('radio_artists')
-        .insert([
-          {
-            user_id: user.id,
+      // 2. CHECK: Update or Insert?
+      if (artist) {
+        // === UPDATE EXISTING ===
+        const { error } = await supabase
+          .from('radio_artists')
+          .update({
             name: formData.name,
-            email: user.email,
-            slug: slug,
             image_url: publicUrl,
             instagram: formData.instagram || null,
             soundcloud: formData.soundcloud || null,
             bio: formData.bio || null,
-            approved: false // Default to pending
-          }
-        ]);
+          })
+          .eq('id', artist.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        
+        // Update local state immediately
+        setArtist({ 
+           ...artist, 
+           name: formData.name, 
+           image_url: publicUrl, 
+           instagram: formData.instagram || null, 
+           soundcloud: formData.soundcloud || null, 
+           bio: formData.bio || null 
+        });
+        
+        setIsEditing(false);
+        setCreatingProfile(false);
+        // Do not redirect, just close modal
+      } else {
+        // === INSERT NEW ===
+        const slug = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        
+        const { error } = await supabase
+          .from('radio_artists')
+          .insert([
+            {
+              user_id: user.id,
+              name: formData.name,
+              email: user.email,
+              slug: slug,
+              image_url: publicUrl,
+              instagram: formData.instagram || null,
+              soundcloud: formData.soundcloud || null,
+              bio: formData.bio || null,
+              approved: false
+            }
+          ]);
 
-      // Redirect with ?welcome=1 to trigger the email
-      window.location.href = '/radio/dashboard?welcome=1';
+        if (error) throw error;
+
+        // Redirect with ?welcome=1
+        window.location.href = '/radio/dashboard?welcome=1';
+      }
       
     } catch (err: any) {
       console.error('Error:', err);
@@ -197,16 +243,16 @@ export default function RadioDashboard() {
 
   if (loading) return <div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center"><div className="w-16 h-16 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" /></div>;
 
-  // --- NEW USER ONBOARDING FORM ---
-  if (!artist) {
+  // --- SHOW FORM IF NO ARTIST OR EDITING ---
+  if (!artist || isEditing) {
     return (
       <div className="min-h-screen bg-[#0a0a12] text-white font-['Rubik',sans-serif] flex items-center justify-center px-4 py-12">
         <div className="glass-warm max-w-lg w-full rounded-3xl p-8 md:p-10 border border-purple-500/20 relative overflow-hidden">
            <FloatingNotes />
            <div className="relative z-10">
              <div className="text-center mb-8">
-               <h2 className="text-2xl md:text-3xl font-bold mb-2">הקמת פרופיל אמן</h2>
-               <p className="text-gray-400 text-sm">הצעד הראשון לשידור ברדיו</p>
+               <h2 className="text-2xl md:text-3xl font-bold mb-2">{artist ? 'עריכת פרופיל' : 'הקמת פרופיל אמן'}</h2>
+               <p className="text-gray-400 text-sm">{artist ? 'עדכון פרטים אישיים' : 'הצעד הראשון לשידור ברדיו'}</p>
              </div>
              
              <form onSubmit={handleCreateProfile} className="space-y-4">
@@ -217,12 +263,14 @@ export default function RadioDashboard() {
                    <div className="w-24 h-24 rounded-full bg-white/10 border-2 border-dashed border-white/20 flex items-center justify-center overflow-hidden group-hover:border-purple-500 transition-all">
                      {file ? (
                        <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                     ) : (artist?.image_url ? (
+                       <img src={artist.image_url} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" />
                      ) : (
                        <div className="text-center">
                          <FaCamera className="mx-auto mb-1 text-gray-400" />
                          <span className="text-[10px] text-gray-500">העלה תמונה</span>
                        </div>
-                     )}
+                     ))}
                    </div>
                    <input 
                      type="file" 
@@ -290,25 +338,38 @@ export default function RadioDashboard() {
                  </label>
                </div>
 
-               <button 
-                 type="submit" 
-                 disabled={creatingProfile || !formData.termsAgreed}
-                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6 shadow-lg shadow-purple-900/20"
-               >
-                 {creatingProfile ? 'יוצר פרופיל...' : 'יצירת פרופיל 🚀'}
-               </button>
+               <div className="flex gap-3 pt-2">
+                 {isEditing && (
+                    <button 
+                      type="button" 
+                      onClick={() => setIsEditing(false)}
+                      className="w-1/3 bg-white/5 text-gray-300 font-bold py-4 rounded-xl hover:bg-white/10 transition-all border border-white/10"
+                    >
+                      ביטול
+                    </button>
+                 )}
+                 <button 
+                   type="submit" 
+                   disabled={creatingProfile || !formData.termsAgreed}
+                   className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-900/20"
+                 >
+                   {creatingProfile ? 'שומר...' : (artist ? 'שמור שינויים' : 'יצירת פרופיל 🚀')}
+                 </button>
+               </div>
              </form>
              
-             <button onClick={handleLogout} className="mt-4 w-full text-center text-xs text-gray-500 hover:text-white transition-colors">
-               התנתק
-             </button>
+             {!artist && (
+               <button onClick={handleLogout} className="mt-4 w-full text-center text-xs text-gray-500 hover:text-white transition-colors">
+                 התנתק
+               </button>
+             )}
            </div>
         </div>
       </div>
     );
   }
 
-  // --- EXISTING DASHBOARD RENDER ---
+  // --- DASHBOARD RENDER ---
   return (
     <>
       <Head>
@@ -348,7 +409,10 @@ export default function RadioDashboard() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 text-gray-400 text-xs sm:text-sm mb-1"><span>{greeting.emoji}</span><span>{greeting.text}</span></div>
-                  <h1 className="text-xl sm:text-3xl font-bold text-white truncate max-w-[200px] sm:max-w-none">{artist?.name}</h1>
+                  <div className="flex items-center gap-3">
+                     <h1 className="text-xl sm:text-3xl font-bold text-white truncate max-w-[200px] sm:max-w-none">{artist?.name}</h1>
+                     <button onClick={handleStartEdit} className="text-gray-400 hover:text-white p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition" title="ערוך פרופיל"><FaEdit /></button>
+                  </div>
                   <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{artist?.approved ? <span className="text-green-400/80">פרופיל מאושר • מוכן לשדר</span> : <span className="text-yellow-400/80">ממתין לאישור הפרופיל</span>}</p>
                 </div>
               </div>
