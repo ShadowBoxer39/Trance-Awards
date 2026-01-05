@@ -237,18 +237,57 @@ export default function RadioDashboard() {
     window.location.href = '/radio/register';
   };
 
+  // === UPDATED DELETE FUNCTION (WITH STORAGE CLEANUP) ===
   const handleDeleteSubmission = async (submissionId: string) => {
     const track = submissions.find(s => s.id === submissionId);
+    
+    // Safety check: Don't delete approved tracks
     if (track?.status === 'approved') {
       alert('לא ניתן למחוק טראק שאושר ונמצא בשידור. לביטול השמעה יש ליצור קשר עם הנהלת הרדיו.');
       return;
     }
+    
     if (!artist || !confirm('בטוח שברצונך למחוק את הטראק מהרשימה?')) return;
+    
     try {
-      const { error } = await supabase.from('radio_submissions').delete().eq('id', submissionId).eq('artist_id', artist.id);
+      // 1. Fetch the specific track data to get the file URL
+      const { data: trackData } = await supabase
+        .from('radio_submissions')
+        .select('mp3_url')
+        .eq('id', submissionId)
+        .single();
+
+      // 2. If there is a file URL, delete it from Storage
+      if (trackData?.mp3_url) {
+         // Extract the filename (e.g., from ".../Radio/song.mp3" get "song.mp3")
+         const fileName = trackData.mp3_url.split('/').pop();
+         
+         if (fileName) {
+           // IMPORTANT: Using bucket 'Radio' based on your screenshot
+           const { error: storageError } = await supabase.storage
+             .from('Radio') 
+             .remove([fileName]);
+             
+           if (storageError) {
+             console.error('Storage cleanup warning:', storageError);
+           }
+         }
+      }
+
+      // 3. Delete the Database Row
+      const { error } = await supabase
+        .from('radio_submissions')
+        .delete()
+        .eq('id', submissionId)
+        .eq('artist_id', artist.id);
+
       if (error) throw error;
+      
+      // 4. Update UI
       setSubmissions(prev => prev.filter(s => s.id !== submissionId));
+      
     } catch (err) {
+      console.error(err);
       alert('שגיאה במחיקת הטראק.');
     }
   };
