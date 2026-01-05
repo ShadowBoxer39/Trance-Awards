@@ -1,10 +1,11 @@
+// pages/radio/dashboard.tsx
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js'; 
 import Navigation from '@/components/Navigation'; 
-import { FaMusic, FaClock, FaCheckCircle, FaTrash, FaInfoCircle, FaSignOutAlt, FaRocket, FaHeadphones, FaInstagram, FaSoundcloud, FaCamera, FaEdit, FaTimes } from 'react-icons/fa';
+import { FaMusic, FaClock, FaCheckCircle, FaTrash, FaInfoCircle, FaSignOutAlt, FaRocket, FaHeadphones, FaInstagram, FaSoundcloud, FaCamera, FaEdit } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const supabase = createClient(
@@ -438,6 +439,17 @@ export default function RadioDashboard() {
               <div className="flex-1 sm:flex-none text-right sm:text-left"><div className="text-2xl sm:text-3xl font-bold text-white mb-1">{pendingCount}</div><div className="text-xs sm:text-sm text-gray-400">בהמתנה</div></div>
             </div>
           </div>
+
+           {/* --- PENDING TRACKS BANNER (NEW) --- */}
+           {pendingCount > 0 && (
+             <div className="mb-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl flex items-start gap-3 animate-fade-in">
+               <FaInfoCircle className="text-purple-400 mt-1 flex-shrink-0" />
+               <div>
+                 <p className="text-sm text-purple-100 font-bold mb-1">יש לך {pendingCount} טראקים בהמתנה</p>
+                 <p className="text-xs text-purple-200/70 leading-relaxed">אנחנו משתדלים לעבור על כל הטראקים תוך 72 שעות אבל יכול להיות שאנחנו מתעכבים, תחכה למייל מאיתנו</p>
+               </div>
+             </div>
+           )}
 
           {/* Submissions Section */}
           <div className="glass-warm rounded-3xl p-5 sm:p-8">
