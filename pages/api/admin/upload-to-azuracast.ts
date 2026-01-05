@@ -11,7 +11,7 @@ const supabase = createClient(
 const AZURACAST_URL = 'https://a12.asurahosting.com';
 const STATION_ID = '383';
 
-// Helper to send the "Your track is live!" email
+// Helper to send the email via your existing API
 async function sendApprovalEmail(artistId: string, trackName: string) {
   try {
     const { data: artist } = await supabase
@@ -22,8 +22,12 @@ async function sendApprovalEmail(artistId: string, trackName: string) {
     
     if (!artist?.email) return;
 
+    // Use the site URL to call our own API
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracktrip.co.il';
-    await fetch(`${baseUrl}/api/radio/send-track-reviewed`, {
+    
+    console.log(`📧 Triggering approval email for ${artist.email}...`);
+    
+    const response = await fetch(`${baseUrl}/api/radio/send-track-reviewed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -33,24 +37,29 @@ async function sendApprovalEmail(artistId: string, trackName: string) {
         status: 'approved',
       }),
     });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        console.error('Email API Error:', errText);
+    } else {
+        console.log('✅ Email API trigger successful');
+    }
   } catch (err) {
-    console.error('Email error:', err);
+    console.error('Email Helper Error:', err);
   }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Only allow POST requests
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { submissionId, adminKey } = req.body;
     
-    // Security Check
     if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // 1. Fetch submission data (The "Source of Truth")
+    // 1. Fetch submission
     const { data: submission, error: fetchError } = await supabase
       .from('radio_submissions')
       .select('*, radio_artists(name)')
@@ -59,44 +68,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (fetchError || !submission) return res.status(404).json({ error: 'Submission not found' });
 
-    console.log(`Processing upload for: ${submission.track_name} by ${submission.radio_artists?.name}`);
+    console.log(`Processing upload for: ${submission.track_name}`);
 
-    // 2. Download the original MP3 file
+    // 2. Download MP3
     const mp3Response = await fetch(submission.mp3_url);
     if (!mp3Response.ok) throw new Error('Failed to download MP3 from storage');
     
     const arrayBuffer = await mp3Response.arrayBuffer();
     let fileBuffer = Buffer.from(arrayBuffer);
 
-    // 3. SANITIZE TAGS: Force the MP3 to match the Database
-    const artistName = submission.radio_artists?.name || 'Unknown Artist';
-    const trackName = submission.track_name || 'Unknown Track';
-
+    // 3. Tagging
     const tags = {
-      title: trackName,
-      artist: artistName,
-      album: 'TrackTrip Radio', // Optional branding
+      title: submission.track_name || 'Unknown Track',
+      artist: submission.radio_artists?.name || 'Unknown Artist',
+      album: 'TrackTrip Radio',
       genre: 'Trance',
     };
 
-    // Attempt to inject the new tags
     const taggedBuffer = NodeID3.update(tags, fileBuffer);
-    
-    // SAFETY CHECK: If tagging failed, taggedBuffer will be 'false'. We fallback to fileBuffer.
-    let finalBuffer: Buffer;
-    if (taggedBuffer instanceof Buffer) {
-        finalBuffer = taggedBuffer;
-        console.log('✅ Tags updated successfully');
-    } else {
-        finalBuffer = fileBuffer;
-        console.warn('⚠️ Tag update failed, using original file (Process will continue)');
-    }
-
+    const finalBuffer = (taggedBuffer instanceof Buffer) ? taggedBuffer : fileBuffer;
     const base64File = finalBuffer.toString('base64');
 
-    // 4. Create a clean filename
-    // Removes special characters to prevent errors
-    const cleanFilename = `${artistName} - ${trackName}.mp3`.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
+    // 4. Clean Filename
+    const artistName = submission.radio_artists?.name || 'Unknown';
+    const cleanFilename = `${artistName} - ${submission.track_name}.mp3`.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
 
     // 5. Upload to AzuraCast
     const azuraResponse = await fetch(
@@ -120,40 +115,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(azuraResponse.status).json({ error: 'Azuracast Upload Failed', details: resultText });
     }
 
-    // 6. Update Database Status & Send Email
-    // Set status to approved, update reviewed_at, and mark file as deleted
+    // 6. Update Database
     await supabase
       .from('radio_submissions')
       .update({ 
         status: 'approved', 
         reviewed_at: new Date().toISOString(),
-        is_file_deleted: true // Mark as deleted in DB
+        is_file_deleted: true 
       })
       .eq('id', submissionId);
 
-    // --- 7. CLEANUP: Delete file from Supabase Storage ---
-    // The file is now safely on AzuraCast, so we delete it from Supabase to save space
+    // 7. Storage Cleanup
     if (submission.mp3_url) {
       const fileNameToDelete = submission.mp3_url.split('/').pop();
       if (fileNameToDelete) {
-        // IMPORTANT: Using bucket 'Radio' based on your previous screenshot
-        const { error: storageError } = await supabase.storage
-          .from('Radio')
-          .remove([fileNameToDelete]);
-          
-        if (storageError) {
-          console.error('Automatic storage cleanup failed:', storageError);
-        } else {
-          console.log(`✅ Cleaned up file from Supabase: ${fileNameToDelete}`);
-        }
+        await supabase.storage.from('Radio').remove([fileNameToDelete]);
+        console.log(`✅ Cleaned up file from Supabase: ${fileNameToDelete}`);
       }
     }
-    // ---------------------------------------------------
 
-    // Non-blocking email sending (so the admin doesn't wait for it)
-    sendApprovalEmail(submission.artist_id, trackName);
+    // 8. SEND EMAIL (CRITICAL FIX: AWAIT IS REQUIRED)
+    // We must wait for this to finish before returning the response
+    await sendApprovalEmail(submission.artist_id, submission.track_name);
 
-    return res.status(200).json({ success: true, message: `Uploaded, Tagged & Cleaned Up: ${cleanFilename}` });
+    return res.status(200).json({ success: true, message: `Uploaded: ${cleanFilename}` });
 
   } catch (error: any) {
     console.error('Upload error:', error);
@@ -164,8 +149,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '50mb', // Allows large requests if needed
+      sizeLimit: '50mb',
     },
   },
-  maxDuration: 60, // Uncommented for longer processing times
+  maxDuration: 60,
 };
