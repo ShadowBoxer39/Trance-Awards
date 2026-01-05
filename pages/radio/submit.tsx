@@ -321,7 +321,13 @@ export default function RadioSubmitPage() {
                   {/* File Upload */}
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-3 mr-1">קובץ MP3 *</label>
-                    <input type="file" accept="audio/*,.mp3" onChange={handleMp3Change} className="hidden" id="mp3-upload" />
+                 <input 
+  type="file" 
+  accept=".mp3,audio/mpeg" 
+  onChange={handleMp3Change} 
+  className="hidden" 
+  id="mp3-upload" 
+/>
                     <label htmlFor="mp3-upload" className={`flex flex-col items-center justify-center gap-4 w-full p-10 border-2 border-dashed rounded-[2.5rem] cursor-pointer transition-all ${
                       mp3File ? 'border-green-500/50 bg-green-500/5' : 'border-white/10 hover:border-purple-500/40 bg-white/5'
                     }`}>
