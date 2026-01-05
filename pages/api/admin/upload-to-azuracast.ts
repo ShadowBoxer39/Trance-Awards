@@ -121,15 +121,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 6. Update Database Status & Send Email
+    // Set status to approved, update reviewed_at, and mark file as deleted
     await supabase
       .from('radio_submissions')
-      .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+      .update({ 
+        status: 'approved', 
+        reviewed_at: new Date().toISOString(),
+        is_file_deleted: true // Mark as deleted in DB
+      })
       .eq('id', submissionId);
+
+    // --- 7. CLEANUP: Delete file from Supabase Storage ---
+    // The file is now safely on AzuraCast, so we delete it from Supabase to save space
+    if (submission.mp3_url) {
+      const fileNameToDelete = submission.mp3_url.split('/').pop();
+      if (fileNameToDelete) {
+        // IMPORTANT: Using bucket 'Radio' based on your previous screenshot
+        const { error: storageError } = await supabase.storage
+          .from('Radio')
+          .remove([fileNameToDelete]);
+          
+        if (storageError) {
+          console.error('Automatic storage cleanup failed:', storageError);
+        } else {
+          console.log(`✅ Cleaned up file from Supabase: ${fileNameToDelete}`);
+        }
+      }
+    }
+    // ---------------------------------------------------
 
     // Non-blocking email sending (so the admin doesn't wait for it)
     sendApprovalEmail(submission.artist_id, trackName);
 
-    return res.status(200).json({ success: true, message: `Uploaded & Tagged: ${cleanFilename}` });
+    return res.status(200).json({ success: true, message: `Uploaded, Tagged & Cleaned Up: ${cleanFilename}` });
 
   } catch (error: any) {
     console.error('Upload error:', error);
@@ -143,5 +167,5 @@ export const config = {
       sizeLimit: '50mb', // Allows large requests if needed
     },
   },
-  // maxDuration: 60, // Uncomment this line if you are on Vercel Pro to allow longer uploads
+  maxDuration: 60, // Uncommented for longer processing times
 };
