@@ -11,9 +11,10 @@ const supabase = createClient(
 const AZURACAST_URL = 'https://a12.asurahosting.com';
 const STATION_ID = '383';
 
-// Helper to send the email via your existing API
+// --- Helper: Send Email via API ---
 async function sendApprovalEmail(artistId: string, trackName: string) {
   try {
+    // 1. Get Artist Data
     const { data: artist } = await supabase
       .from('radio_artists')
       .select('name, email')
@@ -22,11 +23,13 @@ async function sendApprovalEmail(artistId: string, trackName: string) {
     
     if (!artist?.email) return;
 
-    // Use the site URL to call our own API
+    // 2. Determine the correct URL (Crucial for Production)
+    // Falls back to tracktrip.co.il if env var is missing
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tracktrip.co.il';
     
-    console.log(`📧 Triggering approval email for ${artist.email}...`);
+    console.log(`📧 Calling Email API at: ${baseUrl}/api/radio/send-track-reviewed`);
     
+    // 3. Call the Email API
     const response = await fetch(`${baseUrl}/api/radio/send-track-reviewed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -40,12 +43,12 @@ async function sendApprovalEmail(artistId: string, trackName: string) {
 
     if (!response.ok) {
         const errText = await response.text();
-        console.error('Email API Error:', errText);
+        console.error('❌ Email API failed:', errText);
     } else {
-        console.log('✅ Email API trigger successful');
+        console.log('✅ Email API triggered successfully');
     }
   } catch (err) {
-    console.error('Email Helper Error:', err);
+    console.error('❌ Email Helper Error:', err);
   }
 }
 
@@ -89,9 +92,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const finalBuffer = (taggedBuffer instanceof Buffer) ? taggedBuffer : fileBuffer;
     const base64File = finalBuffer.toString('base64');
 
-    // 4. Clean Filename
+    // 4. Clean Filename (Reverted to the Logic that WORKED)
     const artistName = submission.radio_artists?.name || 'Unknown';
+    // Only allows English letters, numbers, spaces, and hyphens.
     const cleanFilename = `${artistName} - ${submission.track_name}.mp3`.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
+
+    console.log(`Uploading to AzuraCast as: ${cleanFilename}`);
 
     // 5. Upload to AzuraCast
     const azuraResponse = await fetch(
@@ -103,7 +109,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          path: cleanFilename, 
+          path: cleanFilename,
           file: base64File,
         }),
       }
@@ -134,8 +140,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 8. SEND EMAIL (CRITICAL FIX: AWAIT IS REQUIRED)
-    // We must wait for this to finish before returning the response
+    // 8. Trigger Email
+    // CRITICAL: We MUST await this. In Vercel production, if we return before this finishes,
+    // the server kills the request and the email never sends.
     await sendApprovalEmail(submission.artist_id, submission.track_name);
 
     return res.status(200).json({ success: true, message: `Uploaded: ${cleanFilename}` });
