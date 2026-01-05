@@ -1,11 +1,11 @@
-// pages/radio/index.tsx - Complete Code with Smart Fallback
+// pages/radio/index.tsx - Radio with Persistent CTA
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import { 
   FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaInstagram, 
-  FaSoundcloud, FaMusic, FaUsers, FaArrowLeft, FaUpload
+  FaSoundcloud, FaUsers, FaArrowLeft, FaUpload
 } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
@@ -69,7 +69,6 @@ export default function RadioPage() {
   // Fetch Artist metadata from our own Supabase DB
   const updateArtistSpotlight = async (artistName: string) => {
     try {
-      // Avoid searching for placeholders to save API calls
       if (!artistName || artistName === 'Track Trip Radio' || artistName === 'Unknown Artist') {
         setArtistDetails(null);
         return;
@@ -80,7 +79,7 @@ export default function RadioPage() {
         const data = await res.json();
         setArtistDetails(data);
       } else {
-        setArtistDetails(null); // Artist not found in DB -> Switch to Fallback Mode
+        setArtistDetails(null);
       }
     } catch (err) {
       setArtistDetails(null);
@@ -95,7 +94,6 @@ export default function RadioPage() {
         const currentArtistName = nowPlaying?.now_playing?.song?.artist;
         const newArtistName = data.now_playing.song.artist;
         
-        // If the artist changed since the last poll, update our spotlight
         if (newArtistName !== currentArtistName) {
           updateArtistSpotlight(newArtistName);
         }
@@ -159,22 +157,20 @@ export default function RadioPage() {
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 md:py-20">
           
-          {/* MAIN GRID LAYOUT */}
           <div className="grid lg:grid-cols-12 gap-8 items-stretch">
             
-            {/* COLUMN 1: ARTIST SPOTLIGHT OR FALLBACK (4/12) */}
+            {/* COLUMN 1: ARTIST SPOTLIGHT (4/12) */}
             <div className="lg:col-span-5 order-2 lg:order-1">
-              <div className="glass-warm h-full rounded-[2.5rem] p-8 md:p-10 border border-white/5 flex flex-col items-center text-center">
+              <div className="glass-warm h-full rounded-[2.5rem] p-8 md:p-10 border border-white/5 flex flex-col items-center text-center relative overflow-hidden">
                 
-                {/* Header that changes based on context */}
                 <div className="flex items-center gap-2 mb-8 text-purple-400 font-bold tracking-widest uppercase text-xs">
                   <HiSparkles /> {artistDetails ? 'הכירו את האמן' : 'מתנגן כעת'}
                 </div>
 
                 {artistDetails ? (
-                  /* === SCENARIO A: Artist IS in Database === */
-                  <div className="w-full flex flex-col items-center animate-fade-in">
-                    <div className="relative w-48 h-48 md:w-64 md:h-64 mb-8">
+                  /* === ARTIST FOUND === */
+                  <div className="w-full flex flex-col items-center animate-fade-in flex-1">
+                    <div className="relative w-40 h-40 md:w-56 md:h-56 mb-6">
                        <div className="absolute -inset-4 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-pulse" />
                        <img 
                         src={artistDetails.image_url || '/images/logo.png'} 
@@ -183,32 +179,31 @@ export default function RadioPage() {
                        />
                     </div>
                     
-                    <h2 className="text-3xl font-black mb-3">{artistDetails.name}</h2>
+                    <h2 className="text-2xl md:text-3xl font-black mb-3">{artistDetails.name}</h2>
                     
                     {artistDetails.bio && (
-                      <div className="text-gray-400 text-sm leading-relaxed mb-8 max-w-sm italic line-clamp-4 relative">
+                      <div className="text-gray-400 text-sm leading-relaxed mb-6 max-w-sm italic line-clamp-4 relative">
                         "{artistDetails.bio}"
                       </div>
                     )}
 
-                    <div className="flex gap-4 w-full justify-center mt-auto">
+                    <div className="flex gap-4 w-full justify-center mb-8">
                       {artistDetails.instagram && (
-                        <a href={artistDetails.instagram.startsWith('http') ? artistDetails.instagram : `https://instagram.com/${artistDetails.instagram}`} target="_blank" className="p-4 bg-white/5 hover:bg-pink-600/20 rounded-2xl border border-white/5 transition-all text-pink-400 hover:scale-110">
-                          <FaInstagram className="text-2xl" />
+                        <a href={artistDetails.instagram.startsWith('http') ? artistDetails.instagram : `https://instagram.com/${artistDetails.instagram}`} target="_blank" className="p-3 bg-white/5 hover:bg-pink-600/20 rounded-2xl border border-white/5 transition-all text-pink-400 hover:scale-110">
+                          <FaInstagram className="text-xl" />
                         </a>
                       )}
                       {artistDetails.soundcloud && (
-                        <a href={artistDetails.soundcloud} target="_blank" className="p-4 bg-white/5 hover:bg-orange-600/20 rounded-2xl border border-white/5 transition-all text-orange-400 hover:scale-110">
-                          <FaSoundcloud className="text-2xl" />
+                        <a href={artistDetails.soundcloud} target="_blank" className="p-3 bg-white/5 hover:bg-orange-600/20 rounded-2xl border border-white/5 transition-all text-orange-400 hover:scale-110">
+                          <FaSoundcloud className="text-xl" />
                         </a>
                       )}
                     </div>
                   </div>
                 ) : (
-                  /* === SCENARIO B: Regular Track / Fallback === */
-                  <div className="w-full flex flex-col items-center animate-fade-in">
+                  /* === FALLBACK (REGULAR TRACK) === */
+                  <div className="w-full flex flex-col items-center animate-fade-in flex-1">
                     <div className="relative w-48 h-48 md:w-64 md:h-64 mb-8">
-                       {/* Use Album Art from Stream */}
                        <img 
                         src={currentSong?.art || '/images/logo.png'} 
                         className="relative w-full h-full object-cover rounded-3xl border-2 border-white/10 shadow-2xl" 
@@ -217,28 +212,31 @@ export default function RadioPage() {
                     </div>
                     
                     <h2 className="text-2xl font-bold mb-2 text-white">{currentSong?.artist || 'Track Trip Radio'}</h2>
-                    <p className="text-purple-400 text-lg mb-8 line-clamp-2">{currentSong?.title}</p>
-                    
-                    <div className="bg-white/5 rounded-2xl p-6 w-full max-w-xs border border-white/5">
-                       <p className="text-gray-400 text-xs mb-4">
-                         זהו טראק מהאוסף שלנו.
-                         <br/>
-                         רוצים שגם המוזיקה שלכם תופיע כאן עם פרופיל מלא?
-                       </p>
-                       <Link href="/radio/register" className="block w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold text-sm transition-colors shadow-lg">
-                         שלחו טראק לשידור <FaUpload className="inline mr-1" />
-                       </Link>
-                    </div>
+                    <p className="text-purple-400 text-lg mb-4 line-clamp-2">{currentSong?.title}</p>
+                    <p className="text-gray-500 text-sm mb-8">מוזיקה מקורית מישראל</p>
                   </div>
                 )}
+
+                {/* === PERSISTENT SIGNUP CTA (Always Visible) === */}
+                <div className="w-full mt-auto pt-6 border-t border-white/5">
+                   <Link href="/radio/register" className="group flex items-center justify-between p-4 bg-white/5 hover:bg-purple-600/10 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-all">
+                      <div className="text-right">
+                        <span className="block text-xs font-bold text-white group-hover:text-purple-400 transition-colors">גם אתם יוצרים?</span>
+                        <span className="block text-[10px] text-gray-500">שלחו טראק לשידור ברדיו</span>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-purple-500 flex items-center justify-center transition-all">
+                        <FaUpload className="text-gray-400 group-hover:text-white text-xs" />
+                      </div>
+                   </Link>
+                </div>
+
               </div>
             </div>
 
-            {/* COLUMN 2: PLAYER & NOW PLAYING (7/12) */}
+            {/* COLUMN 2: PLAYER (7/12) */}
             <div className="lg:col-span-7 order-1 lg:order-2">
               <div className="glass-warm h-full rounded-[3rem] p-8 md:p-12 border border-purple-500/10 flex flex-col shadow-2xl">
                 
-                {/* Header Info */}
                 <div className="flex justify-between items-center mb-12">
                    <div className={`flex items-center gap-3 rounded-full px-5 py-2 border ${isPlaying ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-white/5 border-white/10 text-gray-500'}`}>
                       <div className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-gray-600'}`} />
@@ -247,7 +245,6 @@ export default function RadioPage() {
                    <div className="text-xs text-gray-500 flex items-center gap-2"><FaUsers /> {nowPlaying?.listeners?.current || 0} מאזינים</div>
                 </div>
 
-                {/* Track Info */}
                 <div className="flex-1 flex flex-col items-center lg:items-end text-center lg:text-right">
                   <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tighter leading-tight text-white">
                     {currentSong?.title || 'טוען...'}
@@ -283,7 +280,6 @@ export default function RadioPage() {
                   </div>
                 </div>
 
-                {/* Next Track Preview */}
                 <div className="mt-12 pt-8 border-t border-white/5 flex items-center justify-between">
                    <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center"><HiMusicNote className="text-gray-500" /></div>
@@ -292,10 +288,8 @@ export default function RadioPage() {
                         <div className="text-sm font-bold truncate max-w-[200px] text-gray-300">{nowPlaying?.playing_next?.song?.title || 'בקרוב...'}</div>
                       </div>
                    </div>
-                   <Link href="/radio/register" className="flex items-center gap-2 text-xs text-purple-400 hover:text-white transition-colors">
-                     רוצה לשדר כאן? <FaArrowLeft />
-                   </Link>
                 </div>
+
               </div>
             </div>
 
