@@ -1186,7 +1186,7 @@ export default function Home({
           </div>
         </section>
 
-        {/* Footer */}
+       {/* Footer */}
         <footer className="border-t border-gray-800 mt-16">
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="flex flex-col items-center gap-6">
@@ -1214,9 +1214,10 @@ export default function Home({
                 <Link href="/legends" className="text-gray-400 hover:text-gray-300 transition">אגדות</Link>
                 <Link href="/featured-artist" className="text-gray-400 hover:text-gray-300 transition">אמנים מוצגים</Link>
                 <Link href="/about" className="text-gray-400 hover:text-gray-300 transition">אודות</Link>
+                <Link href="/accessibility" className="text-gray-400 hover:text-gray-300 transition">הצהרת נגישות</Link>
               </div>
 
-              <div className="text-sm text-gray-500">© 2025 יוצאים לטראק</div>
+              <div className="text-sm text-gray-500">© 2026 יוצאים לטראק</div>
             </div>
           </div>
         </footer>
