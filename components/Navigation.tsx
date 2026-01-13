@@ -5,7 +5,7 @@ import Image from "next/image";
 import React from "react";
 
 interface NavigationProps {
-  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist" | "featured-artists" | "artists" | "legends"; 
+  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist" | "featured-artists" | "artists" | "legends" | "accessibility"; 
 }
 
 export default function Navigation({ currentPage }: NavigationProps) {
