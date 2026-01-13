@@ -8,6 +8,7 @@ import Navigation from "../components/Navigation";
 import DailyDuel from "../components/DailyDuel";
 import { default as episodeApiHandler } from "./api/episodes";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import supabase from '../lib/supabaseServer';
 
 interface Episode {
   id: number;
@@ -1276,7 +1277,7 @@ export async function getServerSideProps() {
 
   // Fetch Track of the Week using Supabase
   try {
-    const supabase = require('../lib/supabaseServer').default;
+    
     const { data, error } = await supabase
       .from('track_of_the_week_submissions')
       .select('*')
@@ -1296,7 +1297,7 @@ export async function getServerSideProps() {
 
   // Fetch Featured Artist (current) AND Previous Artists
   try {
-    const supabase = require('../lib/supabaseServer').default;
+   
     
     // Get current featured artist (most recent)
     const { data: currentArtist, error: currentError } = await supabase
@@ -1311,6 +1312,7 @@ export async function getServerSideProps() {
     } else if (currentArtist) {
       featuredArtist = currentArtist;
     }
+    console.log('Featured Artist from DB:', currentArtist);
 
     // Get previous artists (all except the current one)
     const { data: prevArtists, error: prevError } = await supabase
@@ -1330,7 +1332,7 @@ export async function getServerSideProps() {
 
   // Fetch Artists (from artists table)
   try {
-    const supabase = require('../lib/supabaseServer').default;
+   
     const { data: artistsData, error: artistsError } = await supabase
       .from('artists')
       .select('id, slug, stage_name, profile_photo_url, genre, primary_color')
@@ -1349,7 +1351,7 @@ export async function getServerSideProps() {
 
   // Fetch Legends
   try {
-    const supabase = require('../lib/supabaseServer').default;
+  
     
     // Get legends with episode info
     const { data: legendsRaw, error: legendsError } = await supabase
