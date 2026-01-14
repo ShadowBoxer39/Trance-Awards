@@ -292,10 +292,20 @@ export default function RadioRegisterPage() {
               <FaRocket className="text-5xl text-purple-500 mx-auto mb-8 animate-bounce" />
               <h2 className="text-3xl md:text-4xl font-black mb-6">מוכנים לשיגור?</h2>
               <p className="text-gray-400 mb-10 text-lg">הצטרפו למשפחת "יוצאים לטראק" והתחילו לשדר היום</p>
-              <div className="flex justify-center mb-6">
-                <GoogleLoginButton />
-              </div>
-              <p className="text-[10px] text-gray-600">בלחיצה על התחברות אתם מאשרים את תנאי השימוש</p>
+              <div className="flex flex-col items-center gap-4 mb-6">
+  <a 
+    href={YOUTUBE_SUBSCRIBE_URL}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-8 rounded-full transition-all shadow-lg shadow-red-600/30 w-full max-w-xs"
+  >
+    <FaYoutube className="text-xl" />
+    <span>שלב 1: הרשמו ליוטיוב</span>
+  </a>
+  <div className="text-gray-500 text-sm">👇 אחרי שנרשמתם 👇</div>
+  <GoogleLoginButton />
+</div>
+<p className="text-[10px] text-gray-600">בהרשמה אתם מאשרים שאתם עוקבים אחרי ערוץ היוטיוב ומסכימים לתנאי השימוש</p>
             </div>
           </div>
         </section>

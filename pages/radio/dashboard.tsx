@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js'; 
 import Navigation from '@/components/Navigation'; 
-import { FaMusic, FaClock, FaCheckCircle, FaTrash, FaInfoCircle, FaSignOutAlt, FaRocket, FaHeadphones, FaInstagram, FaSoundcloud, FaCamera, FaEdit } from 'react-icons/fa';
+import { FaMusic, FaClock, FaCheckCircle, FaTrash, FaInfoCircle, FaSignOutAlt, FaRocket, FaHeadphones, FaInstagram, FaSoundcloud, FaCamera, FaEdit, FaYoutube } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const supabase = createClient(
@@ -62,6 +62,18 @@ export default function RadioDashboard() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [creatingProfile, setCreatingProfile] = useState(false);
+
+  const [showYTBanner, setShowYTBanner] = useState(true);
+
+useEffect(() => {
+  const dismissed = localStorage.getItem('yt-banner-dismissed');
+  if (dismissed) setShowYTBanner(false);
+}, []);
+
+const dismissYTBanner = () => {
+  localStorage.setItem('yt-banner-dismissed', 'true');
+  setShowYTBanner(false);
+};
 
   const greeting = getGreeting();
 
@@ -449,6 +461,37 @@ export default function RadioDashboard() {
         </div>
 
         <Navigation />
+
+        {/* YouTube Reminder Banner */}
+{showYTBanner && (
+  <div className="bg-gradient-to-r from-red-900/30 to-purple-900/30 border-b border-red-500/20">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <FaYoutube className="text-red-500 text-xl flex-shrink-0" />
+        <p className="text-sm text-gray-300">
+          <span className="font-bold text-white">לא לשכוח!</span> הירשמו לערוץ היוטיוב כדי לדעת מתי הטראק שלכם בשידור
+        </p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <a 
+          href="https://www.youtube.com/@tracktripil?sub_confirmation=1" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full transition"
+        >
+          הרשמה
+        </a>
+        <button 
+          onClick={dismissYTBanner}
+          className="text-gray-500 hover:text-white p-1 transition"
+          title="סגור"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
           {/* Header Section */}
