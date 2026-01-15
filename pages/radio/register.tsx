@@ -131,7 +131,7 @@ export default function RadioRegisterPage() {
       `}</style>
 
       <div className="min-h-screen bg-[#0a0a12] text-white font-['Rubik',sans-serif]">
-        <Navigation />
+        <Navigation currentPage="radio" />
 
         {/* Hero Section */}
         <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden px-6">

@@ -460,7 +460,7 @@ const dismissYTBanner = () => {
           <FloatingNotes />
         </div>
 
-        <Navigation />
+        <Navigation currentPage="radio" />
 
         {/* YouTube Reminder Banner */}
 {showYTBanner && (

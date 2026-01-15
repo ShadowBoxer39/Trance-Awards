@@ -146,7 +146,7 @@ export default function RadioPage() {
         <title>הרדיו של יוצאים לטראק</title>
       </Head>
       
-      <Navigation currentPage="home" />
+      <Navigation currentPage="radio" />
 
       <main className="max-w-6xl mx-auto px-6 pt-20 pb-10">
         
