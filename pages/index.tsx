@@ -916,104 +916,87 @@ export default function Home({
           </div>
         </section>
 
-        {/* Track of the Week Section - MOVED UP */}
-        <section className="max-w-7xl mx-auto px-6 pb-16">
-          <div className="glass-card rounded-xl p-8 md:p-10 border-2 border-green-500/30">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <span className="text-3xl">💬</span>
-              <h2 className="text-2xl md:text-3xl font-semibold text-white">
-                הטראק השבועי של הקהילה
-              </h2>
-            </div>
+     {/* Radio Teaser Section */}
+<section className="max-w-7xl mx-auto px-6 pb-16">
+  <div className="glass-card rounded-2xl p-8 md:p-12 border-2 border-purple-500/30 relative overflow-hidden">
+    
+    {/* Background decorations */}
+    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
+    <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl"></div>
+    <div className="absolute top-10 left-10 text-6xl opacity-10 animate-bounce">🎵</div>
+    <div className="absolute bottom-10 right-20 text-4xl opacity-10 animate-pulse">🎧</div>
+    
+    <div className="relative z-10">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 mb-4">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </span>
+          <span className="text-sm font-medium text-green-400">חדש! מקבלים הגשות</span>
+        </div>
+        
+        <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+            הרדיו של יוצאים לטראק
+          </span>
+        </h2>
+        
+        <p className="text-xl text-gray-300 mb-2">
+          אתם יוצרים טראנס? 🔥
+        </p>
+        <p className="text-gray-400 max-w-xl mx-auto">
+          הצטרפו לרדיו הטראנס הישראלי הראשון! שלחו את הטראקים שלכם והגיעו לאלפי מאזינים.
+          <br />
+          <span className="text-purple-400 font-medium">100% בחינם. 100% קרדיט לאמן.</span>
+        </p>
+      </div>
 
-            {trackOfWeek ? (
-              <div className="grid md:grid-cols-2 gap-6 items-start">
-                <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    src={`https://www.youtube.com/embed/${getYouTubeId(trackOfWeek.youtube_url)}`}
-                    title={trackOfWeek.track_title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
+      {/* Stats */}
+      <div className="flex flex-wrap justify-center gap-6 mb-8">
+        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
+          <span className="text-2xl">🎤</span>
+          <span className="text-gray-300"><span className="font-bold text-white">50+</span> אמנים רשומים</span>
+        </div>
+        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
+          <span className="text-2xl">🎵</span>
+          <span className="text-gray-300"><span className="font-bold text-white">24/7</span> שידור רצוף</span>
+        </div>
+        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
+          <span className="text-2xl">📺</span>
+          <span className="text-gray-300">שידור חי ב-<span className="font-bold text-red-400">YouTube</span></span>
+        </div>
+      </div>
 
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-green-500/50 bg-gray-700 flex-shrink-0">
-                      {trackOfWeek.photo_url ? (
-                        <img
-                          src={trackOfWeek.photo_url}
-                          alt={trackOfWeek.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            if (e.currentTarget.nextElementSibling) {
-                              (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
-                            }
-                          }}
-                        />
-                      ) : null}
-                      <div 
-                        className="w-full h-full flex items-center justify-center text-3xl text-gray-500"
-                        style={{ display: trackOfWeek.photo_url ? 'none' : 'flex' }}
-                      >
-                        👤
-                      </div>
-                    </div>
+      {/* CTA Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <Link
+          href="/radio/register"
+          className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 shadow-xl shadow-purple-500/30"
+        >
+          <span className="text-2xl group-hover:animate-bounce">🚀</span>
+          הצטרפו עכשיו - זה בחינם!
+        </Link>
+        
+        
+      </div>
 
-                    <div>
-                      <h3 className="text-xl font-bold text-white mb-1">
-                        {trackOfWeek.track_title}
-                      </h3>
-                      <p className="text-green-400 font-medium">
-                        {trackOfWeek.name}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-black/30 rounded-lg p-4">
-                    <p className="text-sm text-gray-400 mb-2">למה הטראק הזה?</p>
-                    <p className="text-gray-300 leading-relaxed">
-                      {trackOfWeek.description}
-                    </p>
-                  </div>
-
-                  <TrackOfWeekComments trackId={trackOfWeek.id} />
-
-                  <Link
-                    href="/track-of-the-week"
-                    className="btn-secondary px-6 py-3 rounded-lg font-medium text-center"
-                  >
-                    עוד פרטים והגיבו ←
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
-                  הגיע הזמן לשמוע מה בוחרת קהילת הטראנס הגדולה בישראל! בכל שבוע, טרק חדש וסיפור אישי מאחוריו.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4">
-                  <Link
-                    href="/track-of-the-week"
-                    className="btn-primary px-6 py-3 rounded-lg font-medium inline-flex items-center gap-2"
-                  >
-                    🎧 צפה בטרק השבועי
-                  </Link>
-                  <Link
-                    href="/submit-track"
-                    className="btn-secondary px-6 py-3 rounded-lg font-medium inline-block"
-                  >
-                    הגישו טרק משלכם
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
+      {/* Trust badges */}
+      <div className="flex flex-wrap justify-center gap-4 mt-8 text-sm text-gray-500">
+        <div className="flex items-center gap-1">
+          <span className="text-green-500">✓</span> ללא תשלום
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-green-500">✓</span> הזכויות נשארות שלכם
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-green-500">✓</span> קרדיט מלא בשידור
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* Artists Section */}
         {artists && artists.length > 0 && (

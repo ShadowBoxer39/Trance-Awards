@@ -121,29 +121,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                       >
                         🌟 הרשמה לאמנים צעירים
                       </Link>
-                      <Link
-                        href="/track-of-the-week"
-                        className={`block px-4 py-3 text-sm transition ${
-                          isActive("track-of-the-week")
-                            ? "text-purple-400 bg-gray-800"
-                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                        }`}
-                      >
-                        🎵 הטראק השבועי
-                      </Link>
-                      <div className="border-t border-gray-800 my-1"></div>
-                      <Link
-                        href="/submit-track"
-                        className={`block px-4 py-3 text-sm transition ${
-                          isActive("submit-track")
-                            ? "text-purple-400 bg-gray-800"
-                            : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                        }`}
-                      >
-
-                        
-                       הגישו טראק
-                      </Link>
+                     
 
                                         <Link
   href="/radio/register"
@@ -295,17 +273,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                 🌟 הרשמה לאמנים צעירים
               </Link>
 
-              <Link
-                href="/track-of-the-week"
-                className={`block px-4 py-3 rounded-lg transition ${
-                  isActive("track-of-the-week") 
-                    ? "text-white bg-gray-800" 
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                🎵 הטראק השבועי
-              </Link>
+             
 
               <Link
                 href="/submit-track"
