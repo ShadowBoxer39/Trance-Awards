@@ -146,7 +146,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
                       </Link>
 
                                         <Link
-  href="/radio"
+  href="/radio/register"
   className={`block px-4 py-3 text-sm transition ${
     isActive("radio")
       ? "text-purple-400 bg-gray-800"
@@ -320,7 +320,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
               </Link>
 
 <Link
-  href="/radio"
+  href="/radio/register"
   className={`block px-4 py-3 rounded-lg transition ${
     isActive("radio") 
       ? "text-white bg-gray-800" 
