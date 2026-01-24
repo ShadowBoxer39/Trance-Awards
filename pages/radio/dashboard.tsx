@@ -359,16 +359,19 @@ const dismissYTBanner = () => {
                  />
                </div>
 
-               {/* Bio */}
-               <div>
-                 <label className="block text-xs text-gray-500 mb-1 mr-1">ביוגרפיה קצרה</label>
-                 <textarea 
-                   className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none h-24 resize-none"
-                   placeholder="ספרו קצת על עצמכם..."
-                   value={formData.bio}
-                   onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                 />
-               </div>
+              {/* Bio */}
+<div>
+  <label className="block text-xs text-gray-500 mb-1 mr-1">ביוגרפיה קצרה</label>
+  <textarea 
+    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none h-24 resize-none"
+    placeholder="ספרו קצת על עצמכם..."
+    value={formData.bio}
+    onChange={(e) => setFormData({...formData, bio: e.target.value})}
+  />
+  <p className="text-[11px] text-purple-400/80 mt-2 mr-1">
+    💡 <span className="font-bold">טיפ:</span> הביוגרפיה תופיע בשידור החי ברדיו וביוטיוב. ככל שתכתבו יותר, כך המאזינים יכירו אתכם טוב יותר!
+  </p>
+</div>
 
                {/* Socials */}
                <div className="grid grid-cols-2 gap-4">

@@ -287,19 +287,24 @@ export default function RadioSubmitPage() {
                   </div>
 
                   {/* Track Story */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-3 mr-1">
-                      <FaPenNib className="inline ml-2 text-purple-400/80" />
-                      ספרו לנו על הטראק (אופציונלי)
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="מה ההשראה לטראק? משהו שתרצו שנגיד עליו בשידור?"
-                      className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 focus:outline-none text-white resize-none transition-all placeholder:text-gray-600"
-                    />
-                  </div>
+<div>
+  <label className="block text-sm font-medium text-gray-400 mb-3 mr-1">
+    <FaPenNib className="inline ml-2 text-purple-400/80" />
+    ספרו לנו על הטראק (אופציונלי)
+  </label>
+  <textarea
+    rows={4}
+    value={formData.description}
+    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+    placeholder="מה ההשראה לטראק? משהו שתרצו שנגיד עליו בשידור?"
+    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 focus:outline-none text-white resize-none transition-all placeholder:text-gray-600"
+  />
+  <div className="mt-3 bg-purple-500/10 border border-purple-500/20 rounded-xl p-3">
+    <p className="text-xs text-purple-300">
+      💬 <span className="font-bold">הטקסט הזה יופיע בשידור!</span> המאזינים יראו אותו מתחת לשם הטראק בזמן שהוא מתנגן. זו ההזדמנות שלכם לספר את הסיפור מאחורי המוזיקה.
+    </p>
+  </div>
+</div>
 
                   {/* Premiere Toggle */}
                   <div className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5">
