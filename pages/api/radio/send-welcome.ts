@@ -118,7 +118,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     console.log('✅ Email sent successfully:', data);
-    return res.status(200).json({ success: true, data });
+
+// Send admin notification (non-blocking)
+resend.emails.send({
+  from: EMAIL_SENDER,
+  to: ['tracktripil@gmail.com'],
+  subject: `🎤 אמן חדש נרשם: ${name}`,
+  html: `<div style="font-family: sans-serif; direction: rtl; padding: 20px;">
+    <h2>אמן חדש נרשם לרדיו!</h2>
+    <p><strong>שם:</strong> ${name}</p>
+    <p><strong>אימייל:</strong> ${email}</p>
+    <p><a href="https://tracktrip.co.il/admin/radio">לצפייה בפאנל הניהול</a></p>
+  </div>`,
+}).catch(err => console.error('Admin notification failed:', err));
+
+return res.status(200).json({ success: true, data });
   } catch (error: any) {
     console.error('❌ Resend error:', error);
     return res.status(500).json({ 
