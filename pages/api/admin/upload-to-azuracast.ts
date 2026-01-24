@@ -88,9 +88,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       genre: 'Trance',
     };
 
-    const taggedBuffer = NodeID3.update(tags, fileBuffer);
-    const finalBuffer = (taggedBuffer instanceof Buffer) ? taggedBuffer : fileBuffer;
-    const base64File = finalBuffer.toString('base64');
+    let finalBuffer: Buffer = fileBuffer;
+try {
+  const taggedBuffer = NodeID3.update(tags, fileBuffer);
+  if (taggedBuffer && taggedBuffer instanceof Buffer) {
+    finalBuffer = taggedBuffer;
+  }
+} catch (tagError) {
+  console.log('⚠️ ID3 tagging failed, using original file:', tagError);
+}
+const base64File = finalBuffer.toString('base64');
 
     // 4. Clean Filename (Reverted to the Logic that WORKED)
     const artistName = submission.radio_artists?.name || 'Unknown';
