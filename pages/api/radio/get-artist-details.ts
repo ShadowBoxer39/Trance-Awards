@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { name } = req.query;
+  const { name, track } = req.query;
   if (!name || typeof name !== 'string') {
     return res.status(400).json({ error: 'Missing name' });
   }
@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // 1. Try Exact Match (Case Insensitive) - The most accurate
   let { data } = await supabase
     .from('radio_artists')
-    .select('name, bio, image_url, instagram, soundcloud, slug')
+    .select('id, name, bio, image_url, instagram, soundcloud, slug')
     .ilike('name', cleanName)
     .maybeSingle();
 
@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (mainArtistName !== cleanName && mainArtistName.length > 2) {
         const { data: retryData } = await supabase
             .from('radio_artists')
-            .select('name, bio, image_url, instagram, soundcloud, slug')
+            .select('id, name, bio, image_url, instagram, soundcloud, slug')
             .ilike('name', mainArtistName)
             .maybeSingle();
             
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!data) {
      const { data: fuzzyData } = await supabase
         .from('radio_artists')
-        .select('name, bio, image_url, instagram, soundcloud, slug')
+        .select('id, name, bio, image_url, instagram, soundcloud, slug')
         .textSearch('name', cleanName, { type: 'websearch', config: 'english' })
         .maybeSingle();
         
@@ -53,5 +53,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Artist not found' });
   }
 
-  return res.status(200).json(data);
+  // Fetch track info if track name provided
+  let trackInfo = null;
+
+  if (track && typeof track === 'string' && data.id) {
+    const { data: trackData } = await supabase
+      .from('radio_submissions')
+      .select('description, is_premiere')
+      .eq('artist_id', data.id)
+      .ilike('track_name', track.trim())
+      .eq('status', 'approved')
+      .maybeSingle();
+    
+    trackInfo = trackData;
+  }
+
+  return res.status(200).json({
+    ...data,
+    track_description: trackInfo?.description || null,
+    is_premiere: trackInfo?.is_premiere || false
+  });
 }

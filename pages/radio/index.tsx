@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
-import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUsers, FaUpload, FaInstagram, FaSoundcloud, FaYoutube, FaMobileAlt, FaHeadphones } from 'react-icons/fa';
+import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUsers, FaUpload, FaInstagram, FaSoundcloud, FaYoutube, FaMobileAlt, FaHeadphones, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const AZURACAST_API_URL = 'https://a12.asurahosting.com/api/nowplaying/track_trip_radio';
@@ -22,8 +22,9 @@ interface ArtistDetails {
   image_url: string;
   instagram: string;
   soundcloud: string;
+  track_description: string | null;
+  is_premiere: boolean;
 }
-
 
 const mockData: NowPlayingData = {
   station: { name: 'Track Trip Radio', listen_url: STREAM_URL },
@@ -66,17 +67,23 @@ export default function RadioPage() {
   const [volume, setVolume] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [bioExpanded, setBioExpanded] = useState(false);
 
-  const updateArtistSpotlight = async (artistName: string) => {
+  const updateArtistSpotlight = async (artistName: string, trackTitle?: string) => {
     try {
       if (!artistName || artistName === 'Track Trip Radio' || artistName === 'Unknown Artist') {
         setArtistDetails(null);
         return;
       }
-      const res = await fetch('/api/radio/get-artist-details?name=' + encodeURIComponent(artistName));
+      let url = '/api/radio/get-artist-details?name=' + encodeURIComponent(artistName);
+      if (trackTitle) {
+        url += '&track=' + encodeURIComponent(trackTitle);
+      }
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setArtistDetails(data);
+        setBioExpanded(false);
       } else {
         setArtistDetails(null);
       }
@@ -91,9 +98,11 @@ export default function RadioPage() {
       if (response.ok) {
         const data = await response.json();
         const currentArtistName = nowPlaying?.now_playing?.song?.artist;
+        const currentTrackTitle = nowPlaying?.now_playing?.song?.title;
         const newArtistName = data.now_playing.song.artist;
-        if (newArtistName !== currentArtistName) {
-          updateArtistSpotlight(newArtistName);
+        const newTrackTitle = data.now_playing.song.title;
+        if (newArtistName !== currentArtistName || newTrackTitle !== currentTrackTitle) {
+          updateArtistSpotlight(newArtistName, newTrackTitle);
         }
         setNowPlaying(data);
       }
@@ -139,6 +148,9 @@ export default function RadioPage() {
 
   const currentSong = nowPlaying?.now_playing?.song;
   const nextSong = nowPlaying?.playing_next?.song;
+
+  // Check if bio is long enough to need expansion
+  const bioIsLong = artistDetails?.bio && artistDetails.bio.length > 150;
 
   return (
     <div className="trance-backdrop min-h-screen text-gray-100">
@@ -247,88 +259,144 @@ export default function RadioPage() {
           </div>
         </div>
 
-        {/* Three Column Layout */}
-        <div className="grid md:grid-cols-3 gap-5 mb-6">
+        {/* Two Column Layout - Artist Spotlight + Side Cards */}
+        <div className="grid md:grid-cols-5 gap-5 mb-6">
           
-          {/* Artist Spotlight */}
-          <div className="glass-card rounded-xl p-5 border border-purple-500/20">
-            <div className="flex items-center gap-2 mb-4">
-              <HiSparkles className="text-purple-400 text-lg" />
-              <h3 className="text-lg font-bold text-white">הכירו את האמן</h3>
+          {/* Artist Spotlight - Takes 3 columns */}
+          <div className="md:col-span-3 glass-card rounded-2xl p-6 border border-purple-500/20">
+            <div className="flex items-center gap-2 mb-5">
+              <HiSparkles className="text-purple-400 text-xl" />
+              <h3 className="text-xl font-bold text-white">הכירו את האמן</h3>
+              {artistDetails?.is_premiere && (
+                <span className="mr-auto bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                  🚀 PREMIERE
+                </span>
+              )}
             </div>
 
-            <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-purple-500/30 mb-3">
-                <img
-                  src={artistDetails?.image_url || currentSong?.art || '/images/logo.png'}
-                  alt={artistDetails?.name || currentSong?.artist || 'Artist'}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h4 className="text-lg font-bold text-white mb-1">{artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}</h4>
-              {artistDetails?.bio ? (
-                <p className="text-xs text-gray-400 line-clamp-2 mb-3">{artistDetails.bio}</p>
-              ) : (
-                <p className="text-xs text-gray-500 mb-3">מוזיקה מקורית מישראל</p>
-              )}
-              {artistDetails && (
-                <div className="flex gap-2">
-                  {artistDetails.instagram && (
-                    <a href={artistDetails.instagram.startsWith('http') ? artistDetails.instagram : 'https://instagram.com/' + artistDetails.instagram.replace('@', '')} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center hover:opacity-80 transition">
-                      <FaInstagram className="text-sm" />
-                    </a>
-                  )}
-                  {artistDetails.soundcloud && (
-                    <a href={artistDetails.soundcloud.startsWith('http') ? artistDetails.soundcloud : 'https://soundcloud.com/' + artistDetails.soundcloud} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center hover:opacity-80 transition">
-                      <FaSoundcloud className="text-sm" />
-                    </a>
-                  )}
-                  
+            <div className="flex flex-col sm:flex-row gap-6">
+              {/* Artist Image */}
+              <div className="flex-shrink-0 flex flex-col items-center">
+                <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-purple-500/30 shadow-lg shadow-purple-500/20">
+                  <img
+                    src={artistDetails?.image_url || currentSong?.art || '/images/logo.png'}
+                    alt={artistDetails?.name || currentSong?.artist || 'Artist'}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              )}
+                
+                {/* Social Links */}
+                {artistDetails && (artistDetails.instagram || artistDetails.soundcloud) && (
+                  <div className="flex gap-3 mt-4">
+                    {artistDetails.instagram && (
+                      <a 
+                        href={artistDetails.instagram.startsWith('http') ? artistDetails.instagram : 'https://instagram.com/' + artistDetails.instagram.replace('@', '')} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="w-11 h-11 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center hover:opacity-80 hover:scale-110 transition-all shadow-lg"
+                      >
+                        <FaInstagram className="text-lg" />
+                      </a>
+                    )}
+                    {artistDetails.soundcloud && (
+                      <a 
+                        href={artistDetails.soundcloud.startsWith('http') ? artistDetails.soundcloud : 'https://soundcloud.com/' + artistDetails.soundcloud} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="w-11 h-11 rounded-full bg-orange-500 flex items-center justify-center hover:opacity-80 hover:scale-110 transition-all shadow-lg"
+                      >
+                        <FaSoundcloud className="text-lg" />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Artist Info */}
+              <div className="flex-1 min-w-0">
+                <h4 className="text-2xl font-bold text-white mb-3">
+                  {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
+                </h4>
+                
+                {/* Artist Bio */}
+                {artistDetails?.bio ? (
+                  <div className="mb-4">
+                    <p className={`text-sm text-gray-400 leading-relaxed ${!bioExpanded && bioIsLong ? 'line-clamp-3' : ''}`}>
+                      {artistDetails.bio}
+                    </p>
+                    {bioIsLong && (
+                      <button 
+                        onClick={() => setBioExpanded(!bioExpanded)}
+                        className="text-purple-400 hover:text-purple-300 text-sm mt-2 flex items-center gap-1 transition-colors"
+                      >
+                        {bioExpanded ? (
+                          <>הצג פחות <FaChevronUp className="text-xs" /></>
+                        ) : (
+                          <>קרא עוד <FaChevronDown className="text-xs" /></>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mb-4">מוזיקה מקורית מישראל 🇮🇱</p>
+                )}
+
+                {/* Track Description */}
+                {artistDetails?.track_description && (
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <p className="text-xs text-purple-400 font-medium mb-2">💬 על הטראק הזה:</p>
+                    <p className="text-sm text-gray-300 leading-relaxed">{artistDetails.track_description}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Next Track */}
-          <div className="glass-card rounded-xl p-5 border border-cyan-500/20">
-            <div className="flex items-center gap-2 mb-4">
-              <HiMusicNote className="text-cyan-400 text-lg" />
-              <h3 className="text-lg font-bold text-white">הטראק הבא</h3>
-            </div>
+          {/* Side Column - Next Track + CTA stacked */}
+          <div className="md:col-span-2 flex flex-col gap-5">
+            
+            {/* Next Track */}
+            <div className="glass-card rounded-xl p-5 border border-cyan-500/20 flex-1">
+              <div className="flex items-center gap-2 mb-4">
+                <HiMusicNote className="text-cyan-400 text-lg" />
+                <h3 className="text-lg font-bold text-white">הטראק הבא</h3>
+              </div>
 
-            {nextSong ? (
-              <div className="flex flex-col items-center text-center">
-                <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-cyan-500/30 mb-3">
-                  <img src={nextSong.art || '/images/logo.png'} alt={nextSong.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span className="text-[10px] font-bold bg-cyan-500 px-2 py-0.5 rounded">NEXT</span>
+              {nextSong ? (
+                <div className="flex items-center gap-4">
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-cyan-500/30 flex-shrink-0">
+                    <img src={nextSong.art || '/images/logo.png'} alt={nextSong.title} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <span className="text-[10px] font-bold bg-cyan-500 px-2 py-0.5 rounded">NEXT</span>
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-base font-bold text-white truncate">{nextSong.title}</h4>
+                    <p className="text-cyan-400 font-medium text-sm truncate">{nextSong.artist}</p>
+                    <p className="text-xs text-gray-500 mt-1">מתחיל בקרוב...</p>
                   </div>
                 </div>
-                <h4 className="text-lg font-bold text-white mb-1">{nextSong.title}</h4>
-                <p className="text-cyan-400 font-medium text-sm">{nextSong.artist}</p>
-                <p className="text-xs text-gray-500 mt-1">מתחיל בקרוב...</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-3">
-                  <HiMusicNote className="text-cyan-400 text-2xl" />
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
+                    <HiMusicNote className="text-cyan-400 text-2xl" />
+                  </div>
+                  <p className="text-gray-400 text-sm">הטראק הבא יופיע כאן</p>
                 </div>
-                <p className="text-gray-400 text-sm">הטראק הבא יופיע כאן</p>
-              </div>
-            )}
-          </div>
-
-          {/* Artist CTA */}
-          <Link href="/radio/register" className="glass-card rounded-xl p-5 border-2 border-purple-500/30 hover:border-purple-500/60 transition group flex flex-col items-center justify-center text-center">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center mb-3 group-hover:scale-110 transition shadow-lg shadow-purple-500/30">
-              <FaUpload className="text-xl" />
+              )}
             </div>
-            <h4 className="text-lg font-bold text-white group-hover:text-purple-400 transition mb-1">אתם יוצרים?</h4>
-            <p className="text-xs text-gray-400 mb-3">שלחו טראק לשידור והגיעו לאלפי מאזינים</p>
-            <span className="bg-gradient-to-r from-purple-600 to-cyan-600 px-4 py-2 rounded-lg text-sm font-bold">
-              הרשמו עכשיו
-            </span>
-          </Link>
+
+            {/* Artist CTA */}
+            <Link href="/radio/register" className="glass-card rounded-xl p-5 border-2 border-purple-500/30 hover:border-purple-500/60 transition group flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center group-hover:scale-110 transition shadow-lg shadow-purple-500/30 flex-shrink-0">
+                <FaUpload className="text-xl" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-lg font-bold text-white group-hover:text-purple-400 transition">אתם יוצרים?</h4>
+                <p className="text-xs text-gray-400">שלחו טראק לשידור והגיעו לאלפי מאזינים</p>
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* YouTube CTA Banner - Full Size */}
