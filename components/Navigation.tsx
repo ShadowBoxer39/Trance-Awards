@@ -5,7 +5,7 @@ import Image from "next/image";
 import React from "react";
 
 interface NavigationProps {
-  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist" | "featured-artists" | "artists" | "legends" | "accessibility" | "radio";}
+  currentPage?: "home" | "episodes" | "young-artists" | "about" | "advertisers" | "vote" | "track-of-the-week" | "submit-track" | "featured-artist" | "featured-artists" | "artists" | "legends" | "accessibility" | "radio" | "merch";}
 
 export default function Navigation({ currentPage }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -17,7 +17,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
   const isFeaturedActive = currentPage === "featured-artist" || currentPage === "featured-artists";
   
   // Check if any "More" menu page is active
-  const isMoreActive = ["episodes", "young-artists", "track-of-the-week", "submit-track", "about", "advertisers", "radio"].includes(currentPage || "");
+  const isMoreActive = ["episodes", "young-artists", "track-of-the-week", "submit-track", "about", "advertisers", "radio", "merch"].includes(currentPage || "");
 
   return (
     <nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
@@ -111,6 +111,18 @@ export default function Navigation({ currentPage }: NavigationProps) {
                       >
                         🎧 פרקים
                       </Link>
+
+<Link
+  href="/merch"
+  className={`block px-4 py-3 text-sm transition ${
+    isActive("merch")
+      ? "text-purple-400 bg-gray-800"
+      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+  }`}
+>
+  🛍️ מרצ׳
+</Link>
+
                       <Link
                         href="/young-artists"
                         className={`block px-4 py-3 text-sm transition ${
@@ -260,6 +272,18 @@ export default function Navigation({ currentPage }: NavigationProps) {
               >
                 🎧 פרקים
               </Link>
+
+              <Link
+  href="/merch"
+  className={`block px-4 py-3 rounded-lg transition ${
+    isActive("merch") 
+      ? "text-white bg-gray-800" 
+      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+  }`}
+  onClick={() => setMobileMenuOpen(false)}
+>
+  🛍️ מרצ׳
+</Link>
 
               <Link
                 href="/young-artists"

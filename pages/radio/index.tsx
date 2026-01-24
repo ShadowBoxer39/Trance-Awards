@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
-import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUsers, FaUpload, FaInstagram, FaSoundcloud, FaSpotify, FaYoutube, FaMobileAlt, FaHeadphones } from 'react-icons/fa';
+import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUsers, FaUpload, FaInstagram, FaSoundcloud, FaYoutube, FaMobileAlt, FaHeadphones } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const AZURACAST_API_URL = 'https://a12.asurahosting.com/api/nowplaying/track_trip_radio';
@@ -21,9 +21,9 @@ interface ArtistDetails {
   bio: string;
   image_url: string;
   instagram: string;
-  soundcloud_text: string;
-  spotify_url: string;
+  soundcloud: string;
 }
+
 
 const mockData: NowPlayingData = {
   station: { name: 'Track Trip Radio', listen_url: STREAM_URL },
@@ -274,20 +274,16 @@ export default function RadioPage() {
               {artistDetails && (
                 <div className="flex gap-2">
                   {artistDetails.instagram && (
-                    <a href={'https://instagram.com/' + artistDetails.instagram.replace('@', '')} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center hover:opacity-80 transition">
+                    <a href={artistDetails.instagram.startsWith('http') ? artistDetails.instagram : 'https://instagram.com/' + artistDetails.instagram.replace('@', '')} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center hover:opacity-80 transition">
                       <FaInstagram className="text-sm" />
                     </a>
                   )}
-                  {artistDetails.soundcloud_text && (
-                    <a href={artistDetails.soundcloud_text} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center hover:opacity-80 transition">
+                  {artistDetails.soundcloud && (
+                    <a href={artistDetails.soundcloud.startsWith('http') ? artistDetails.soundcloud : 'https://soundcloud.com/' + artistDetails.soundcloud} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center hover:opacity-80 transition">
                       <FaSoundcloud className="text-sm" />
                     </a>
                   )}
-                  {artistDetails.spotify_url && (
-                    <a href={artistDetails.spotify_url} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center hover:opacity-80 transition">
-                      <FaSpotify className="text-sm" />
-                    </a>
-                  )}
+                  
                 </div>
               )}
             </div>

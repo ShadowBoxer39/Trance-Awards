@@ -579,6 +579,20 @@ export default function Home({
      
 
       <div className="trance-backdrop min-h-screen text-gray-100">
+
+{/* Limited Merch Banner */}
+<Link href="/merch" className="block bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 text-white relative overflow-hidden hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 transition-all">
+  <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-sm md:text-base">
+    <span className="animate-bounce">🔥</span>
+    <span className="font-medium">
+      <span className="hidden sm:inline">חולצות וקפוצ'ונים במהדורה מוגבלת מהמפגש הקהילתי - </span>
+      <span className="sm:hidden">מרצ׳ במהדורה מוגבלת - </span>
+      <span className="font-bold underline underline-offset-2">עד גמר המלאי!</span>
+    </span>
+    <span className="animate-bounce">🔥</span>
+  </div>
+</Link>
+
         <Navigation currentPage="home" />
 
         {/* <div className="pt-24 pb-8 px-4 relative z-20">
