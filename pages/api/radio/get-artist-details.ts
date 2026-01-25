@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // 1. Try Exact Match (Case Insensitive) - The most accurate
   let { data } = await supabase
     .from('radio_artists')
-    .select('id, name, bio, image_url, instagram, soundcloud, slug')
+    .select('id, name, bio, image_url, instagram, soundcloud, slug, podcast_featured')
     .ilike('name', cleanName)
     .maybeSingle();
 
@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (mainArtistName !== cleanName && mainArtistName.length > 2) {
         const { data: retryData } = await supabase
             .from('radio_artists')
-            .select('id, name, bio, image_url, instagram, soundcloud, slug')
+            .select('id, name, bio, image_url, instagram, soundcloud, slug, podcast_featured')
             .ilike('name', mainArtistName)
             .maybeSingle();
             
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!data) {
      const { data: fuzzyData } = await supabase
         .from('radio_artists')
-        .select('id, name, bio, image_url, instagram, soundcloud, slug')
+        .select('id, name, bio, image_url, instagram, soundcloud, slug, podcast_featured')
         .textSearch('name', cleanName, { type: 'websearch', config: 'english' })
         .maybeSingle();
         
