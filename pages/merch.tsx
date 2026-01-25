@@ -7,8 +7,8 @@ import SEO from '@/components/SEO';
 
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const PRODUCTS = {
-  tshirt: { name: 'חולצת טי', image: '/images/merch/tshirt.jpeg', price: 100 },
-  hoodie: { name: 'קפוצ׳ון', image: '/images/merch/hoodie.jpeg', price: 180 },
+  tshirt: { name: 'חולצת טי', image: '/images/tshirt.jpeg', price: 100 },
+  hoodie: { name: 'קפוצ׳ון', image: '/images/hoodie.jpeg', price: 180 },
 };
 
 type ProductKey = keyof typeof PRODUCTS;
