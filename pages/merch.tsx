@@ -210,11 +210,11 @@ export default function MerchPage() {
                         
                         {/* Large Product Image */}
                         <div className="w-full md:w-80 h-64 md:h-auto md:min-h-[400px] bg-gradient-to-br from-purple-900/60 to-pink-900/60 flex items-center justify-center relative">
-                          <Image 
+                         <Image 
   src={product.image} 
   alt={product.name}
   fill
-  className="object-contain p-4"
+  className="object-cover"
 />
                           
                           {/* Badge if in cart */}
