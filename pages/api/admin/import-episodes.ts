@@ -8,7 +8,8 @@ import { createClient } from '@supabase/supabase-js';
 // ==========================================
 // SECURITY: Change this password!
 // ==========================================
-const IMPORT_PASSWORD = process.env.ADMIN_IMPORT_PASSWORD || 'tracktrip2025'; // Change this!
+const IMPORT_PASSWORD = process.env.ADMIN_IMPORT_PASSWORD;
+if (!IMPORT_PASSWORD) throw new Error('ADMIN_IMPORT_PASSWORD not configured');
 
 // ==========================================
 // CONFIGURATION

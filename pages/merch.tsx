@@ -2,12 +2,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
+import Image from 'next/image';
 import SEO from '@/components/SEO';
 
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const PRODUCTS = {
-  tshirt: { name: 'חולצת טי', emoji: '👕', price: 100 },
-  hoodie: { name: 'קפוצ׳ון', emoji: '🧥', price: 180 },
+  tshirt: { name: 'חולצת טי', image: '/images/merch/tshirt.jpeg', price: 100 },
+  hoodie: { name: 'קפוצ׳ון', image: '/images/merch/hoodie.jpeg', price: 180 },
 };
 
 type ProductKey = keyof typeof PRODUCTS;
@@ -209,7 +210,12 @@ export default function MerchPage() {
                         
                         {/* Large Product Image */}
                         <div className="w-full md:w-80 h-64 md:h-auto md:min-h-[400px] bg-gradient-to-br from-purple-900/60 to-pink-900/60 flex items-center justify-center relative">
-                          <span className="text-[120px] md:text-[160px]">{product.emoji}</span>
+                          <Image 
+  src={product.image} 
+  alt={product.name}
+  fill
+  className="object-contain p-4"
+/>
                           
                           {/* Badge if in cart */}
                           {productTotal > 0 && (
@@ -321,7 +327,7 @@ export default function MerchPage() {
                         {cart.map((item, idx) => (
                           <div key={idx} className="flex justify-between items-center bg-white/5 rounded-xl px-4 py-3">
                             <span className="text-lg">
-                              {PRODUCTS[item.product].emoji} {PRODUCTS[item.product].name} - מידה {item.size}
+                              {PRODUCTS[item.product].name} - מידה {item.size}
                               {item.quantity > 1 && <span className="text-purple-400"> ×{item.quantity}</span>}
                             </span>
                             <span className="text-green-400 font-bold text-lg">₪{item.price * item.quantity}</span>
