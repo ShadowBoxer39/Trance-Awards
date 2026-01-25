@@ -23,6 +23,7 @@ interface ArtistDetails {
   instagram: string;
   soundcloud: string;
   track_description: string | null;
+  podcast_featured: boolean;
   is_premiere: boolean;
 }
 
@@ -314,9 +315,16 @@ export default function RadioPage() {
 
               {/* Artist Info */}
               <div className="flex-1 min-w-0">
-                <h4 className="text-2xl font-bold text-white mb-3">
-                  {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
-                </h4>
+              <div className="flex items-center gap-3 mb-3">
+  <h4 className="text-2xl font-bold text-white">
+    {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
+  </h4>
+  {artistDetails?.podcast_featured && (
+    <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-amber-500/30 animate-pulse">
+      🎙️ התארח\ה בפרק 
+    </span>
+  )}
+</div>
                 
                 {/* Artist Bio */}
                 {artistDetails?.bio ? (
