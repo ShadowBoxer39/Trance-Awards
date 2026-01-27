@@ -474,7 +474,13 @@ const handleLike = async () => {
               {nextSong ? (
                 <div className="flex items-center gap-4">
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-cyan-500/30 flex-shrink-0">
-                    <img src={nextSong.art || '/images/logo.png'} alt={nextSong.title} className="w-full h-full object-cover" />
+                    <img src={(() => {
+  const art = nextSong.art;
+  const isDefaultArt = !art || 
+    art.includes('/static/img/generic_song') || 
+    (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
+  return isDefaultArt ? '/images/logo.png' : art;
+})()} alt={nextSong.title} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <span className="text-[10px] font-bold bg-cyan-500 px-2 py-0.5 rounded">NEXT</span>
                     </div>
