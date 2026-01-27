@@ -1,0 +1,96 @@
+// pages/api/radio/track-likes.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  
+  // GET - Fetch like count for a track
+  if (req.method === 'GET') {
+    const { track, artist, fingerprint } = req.query;
+    
+    if (!track || !artist) {
+      return res.status(400).json({ error: 'Missing track or artist' });
+    }
+
+    try {
+      // Get total like count
+      const { count } = await supabase
+        .from('radio_track_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('track_name', track)
+        .eq('artist_name', artist);
+
+      // Check if this user already liked
+      let userLiked = false;
+      if (fingerprint) {
+        const { data: existingLike } = await supabase
+          .from('radio_track_likes')
+          .select('id')
+          .eq('track_name', track)
+          .eq('artist_name', artist)
+          .eq('user_fingerprint', fingerprint)
+          .maybeSingle();
+        
+        userLiked = !!existingLike;
+      }
+
+      return res.status(200).json({ 
+        likes: count || 0, 
+        userLiked 
+      });
+    } catch (error: any) {
+      console.error('Error fetching likes:', error);
+      return res.status(500).json({ error: 'Failed to fetch likes' });
+    }
+  }
+
+  // POST - Add a like
+  if (req.method === 'POST') {
+    const { track, artist, fingerprint } = req.body;
+
+    if (!track || !artist || !fingerprint) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+      // Try to insert (will fail if duplicate due to unique constraint)
+      const { error } = await supabase
+        .from('radio_track_likes')
+        .insert({
+          track_name: track,
+          artist_name: artist,
+          user_fingerprint: fingerprint
+        });
+
+      if (error) {
+        // Duplicate like - user already liked this track
+        if (error.code === '23505') {
+          return res.status(409).json({ error: 'Already liked', alreadyLiked: true });
+        }
+        throw error;
+      }
+
+      // Get updated count
+      const { count } = await supabase
+        .from('radio_track_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('track_name', track)
+        .eq('artist_name', artist);
+
+      return res.status(200).json({ 
+        success: true, 
+        likes: count || 0 
+      });
+    } catch (error: any) {
+      console.error('Error adding like:', error);
+      return res.status(500).json({ error: 'Failed to add like' });
+    }
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
+}

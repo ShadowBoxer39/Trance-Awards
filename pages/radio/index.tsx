@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
-import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUsers, FaUpload, FaInstagram, FaSoundcloud, FaYoutube, FaMobileAlt, FaHeadphones, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUsers, FaUpload, FaInstagram, FaSoundcloud, FaYoutube, FaMobileAlt, FaHeadphones, FaChevronDown, FaChevronUp, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const AZURACAST_API_URL = 'https://a12.asurahosting.com/api/nowplaying/track_trip_radio';
@@ -69,29 +69,96 @@ export default function RadioPage() {
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [trackLikes, setTrackLikes] = useState(0);
+const [userLiked, setUserLiked] = useState(false);
+const [likeLoading, setLikeLoading] = useState(false);
+
+// Get or create user fingerprint
+const getFingerprint = () => {
+  if (typeof window === 'undefined') return null;
+  let fp = localStorage.getItem('radio_fingerprint');
+  if (!fp) {
+    fp = 'fp_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    localStorage.setItem('radio_fingerprint', fp);
+  }
+  return fp;
+};
+
+// Fetch likes for current track
+const fetchTrackLikes = async (trackName: string, artistName: string) => {
+  try {
+    const fp = getFingerprint();
+    const params = new URLSearchParams({ track: trackName, artist: artistName });
+    if (fp) params.append('fingerprint', fp);
+    
+    const res = await fetch(`/api/radio/track-likes?${params}`);
+    if (res.ok) {
+      const data = await res.json();
+      setTrackLikes(data.likes);
+      setUserLiked(data.userLiked);
+    }
+  } catch (err) {
+    console.error('Error fetching likes:', err);
+  }
+};
+
+// Handle like button click
+const handleLike = async () => {
+  const currentSong = nowPlaying?.now_playing?.song;
+  if (!currentSong || likeLoading || userLiked) return;
+  
+  setLikeLoading(true);
+  try {
+    const fp = getFingerprint();
+    const res = await fetch('/api/radio/track-likes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        track: currentSong.title,
+        artist: currentSong.artist,
+        fingerprint: fp
+      })
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      setTrackLikes(data.likes);
+      setUserLiked(true);
+    }
+  } catch (err) {
+    console.error('Error liking track:', err);
+  }
+  setLikeLoading(false);
+};
+
 
   const updateArtistSpotlight = async (artistName: string, trackTitle?: string) => {
-    try {
-      if (!artistName || artistName === 'Track Trip Radio' || artistName === 'Unknown Artist') {
-        setArtistDetails(null);
-        return;
-      }
-      let url = '/api/radio/get-artist-details?name=' + encodeURIComponent(artistName);
+  try {
+    if (!artistName || artistName === 'Track Trip Radio' || artistName === 'Unknown Artist') {
+      setArtistDetails(null);
+      return;
+    }
+    let url = '/api/radio/get-artist-details?name=' + encodeURIComponent(artistName);
+    if (trackTitle) {
+      url += '&track=' + encodeURIComponent(trackTitle);
+    }
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      setArtistDetails(data);
+      setBioExpanded(false);
+      
+      // Also fetch likes for this track
       if (trackTitle) {
-        url += '&track=' + encodeURIComponent(trackTitle);
+        fetchTrackLikes(trackTitle, artistName);
       }
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setArtistDetails(data);
-        setBioExpanded(false);
-      } else {
-        setArtistDetails(null);
-      }
-    } catch (err) {
+    } else {
       setArtistDetails(null);
     }
-  };
+  } catch (err) {
+    setArtistDetails(null);
+  }
+};
 
   const fetchNowPlaying = async () => {
     try {
@@ -222,6 +289,33 @@ export default function RadioPage() {
                 <p className="text-lg text-gray-300">
                   {currentSong?.artist || 'יוצאים לטראק'}
                 </p>
+{/* Like Button */}
+<div className="flex items-center justify-center md:justify-start gap-3 mt-3">
+  <button
+    onClick={handleLike}
+    disabled={likeLoading || userLiked}
+    className={`group flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+      userLiked 
+        ? 'bg-pink-500/20 text-pink-400 cursor-default' 
+        : 'bg-white/5 hover:bg-pink-500/20 text-gray-400 hover:text-pink-400'
+    }`}
+  >
+    {userLiked ? (
+      <FaHeart className="text-pink-500" />
+    ) : (
+      <FaRegHeart className={`transition-transform ${likeLoading ? 'animate-pulse' : 'group-hover:scale-110'}`} />
+    )}
+    <span className="text-sm font-medium">
+      {trackLikes > 0 ? trackLikes.toLocaleString() : ''} {userLiked ? 'אהבת את הטראק!' : 'אהבתי'}
+    </span>
+  </button>
+  {trackLikes > 0 && (
+    <span className="text-xs text-gray-500">
+      {trackLikes === 1 ? 'לייק אחד' : `${trackLikes} אנשים אהבו`}
+    </span>
+  )}
+</div>
+
               </div>
 
               <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-gray-400 mb-4">
