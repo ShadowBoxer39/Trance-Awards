@@ -1,4 +1,4 @@
-// pages/index.tsx - UPDATED WITH ARTISTS & LEGENDS SECTIONS
+// pages/index.tsx - UPDATED WITH COMPACT RADIO PLAYER IN HERO
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -7,8 +7,11 @@ import SEO from "@/components/SEO";
 import Navigation from "../components/Navigation";
 import DailyDuel from "../components/DailyDuel";
 import { default as episodeApiHandler } from "./api/episodes";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaPlay, FaPause, FaHeadphones } from "react-icons/fa";
 import supabase from '../lib/supabaseServer';
+
+const AZURACAST_API_URL = 'https://a12.asurahosting.com/api/nowplaying/track_trip_radio';
+const STREAM_URL = 'https://a12.asurahosting.com/listen/track_trip_radio/radio.mp3';
 
 interface Episode {
   id: number;
@@ -66,6 +69,20 @@ interface Legend {
   youtube_video_id?: string | null;
 }
 
+// Now Playing interface for radio
+interface NowPlayingData {
+  now_playing: {
+    song: {
+      title: string;
+      artist: string;
+      art: string;
+    };
+  };
+  listeners: {
+    current: number;
+  };
+}
+
 // Helper to extract YouTube video ID
 function getYouTubeId(url: string): string | null {
   const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -73,41 +90,156 @@ function getYouTubeId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-// Inline Component for Counting Stats
-function CountUpStat({ target, suffix = '', label }: { target: number, suffix?: string, label: string }) {
-  const [count, setCount] = useState(0);
-  const duration = 1500;
-  const step = target / (duration / 30); 
+// Compact Radio Player for Hero
+function HeroRadioPlayer() {
+  const [nowPlaying, setNowPlaying] = useState<NowPlayingData | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const fetchNowPlaying = async () => {
+    try {
+      const response = await fetch(AZURACAST_API_URL);
+      if (response.ok) {
+        const data = await response.json();
+        setNowPlaying(data);
+      }
+    } catch (err) {
+      console.log('Stream data fetch failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let startTime: number;
-    let animationFrame: number;
+    fetchNowPlaying();
+    const interval = setInterval(fetchNowPlaying, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = timestamp - startTime;
-      const newValue = Math.min(target, 0 + step * (progress / 30));
-      
-      setCount(Math.floor(newValue));
-
-      if (progress < duration) {
-        animationFrame = requestAnimationFrame(animate);
-      } else {
-        setCount(target);
+  useEffect(() => {
+    audioRef.current = new Audio(STREAM_URL);
+    audioRef.current.volume = 0.8;
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
     };
+  }, []);
 
-    animationFrame = requestAnimationFrame(animate);
-    
-    return () => cancelAnimationFrame(animationFrame);
-  }, [target]);
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(console.error);
+    }
+  };
+
+  const currentSong = nowPlaying?.now_playing?.song;
+  const listeners = Math.max(10, nowPlaying?.listeners?.current || 0);
 
   return (
-    <div>
-      <div className="text-4xl md:text-5xl font-semibold text-gradient mb-1"> 
-        {count.toLocaleString('en-US')}{suffix}
+    <div className="glass-card rounded-2xl p-6 border-2 border-purple-500/30 hover:border-purple-500/50 transition-all max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <span className="text-2xl">🎧</span>
+        <h3 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+          הרדיו של יוצאים לטראק
+        </h3>
       </div>
-      <div className="text-sm text-gray-500">{label}</div>
+      
+      <p className="text-center text-gray-400 text-sm mb-5">טראנס ישראלי 24/7 | תוצרת הארץ 🇮🇱</p>
+
+      {/* Now Playing */}
+      <div className="flex items-center gap-4 bg-black/30 rounded-xl p-4 mb-5">
+        {/* Album Art */}
+        <div className="relative flex-shrink-0">
+          <div className={`absolute -inset-1 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-xl blur opacity-40 ${isPlaying ? 'animate-pulse' : ''}`}></div>
+          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 border-white/20">
+            <img
+              src={currentSong?.art || '/images/logo.png'}
+              alt="Now Playing"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+        {/* Track Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`relative flex h-2 w-2 ${isPlaying ? '' : 'opacity-50'}`}>
+              <span className={`${isPlaying ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${isPlaying ? 'bg-red-500' : 'bg-gray-500'}`}></span>
+            </span>
+            <span className="text-xs text-gray-400">{isPlaying ? 'משדר עכשיו' : 'לחצו להאזנה'}</span>
+          </div>
+          
+          {isLoading ? (
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-700 rounded w-3/4 animate-pulse"></div>
+              <div className="h-3 bg-gray-700 rounded w-1/2 animate-pulse"></div>
+            </div>
+          ) : (
+            <>
+              <h4 className="font-bold text-white truncate text-sm md:text-base">
+                {currentSong?.title || 'Track Trip Radio'}
+              </h4>
+              <p className="text-purple-400 text-xs md:text-sm truncate">
+                {currentSong?.artist || 'יוצאים לטראק'}
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Play Button */}
+        <button
+          onClick={togglePlay}
+          className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all shadow-lg transform hover:scale-110 ${
+            isPlaying
+              ? 'bg-white/90 text-gray-900 hover:bg-white'
+              : 'bg-gradient-to-r from-purple-600 to-cyan-600 text-white shadow-purple-500/50'
+          }`}
+        >
+          {isPlaying ? <FaPause className="text-lg" /> : <FaPlay className="text-lg ml-0.5" />}
+        </button>
+      </div>
+
+      {/* Stats Row */}
+      <div className="flex flex-wrap justify-center gap-4 mb-5 text-sm">
+        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
+          <FaHeadphones className="text-purple-400" />
+          <span className="text-gray-300">{listeners} מאזינים</span>
+        </div>
+        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
+          <span className="text-lg">🎤</span>
+          <span className="text-gray-300"><span className="font-bold text-white">50+</span> אמנים</span>
+        </div>
+        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
+          <span className="text-lg">🎵</span>
+          <span className="text-gray-300">24/7</span>
+        </div>
+      </div>
+
+      {/* CTA Buttons */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <Link
+          href="/radio"
+          className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30"
+        >
+          <span>🎧</span>
+          לרדיו המלא
+        </Link>
+        <Link
+          href="/radio/register"
+          className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-xl font-medium transition-all"
+        >
+          <span>🚀</span>
+          שלחו טראק
+        </Link>
+      </div>
     </div>
   );
 }
@@ -572,16 +704,15 @@ export default function Home({
   return (
     <>
       <SEO
-  title="תכנית הטראנס של ישראל"
-  description="יוצאים לטראק - תכנית הטראנס הגדולה בישראל. עושים כבוד לאגדות, נותנים במה לצעירים ועוזרים לקהילת הטראנס בישראל לצמוח. האזינו לפרקים, הכירו אמנים צעירים ואגדות."
-  url="https://tracktrip.co.il"
-/>
-     
+        title="תכנית הטראנס של ישראל"
+        description="יוצאים לטראק - תכנית הטראנס הגדולה בישראל. עושים כבוד לאגדות, נותנים במה לצעירים ועוזרים לקהילת הטראנס בישראל לצמוח. האזינו לפרקים, הכירו אמנים צעירים ואגדות."
+        url="https://tracktrip.co.il"
+      />
 
       <div className="trance-backdrop min-h-screen text-gray-100">
 
-{/* Limited Merch Banner */}
-<Link href="/merch" className="block bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 text-white relative overflow-hidden hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 transition-all">
+        {/* Limited Merch Banner */}
+        <Link href="/merch" className="block bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 text-white relative overflow-hidden hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 transition-all">
   <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-sm md:text-base">
     <span className="animate-bounce">🔥</span>
     <span className="font-medium">
@@ -594,11 +725,6 @@ export default function Home({
 </Link>
 
         <Navigation currentPage="home" />
-
-        {/* <div className="pt-24 pb-8 px-4 relative z-20">
-  <DailyDuel />
-</div> 
-*/}
 
         {/* HERO */}
         <header className="relative overflow-hidden">
@@ -631,7 +757,7 @@ export default function Home({
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-wrap gap-4 justify-center mb-16">
+              <div className="flex flex-wrap gap-4 justify-center mb-12">
                 <Link 
                   href="/episodes" 
                   className="group relative px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300 hover:scale-105 flex items-center justify-center min-w-[200px]"
@@ -640,7 +766,7 @@ export default function Home({
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
                     </svg>
-                    האזינו לפרקים
+                    צפו בפרקים
                   </span>
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 blur opacity-50 group-hover:opacity-75 transition-opacity" />
                 </Link>
@@ -654,32 +780,11 @@ export default function Home({
                 </Link>
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-3xl mx-auto">
-                <div className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 hover:scale-105 transition-transform">
-                  <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1 break-words">
-                    <CountUpStat target={50} suffix="+" label="" />
-                  </div>
-                  <p className="text-xs sm:text-sm text-gray-400 font-medium">פרקים</p>
-                </div>
-                
-                <div className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 hover:scale-105 transition-transform">
-                  <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-1 break-words">
-                    <CountUpStat target={200} suffix="+" label="" />
-                  </div>
-                  <p className="text-xs sm:text-sm text-gray-400 font-medium">שעות תוכן</p>
-                </div>
-                
-                <div className="glass-card rounded-2xl p-3 sm:p-4 md:p-6 hover:scale-105 transition-transform">
-                  <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-pink-400 to-purple-400 bg-clip-text text-transparent mb-1 break-words">
-                    <CountUpStat target={40} suffix="+" label="" />
-                  </div>
-                  <p className="text-xs sm:text-sm text-gray-400 font-medium">אמנים צעירים</p>
-                </div>
-              </div>
+              {/* Compact Radio Player - Replaces Stats */}
+              <HeroRadioPlayer />
 
               {/* Music Room Partner Card */}
-              <div className="mt-16 max-w-2xl mx-auto">
+              <div className="mt-12 max-w-2xl mx-auto">
                 <div className="glass-card rounded-2xl p-8 border-2 border-purple-500/40 hover:border-purple-500/70 transition-all shadow-xl shadow-purple-500/20">
                   <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-right">
                     <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-2xl ring-4 ring-purple-500/30">
@@ -930,88 +1035,6 @@ export default function Home({
           </div>
         </section>
 
-     {/* Radio Teaser Section */}
-<section className="max-w-7xl mx-auto px-6 pb-16">
-  <div className="glass-card rounded-2xl p-8 md:p-12 border-2 border-purple-500/30 relative overflow-hidden">
-    
-    {/* Background decorations */}
-    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
-    <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl"></div>
-    <div className="absolute top-10 left-10 text-6xl opacity-10 animate-bounce">🎵</div>
-    <div className="absolute bottom-10 right-20 text-4xl opacity-10 animate-pulse">🎧</div>
-    
-    <div className="relative z-10">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 mb-4">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-          </span>
-          <span className="text-sm font-medium text-green-400">חדש! מקבלים הגשות</span>
-        </div>
-        
-        <h2 className="text-4xl md:text-5xl font-bold mb-4">
-          <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
-            הרדיו של יוצאים לטראק
-          </span>
-        </h2>
-        
-        <p className="text-xl text-gray-300 mb-2">
-          אתם יוצרים טראנס? 🔥
-        </p>
-        <p className="text-gray-400 max-w-xl mx-auto">
-          הצטרפו לרדיו הטראנס הישראלי הראשון! שלחו את הטראקים שלכם והגיעו לאלפי מאזינים.
-          <br />
-          <span className="text-purple-400 font-medium">100% בחינם. 100% קרדיט לאמן.</span>
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="flex flex-wrap justify-center gap-6 mb-8">
-        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
-          <span className="text-2xl">🎤</span>
-          <span className="text-gray-300"><span className="font-bold text-white">50+</span> אמנים רשומים</span>
-        </div>
-        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
-          <span className="text-2xl">🎵</span>
-          <span className="text-gray-300"><span className="font-bold text-white">24/7</span> שידור רצוף</span>
-        </div>
-        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
-          <span className="text-2xl">📺</span>
-          <span className="text-gray-300">שידור חי ב-<span className="font-bold text-red-400">YouTube</span></span>
-        </div>
-      </div>
-
-      {/* CTA Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-        <Link
-          href="/radio/register"
-          className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-8 py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 shadow-xl shadow-purple-500/30"
-        >
-          <span className="text-2xl group-hover:animate-bounce">🚀</span>
-          הצטרפו עכשיו - זה בחינם!
-        </Link>
-        
-        
-      </div>
-
-      {/* Trust badges */}
-      <div className="flex flex-wrap justify-center gap-4 mt-8 text-sm text-gray-500">
-        <div className="flex items-center gap-1">
-          <span className="text-green-500">✓</span> ללא תשלום
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-green-500">✓</span> הזכויות נשארות שלכם
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-green-500">✓</span> קרדיט מלא בשידור
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
         {/* Artists Section */}
         {artists && artists.length > 0 && (
           <section className="max-w-7xl mx-auto px-6 py-16">
@@ -1129,7 +1152,7 @@ export default function Home({
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {previousEpisodes.map((episode) => (
+               {previousEpisodes.map((episode) => (
                   <a
                     key={episode.id}
                     href={`https://www.youtube.com/watch?v=${episode.videoId}`}
