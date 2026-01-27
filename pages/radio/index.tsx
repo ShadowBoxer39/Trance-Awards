@@ -256,7 +256,12 @@ const handleLike = async () => {
               <div className={'absolute -inset-3 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-2xl blur-lg opacity-40 ' + (isPlaying ? 'animate-pulse' : '')}></div>
               <div className="relative w-48 h-48 md:w-56 md:h-56">
                 <img
-                  src={currentSong?.art || '/images/logo.png'}
+                  src={(() => {
+  const art = currentSong?.art;
+  const isGenericArt = !art || art.includes('/static/img/generic_song');
+  if (!isGenericArt) return art;
+  return artistDetails?.image_url || '/images/logo.png';
+})()}
                   alt="Album Art"
                   className="w-full h-full object-cover rounded-xl border-2 border-white/20 shadow-2xl"
                 />
