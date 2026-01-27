@@ -275,7 +275,7 @@ export default function RadioPage() {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-6">
+           <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
               {/* Artist Image */}
               <div className="flex-shrink-0 flex flex-col items-center">
                 <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-purple-500/30 shadow-lg shadow-purple-500/20">
