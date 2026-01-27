@@ -258,8 +258,10 @@ const handleLike = async () => {
                 <img
                   src={(() => {
   const art = currentSong?.art;
-  const isGenericArt = !art || art.includes('/static/img/generic_song');
-  if (!isGenericArt) return art;
+  const isDefaultArt = !art || 
+    art.includes('/static/img/generic_song') || 
+    (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
+  if (!isDefaultArt) return art;
   return artistDetails?.image_url || '/images/logo.png';
 })()}
                   alt="Album Art"
