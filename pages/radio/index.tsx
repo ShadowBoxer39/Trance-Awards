@@ -290,30 +290,30 @@ const handleLike = async () => {
                   {currentSong?.artist || 'יוצאים לטראק'}
                 </p>
 {/* Like Button */}
-<div className="flex items-center justify-center md:justify-start gap-3 mt-3">
+<div className="flex items-center justify-center md:justify-start mt-3">
   <button
     onClick={handleLike}
     disabled={likeLoading || userLiked}
-    className={`group flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+    className={`group flex items-center gap-2 px-5 py-2.5 rounded-full transition-all ${
       userLiked 
-        ? 'bg-pink-500/20 text-pink-400 cursor-default' 
-        : 'bg-white/5 hover:bg-pink-500/20 text-gray-400 hover:text-pink-400'
+        ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 text-pink-400' 
+        : 'bg-white/5 hover:bg-gradient-to-r hover:from-pink-500/20 hover:to-purple-500/20 border border-white/10 hover:border-pink-500/30 text-gray-400 hover:text-pink-400'
     }`}
   >
     {userLiked ? (
-      <FaHeart className="text-pink-500" />
+      <FaHeart className="text-pink-500 text-lg" />
     ) : (
-      <FaRegHeart className={`transition-transform ${likeLoading ? 'animate-pulse' : 'group-hover:scale-110'}`} />
+      <FaRegHeart className={`text-lg transition-transform ${likeLoading ? 'animate-pulse' : 'group-hover:scale-110'}`} />
     )}
-    <span className="text-sm font-medium">
-      {trackLikes > 0 ? trackLikes.toLocaleString() : ''} {userLiked ? 'אהבת את הטראק!' : 'אהבתי'}
+    <span className="font-medium">
+      {userLiked ? 'תודה על האהבה!' : 'אהבתי את הטראק'}
     </span>
+    {trackLikes > 0 && (
+      <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">
+        {trackLikes}
+      </span>
+    )}
   </button>
-  {trackLikes > 0 && (
-    <span className="text-xs text-gray-500">
-      {trackLikes === 1 ? 'לייק אחד' : `${trackLikes} אנשים אהבו`}
-    </span>
-  )}
 </div>
 
               </div>
