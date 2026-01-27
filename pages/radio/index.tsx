@@ -314,8 +314,8 @@ export default function RadioPage() {
               </div>
 
               {/* Artist Info */}
-              <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-3">
+<div className="flex-1 min-w-0 text-center sm:text-right">
+<div className="flex items-center justify-center sm:justify-start gap-3 mb-3">
   <h4 className="text-2xl font-bold text-white">
     {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
   </h4>
@@ -334,9 +334,9 @@ export default function RadioPage() {
                     </p>
                     {bioIsLong && (
                       <button 
-                        onClick={() => setBioExpanded(!bioExpanded)}
-                        className="text-purple-400 hover:text-purple-300 text-sm mt-2 flex items-center gap-1 transition-colors"
-                      >
+  onClick={() => setBioExpanded(!bioExpanded)}
+  className="text-purple-400 hover:text-purple-300 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1 transition-colors mx-auto sm:mx-0"
+>
                         {bioExpanded ? (
                           <>הצג פחות <FaChevronUp className="text-xs" /></>
                         ) : (
