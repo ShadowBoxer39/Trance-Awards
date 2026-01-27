@@ -321,7 +321,7 @@ const handleLike = async () => {
               <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-gray-400 mb-4">
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
                   <FaUsers className="text-purple-400" />
-                 <span>{Math.max(10, nowPlaying?.listeners?.current || 0)} מאזינים</span>
+                 <span>{nowPlaying?.listeners?.current || 0} מאזינים</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
                   <FaHeadphones className="text-cyan-400" />
