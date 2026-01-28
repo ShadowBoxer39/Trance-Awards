@@ -93,15 +93,39 @@ function getYouTubeId(url: string): string | null {
 // Compact Radio Player for Hero
 function HeroRadioPlayer() {
   const [nowPlaying, setNowPlaying] = useState<NowPlayingData | null>(null);
+  const [artistDetails, setArtistDetails] = useState<{ image_url: string } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const updateArtistSpotlight = async (artistName: string) => {
+    try {
+      if (!artistName || artistName === 'Track Trip Radio' || artistName === 'Unknown Artist') {
+        setArtistDetails(null);
+        return;
+      }
+      const res = await fetch('/api/radio/get-artist-details?name=' + encodeURIComponent(artistName));
+      if (res.ok) {
+        const data = await res.json();
+        setArtistDetails(data);
+      } else {
+        setArtistDetails(null);
+      }
+    } catch {
+      setArtistDetails(null);
+    }
+  };
 
   const fetchNowPlaying = async () => {
     try {
       const response = await fetch(AZURACAST_API_URL);
       if (response.ok) {
         const data = await response.json();
+        const currentArtist = nowPlaying?.now_playing?.song?.artist;
+        const newArtist = data.now_playing?.song?.artist;
+        if (newArtist && newArtist !== currentArtist) {
+          updateArtistSpotlight(newArtist);
+        }
         setNowPlaying(data);
       }
     } catch (err) {
@@ -160,10 +184,17 @@ function HeroRadioPlayer() {
           <div className={`absolute -inset-1 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-xl blur opacity-40 ${isPlaying ? 'animate-pulse' : ''}`}></div>
           <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 border-white/20">
             <img
-              src={currentSong?.art || '/images/logo.png'}
-              alt="Now Playing"
-              className="w-full h-full object-cover"
-            />
+  src={(() => {
+    const art = currentSong?.art;
+    const isDefaultArt = !art || 
+      art.includes('/static/img/generic_song') || 
+      (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
+    if (!isDefaultArt) return art;
+    return artistDetails?.image_url || '/images/logo.png';
+  })()}
+  alt="Now Playing"
+  className="w-full h-full object-cover"
+/>
           </div>
         </div>
 
