@@ -85,7 +85,6 @@ export default function RadioStreamPage() {
   };
 
   useEffect(() => {
-    document.documentElement.setAttribute('dir', 'rtl');
     fetchNowPlaying();
     const interval = setInterval(fetchNowPlaying, 5000);
     return () => clearInterval(interval);
@@ -119,10 +118,10 @@ export default function RadioStreamPage() {
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[400px] bg-pink-500/15 rounded-full blur-[120px]" />
 
       {/* Main layout */}
-      <div className="relative z-10 h-full flex flex-col p-10" dir="ltr">
+      <div className="relative z-10 h-full flex flex-col p-8">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 px-5 py-2.5 rounded-full bg-red-500/20 border border-red-500/40">
               <span className="inline-flex rounded-full h-3 w-3 bg-red-500"></span>
@@ -131,7 +130,7 @@ export default function RadioStreamPage() {
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="text-right">
+            <div className="text-right" dir="rtl">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
                 רדיו יוצאים לטראק
               </h1>
@@ -142,14 +141,14 @@ export default function RadioStreamPage() {
         </div>
 
         {/* Main content - two columns */}
-        <div className="flex-1 flex gap-10">
+        <div className="flex-1 flex gap-8">
           
           {/* Left side - Now Playing (60%) */}
           <div className="flex-[3] flex flex-col">
             
             {/* Now Playing Card */}
-            <div className="flex-1 rounded-3xl p-10 border border-white/10 bg-white/5 backdrop-blur-sm flex items-center">
-              <div className="flex items-center gap-12 w-full">
+            <div className="flex-1 rounded-3xl p-8 border border-white/10 bg-white/5 backdrop-blur-sm flex items-center">
+              <div className="flex items-center gap-10 w-full">
                 
                 {/* Album Art - Large */}
                 <div className="relative flex-shrink-0">
@@ -158,12 +157,12 @@ export default function RadioStreamPage() {
                   <img
                     src={getAlbumArt()}
                     alt="Album Art"
-                    className="relative w-72 h-72 object-cover rounded-2xl shadow-2xl"
+                    className="relative w-80 h-80 object-cover rounded-2xl shadow-2xl"
                   />
                 </div>
 
                 {/* Track Info */}
-                <div className="flex-1">
+                <div className="flex-1" dir="rtl">
                   <p className="text-purple-400 font-semibold text-xl mb-3">מתנגן עכשיו</p>
                   <h2 className="text-5xl font-black text-white mb-3 leading-tight">
                     {currentSong?.title || 'טוען...'}
@@ -178,9 +177,9 @@ export default function RadioStreamPage() {
             </div>
 
             {/* Bottom row - Next Track + URL */}
-            <div className="flex items-center gap-6 mt-6">
+            <div className="flex items-center gap-6 mt-4">
               {/* Next Track */}
-              <div className="flex-1 rounded-2xl p-5 border border-cyan-500/20 bg-white/5 backdrop-blur-sm">
+              <div className="flex-1 rounded-2xl p-4 border border-cyan-500/20 bg-white/5 backdrop-blur-sm" dir="rtl">
                 <div className="flex items-center gap-4">
                   <HiMusicNote className="text-cyan-400 text-2xl" />
                   <span className="text-lg font-bold text-white">הטראק הבא:</span>
@@ -209,7 +208,7 @@ export default function RadioStreamPage() {
               </div>
 
               {/* URL */}
-              <div className="rounded-2xl px-8 py-5 border border-purple-500/20 bg-white/5">
+              <div className="rounded-2xl px-8 py-4 border border-purple-500/20 bg-white/5" dir="rtl">
                 <p className="text-gray-400 text-sm">האזינו ברדיו</p>
                 <p className="text-xl font-bold text-white">tracktrip.co.il/radio</p>
               </div>
@@ -218,10 +217,10 @@ export default function RadioStreamPage() {
 
           {/* Right side - Artist Spotlight (40%) */}
           <div className="flex-[2] flex flex-col">
-            <div className="flex-1 rounded-3xl p-8 border border-purple-500/20 bg-white/5 backdrop-blur-sm flex flex-col">
+            <div className="flex-1 rounded-3xl p-6 border border-purple-500/20 bg-white/5 backdrop-blur-sm flex flex-col overflow-hidden" dir="rtl">
               
               {/* Header */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="text-purple-400 text-2xl">✨</span>
                   <h3 className="text-2xl font-bold text-white">הכירו את האמן</h3>
@@ -233,14 +232,14 @@ export default function RadioStreamPage() {
                 )}
               </div>
 
-              {/* Artist content */}
-              <div className="flex-1 flex flex-col">
+              {/* Artist content - scrollable if needed */}
+              <div className="flex-1 flex flex-col min-h-0">
                 
                 {/* Artist image + name */}
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="relative">
+                <div className="flex items-center gap-5 mb-4">
+                  <div className="relative flex-shrink-0">
                     <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50"></div>
-                    <div className="relative w-32 h-32 rounded-2xl overflow-hidden border-2 border-white/20">
+                    <div className="relative w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/20">
                       <img
                         src={artistDetails?.image_url || currentSong?.art || '/images/logo.png'}
                         alt={artistDetails?.name || currentSong?.artist || 'Artist'}
@@ -249,26 +248,26 @@ export default function RadioStreamPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="text-3xl font-bold text-white mb-2">
+                    <h4 className="text-2xl font-bold text-white mb-1">
                       {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
                     </h4>
                     {artistDetails?.is_premiere && (
-                      <span className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold px-4 py-1.5 rounded-full">
+                      <span className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
                         🚀 PREMIERE
                       </span>
                     )}
                     
                     {/* Social Links */}
                     {artistDetails && (artistDetails.instagram || artistDetails.soundcloud) && (
-                      <div className="flex gap-3 mt-3">
+                      <div className="flex gap-2 mt-2">
                         {artistDetails.instagram && (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
-                            <FaInstagram className="text-lg" />
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                            <FaInstagram className="text-sm" />
                           </div>
                         )}
                         {artistDetails.soundcloud && (
-                          <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
-                            <FaSoundcloud className="text-lg" />
+                          <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center">
+                            <FaSoundcloud className="text-sm" />
                           </div>
                         )}
                       </div>
@@ -276,22 +275,22 @@ export default function RadioStreamPage() {
                   </div>
                 </div>
 
-                {/* Bio - full, no truncation */}
+                {/* Bio */}
                 {artistDetails?.bio ? (
-                  <div className="mb-6">
-                    <p className="text-base text-gray-300 leading-relaxed">
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-300 leading-relaxed">
                       {artistDetails.bio}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-base text-gray-500 mb-6">מוזיקה מקורית מישראל 🇮🇱</p>
+                  <p className="text-sm text-gray-500 mb-4">מוזיקה מקורית מישראל 🇮🇱</p>
                 )}
 
-                {/* Track Description - full, no truncation */}
+                {/* Track Description */}
                 {artistDetails?.track_description && (
-                  <div className="mt-auto bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl p-5 border border-purple-500/20">
-                    <p className="text-purple-400 font-semibold mb-2">💬 על הטראק הזה:</p>
-                    <p className="text-base text-gray-300 leading-relaxed">{artistDetails.track_description}</p>
+                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/20">
+                    <p className="text-purple-400 font-semibold text-sm mb-2">💬 על הטראק הזה:</p>
+                    <p className="text-sm text-gray-300 leading-relaxed">{artistDetails.track_description}</p>
                   </div>
                 )}
               </div>
