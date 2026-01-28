@@ -118,7 +118,7 @@ export default function RadioStreamPage() {
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[400px] bg-pink-500/15 rounded-full blur-[120px]" />
 
       {/* Main layout - fixed height sections */}
-      <div className="relative z-10 h-[1080px] flex flex-col p-8">
+      <div className="relative z-10 h-[1080px] flex flex-col p-6">
         
         {/* Header - 80px */}
         <div className="h-[80px] flex items-center justify-between flex-shrink-0">
@@ -141,10 +141,10 @@ export default function RadioStreamPage() {
         </div>
 
         {/* Main content - fills remaining space */}
-        <div className="flex-1 flex gap-8 min-h-0">
+        <div className="flex-1 flex gap-6 min-h-0">
           
           {/* Left side - Now Playing */}
-          <div className="flex-[3] flex flex-col gap-4">
+          <div className="flex-[3] flex flex-col gap-3">
             
             {/* Now Playing Card */}
             <div className="flex-1 rounded-3xl p-10 border border-white/10 bg-white/5 backdrop-blur-sm flex items-center">
