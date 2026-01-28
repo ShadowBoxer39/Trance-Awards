@@ -1,4 +1,4 @@
-// pages/admin/radio.tsx - Aesthetic Admin Panel (Fixed Functionality)
+// pages/admin/radio.tsx - Admin Panel with Whitelist Approvals
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -7,7 +7,7 @@ import {
   FaMusic, FaUser, FaCheck, FaTimes, FaDownload, FaClock, FaUpload, 
   FaSpinner, FaInstagram, FaSoundcloud, FaEnvelope, FaChevronDown, 
   FaChevronUp, FaTrash, FaLayerGroup, FaList, FaPlay, FaPause, 
-  FaVolumeUp, FaEdit, FaSave 
+  FaVolumeUp, FaEdit, FaSave, FaExternalLinkAlt
 } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 
@@ -21,8 +21,11 @@ interface RadioArtist {
 interface Submission {
   id: string; artist_id: string; track_name: string; bpm: number | null; genre: string | null;
   description?: string; is_premiere?: boolean; mp3_url: string; art_url: string | null;
-  status: 'pending' | 'approved' | 'declined'; admin_notes: string | null;
+  status: 'pending' | 'pending_whitelist' | 'approved' | 'declined'; admin_notes: string | null;
   submitted_at: string; radio_artists: RadioArtist;
+  content_id_status?: string;
+  content_id_label?: string;
+  whitelist_screenshot_url?: string;
 }
 
 const FloatingNotes = () => (
@@ -33,7 +36,6 @@ const FloatingNotes = () => (
   </div>
 );
 
-// Global Audio Player State
 function useAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
@@ -42,7 +44,6 @@ function useAudioPlayer() {
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
-    // Create audio element once
     if (!audioRef.current) {
       audioRef.current = new Audio();
       audioRef.current.addEventListener('timeupdate', () => {
@@ -71,14 +72,12 @@ function useAudioPlayer() {
     if (!audioRef.current) return;
     
     if (currentUrl === url) {
-      // Toggle play/pause for same track
       if (isPlaying) {
         audioRef.current.pause();
       } else {
         audioRef.current.play();
       }
     } else {
-      // New track
       audioRef.current.src = url;
       audioRef.current.play();
       setCurrentUrl(url);
@@ -110,7 +109,7 @@ export default function AdminRadioPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [activeTab, setActiveTab] = useState<'submissions' | 'artists'>('submissions');
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped'); 
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'declined'>('pending');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'pending_whitelist' | 'approved' | 'declined'>('pending');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
@@ -163,7 +162,6 @@ export default function AdminRadioPage() {
     } catch (err) { alert('שגיאה בעדכון'); }
   };
 
-  // --- NEW: Rename Handler ---
   const handleRenameTrack = async (submissionId: string, newName: string) => {
     try {
       const res = await fetch('/api/admin/radio', {
@@ -269,7 +267,7 @@ export default function AdminRadioPage() {
         <FloatingNotes />
 
         <div className="relative z-10">
-          {/* Header with Back Link */}
+          {/* Header */}
           <div className="bg-white/5 border-b border-white/5 px-6 py-5">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -294,10 +292,15 @@ export default function AdminRadioPage() {
           </div>
 
           <div className="max-w-7xl mx-auto px-6 py-10">
-            {message && <div className={`mb-8 p-5 rounded-2xl border ${message.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>{message.text}</div>}
+            {message && (
+              <div className={`mb-8 p-5 rounded-2xl border ${message.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                {message.text}
+                <button onClick={() => setMessage(null)} className="float-left text-gray-500 hover:text-white">✕</button>
+              </div>
+            )}
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
               <div className="glass-warm rounded-2xl p-6">
                 <div className="text-3xl font-bold text-purple-400">{artists.length}</div>
                 <div className="text-gray-500 text-sm">אמנים</div>
@@ -305,6 +308,10 @@ export default function AdminRadioPage() {
               <div className="glass-warm rounded-2xl p-6">
                 <div className="text-3xl font-bold text-yellow-400">{submissions.filter(s => s.status === 'pending').length}</div>
                 <div className="text-gray-500 text-sm">ממתינים</div>
+              </div>
+              <div className="glass-warm rounded-2xl p-6 cursor-pointer hover:border-orange-500/30 transition" onClick={() => setFilter('pending_whitelist')}>
+                <div className="text-3xl font-bold text-orange-400">{submissions.filter(s => s.status === 'pending_whitelist').length}</div>
+                <div className="text-gray-500 text-sm">⚠️ Whitelist</div>
               </div>
               <div className="glass-warm rounded-2xl p-6">
                 <div className="text-3xl font-bold text-green-400">{submissions.filter(s => s.status === 'approved').length}</div>
@@ -329,10 +336,10 @@ export default function AdminRadioPage() {
                     <button onClick={() => setViewMode('grouped')} className={`p-2 rounded-lg transition ${viewMode === 'grouped' ? 'bg-white/10 text-purple-400' : 'text-gray-500'}`} title="תצוגה לפי אמנים"><FaLayerGroup /></button>
                     <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition ${viewMode === 'list' ? 'bg-white/10 text-purple-400' : 'text-gray-500'}`} title="תצוגת רשימה"><FaList /></button>
                   </div>
-                  <div className="flex gap-2">
-                    {(['pending', 'approved', 'declined', 'all'] as const).map(f => (
+                  <div className="flex gap-2 flex-wrap">
+                    {(['pending', 'pending_whitelist', 'approved', 'declined', 'all'] as const).map(f => (
                       <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-xl text-xs transition border ${filter === f ? 'bg-white/10 border-white/20 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
-                        {f === 'pending' ? 'ממתין' : f === 'approved' ? 'מאושר' : f === 'declined' ? 'נדחה' : 'הכל'}
+                        {f === 'pending' ? 'ממתין' : f === 'pending_whitelist' ? '⚠️ Whitelist' : f === 'approved' ? 'מאושר' : f === 'declined' ? 'נדחה' : 'הכל'}
                       </button>
                     ))}
                   </div>
@@ -358,7 +365,6 @@ export default function AdminRadioPage() {
                             submission={sub} 
                             uploadingId={uploadingId} 
                             audioPlayer={audioPlayer}
-                            // Only "Approve & Upload" remains
                             onApproveAndUpload={() => handleApproveAndUpload(sub)} 
                             onDecline={n => handleSubmissionAction(sub.id, 'decline', n)} 
                             onDelete={() => handleSubmissionAction(sub.id, 'delete')} 
@@ -388,7 +394,6 @@ export default function AdminRadioPage() {
 function SubmissionCard({ submission, uploadingId, audioPlayer, onApproveAndUpload, onDecline, onDelete, onRename }: any) {
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState('');
-  // New: Edit Mode
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(submission.track_name);
 
@@ -403,8 +408,10 @@ function SubmissionCard({ submission, uploadingId, audioPlayer, onApproveAndUplo
     setIsEditing(false);
   };
 
+  const isPendingWhitelist = submission.status === 'pending_whitelist';
+
   return (
-    <div className="glass-warm rounded-[2rem] p-6 border border-white/5 hover:border-white/10 transition-all group">
+    <div className={`glass-warm rounded-[2rem] p-6 border transition-all group ${isPendingWhitelist ? 'border-orange-500/30 bg-orange-500/5' : 'border-white/5 hover:border-white/10'}`}>
       <div className="flex flex-col lg:flex-row lg:items-center gap-6">
         {/* Play Button / Art */}
         <button 
@@ -418,7 +425,6 @@ function SubmissionCard({ submission, uploadingId, audioPlayer, onApproveAndUplo
               <FaMusic />
             </div>
           )}
-          {/* Play/Pause Overlay */}
           <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${isCurrentTrack ? 'opacity-100' : 'opacity-0 group-hover/play:opacity-100'}`}>
             {isPlaying ? (
               <FaPause className="text-white text-xl" />
@@ -430,46 +436,73 @@ function SubmissionCard({ submission, uploadingId, audioPlayer, onApproveAndUplo
 
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-             {submission.is_premiere && <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[10px] font-bold">PREMIERE 🚀</span>}
-             
-             {/* EDIT NAME UI */}
-             {isEditing ? (
-               <div className="flex items-center gap-2">
-                 <input 
-                   type="text" 
-                   value={editName} 
-                   onChange={(e) => setEditName(e.target.value)} 
-                   className="bg-black/50 border border-purple-500/50 rounded px-2 py-1 text-white font-bold text-lg outline-none"
-                   autoFocus
-                 />
-                 <button onClick={saveName} className="p-1.5 bg-green-600 rounded hover:bg-green-500"><FaSave className="text-sm" /></button>
-                 <button onClick={() => setIsEditing(false)} className="p-1.5 bg-gray-600 rounded hover:bg-gray-500"><FaTimes className="text-sm" /></button>
-               </div>
-             ) : (
-               <div className="flex items-center gap-2 group/title">
-                 <h3 className="font-bold text-xl text-white">{submission.track_name}</h3>
-                 {submission.status === 'pending' && (
-                    <button onClick={() => setIsEditing(true)} className="text-gray-600 hover:text-white opacity-0 group-hover/title:opacity-100 transition-opacity">
-                      <FaEdit />
-                    </button>
-                 )}
-               </div>
-             )}
+            {submission.is_premiere && <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[10px] font-bold">PREMIERE 🚀</span>}
+            {isPendingWhitelist && <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-bold">WHITELIST ⚠️</span>}
+            
+            {isEditing ? (
+              <div className="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  value={editName} 
+                  onChange={(e) => setEditName(e.target.value)} 
+                  className="bg-black/50 border border-purple-500/50 rounded px-2 py-1 text-white font-bold text-lg outline-none"
+                  autoFocus
+                />
+                <button onClick={saveName} className="p-1.5 bg-green-600 rounded hover:bg-green-500"><FaSave className="text-sm" /></button>
+                <button onClick={() => setIsEditing(false)} className="p-1.5 bg-gray-600 rounded hover:bg-gray-500"><FaTimes className="text-sm" /></button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group/title">
+                <h3 className="font-bold text-xl text-white">{submission.track_name}</h3>
+                {(submission.status === 'pending' || submission.status === 'pending_whitelist') && (
+                  <button onClick={() => setIsEditing(true)} className="text-gray-600 hover:text-white opacity-0 group-hover/title:opacity-100 transition-opacity">
+                    <FaEdit />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <p className="text-sm text-gray-500 mb-2">אמן: <span className="text-gray-300">{submission.radio_artists?.name}</span> • הוגש ב-{new Date(submission.submitted_at).toLocaleDateString('he-IL')}</p>
           {submission.description && <p className="text-xs text-gray-400 italic leading-relaxed bg-black/20 p-3 rounded-xl border border-white/5 max-w-2xl">{submission.description}</p>}
           
-          {/* Progress Bar - Only show when this track is active */}
+          {/* Content ID / Whitelist Info */}
+          {(submission.content_id_label || submission.whitelist_screenshot_url) && (
+            <div className="mt-3 p-3 rounded-xl bg-orange-500/10 border border-orange-500/20">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <span className="text-orange-400 text-sm font-bold">⚠️ Content ID Info:</span>
+                <div className="flex flex-wrap items-center gap-4">
+                  {submission.content_id_label && (
+                    <span className="text-xs text-gray-300">
+                      <span className="text-gray-500">Distributor:</span> <span className="text-orange-300">{submission.content_id_label}</span>
+                    </span>
+                  )}
+                  {submission.whitelist_screenshot_url && (
+                    <a 
+                      href={submission.whitelist_screenshot_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-xs text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 px-3 py-1.5 rounded-lg transition"
+                    >
+                      <FaExternalLinkAlt className="text-[10px]" />
+                      צפה בצילום מסך Whitelist
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Progress Bar */}
           {isCurrentTrack && (
-           <div className="mt-4 flex items-center gap-3" dir="ltr">
+            <div className="mt-4 flex items-center gap-3" dir="ltr">
               <span className="text-xs text-gray-500 w-10">{audioPlayer.formatTime(audioPlayer.progress)}</span>
               <div 
                 className="flex-1 h-1.5 bg-white/10 rounded-full cursor-pointer overflow-hidden"
-               onClick={(e) => {
-  const rect = e.currentTarget.getBoundingClientRect();
-  const percentage = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  audioPlayer.seek(percentage * audioPlayer.duration);
-}}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const percentage = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  audioPlayer.seek(percentage * audioPlayer.duration);
+                }}
               >
                 <div 
                   className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
@@ -482,21 +515,25 @@ function SubmissionCard({ submission, uploadingId, audioPlayer, onApproveAndUplo
         </div>
 
         <div className="flex items-center gap-2">
-           <div className={`px-4 py-1.5 rounded-full text-xs font-medium ${submission.status === 'approved' ? 'bg-green-500/10 text-green-400' : submission.status === 'declined' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-             {submission.status === 'approved' ? 'מאושר' : submission.status === 'declined' ? 'נדחה' : 'ממתין'}
-           </div>
+          <div className={`px-4 py-1.5 rounded-full text-xs font-medium ${
+            submission.status === 'approved' ? 'bg-green-500/10 text-green-400' : 
+            submission.status === 'declined' ? 'bg-red-500/10 text-red-400' : 
+            submission.status === 'pending_whitelist' ? 'bg-orange-500/10 text-orange-400' :
+            'bg-yellow-500/10 text-yellow-400'
+          }`}>
+            {submission.status === 'approved' ? 'מאושר' : 
+             submission.status === 'declined' ? 'נדחה' : 
+             submission.status === 'pending_whitelist' ? '⚠️ Whitelist' :
+             'ממתין'}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <a href={submission.mp3_url} target="_blank" className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition text-gray-400 hover:text-white" title="הורד"><FaDownload /></a>
           
-          {submission.status === 'pending' && (
+          {(submission.status === 'pending' || submission.status === 'pending_whitelist') && (
             <>
-              {/* Changed: Only "Approve & Upload" remains */}
               <button onClick={onApproveAndUpload} disabled={isUploading} className="p-3 bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white rounded-xl transition disabled:opacity-50" title="אשר והעלה לרדיו">{isUploading ? <FaSpinner className="animate-spin" /> : <FaUpload />}</button>
-              
-              {/* Removed: Standalone onApprove Button */}
-              
               <button onClick={() => setShowNotes(!showNotes)} className="p-3 bg-white/5 hover:bg-yellow-600 text-gray-400 hover:text-white rounded-xl transition" title="דחה עם הערה"><FaClock /></button>
             </>
           )}
@@ -509,8 +546,8 @@ function SubmissionCard({ submission, uploadingId, audioPlayer, onApproveAndUplo
         <div className="mt-6 pt-6 border-t border-white/5">
           <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="הערות לאמן (אופציונלי)" className="w-full px-5 py-3 bg-black/40 border border-white/10 rounded-xl text-white mb-3 outline-none focus:border-purple-500/50" />
           <div className="flex gap-3">
-             <button onClick={() => { onDecline(notes); setShowNotes(false); }} className="px-6 py-2 bg-red-600 rounded-xl text-sm font-bold">אשר דחייה</button>
-             <button onClick={() => setShowNotes(false)} className="px-6 py-2 text-gray-500 text-sm">ביטול</button>
+            <button onClick={() => { onDecline(notes); setShowNotes(false); }} className="px-6 py-2 bg-red-600 rounded-xl text-sm font-bold">אשר דחייה</button>
+            <button onClick={() => setShowNotes(false)} className="px-6 py-2 text-gray-500 text-sm">ביטול</button>
           </div>
         </div>
       )}
@@ -538,11 +575,11 @@ function ArtistCard({ artist, onToggleApproval }: any) {
       </div>
       {expanded && (
         <div className="px-6 pb-6 pt-2 border-t border-white/5 bg-black/20 text-sm space-y-4">
-           {artist.bio && <p className="text-gray-400 leading-relaxed"><span className="text-white font-bold ml-2">ביו:</span>{artist.bio}</p>}
-           <div className="flex gap-4">
-              {artist.instagram && <a href={`https://instagram.com/${artist.instagram}`} target="_blank" className="text-pink-400 flex items-center gap-2"><FaInstagram /> {artist.instagram}</a>}
-              {artist.soundcloud && <a href={artist.soundcloud} target="_blank" className="text-orange-400 flex items-center gap-2"><FaSoundcloud /> SoundCloud</a>}
-           </div>
+          {artist.bio && <p className="text-gray-400 leading-relaxed"><span className="text-white font-bold ml-2">ביו:</span>{artist.bio}</p>}
+          <div className="flex gap-4">
+            {artist.instagram && <a href={`https://instagram.com/${artist.instagram}`} target="_blank" className="text-pink-400 flex items-center gap-2"><FaInstagram /> {artist.instagram}</a>}
+            {artist.soundcloud && <a href={artist.soundcloud} target="_blank" className="text-orange-400 flex items-center gap-2"><FaSoundcloud /> SoundCloud</a>}
+          </div>
         </div>
       )}
     </div>
