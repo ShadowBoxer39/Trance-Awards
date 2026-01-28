@@ -232,11 +232,11 @@ export default function RadioStreamPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4 flex-shrink-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-purple-400 text-xl">✨</span>
-                    <h3 className="text-xl font-bold text-white">הכירו את האמן</h3>
+                    <span className="text-purple-400 text-2xl">✨</span>
+                    <h3 className="text-2xl font-bold text-white">הכירו את האמן</h3>
                   </div>
                   {artistDetails?.podcast_featured && (
-                    <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                    <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold px-4 py-1.5 rounded-full">
                       🎙️ התארח/ה בפרק
                     </span>
                   )}
@@ -245,10 +245,10 @@ export default function RadioStreamPage() {
                 {/* Artist content - scrollable if needed */}
                 <div className="flex-1 overflow-y-auto min-h-0">
                   {/* Artist image + name + socials */}
-                  <div className="flex items-start gap-5 mb-4">
+                  <div className="flex items-start gap-5 mb-5">
                     <div className="relative flex-shrink-0">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur opacity-50"></div>
-                      <div className="relative w-28 h-28 rounded-xl overflow-hidden border-2 border-white/20">
+                      <div className="absolute -inset-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur opacity-50"></div>
+                      <div className="relative w-40 h-40 rounded-xl overflow-hidden border-2 border-white/20">
                         <img
                           src={artistDetails?.image_url || currentSong?.art || '/images/logo.png'}
                           alt={artistDetails?.name || currentSong?.artist || 'Artist'}
@@ -256,27 +256,27 @@ export default function RadioStreamPage() {
                         />
                       </div>
                     </div>
-                    <div className="pt-1">
-                      <h4 className="text-2xl font-bold text-white mb-1">
+                    <div className="pt-2">
+                      <h4 className="text-4xl font-bold text-white mb-2">
                         {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
                       </h4>
                       {artistDetails?.is_premiere && (
-                        <span className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
+                        <span className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold px-4 py-1.5 rounded-full mb-3">
                           🚀 PREMIERE
                         </span>
                       )}
                       
                       {/* Social Links */}
                       {artistDetails && (artistDetails.instagram || artistDetails.soundcloud) && (
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex gap-3 mt-3">
                           {artistDetails.instagram && (
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
-                              <FaInstagram className="text-sm" />
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                              <FaInstagram className="text-lg" />
                             </div>
                           )}
                           {artistDetails.soundcloud && (
-                            <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center">
-                              <FaSoundcloud className="text-sm" />
+                            <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center">
+                              <FaSoundcloud className="text-lg" />
                             </div>
                           )}
                         </div>
@@ -286,18 +286,18 @@ export default function RadioStreamPage() {
 
                   {/* Bio */}
                   {artistDetails?.bio ? (
-                    <p className="text-sm text-gray-300 leading-relaxed mb-4">
+                    <p className="text-lg text-gray-300 leading-relaxed mb-6">
                       {artistDetails.bio}
                     </p>
                   ) : (
-                    <p className="text-sm text-gray-500 mb-4">מוזיקה מקורית מישראל 🇮🇱</p>
+                    <p className="text-lg text-gray-500 mb-6">מוזיקה מקורית מישראל 🇮🇱</p>
                   )}
 
                   {/* Track Description */}
                   {artistDetails?.track_description && (
-                    <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/20">
-                      <p className="text-purple-400 font-semibold text-sm mb-1">💬 על הטראק הזה:</p>
-                      <p className="text-sm text-gray-300 leading-relaxed">{artistDetails.track_description}</p>
+                    <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-5 border border-purple-500/20">
+                      <p className="text-purple-400 font-semibold text-base mb-2">💬 על הטראק הזה:</p>
+                      <p className="text-lg text-gray-300 leading-relaxed">{artistDetails.track_description}</p>
                     </div>
                   )}
                 </div>
