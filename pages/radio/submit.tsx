@@ -120,52 +120,63 @@ export default function RadioSubmitPage() {
     setCheckingContentId(false);
   };
 
-  const handleMp3Change = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    if (!file.type.includes('audio/mpeg') && !file.name.endsWith('.mp3')) { 
-      setError('יש להעלות קובץ MP3 בלבד'); 
-      return; 
-    }
-    if (file.size > 35 * 1024 * 1024) { 
-      setError('הקובץ גדול מדי. מקסימום 35MB'); 
-      return; 
-    }
-    
-    setMp3File(file);
-    setError('');
-    setContentIdResult(null);
-    setWhitelistScreenshot(null);
-    
-    if (!formData.trackName) { 
-      setFormData(prev => ({ ...prev, trackName: file.name.replace(/\.mp3$/i, '') })); 
-    }
+ const handleMp3Change = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  console.log('handleMp3Change triggered');
+  const file = e.target.files?.[0];
+  if (!file) {
+    console.log('No file selected');
+    return;
+  }
+  console.log('File selected:', file.name, file.size);
 
-    // Upload temporarily to check Content ID
-    setCheckingContentId(true);
-    try {
-      const timestamp = Date.now();
-      const tempFileName = `temp_check/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-      
-      const { error: uploadError } = await supabase.storage.from('Radio').upload(tempFileName, file);
-      if (uploadError) throw uploadError;
-      
-      const { data: urlData } = supabase.storage.from('Radio').getPublicUrl(tempFileName);
-      
-      // Run the Content ID check
-      await runContentIdCheck(urlData.publicUrl);
-      
-      // Clean up temp file after check (non-blocking)
-      supabase.storage.from('Radio').remove([tempFileName]).catch(() => {});
-      
-    } catch (err) {
-      console.error('Content ID check setup failed:', err);
-      setContentIdResult({ status: 'safe', message: 'בדיקה נכשלה', match: null });
-      setCheckingContentId(false);
-    }
-  };
+  if (!file.type.includes('audio/mpeg') && !file.name.endsWith('.mp3')) { 
+    setError('יש להעלות קובץ MP3 בלבד'); 
+    return; 
+  }
+  if (file.size > 35 * 1024 * 1024) { 
+    setError('הקובץ גדול מדי. מקסימום 35MB'); 
+    return; 
+  }
+  
+  setMp3File(file);
+  setError('');
+  setContentIdResult(null);
+  setWhitelistScreenshot(null);
+  
+  if (!formData.trackName) { 
+    setFormData(prev => ({ ...prev, trackName: file.name.replace(/\.mp3$/i, '') })); 
+  }
 
+  // Upload temporarily to check Content ID
+  setCheckingContentId(true);
+  console.log('Starting Content ID check...');
+  try {
+    const timestamp = Date.now();
+    const tempFileName = `temp_check/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+    console.log('Uploading temp file:', tempFileName);
+    
+    const { error: uploadError } = await supabase.storage.from('Radio').upload(tempFileName, file);
+    if (uploadError) {
+      console.error('Temp upload error:', uploadError);
+      throw uploadError;
+    }
+    console.log('Temp file uploaded successfully');
+    
+    const { data: urlData } = supabase.storage.from('Radio').getPublicUrl(tempFileName);
+    console.log('Public URL:', urlData.publicUrl);
+    
+    // Run the Content ID check
+    await runContentIdCheck(urlData.publicUrl);
+    
+    // Clean up temp file after check (non-blocking)
+    supabase.storage.from('Radio').remove([tempFileName]).catch(() => {});
+    
+  } catch (err) {
+    console.error('Content ID check setup failed:', err);
+    setContentIdResult({ status: 'safe', message: 'בדיקה נכשלה', match: null });
+    setCheckingContentId(false);
+  }
+};
   const handleWhitelistScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
