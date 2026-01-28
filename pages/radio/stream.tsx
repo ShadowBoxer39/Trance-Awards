@@ -117,11 +117,11 @@ export default function RadioStreamPage() {
       <div className="absolute bottom-0 left-1/4 w-[600px] h-[400px] bg-cyan-500/15 rounded-full blur-[120px]" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[400px] bg-pink-500/15 rounded-full blur-[120px]" />
 
-      {/* Main layout */}
-      <div className="relative z-10 h-full flex flex-col p-8">
+      {/* Main layout - fixed height sections */}
+      <div className="relative z-10 h-[1080px] flex flex-col p-8">
         
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Header - 80px */}
+        <div className="h-[80px] flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 px-5 py-2.5 rounded-full bg-red-500/20 border border-red-500/40">
               <span className="inline-flex rounded-full h-3 w-3 bg-red-500"></span>
@@ -140,24 +140,24 @@ export default function RadioStreamPage() {
           </div>
         </div>
 
-        {/* Main content - two columns */}
-        <div className="flex-1 flex gap-8">
+        {/* Main content - fills remaining space */}
+        <div className="flex-1 flex gap-8 min-h-0">
           
-          {/* Left side - Now Playing (60%) */}
-          <div className="flex-[3] flex flex-col">
+          {/* Left side - Now Playing */}
+          <div className="flex-[3] flex flex-col gap-4">
             
             {/* Now Playing Card */}
-            <div className="flex-1 rounded-3xl p-8 border border-white/10 bg-white/5 backdrop-blur-sm flex items-center">
-              <div className="flex items-center gap-10 w-full">
+            <div className="flex-1 rounded-3xl p-10 border border-white/10 bg-white/5 backdrop-blur-sm flex items-center">
+              <div className="flex items-center gap-12 w-full">
                 
-                {/* Album Art - Large */}
+                {/* Album Art */}
                 <div className="relative flex-shrink-0">
                   <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-3xl blur-2xl opacity-40"></div>
                   <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 rounded-2xl opacity-60"></div>
                   <img
                     src={getAlbumArt()}
                     alt="Album Art"
-                    className="relative w-80 h-80 object-cover rounded-2xl shadow-2xl"
+                    className="relative w-72 h-72 object-cover rounded-2xl shadow-2xl"
                   />
                 </div>
 
@@ -176,10 +176,10 @@ export default function RadioStreamPage() {
               </div>
             </div>
 
-            {/* Bottom row - Next Track + URL */}
-            <div className="flex items-center gap-6 mt-4">
+            {/* Bottom row - 80px fixed */}
+            <div className="h-[80px] flex items-center gap-6 flex-shrink-0">
               {/* Next Track */}
-              <div className="flex-1 rounded-2xl p-4 border border-cyan-500/20 bg-white/5 backdrop-blur-sm" dir="rtl">
+              <div className="flex-1 h-full rounded-2xl px-6 border border-cyan-500/20 bg-white/5 backdrop-blur-sm flex items-center" dir="rtl">
                 <div className="flex items-center gap-4">
                   <HiMusicNote className="text-cyan-400 text-2xl" />
                   <span className="text-lg font-bold text-white">הטראק הבא:</span>
@@ -208,20 +208,20 @@ export default function RadioStreamPage() {
               </div>
 
               {/* URL */}
-              <div className="rounded-2xl px-8 py-4 border border-purple-500/20 bg-white/5" dir="rtl">
+              <div className="h-full rounded-2xl px-8 border border-purple-500/20 bg-white/5 flex flex-col justify-center" dir="rtl">
                 <p className="text-gray-400 text-sm">האזינו ברדיו</p>
                 <p className="text-xl font-bold text-white">tracktrip.co.il/radio</p>
               </div>
             </div>
           </div>
 
-          {/* Right side - Artist Spotlight (40%) */}
-          <div className="flex-[2] flex flex-col">
-            <div className="flex-1 rounded-3xl p-6 border border-purple-500/20 bg-white/5 backdrop-blur-sm flex flex-col overflow-hidden" dir="rtl">
+          {/* Right side - Artist Spotlight */}
+          <div className="flex-[2]">
+            <div className="h-full rounded-3xl p-8 border border-purple-500/20 bg-white/5 backdrop-blur-sm" dir="rtl">
               
               {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
                   <span className="text-purple-400 text-2xl">✨</span>
                   <h3 className="text-2xl font-bold text-white">הכירו את האמן</h3>
                 </div>
@@ -232,68 +232,62 @@ export default function RadioStreamPage() {
                 )}
               </div>
 
-              {/* Artist content - scrollable if needed */}
-              <div className="flex-1 flex flex-col min-h-0">
-                
-                {/* Artist image + name */}
-                <div className="flex items-center gap-5 mb-4">
-                  <div className="relative flex-shrink-0">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50"></div>
-                    <div className="relative w-28 h-28 rounded-2xl overflow-hidden border-2 border-white/20">
-                      <img
-                        src={artistDetails?.image_url || currentSong?.art || '/images/logo.png'}
-                        alt={artistDetails?.name || currentSong?.artist || 'Artist'}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-2xl font-bold text-white mb-1">
-                      {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
-                    </h4>
-                    {artistDetails?.is_premiere && (
-                      <span className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
-                        🚀 PREMIERE
-                      </span>
-                    )}
-                    
-                    {/* Social Links */}
-                    {artistDetails && (artistDetails.instagram || artistDetails.soundcloud) && (
-                      <div className="flex gap-2 mt-2">
-                        {artistDetails.instagram && (
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
-                            <FaInstagram className="text-sm" />
-                          </div>
-                        )}
-                        {artistDetails.soundcloud && (
-                          <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center">
-                            <FaSoundcloud className="text-sm" />
-                          </div>
-                        )}
-                      </div>
-                    )}
+              {/* Artist image + name + socials */}
+              <div className="flex items-start gap-6 mb-6">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute -inset-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50"></div>
+                  <div className="relative w-36 h-36 rounded-2xl overflow-hidden border-2 border-white/20">
+                    <img
+                      src={artistDetails?.image_url || currentSong?.art || '/images/logo.png'}
+                      alt={artistDetails?.name || currentSong?.artist || 'Artist'}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
-
-                {/* Bio */}
-                {artistDetails?.bio ? (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-300 leading-relaxed">
-                      {artistDetails.bio}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 mb-4">מוזיקה מקורית מישראל 🇮🇱</p>
-                )}
-
-                {/* Track Description */}
-                {artistDetails?.track_description && (
-                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/20">
-                    <p className="text-purple-400 font-semibold text-sm mb-2">💬 על הטראק הזה:</p>
-                    <p className="text-sm text-gray-300 leading-relaxed">{artistDetails.track_description}</p>
-                  </div>
-                )}
+                <div className="pt-2">
+                  <h4 className="text-3xl font-bold text-white mb-2">
+                    {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
+                  </h4>
+                  {artistDetails?.is_premiere && (
+                    <span className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold px-4 py-1.5 rounded-full mb-3">
+                      🚀 PREMIERE
+                    </span>
+                  )}
+                  
+                  {/* Social Links */}
+                  {artistDetails && (artistDetails.instagram || artistDetails.soundcloud) && (
+                    <div className="flex gap-3 mt-3">
+                      {artistDetails.instagram && (
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                          <FaInstagram className="text-lg" />
+                        </div>
+                      )}
+                      {artistDetails.soundcloud && (
+                        <div className="w-11 h-11 rounded-full bg-orange-500 flex items-center justify-center">
+                          <FaSoundcloud className="text-lg" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Bio */}
+              {artistDetails?.bio ? (
+                <p className="text-base text-gray-300 leading-relaxed mb-6">
+                  {artistDetails.bio}
+                </p>
+              ) : (
+                <p className="text-base text-gray-500 mb-6">מוזיקה מקורית מישראל 🇮🇱</p>
+              )}
+
+              {/* Track Description */}
+              {artistDetails?.track_description && (
+                <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl p-5 border border-purple-500/20">
+                  <p className="text-purple-400 font-semibold mb-2">💬 על הטראק הזה:</p>
+                  <p className="text-base text-gray-300 leading-relaxed">{artistDetails.track_description}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
