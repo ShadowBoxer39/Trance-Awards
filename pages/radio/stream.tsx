@@ -104,9 +104,9 @@ export default function RadioStreamPage() {
 
   return (
     <div 
-      className="w-[1920px] h-[1080px] bg-gray-950 text-gray-100 overflow-hidden relative"
-      style={{ cursor: 'none' }}
-    >
+  className="w-screen h-screen bg-gray-950 text-gray-100 overflow-hidden relative"
+  style={{ cursor: 'none', maxHeight: '100vh' }}
+>
       <Head>
         <title>Track Trip Radio - Live Stream</title>
       </Head>
