@@ -3,16 +3,39 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Major labels - HARD BLOCK (will always claim)
 const BLOCKED_LABELS = [
-  'universal', 'umg', 'sony', 'sme', 'warner', 'wmg', 
-  'merlin', 'believe', 'the orchard', 'adrev', 'haawk',
-  'identifyy', 'audiam', 'repost network'
+  // Universal Music Group (UMG) & subsidiaries
+  'universal', 'umg', 'interscope', 'geffen', 'capitol', 'republic', 
+  'island', 'def jam', 'polydor', 'blue note', 'decca', 'motown', 'virgin', 'emi', 'verve',
+  
+  // Sony Music Entertainment (SME) & subsidiaries
+  'sony', 'sme', 'columbia', 'rca', 'epic', 'arista', 'legacy', 'the orchard', 'orchard',
+  
+  // Warner Music Group (WMG) & subsidiaries
+  'warner', 'wmg', 'atlantic', 'elektra', 'parlophone', 'reprise', 'rhino', 'nonesuch', 'sire',
+  
+  // Major-affiliated labels
+  'xl recordings', 'bmg', 'kobalt',
+  
+  // Professional B2B / Aggregators that enforce strictly
+  'believe', 'merlin', 'label worx', 'labelworx', 'fuga', 'amp suite', 'ampsuite',
+  'symphonic', 'adrev', 'label engine', 'labelengine',
+  
+  // Third-Party Rights Management
+  'haawk', 'identifyy', 'audiam', 'elite alliance', 'sourceaudio',
+  'latinautorperf', 'latinautor', 'repost network'
 ];
 
 // Distributors that have whitelist options - require proof
 const WHITELIST_DISTRIBUTORS = [
   { id: 'distrokid', name: 'DistroKid', path: 'Goodies > Special Access > YouTube Allowlist' },
   { id: 'tunecore', name: 'TuneCore', path: 'YouTube Monetization > Set Channel Preferences' },
+  { id: 'cd baby', name: 'CD Baby', path: 'YouTube Monetization settings' },
+  { id: 'cdbaby', name: 'CD Baby', path: 'YouTube Monetization settings' },
   { id: 'landr', name: 'LANDR', path: 'Distribution dashboard > Whitelist requests' },
+  { id: 'amuse', name: 'Amuse', path: 'Settings > YouTube Whitelist' },
+  { id: 'ditto', name: 'Ditto Music', path: 'Account settings > YouTube Whitelist' },
+  { id: 'unitedmasters', name: 'UnitedMasters', path: 'Settings > Content ID' },
+  { id: 'united masters', name: 'UnitedMasters', path: 'Settings > Content ID' },
   { id: 'songtrust', name: 'Songtrust', path: 'YouTube Channel Settings' },
   { id: 'deep sounds', name: 'Deep Sounds', path: 'Subscription page > Paste Channel ID' },
 ];
