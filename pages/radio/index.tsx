@@ -145,8 +145,11 @@ const handleLike = async () => {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
+      // Only reset bioExpanded if it's a different artist
+      if (artistDetails?.name !== data.name) {
+        setBioExpanded(false);
+      }
       setArtistDetails(data);
-      setBioExpanded(false);
       
       // Also fetch likes for this track
       if (trackTitle) {
