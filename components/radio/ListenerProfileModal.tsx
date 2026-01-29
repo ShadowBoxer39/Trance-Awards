@@ -1,6 +1,6 @@
 // components/radio/ListenerProfileModal.tsx
 import { useState, useEffect } from 'react';
-import { FaTimes, FaCamera, FaCheck, FaCrown, FaCommentAlt, FaHeart, FaTrophy } from 'react-icons/fa';
+import { FaTimes, FaCamera, FaCheck, FaCrown, FaCommentAlt, FaHeart, FaTrophy, FaLink } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 
 interface ListenerProfileModalProps {
@@ -20,6 +20,8 @@ const AVATAR_OPTIONS = [
   '💜', '💙', '💚', '💛', '🧡', '❤️', '🖤', '🤍'
 ];
 
+type AvatarType = 'google' | 'url' | 'emoji';
+
 export default function ListenerProfileModal({
   isOpen,
   onClose,
@@ -30,18 +32,35 @@ export default function ListenerProfileModal({
   isNewUser = false
 }: ListenerProfileModalProps) {
   const [nickname, setNickname] = useState(initialNickname);
-  const [avatarUrl, setAvatarUrl] = useState(initialAvatar || googleAvatar);
-  const [useEmoji, setUseEmoji] = useState(!initialAvatar && !googleAvatar);
   const [selectedEmoji, setSelectedEmoji] = useState('🎧');
+  const [customUrl, setCustomUrl] = useState('');
+  const [avatarType, setAvatarType] = useState<AvatarType>('google');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [urlError, setUrlError] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setNickname(initialNickname);
-      setAvatarUrl(initialAvatar || googleAvatar);
-      setUseEmoji(!initialAvatar && !googleAvatar);
       setError('');
+      setUrlError(false);
+      
+      // Determine initial avatar type
+      if (initialAvatar) {
+        if (initialAvatar.length <= 4) {
+          setAvatarType('emoji');
+          setSelectedEmoji(initialAvatar);
+        } else if (initialAvatar.includes('googleusercontent') || initialAvatar === googleAvatar) {
+          setAvatarType('google');
+        } else {
+          setAvatarType('url');
+          setCustomUrl(initialAvatar);
+        }
+      } else if (googleAvatar) {
+        setAvatarType('google');
+      } else {
+        setAvatarType('emoji');
+      }
     }
   }, [isOpen, initialNickname, initialAvatar, googleAvatar]);
 
@@ -55,11 +74,25 @@ export default function ListenerProfileModal({
       return;
     }
 
+    // Validate URL if using custom URL
+    if (avatarType === 'url' && customUrl) {
+      try {
+        new URL(customUrl);
+      } catch {
+        setError('הקישור לתמונה לא תקין');
+        return;
+      }
+    }
+
     setSaving(true);
     setError('');
 
-    const finalAvatar = useEmoji ? selectedEmoji : avatarUrl;
-    const result = await onSave(nickname.trim(), finalAvatar);
+    const finalAvatar = 
+      avatarType === 'emoji' ? selectedEmoji :
+      avatarType === 'url' ? customUrl :
+      googleAvatar;
+
+    const result = await onSave(nickname.trim(), finalAvatar || '🎧');
 
     if (!result.success) {
       if (result.error === 'nickname_taken') {
@@ -75,6 +108,21 @@ export default function ListenerProfileModal({
     onClose();
   };
 
+  const getPreviewAvatar = () => {
+    if (avatarType === 'emoji') {
+      return { type: 'emoji', value: selectedEmoji };
+    }
+    if (avatarType === 'url' && customUrl) {
+      return { type: 'image', value: customUrl };
+    }
+    if (avatarType === 'google' && googleAvatar) {
+      return { type: 'image', value: googleAvatar };
+    }
+    return { type: 'emoji', value: '🎧' };
+  };
+
+  const preview = getPreviewAvatar();
+
   if (!isOpen) return null;
 
   return (
@@ -83,7 +131,7 @@ export default function ListenerProfileModal({
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-[#12121a] border border-purple-500/20 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl shadow-purple-500/10">
+      <div className="relative bg-[#12121a] border border-purple-500/20 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl shadow-purple-500/10 max-h-[90vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -132,45 +180,82 @@ export default function ListenerProfileModal({
 
         {/* Avatar Selection */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-400 mb-3">תמונת פרופיל</label>
+          <label className="block text-sm font-medium text-gray-400 mb-3 text-center">תמונת פרופיל</label>
 
-          {/* Toggle between Google photo and emoji */}
-          {googleAvatar && (
-            <div className="flex gap-2 mb-4">
+          {/* Three-way toggle */}
+          <div className="flex gap-2 mb-4">
+            {googleAvatar && (
               <button
-                onClick={() => { setUseEmoji(false); setAvatarUrl(googleAvatar); }}
-                className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition ${
-                  !useEmoji ? 'bg-purple-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                onClick={() => setAvatarType('google')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition ${
+                  avatarType === 'google' ? 'bg-purple-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
                 }`}
               >
-                תמונת Google
+                Google
               </button>
-              <button
-                onClick={() => setUseEmoji(true)}
-                className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition ${
-                  useEmoji ? 'bg-purple-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                }`}
-              >
-                אימוג׳י
-              </button>
-            </div>
-          )}
+            )}
+            <button
+              onClick={() => setAvatarType('url')}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1 ${
+                avatarType === 'url' ? 'bg-purple-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
+            >
+              <FaLink className="text-[10px]" />
+              קישור
+            </button>
+            <button
+              onClick={() => setAvatarType('emoji')}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition ${
+                avatarType === 'emoji' ? 'bg-purple-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
+            >
+              אימוג׳י
+            </button>
+          </div>
 
           {/* Preview */}
           <div className="flex justify-center mb-4">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/30 flex items-center justify-center overflow-hidden">
-              {useEmoji ? (
-                <span className="text-4xl">{selectedEmoji}</span>
-              ) : avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/30 flex items-center justify-center overflow-hidden">
+              {preview.type === 'emoji' ? (
+                <span className="text-5xl">{preview.value}</span>
               ) : (
-                <FaCamera className="text-2xl text-gray-500" />
+                <img 
+                  src={preview.value} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover"
+                  onError={() => setUrlError(true)}
+                  onLoad={() => setUrlError(false)}
+                />
               )}
             </div>
           </div>
 
+          {/* URL Input */}
+          {avatarType === 'url' && (
+            <div className="mb-4">
+              <input
+                type="url"
+                value={customUrl}
+                onChange={(e) => { setCustomUrl(e.target.value); setUrlError(false); }}
+                placeholder="https://example.com/image.jpg"
+                className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white focus:outline-none transition text-sm ${
+                  urlError ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-purple-500'
+                }`}
+                dir="ltr"
+              />
+              <p className="text-[10px] text-gray-500 mt-2 text-center">
+                העתיקו קישור ישיר לתמונה מ-Instagram, SoundCloud, או כל מקור אחר
+              </p>
+              {urlError && (
+                <p className="text-[10px] text-red-400 mt-1 text-center">
+                  לא ניתן לטעון את התמונה, בדקו את הקישור
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Emoji grid */}
-          {useEmoji && (
+          {avatarType === 'emoji' && (
             <div className="grid grid-cols-8 gap-2 bg-white/5 rounded-xl p-3">
               {AVATAR_OPTIONS.map((emoji) => (
                 <button

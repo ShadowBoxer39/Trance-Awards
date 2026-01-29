@@ -14,8 +14,8 @@ const getListenerLevel = (totalSeconds: number) => {
   const hours = totalSeconds / 3600;
   if (hours >= 100) return { badge: '💎', title: 'אגדה', color: 'from-cyan-400 to-blue-500' };
   if (hours >= 50) return { badge: '🥇', title: 'סופרפאן', color: 'from-yellow-400 to-amber-500' };
-  if (hours >= 10) return { badge: '🥈', title: 'רגיל', color: 'from-gray-300 to-gray-400' };
-  return { badge: '🥉', title: 'חדש', color: 'from-amber-600 to-amber-700' };
+  if (hours >= 10) return { badge: '🥈', title: 'סבבה', color: 'from-gray-300 to-gray-400' };
+  return { badge: '🥉', title: 'חדש/ה', color: 'from-amber-600 to-amber-700' };
 };
 
 const formatHours = (totalSeconds: number): string => {
