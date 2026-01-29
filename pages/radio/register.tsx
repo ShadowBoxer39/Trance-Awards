@@ -188,58 +188,83 @@ export default function RadioRegisterPage() {
           </div>
         </section>
 
-        {/* YouTube Promo Section - Enhanced */}
-        <section className="py-24 px-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="glass-warm rounded-[3rem] p-8 md:p-16 relative overflow-hidden border border-red-500/20">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 blur-[80px]" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-600/10 blur-[80px]" />
-              
-              <div className="relative z-10">
-                {/* Header */}
-                <div className="text-center mb-10">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-600/20 mb-6 animate-pulse-glow">
-                    <FaYoutube className="text-5xl text-red-500" />
-                  </div>
-                  <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">שידור חי 24/7 ביוטיוב</h2>
-                  <p className="text-gray-400 text-lg leading-relaxed max-w-2xl mx-auto">
-                    הטראקים שלכם משודרים עם <span className="text-white font-semibold">קרדיט מלא</span> וקישורים ישירים לסושיאל שלכם. 
-                    <br className="hidden md:block" />
-                    הירשמו לערוץ כדי לא לפספס!
-                  </p>
-                </div>
+      {/* YouTube Promo Section - Live Stream */}
+<section className="py-24 px-6">
+  <div className="max-w-4xl mx-auto">
+    <div className="glass-warm rounded-[3rem] p-8 md:p-16 relative overflow-hidden border border-red-500/20">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 blur-[80px]" />
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-600/10 blur-[80px]" />
+      
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-600/20 mb-6 animate-pulse-glow">
+            <FaYoutube className="text-5xl text-red-500" />
+          </div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-600/20 border border-red-500/30 mb-4">
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-red-400 text-sm font-bold">LIVE 24/7</span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">שידור חי ביוטיוב</h2>
+          <p className="text-gray-400 text-lg leading-relaxed max-w-2xl mx-auto">
+            הטראקים שלכם משודרים עם <span className="text-white font-semibold">קרדיט מלא</span> וקישורים ישירים לסושיאל שלכם. 
+            <br className="hidden md:block" />
+            הירשמו לערוץ כדי לא לפספס!
+          </p>
+        </div>
 
-                {/* Video Preview */}
-                <div className="aspect-video bg-black/60 rounded-3xl border border-white/10 flex items-center justify-center shadow-2xl mb-10 overflow-hidden relative group">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <div className="relative text-center">
-                    <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-red-600/30">
-                      <FaPlay className="text-white text-2xl ml-1" />
-                    </div>
-                    <span className="text-gray-300 font-medium">השידור החי יעלה בקרוב</span>
-                  </div>
-                </div>
+        {/* Clickable Live Preview */}
+        <a 
+          href="https://www.youtube.com/@tracktripil/live"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block aspect-video bg-black/60 rounded-3xl border border-white/10 shadow-2xl mb-10 overflow-hidden relative group hover:border-red-500/30 transition-all"
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          
+          {/* Live Badge */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 shadow-lg">
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            <span className="text-white text-xs font-bold">LIVE</span>
+          </div>
 
-                {/* Subscribe Button - Main CTA */}
-                <div className="text-center">
-                  <a 
-                    href={YOUTUBE_SUBSCRIBE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-4 bg-red-600 hover:bg-red-500 text-white font-bold py-5 px-12 rounded-full transition-all shadow-xl shadow-red-600/30 hover:shadow-red-500/40 active:scale-95 text-lg"
-                  >
-                    <FaYoutube className="text-2xl" />
-                    <span>הירשמו לערוץ היוטיוב</span>
-                    <FaBell className="text-lg" />
-                  </a>
-                  <p className="text-gray-500 text-sm mt-4">
-                    🔔 הפעילו התראות כדי לדעת מתי הטראק שלכם בשידור
-                  </p>
-                </div>
-              </div>
+          {/* Play Button */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-red-600/30">
+              <FaPlay className="text-white text-2xl ml-1" />
             </div>
           </div>
-        </section>
+
+          {/* Bottom Info */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 flex items-center justify-between">
+            <div>
+              <p className="text-white font-bold">רדיו יוצאים לטראק</p>
+              <p className="text-gray-400 text-sm">לחצו לצפייה בשידור החי</p>
+            </div>
+            <FaYoutube className="text-red-500 text-3xl" />
+          </div>
+        </a>
+
+        {/* Subscribe Button */}
+        <div className="text-center">
+          <a 
+            href={YOUTUBE_SUBSCRIBE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-4 bg-red-600 hover:bg-red-500 text-white font-bold py-5 px-12 rounded-full transition-all shadow-xl shadow-red-600/30 hover:shadow-red-500/40 active:scale-95 text-lg"
+          >
+            <FaYoutube className="text-2xl" />
+            <span>הירשמו לערוץ היוטיוב</span>
+            <FaBell className="text-lg" />
+          </a>
+          <p className="text-gray-500 text-sm mt-4">
+            🔔 הפעילו התראות כדי לדעת מתי הטראק שלכם בשידור
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* Benefits Section - NEW */}
         <section className="py-16 px-6">
