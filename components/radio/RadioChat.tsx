@@ -242,8 +242,8 @@ export default function RadioChat({ listenerProfile, onLoginClick, fingerprint }
       {/* Messages */}
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 relative"
-        style={{ minHeight: '300px', maxHeight: '400px' }}
+      className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 relative"
+style={{ minHeight: '250px', maxHeight: '350px' }}
       >
         {/* Floating reactions */}
         {floatingReactions.map((reaction) => (

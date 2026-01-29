@@ -84,7 +84,7 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
 
   if (loading) {
     return (
-      <div className="bg-black/20 rounded-2xl border border-white/5 p-4">
+      <div className="bg-black/20 rounded-2xl border border-white/5 p-4 overflow-hidden">
         <div className="flex items-center gap-2 mb-4">
           <FaTrophy className="text-yellow-500" />
           <span className="font-bold text-white text-sm">טבלת המאזינים</span>
@@ -100,7 +100,7 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
 
   if (leaderboard.length === 0) {
     return (
-      <div className="bg-black/20 rounded-2xl border border-white/5 p-4">
+     <div className="bg-black/20 rounded-2xl border border-white/5 p-4 overflow-hidden">
         <div className="flex items-center gap-2 mb-4">
           <FaTrophy className="text-yellow-500" />
           <span className="font-bold text-white text-sm">טבלת המאזינים</span>
@@ -115,7 +115,7 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
   }
 
   return (
-    <div className="bg-black/20 rounded-2xl border border-white/5 p-4">
+    <div className="bg-black/20 rounded-2xl border border-white/5 p-4 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <FaTrophy className="text-yellow-500" />
@@ -133,7 +133,7 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
           return (
             <div
               key={entry.id}
-              className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${getRankStyle(index)} ${
+             className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-xl border transition overflow-hidden ${getRankStyle(index)} ${
                 isCurrentUser ? 'ring-2 ring-purple-500/50' : ''
               }`}
             >
@@ -143,7 +143,7 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
               </div>
 
               {/* Avatar */}
-              <div className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br ${level.color} border border-white/10`}>
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br ${level.color} border border-white/10`}>
                 {isEmojiAvatar ? (
                   <span className="text-lg">{entry.avatar_url}</span>
                 ) : entry.avatar_url ? (
@@ -167,9 +167,9 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
               </div>
 
               {/* Hours */}
-              <div className="text-left flex-shrink-0">
-                <p className="text-sm font-bold text-white">{formatHours(entry.total_seconds)}</p>
-              </div>
+<div className="text-left flex-shrink-0 min-w-[60px]">
+  <p className="text-xs sm:text-sm font-bold text-white whitespace-nowrap">{formatHours(entry.total_seconds)}</p>
+</div>
             </div>
           );
         })}
