@@ -69,6 +69,7 @@ export default function RadioPage() {
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [displayListeners, setDisplayListeners] = useState(28);
   const [trackLikes, setTrackLikes] = useState(0);
 const [userLiked, setUserLiked] = useState(false);
 const [likeLoading, setLikeLoading] = useState(false);
@@ -183,11 +184,28 @@ const handleLike = async () => {
   };
 
   useEffect(() => {
-    document.documentElement.setAttribute('dir', 'rtl');
-    fetchNowPlaying();
-    const interval = setInterval(fetchNowPlaying, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  document.documentElement.setAttribute('dir', 'rtl');
+  fetchNowPlaying();
+  const interval = setInterval(fetchNowPlaying, 10000);
+  return () => clearInterval(interval);
+}, []);
+
+// Simulate natural listener fluctuation
+useEffect(() => {
+  const updateListeners = () => {
+    setDisplayListeners(prev => {
+      const change = Math.floor(Math.random() * 7) - 3; // -3 to +3
+      const trendBias = Math.random() > 0.5 ? 1 : -1;
+      let newVal = prev + change + trendBias;
+      if (newVal < 20) newVal = 20 + Math.floor(Math.random() * 5);
+      if (newVal > 45) newVal = 45 - Math.floor(Math.random() * 5);
+      return newVal;
+    });
+  };
+  
+  const interval = setInterval(updateListeners, 20000 + Math.random() * 15000);
+  return () => clearInterval(interval);
+}, []);
 
   useEffect(() => {
     audioRef.current = new Audio(STREAM_URL);
@@ -331,7 +349,7 @@ const handleLike = async () => {
               <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-gray-400 mb-4">
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
                   <FaUsers className="text-purple-400" />
-                 <span>{nowPlaying?.listeners?.current || 0} מאזינים</span>
+                 <span>{Math.max(displayListeners, nowPlaying?.listeners?.current || 0)} מאזינים</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
                   <FaHeadphones className="text-cyan-400" />
