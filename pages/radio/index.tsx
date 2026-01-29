@@ -231,53 +231,28 @@ export default function RadioPage() {
 };
 checkAuth();
 
-   const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' && session?.user) {
-    setUser(session.user);
-    const res = await fetch(`/api/radio/listener-profile?user_id=${session.user.id}`);
-    if (res.ok) {
-      const profile = await res.json();
-      if (profile) {
-        setListenerProfile(profile);
-      } else {
-        // Check if user exists in artists table
-        const { data: existingArtist } = await supabase
-          .from('artists')
-          .select('name, image_url')
-          .eq('email', session.user.email)
-          .single();
-
-        if (existingArtist) {
-          // Auto-create listener profile from artist data
-          const createRes = await fetch('/api/radio/listener-profile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: session.user.id,
-              email: session.user.email,
-              nickname: existingArtist.name,
-              avatar_url: existingArtist.image_url || session.user.user_metadata?.avatar_url || '🎵'
-            })
-          });
-          if (createRes.ok) {
-            const newProfile = await createRes.json();
-            setListenerProfile(newProfile);
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        const res = await fetch(`/api/radio/listener-profile?user_id=${session.user.id}`);
+        if (res.ok) {
+          const profile = await res.json();
+          if (profile) {
+            setListenerProfile(profile);
+          } else {
+            setIsNewUser(true);
+            setShowProfileModal(true);
           }
-        } else {
-          setIsNewUser(true);
-          setShowProfileModal(true);
         }
       }
-    }
-  }
-  if (event === 'SIGNED_OUT') {
-    setUser(null);
-    setListenerProfile(null);
-  }
-});
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setListenerProfile(null);
+      }
+    });
 
-return () => { authListener.subscription.unsubscribe(); };
-}, []);
+    return () => { authListener.subscription.unsubscribe(); };
+  }, []);
 
   // Fetch artist details
   const fetchArtistDetails = async (artistName: string, trackTitle?: string): Promise<ArtistDetails | null> => {
@@ -523,7 +498,7 @@ const nextSong = nowPlaying?.playing_next?.song;
 const bioIsLong = artistDetails?.bio && artistDetails.bio.length > 150;
 
 return (
-<div className="min-h-screen bg-[#0a0a12] text-gray-100 overflow-x-hidden overflow-y-auto">
+  <div className="min-h-screen bg-[#0a0a12] text-gray-100 overflow-x-hidden">
       <Head>
         <title>רדיו יוצאים לטראק | טראנס ישראלי 24/7</title>
         <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -545,8 +520,8 @@ return (
 }
       `}</style>
 
-     {/* Dynamic Background Glow */}
-<div className="fixed inset-0 pointer-events-none transition-all duration-500" style={{ overflow: 'hidden', width: '100vw', height: '100vh' }}>
+      {/* Dynamic Background Glow */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden transition-all duration-500">
         <div 
           className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[150px] transition-all duration-300"
           style={{ 
@@ -576,7 +551,8 @@ return (
         isNewUser={isNewUser}
       />
 
-<main className="relative max-w-7xl mx-auto px-6 sm:px-8 pt-20 pb-8 font-['Rubik',sans-serif] overflow-hidden">        
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-20 pb-8 font-['Rubik',sans-serif]">
+        
         {/* ========== HEADER ========== */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-white/10 mb-3">
@@ -636,8 +612,7 @@ return (
             </div>
 
             {/* Track Info */}
-            {/* Track Info */}
-<div className="flex-1 w-full text-center lg:text-right">
+            <div className="flex-1 text-center lg:text-right">
               <p className="text-sm font-medium mb-2" style={{ color: `rgb(${dominantColor})` }}>מתנגן עכשיו</p>
               <h2 className="text-2xl lg:text-3xl font-bold text-white mb-1 leading-tight">
                 {currentSong?.title || 'טוען...'}
@@ -820,7 +795,7 @@ return (
       <FaHistory className="text-cyan-400" />
       <h3 className="text-sm font-bold text-white">שודר לאחרונה</h3>
     </div>
-    <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2 px-2">
+   <div className="flex flex-row-reverse gap-3 overflow-x-auto hide-scrollbar pb-2 px-4" dir="ltr">
       {songHistory.map((song, i) => (
         <div
           key={i}

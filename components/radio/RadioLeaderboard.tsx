@@ -167,8 +167,8 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
               </div>
 
               {/* Hours */}
-<div className="text-left flex-shrink-0 min-w-[60px]">
-  <p className="text-xs sm:text-sm font-bold text-white whitespace-nowrap">{formatHours(entry.total_seconds)}</p>
+<div className="flex-shrink-0 w-[65px]">
+  <p className="text-xs sm:text-sm font-bold text-white whitespace-nowrap text-center">{formatHours(entry.total_seconds)}</p>
 </div>
             </div>
           );

@@ -164,10 +164,12 @@ export default function RadioChat({ listenerProfile, onLoginClick, fingerprint }
     };
   }, []);
 
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+ // Auto-scroll to bottom
+useEffect(() => {
+  if (chatContainerRef.current) {
+    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+  }
+}, [messages]);
 
   const sendMessage = async (message: string, isReaction = false) => {
     if (!message.trim() || sending) return;
