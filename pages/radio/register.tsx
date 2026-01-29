@@ -213,37 +213,22 @@ export default function RadioRegisterPage() {
           </p>
         </div>
 
-        {/* Clickable Live Preview */}
-        <a 
-          href="https://www.youtube.com/@tracktripil/live"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block aspect-video bg-black/60 rounded-3xl border border-white/10 shadow-2xl mb-10 overflow-hidden relative group hover:border-red-500/30 transition-all"
-        >
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-          
-          {/* Live Badge */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 shadow-lg">
-            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-white text-xs font-bold">LIVE</span>
-          </div>
-
-          {/* Play Button */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-red-600/30">
-              <FaPlay className="text-white text-2xl ml-1" />
-            </div>
-          </div>
-
-          {/* Bottom Info */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 flex items-center justify-between">
-            <div>
-              <p className="text-white font-bold">רדיו יוצאים לטראק</p>
-              <p className="text-gray-400 text-sm">לחצו לצפייה בשידור החי</p>
-            </div>
-            <FaYoutube className="text-red-500 text-3xl" />
-          </div>
-        </a>
+       {/* Embedded Live Stream */}
+<div className="aspect-video rounded-3xl border border-white/10 shadow-2xl mb-10 overflow-hidden relative">
+  <div className="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 shadow-lg">
+    <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+    <span className="text-white text-xs font-bold">LIVE</span>
+  </div>
+  
+  <iframe
+    src="https://www.youtube.com/embed/live_stream?channel=UCkxngqv_ts0zMCk-pwlc0ig&autoplay=1&mute=1"
+    title="רדיו יוצאים לטראק - שידור חי"
+    className="w-full h-full"
+    frameBorder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+  />
+</div>
 
         {/* Subscribe Button */}
         <div className="text-center">
