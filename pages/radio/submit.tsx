@@ -1,4 +1,4 @@
-// pages/radio/submit.tsx - Track Submission with Content ID Check
+// pages/radio/submit.tsx - Track Submission (Content ID check removed)
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -7,8 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';  
 import { 
   FaCloudUploadAlt, FaArrowRight, FaCheckCircle, FaChevronDown, 
-  FaChevronUp, FaInfoCircle, FaPenNib, FaGem, FaLock, FaExclamationTriangle,
-  FaYoutube, FaCopy 
+  FaChevronUp, FaInfoCircle, FaPenNib, FaGem, FaLock
 } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 
@@ -31,14 +30,6 @@ const FloatingNotes = () => {
   );
 };
 
-interface ContentIdResult {
-  status: 'safe' | 'blocked' | 'needs_whitelist' | null;
-  message: string;
-  match: { title: string; artist: string; label: string; album?: string } | null;
-  distributor?: { id: string; name: string; path: string };
-  youtubeChannelId?: string;
-}
-
 export default function RadioSubmitPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -59,11 +50,6 @@ export default function RadioSubmitPage() {
   // Form State
   const [formData, setFormData] = useState({ trackName: '', description: '', isPremiere: false });
   const [mp3File, setMp3File] = useState<File | null>(null);
-
-  // Content ID check states
-  const [checkingContentId, setCheckingContentId] = useState(false);
-  const [contentIdResult, setContentIdResult] = useState<ContentIdResult | null>(null);
-  const [whitelistScreenshot, setWhitelistScreenshot] = useState<File | null>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('dir', 'rtl');
@@ -102,116 +88,30 @@ export default function RadioSubmitPage() {
     checkAuth();
   }, [router]);
 
-  // Content ID check function
-  const runContentIdCheck = async (fileUrl: string) => {
-    try {
-      const res = await fetch('/api/radio/check-content-id', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audioUrl: fileUrl })
-      });
-      
-      const data = await res.json();
-      setContentIdResult(data);
-    } catch (err) {
-      console.error('Content ID check failed:', err);
-      setContentIdResult({ status: 'safe', message: 'בדיקה נכשלה', match: null });
-    }
-    setCheckingContentId(false);
-  };
-
- const handleMp3Change = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  console.log('handleMp3Change triggered');
-  const file = e.target.files?.[0];
-  if (!file) {
-    console.log('No file selected');
-    return;
-  }
-  console.log('File selected:', file.name, file.size);
-
-  if (!file.type.includes('audio/mpeg') && !file.name.endsWith('.mp3')) { 
-    setError('יש להעלות קובץ MP3 בלבד'); 
-    return; 
-  }
-  if (file.size > 35 * 1024 * 1024) { 
-    setError('הקובץ גדול מדי. מקסימום 35MB'); 
-    return; 
-  }
-  
-  setMp3File(file);
-  setError('');
-  setContentIdResult(null);
-  setWhitelistScreenshot(null);
-  
-  if (!formData.trackName) { 
-    setFormData(prev => ({ ...prev, trackName: file.name.replace(/\.mp3$/i, '') })); 
-  }
-
-  // Upload temporarily to check Content ID
-  setCheckingContentId(true);
-  console.log('Starting Content ID check...');
-  try {
-    const timestamp = Date.now();
-    const tempFileName = `temp_check/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-    console.log('Uploading temp file:', tempFileName);
-    
-    const { error: uploadError } = await supabase.storage.from('Radio').upload(tempFileName, file);
-    if (uploadError) {
-      console.error('Temp upload error:', uploadError);
-      throw uploadError;
-    }
-    console.log('Temp file uploaded successfully');
-    
-    const { data: urlData } = supabase.storage.from('Radio').getPublicUrl(tempFileName);
-    console.log('Public URL:', urlData.publicUrl);
-    
-    // Run the Content ID check
-    await runContentIdCheck(urlData.publicUrl);
-    
-    // Clean up temp file after check (non-blocking)
-    supabase.storage.from('Radio').remove([tempFileName]).catch(() => {});
-    
-  } catch (err) {
-    console.error('Content ID check setup failed:', err);
-    setContentIdResult({ status: 'safe', message: 'בדיקה נכשלה', match: null });
-    setCheckingContentId(false);
-  }
-};
-  const handleWhitelistScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMp3Change = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setError('יש להעלות קובץ תמונה בלבד');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setError('הקובץ גדול מדי. מקסימום 10MB');
-      return;
-    }
-    setWhitelistScreenshot(file);
-    setError('');
-  };
 
-  const copyChannelId = () => {
-    navigator.clipboard.writeText('UCkxngqv_ts0zMCk-pwlc0ig');
-    alert('Channel ID הועתק!');
+    if (!file.type.includes('audio/mpeg') && !file.name.endsWith('.mp3')) { 
+      setError('יש להעלות קובץ MP3 בלבד'); 
+      return; 
+    }
+    if (file.size > 35 * 1024 * 1024) { 
+      setError('הקובץ גדול מדי. מקסימום 35MB'); 
+      return; 
+    }
+    
+    setMp3File(file);
+    setError('');
+    
+    if (!formData.trackName) { 
+      setFormData(prev => ({ ...prev, trackName: file.name.replace(/\.mp3$/i, '') })); 
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!artist || !mp3File || !agreedToTerms || remainingSubmissions <= 0) return;
-    
-    // Block if Content ID check showed blocked
-    if (contentIdResult?.status === 'blocked') {
-      setError('לא ניתן להגיש טראק זה עקב Content ID');
-      return;
-    }
-    
-    // Require whitelist screenshot if needed
-    if (contentIdResult?.status === 'needs_whitelist' && !whitelistScreenshot) {
-      setError('יש להעלות צילום מסך של ה-Whitelist');
-      return;
-    }
 
     setSubmitting(true);
     setError('');
@@ -225,21 +125,10 @@ export default function RadioSubmitPage() {
       const { error: mp3Error } = await supabase.storage.from('Radio').upload(mp3FileName, mp3File);
       if (mp3Error) throw mp3Error;
 
-      setUploadProgress(50);
+      setUploadProgress(60);
       const { data: mp3UrlData } = supabase.storage.from('Radio').getPublicUrl(mp3FileName);
 
-      // Upload whitelist screenshot if provided
-      let whitelistScreenshotUrl = null;
-      if (whitelistScreenshot) {
-        const screenshotFileName = `${artist.id}/${timestamp}_whitelist.${whitelistScreenshot.name.split('.').pop()}`;
-        const { error: screenshotError } = await supabase.storage.from('Radio').upload(screenshotFileName, whitelistScreenshot);
-        if (!screenshotError) {
-          const { data: screenshotUrlData } = supabase.storage.from('Radio').getPublicUrl(screenshotFileName);
-          whitelistScreenshotUrl = screenshotUrlData.publicUrl;
-        }
-      }
-
-      setUploadProgress(70);
+      setUploadProgress(80);
 
       const { error: insertError } = await supabase.from('radio_submissions').insert({
         artist_id: artist.id,
@@ -247,12 +136,9 @@ export default function RadioSubmitPage() {
         description: formData.description.trim(),
         is_premiere: formData.isPremiere,
         mp3_url: mp3UrlData.publicUrl,
-        status: contentIdResult?.status === 'needs_whitelist' ? 'pending_whitelist' : 'pending',
+        status: 'pending',
         agreed_to_terms: true,
         agreed_at: new Date().toISOString(),
-        content_id_status: contentIdResult?.status || 'safe',
-        content_id_label: contentIdResult?.match?.label || null,
-        whitelist_screenshot_url: whitelistScreenshotUrl,
       });
 
       if (insertError) throw insertError;
@@ -284,15 +170,7 @@ export default function RadioSubmitPage() {
   };
 
   const canSubmit = remainingSubmissions > 0;
-
-  // Determine if form can be submitted
-  const isSubmitDisabled = 
-    submitting || 
-    !mp3File || 
-    !agreedToTerms || 
-    checkingContentId ||
-    contentIdResult?.status === 'blocked' ||
-    (contentIdResult?.status === 'needs_whitelist' && !whitelistScreenshot);
+  const isSubmitDisabled = submitting || !mp3File || !agreedToTerms;
 
   if (loading) return <div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center"><div className="w-16 h-16 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" /></div>;
 
@@ -469,226 +347,6 @@ export default function RadioSubmitPage() {
                       )}
                     </label>
                   </div>
-
-                  {/* ============ CONTENT ID CHECK RESULTS ============ */}
-                  
-                  {/* Checking State */}
-                  {checkingContentId && (
-                    <div className="flex items-center justify-center gap-3 p-6 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
-                      <div className="w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-purple-300">בודק Content ID...</span>
-                    </div>
-                  )}
-
-                  {/* BLOCKED - Major Label */}
-                  {contentIdResult?.status === 'blocked' && (
-                    <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-2xl">
-                      <div className="flex items-start gap-4">
-                        <FaExclamationTriangle className="text-red-400 text-2xl flex-shrink-0 mt-1" />
-                        <div>
-                          <h4 className="text-red-400 font-bold text-lg mb-2">🚫 לא ניתן להעלות טראק זה</h4>
-                          <p className="text-gray-300 text-sm mb-4">{contentIdResult.message}</p>
-                          {contentIdResult.match && (
-                            <div className="bg-black/30 rounded-xl p-4 text-sm">
-                              <p className="text-gray-400">נמצאה התאמה:</p>
-                              <p className="text-white font-medium">{contentIdResult.match.title} - {contentIdResult.match.artist}</p>
-                              <p className="text-red-400">Label: {contentIdResult.match.label}</p>
-                            </div>
-                          )}
-                          <p className="text-gray-500 text-xs mt-4">
-                            טראקים שמופצים דרך לייבלים גדולים יוצרים Content ID claims בשידורים חיים, מה שעלול לפגוע בערוץ היוטיוב שלנו.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* NEEDS WHITELIST - With specific distributor instructions */}
-                  {contentIdResult?.status === 'needs_whitelist' && (
-                    <div className="p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl">
-                      <div className="flex items-start gap-4">
-                        <FaExclamationTriangle className="text-yellow-400 text-2xl flex-shrink-0 mt-1" />
-                        <div className="flex-1">
-                          <h4 className="text-yellow-400 font-bold text-lg mb-2">⚠️ נדרש Whitelist</h4>
-                          
-                          {contentIdResult.match && (
-                            <div className="bg-black/30 rounded-xl p-4 text-sm mb-5">
-                              <p className="text-gray-400 text-xs mb-1">נמצאה התאמה:</p>
-                              <p className="text-white font-medium">{contentIdResult.match.artist} - {contentIdResult.match.title}</p>
-                            </div>
-                          )}
-
-                          {/* Simple explanation */}
-                          <div className="bg-black/20 rounded-xl p-4 mb-5">
-                            <p className="text-sm text-gray-300 leading-relaxed">
-                              <strong className="text-white">מה זה אומר?</strong><br />
-                              הטראק שלך רשום במערכת Content ID של YouTube דרך <span className="text-yellow-400">{contentIdResult.distributor?.name}</span>. 
-                              כשנשדר אותו בלייב, YouTube עלול לחסום את השידור או להוריד אותו.
-                            </p>
-                            <p className="text-sm text-gray-300 mt-3 leading-relaxed">
-                              <strong className="text-white">הפתרון פשוט:</strong><br />
-                              צריך להוסיף את הערוץ שלנו לרשימת ה-Whitelist (רשימה לבנה) בפאנל ההפצה שלך. זה לוקח דקה.
-                            </p>
-                          </div>
-
-                          {/* Step by step for the specific distributor */}
-                          <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-5 mb-5">
-                            <h5 className="text-white font-bold mb-4 flex items-center gap-2">
-                              <span className="w-7 h-7 bg-purple-500 rounded-full flex items-center justify-center text-sm">1</span>
-                              איך עושים Whitelist ב-{contentIdResult.distributor?.name}
-                            </h5>
-                            
-                            {contentIdResult.distributor?.id === 'distrokid' && (
-                              <ol className="text-sm text-gray-300 space-y-3 mr-2">
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">א.</span>
-                                  <span>היכנסו ל-<a href="https://distrokid.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">DistroKid</a> והתחברו לחשבון</span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ב.</span>
-                                  <span>לחצו על <strong className="text-white">Goodies</strong> בתפריט העליון</span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ג.</span>
-                                  <span>בחרו <strong className="text-white">Special Access</strong> → <strong className="text-white">YouTube Allowlist</strong></span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ד.</span>
-                                  <span>הדביקו את ה-Channel ID שלנו (למטה) ולחצו Save</span>
-                                </li>
-                              </ol>
-                            )}
-
-                            {contentIdResult.distributor?.id === 'tunecore' && (
-                              <ol className="text-sm text-gray-300 space-y-3 mr-2">
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">א.</span>
-                                  <span>היכנסו ל-<a href="https://tunecore.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">TuneCore</a> והתחברו לחשבון</span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ב.</span>
-                                  <span>לכו ל-<strong className="text-white">YouTube Monetization</strong></span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ג.</span>
-                                  <span>לחצו על <strong className="text-white">Set Channel Preferences</strong></span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ד.</span>
-                                  <span>הוסיפו את ה-Channel ID שלנו לרשימת ה-Exclude</span>
-                                </li>
-                              </ol>
-                            )}
-
-                            {contentIdResult.distributor?.id === 'landr' && (
-                              <ol className="text-sm text-gray-300 space-y-3 mr-2">
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">א.</span>
-                                  <span>היכנסו ל-<a href="https://landr.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">LANDR</a> והתחברו</span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ב.</span>
-                                  <span>פתחו את <strong className="text-white">Distribution Dashboard</strong></span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ג.</span>
-                                  <span>חפשו את אפשרות ה-<strong className="text-white">Whitelist Requests</strong></span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ד.</span>
-                                  <span>הגישו בקשת Whitelist עם ה-Channel ID שלנו</span>
-                                </li>
-                              </ol>
-                            )}
-
-                            {contentIdResult.distributor?.id === 'songtrust' && (
-                              <ol className="text-sm text-gray-300 space-y-3 mr-2">
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">א.</span>
-                                  <span>היכנסו ל-<a href="https://songtrust.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">Songtrust</a></span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ב.</span>
-                                  <span>לכו ל-<strong className="text-white">YouTube Channel Settings</strong></span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ג.</span>
-                                  <span>הוסיפו את ה-Channel ID שלנו לרשימת הערוצים הפטורים</span>
-                                </li>
-                              </ol>
-                            )}
-
-                            {contentIdResult.distributor?.id === 'deep sounds' && (
-                              <ol className="text-sm text-gray-300 space-y-3 mr-2">
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">א.</span>
-                                  <span>היכנסו לאתר Deep Sounds</span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ב.</span>
-                                  <span>לכו ל-<strong className="text-white">Subscription Page</strong></span>
-                                </li>
-                                <li className="flex gap-3">
-                                  <span className="text-purple-400 font-bold">ג.</span>
-                                  <span>הדביקו את ה-Channel ID שלנו - תקבלו אימייל אישור תוך 5-10 דקות</span>
-                                </li>
-                              </ol>
-                            )}
-                          </div>
-
-                          {/* Channel ID to copy */}
-                          <div className="bg-black/30 rounded-xl p-4 mb-5">
-                            <h5 className="text-white font-bold mb-3 flex items-center gap-2">
-                              <span className="w-7 h-7 bg-purple-500 rounded-full flex items-center justify-center text-sm">2</span>
-                              ה-Channel ID שלנו
-                            </h5>
-                            <div className="flex items-center gap-2 bg-black/40 rounded-lg p-3">
-                              <FaYoutube className="text-red-500 text-xl" />
-                              <code className="text-cyan-400 font-mono text-sm flex-1" dir="ltr">UCkxngqv_ts0zMCk-pwlc0ig</code>
-                              <button type="button" onClick={copyChannelId} className="p-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition flex items-center gap-2">
-                                <FaCopy />
-                                <span className="text-xs">העתק</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Screenshot upload */}
-                          <div className="bg-black/30 rounded-xl p-4">
-                            <h5 className="text-white font-bold mb-3 flex items-center gap-2">
-                              <span className="w-7 h-7 bg-purple-500 rounded-full flex items-center justify-center text-sm">3</span>
-                              העלו צילום מסך כהוכחה
-                            </h5>
-                            <p className="text-xs text-gray-400 mb-3">צלמו מסך שמראה שהוספתם את הערוץ שלנו ל-Whitelist</p>
-                            <input type="file" accept="image/*" onChange={handleWhitelistScreenshot} className="hidden" id="whitelist-upload" />
-                            <label htmlFor="whitelist-upload" className={`flex items-center justify-center gap-3 w-full p-4 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
-                              whitelistScreenshot ? 'border-green-500/50 bg-green-500/10' : 'border-white/20 hover:border-yellow-500/40'
-                            }`}>
-                              {whitelistScreenshot ? (
-                                <><FaCheckCircle className="text-green-400" /><span className="text-green-400 text-sm">{whitelistScreenshot.name}</span></>
-                              ) : (
-                                <><FaCloudUploadAlt className="text-gray-500" /><span className="text-gray-400 text-sm">לחץ להעלאת צילום מסך</span></>
-                              )}
-                            </label>
-                          </div>
-
-                          {/* Help link */}
-                          <p className="text-xs text-gray-500 mt-4 text-center">
-                            נתקעתם? שלחו לנו הודעה ב-<a href="https://instagram.com/tracktrip.radio" target="_blank" rel="noopener noreferrer" className="text-purple-400 underline">אינסטגרם</a> ונעזור
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* SAFE - No Content ID Match */}
-                  {contentIdResult?.status === 'safe' && (
-                    <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-2xl">
-                      <FaCheckCircle className="text-green-400" />
-                      <span className="text-green-300 text-sm">✓ לא נמצאה התאמת Content ID - אפשר להמשיך</span>
-                    </div>
-                  )}
-
-                  {/* ============ END CONTENT ID CHECK ============ */}
 
                   {/* Terms and Consent */}
                   <div className="border border-white/5 rounded-3xl overflow-hidden bg-white/5">

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
-import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUsers, FaUpload, FaInstagram, FaSoundcloud, FaYoutube, FaMobileAlt, FaHeadphones, FaChevronDown, FaChevronUp, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUsers, FaUpload, FaInstagram, FaSoundcloud, FaHeadphones, FaChevronDown, FaChevronUp, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const AZURACAST_API_URL = 'https://a12.asurahosting.com/api/nowplaying/track_trip_radio';
@@ -71,66 +71,66 @@ export default function RadioPage() {
   const [bioExpanded, setBioExpanded] = useState(false);
   const [displayListeners, setDisplayListeners] = useState(28);
   const [trackLikes, setTrackLikes] = useState(0);
-const [userLiked, setUserLiked] = useState(false);
-const [likeLoading, setLikeLoading] = useState(false);
+  const [userLiked, setUserLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
 
-// Get or create user fingerprint
-const getFingerprint = () => {
-  if (typeof window === 'undefined') return null;
-  let fp = localStorage.getItem('radio_fingerprint');
-  if (!fp) {
-    fp = 'fp_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-    localStorage.setItem('radio_fingerprint', fp);
-  }
-  return fp;
-};
-
-// Fetch likes for current track
-const fetchTrackLikes = async (trackName: string, artistName: string) => {
-  try {
-    const fp = getFingerprint();
-    const params = new URLSearchParams({ track: trackName, artist: artistName });
-    if (fp) params.append('fingerprint', fp);
-    
-    const res = await fetch(`/api/radio/track-likes?${params}`);
-    if (res.ok) {
-      const data = await res.json();
-      setTrackLikes(data.likes);
-      setUserLiked(data.userLiked);
+  // Get or create user fingerprint
+  const getFingerprint = () => {
+    if (typeof window === 'undefined') return null;
+    let fp = localStorage.getItem('radio_fingerprint');
+    if (!fp) {
+      fp = 'fp_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('radio_fingerprint', fp);
     }
-  } catch (err) {
-    console.error('Error fetching likes:', err);
-  }
-};
+    return fp;
+  };
 
-// Handle like button click
-const handleLike = async () => {
-  const currentSong = nowPlaying?.now_playing?.song;
-  if (!currentSong || likeLoading || userLiked) return;
-  
-  setLikeLoading(true);
-  try {
-    const fp = getFingerprint();
-    const res = await fetch('/api/radio/track-likes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        track: currentSong.title,
-        artist: currentSong.artist,
-        fingerprint: fp
-      })
-    });
-    
-    if (res.ok) {
-      const data = await res.json();
-      setTrackLikes(data.likes);
-      setUserLiked(true);
+  // Fetch likes for current track
+  const fetchTrackLikes = async (trackName: string, artistName: string) => {
+    try {
+      const fp = getFingerprint();
+      const params = new URLSearchParams({ track: trackName, artist: artistName });
+      if (fp) params.append('fingerprint', fp);
+      
+      const res = await fetch(`/api/radio/track-likes?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTrackLikes(data.likes);
+        setUserLiked(data.userLiked);
+      }
+    } catch (err) {
+      console.error('Error fetching likes:', err);
     }
-  } catch (err) {
-    console.error('Error liking track:', err);
-  }
-  setLikeLoading(false);
-};
+  };
+
+  // Handle like button click
+  const handleLike = async () => {
+    const currentSong = nowPlaying?.now_playing?.song;
+    if (!currentSong || likeLoading || userLiked) return;
+    
+    setLikeLoading(true);
+    try {
+      const fp = getFingerprint();
+      const res = await fetch('/api/radio/track-likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          track: currentSong.title,
+          artist: currentSong.artist,
+          fingerprint: fp
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setTrackLikes(data.likes);
+        setUserLiked(true);
+      }
+    } catch (err) {
+      console.error('Error liking track:', err);
+    }
+    setLikeLoading(false);
+  };
 
 
   const updateArtistSpotlight = async (artistName: string, trackTitle?: string) => {
@@ -184,28 +184,28 @@ const handleLike = async () => {
   };
 
   useEffect(() => {
-  document.documentElement.setAttribute('dir', 'rtl');
-  fetchNowPlaying();
-  const interval = setInterval(fetchNowPlaying, 10000);
-  return () => clearInterval(interval);
-}, []);
+    document.documentElement.setAttribute('dir', 'rtl');
+    fetchNowPlaying();
+    const interval = setInterval(fetchNowPlaying, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
-// Simulate natural listener fluctuation
-useEffect(() => {
-  const updateListeners = () => {
-    setDisplayListeners(prev => {
-      const change = Math.floor(Math.random() * 7) - 3; // -3 to +3
-      const trendBias = Math.random() > 0.5 ? 1 : -1;
-      let newVal = prev + change + trendBias;
-      if (newVal < 20) newVal = 20 + Math.floor(Math.random() * 5);
-      if (newVal > 45) newVal = 45 - Math.floor(Math.random() * 5);
-      return newVal;
-    });
-  };
-  
-  const interval = setInterval(updateListeners, 20000 + Math.random() * 15000);
-  return () => clearInterval(interval);
-}, []);
+  // Simulate natural listener fluctuation
+  useEffect(() => {
+    const updateListeners = () => {
+      setDisplayListeners(prev => {
+        const change = Math.floor(Math.random() * 7) - 3; // -3 to +3
+        const trendBias = Math.random() > 0.5 ? 1 : -1;
+        let newVal = prev + change + trendBias;
+        if (newVal < 20) newVal = 20 + Math.floor(Math.random() * 5);
+        if (newVal > 45) newVal = 45 - Math.floor(Math.random() * 5);
+        return newVal;
+      });
+    };
+    
+    const interval = setInterval(updateListeners, 20000 + Math.random() * 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     audioRef.current = new Audio(STREAM_URL);
@@ -278,13 +278,13 @@ useEffect(() => {
               <div className="relative w-48 h-48 md:w-56 md:h-56">
                 <img
                   src={(() => {
-  const art = currentSong?.art;
-  const isDefaultArt = !art || 
-    art.includes('/static/img/generic_song') || 
-    (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
-  if (!isDefaultArt) return art;
-  return artistDetails?.image_url || '/images/logo.png';
-})()}
+                    const art = currentSong?.art;
+                    const isDefaultArt = !art || 
+                      art.includes('/static/img/generic_song') || 
+                      (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
+                    if (!isDefaultArt) return art;
+                    return artistDetails?.image_url || '/images/logo.png';
+                  })()}
                   alt="Album Art"
                   className="w-full h-full object-cover rounded-xl border-2 border-white/20 shadow-2xl"
                 />
@@ -317,32 +317,32 @@ useEffect(() => {
                 <p className="text-lg text-gray-300">
                   {currentSong?.artist || 'יוצאים לטראק'}
                 </p>
-{/* Like Button */}
-<div className="flex items-center justify-center md:justify-start mt-3">
-  <button
-    onClick={handleLike}
-    disabled={likeLoading || userLiked}
-    className={`group flex items-center gap-2 px-5 py-2.5 rounded-full transition-all ${
-      userLiked 
-        ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 text-pink-400' 
-        : 'bg-white/5 hover:bg-gradient-to-r hover:from-pink-500/20 hover:to-purple-500/20 border border-white/10 hover:border-pink-500/30 text-gray-400 hover:text-pink-400'
-    }`}
-  >
-    {userLiked ? (
-      <FaHeart className="text-pink-500 text-lg" />
-    ) : (
-      <FaRegHeart className={`text-lg transition-transform ${likeLoading ? 'animate-pulse' : 'group-hover:scale-110'}`} />
-    )}
-    <span className="font-medium">
-      {userLiked ? 'תודה על האהבה!' : 'אהבתי את הטראק'}
-    </span>
-    {trackLikes > 0 && (
-      <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">
-        {trackLikes}
-      </span>
-    )}
-  </button>
-</div>
+                {/* Like Button */}
+                <div className="flex items-center justify-center md:justify-start mt-3">
+                  <button
+                    onClick={handleLike}
+                    disabled={likeLoading || userLiked}
+                    className={`group flex items-center gap-2 px-5 py-2.5 rounded-full transition-all ${
+                      userLiked 
+                        ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 text-pink-400' 
+                        : 'bg-white/5 hover:bg-gradient-to-r hover:from-pink-500/20 hover:to-purple-500/20 border border-white/10 hover:border-pink-500/30 text-gray-400 hover:text-pink-400'
+                    }`}
+                  >
+                    {userLiked ? (
+                      <FaHeart className="text-pink-500 text-lg" />
+                    ) : (
+                      <FaRegHeart className={`text-lg transition-transform ${likeLoading ? 'animate-pulse' : 'group-hover:scale-110'}`} />
+                    )}
+                    <span className="font-medium">
+                      {userLiked ? 'תודה על האהבה!' : 'אהבתי את הטראק'}
+                    </span>
+                    {trackLikes > 0 && (
+                      <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">
+                        {trackLikes}
+                      </span>
+                    )}
+                  </button>
+                </div>
 
               </div>
 
@@ -436,17 +436,17 @@ useEffect(() => {
               </div>
 
               {/* Artist Info */}
-<div className="flex-1 min-w-0 text-center sm:text-right">
-<div className="flex items-center justify-center sm:justify-start gap-3 mb-3">
-  <h4 className="text-2xl font-bold text-white">
-    {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
-  </h4>
-  {artistDetails?.podcast_featured && (
-    <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-amber-500/30 animate-pulse">
-      🎙️ התארח\ה בפרק 
-    </span>
-  )}
-</div>
+              <div className="flex-1 min-w-0 text-center sm:text-right">
+                <div className="flex items-center justify-center sm:justify-start gap-3 mb-3">
+                  <h4 className="text-2xl font-bold text-white">
+                    {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
+                  </h4>
+                  {artistDetails?.podcast_featured && (
+                    <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-amber-500/30 animate-pulse">
+                      🎙️ התארח\ה בפרק 
+                    </span>
+                  )}
+                </div>
                 
                 {/* Artist Bio */}
                 {artistDetails?.bio ? (
@@ -456,9 +456,9 @@ useEffect(() => {
                     </p>
                     {bioIsLong && (
                       <button 
-  onClick={() => setBioExpanded(!bioExpanded)}
-  className="text-purple-400 hover:text-purple-300 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1 transition-colors mx-auto sm:mx-0"
->
+                        onClick={() => setBioExpanded(!bioExpanded)}
+                        className="text-purple-400 hover:text-purple-300 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1 transition-colors mx-auto sm:mx-0"
+                      >
                         {bioExpanded ? (
                           <>הצג פחות <FaChevronUp className="text-xs" /></>
                         ) : (
@@ -496,12 +496,12 @@ useEffect(() => {
                 <div className="flex items-center gap-4">
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-cyan-500/30 flex-shrink-0">
                     <img src={(() => {
-  const art = nextSong.art;
-  const isDefaultArt = !art || 
-    art.includes('/static/img/generic_song') || 
-    (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
-  return isDefaultArt ? '/images/logo.png' : art;
-})()} alt={nextSong.title} className="w-full h-full object-cover" />
+                      const art = nextSong.art;
+                      const isDefaultArt = !art || 
+                        art.includes('/static/img/generic_song') || 
+                        (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
+                      return isDefaultArt ? '/images/logo.png' : art;
+                    })()} alt={nextSong.title} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <span className="text-[10px] font-bold bg-cyan-500 px-2 py-0.5 rounded">NEXT</span>
                     </div>
@@ -532,46 +532,6 @@ useEffect(() => {
                 <p className="text-xs text-gray-400">שלחו טראק לשידור והגיעו לאלפי מאזינים</p>
               </div>
             </Link>
-          </div>
-        </div>
-
-        {/* YouTube CTA Banner - Full Size */}
-        <div className="glass-card rounded-2xl p-6 border-2 border-red-500/30 bg-gradient-to-r from-red-900/20 to-purple-900/20">
-          <div className="flex flex-col lg:flex-row items-center gap-6">
-            <div className="flex-shrink-0">
-              <div className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center shadow-xl shadow-red-500/30">
-                <FaYoutube className="text-white text-4xl" />
-              </div>
-            </div>
-            <div className="flex-1 text-center lg:text-right">
-              <h3 className="text-2xl font-bold text-white mb-2">הצטרפו לערוץ היוטיוב שלנו</h3>
-              <p className="text-gray-300 mb-4">
-                האזינו לרדיו מכל מקום - בבית, בדרכים או בטלפון. צפו בכל הפרקים, תוכן בלעדי והפתעות מיוחדות!
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start text-sm text-gray-400 mb-4">
-                <div className="flex items-center gap-2">
-                  <FaMobileAlt className="text-red-400" />
-                  <span>האזנה בכל מכשיר</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FaHeadphones className="text-red-400" />
-                  <span>פרקים מלאים</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <HiSparkles className="text-red-400" />
-                  <span>תוכן בלעדי</span>
-                </div>
-              </div>
-              <a 
-                href="https://www.youtube.com/@tracktripil?sub_confirmation=1" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 bg-red-600 hover:bg-red-500 px-6 py-3 rounded-xl font-bold text-lg transition transform hover:scale-105 shadow-lg shadow-red-500/30"
-              >
-                <FaYoutube className="text-xl" />
-                הירשמו עכשיו - זה בחינם!
-              </a>
-            </div>
           </div>
         </div>
 

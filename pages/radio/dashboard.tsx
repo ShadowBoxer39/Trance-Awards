@@ -465,14 +465,14 @@ const dismissYTBanner = () => {
 
         <Navigation currentPage="radio" />
 
-        {/* YouTube Reminder Banner */}
+       {/* YouTube Reminder Banner */}
 {showYTBanner && (
   <div className="bg-gradient-to-r from-red-900/30 to-purple-900/30 border-b border-red-500/20">
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <FaYoutube className="text-red-500 text-xl flex-shrink-0" />
         <p className="text-sm text-gray-300">
-          <span className="font-bold text-white">לא לשכוח!</span> הירשמו לערוץ היוטיוב כדי לדעת מתי הטראק שלכם בשידור
+          <span className="font-bold text-white">לא לשכוח!</span> הירשמו לערוץ היוטיוב לצפייה בפרקים ותוכן בלעדי
         </p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
