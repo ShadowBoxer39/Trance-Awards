@@ -188,45 +188,96 @@ export default function RadioPage() {
     setFingerprint(getFingerprint());
     
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const res = await fetch(`/api/radio/listener-profile?user_id=${session.user.id}`);
-        if (res.ok) {
-          const profile = await res.json();
-          if (profile) {
-            setListenerProfile(profile);
-          } else {
-            setIsNewUser(true);
-            setShowProfileModal(true);
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) {
+    setUser(session.user);
+    const res = await fetch(`/api/radio/listener-profile?user_id=${session.user.id}`);
+    if (res.ok) {
+      const profile = await res.json();
+      if (profile) {
+        setListenerProfile(profile);
+      } else {
+        // Check if user exists in artists table
+        const { data: existingArtist } = await supabase
+          .from('artists')
+          .select('name, image_url')
+          .eq('email', session.user.email)
+          .single();
+
+        if (existingArtist) {
+          // Auto-create listener profile from artist data
+          const createRes = await fetch('/api/radio/listener-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: session.user.id,
+              email: session.user.email,
+              nickname: existingArtist.name,
+              avatar_url: existingArtist.image_url || session.user.user_metadata?.avatar_url || '🎵'
+            })
+          });
+          if (createRes.ok) {
+            const newProfile = await createRes.json();
+            setListenerProfile(newProfile);
           }
+        } else {
+          // Truly new user - show profile modal
+          setIsNewUser(true);
+          setShowProfileModal(true);
         }
       }
-    };
-    checkAuth();
+    }
+  }
+};
+checkAuth();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        setUser(session.user);
-        const res = await fetch(`/api/radio/listener-profile?user_id=${session.user.id}`);
-        if (res.ok) {
-          const profile = await res.json();
-          if (profile) {
-            setListenerProfile(profile);
-          } else {
-            setIsNewUser(true);
-            setShowProfileModal(true);
+   const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session?.user) {
+    setUser(session.user);
+    const res = await fetch(`/api/radio/listener-profile?user_id=${session.user.id}`);
+    if (res.ok) {
+      const profile = await res.json();
+      if (profile) {
+        setListenerProfile(profile);
+      } else {
+        // Check if user exists in artists table
+        const { data: existingArtist } = await supabase
+          .from('artists')
+          .select('name, image_url')
+          .eq('email', session.user.email)
+          .single();
+
+        if (existingArtist) {
+          // Auto-create listener profile from artist data
+          const createRes = await fetch('/api/radio/listener-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: session.user.id,
+              email: session.user.email,
+              nickname: existingArtist.name,
+              avatar_url: existingArtist.image_url || session.user.user_metadata?.avatar_url || '🎵'
+            })
+          });
+          if (createRes.ok) {
+            const newProfile = await createRes.json();
+            setListenerProfile(newProfile);
           }
+        } else {
+          setIsNewUser(true);
+          setShowProfileModal(true);
         }
       }
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setListenerProfile(null);
-      }
-    });
+    }
+  }
+  if (event === 'SIGNED_OUT') {
+    setUser(null);
+    setListenerProfile(null);
+  }
+});
 
-    return () => { authListener.subscription.unsubscribe(); };
-  }, []);
+return () => { authListener.subscription.unsubscribe(); };
+}, []);
 
   // Fetch artist details
   const fetchArtistDetails = async (artistName: string, trackTitle?: string): Promise<ArtistDetails | null> => {
