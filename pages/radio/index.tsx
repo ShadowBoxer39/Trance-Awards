@@ -788,19 +788,19 @@ return (
               </div>
             </div>
 
-           {/* Song History */}
+         {/* Song History */}
 {songHistory.length > 0 && (
   <div className="glass-card rounded-2xl p-5 border border-white/5">
     <div className="flex items-center gap-2 mb-4">
       <FaHistory className="text-cyan-400" />
       <h3 className="text-sm font-bold text-white">שודר לאחרונה</h3>
     </div>
-   <div className="flex flex-row-reverse gap-3 overflow-x-auto hide-scrollbar pb-2 px-4" dir="ltr">
-      {songHistory.map((song, i) => (
+    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+      {songHistory.slice(0, 5).map((song, i) => (
         <div
           key={i}
           onClick={() => song.soundcloud && openSoundCloud(song.soundcloud)}
-          className={`flex-shrink-0 w-24 text-right transition-transform duration-200 ${song.soundcloud ? 'cursor-pointer hover:scale-105' : ''}`}
+          className={`text-center transition-transform duration-200 ${song.soundcloud ? 'cursor-pointer hover:scale-105' : ''}`}
         >
           <div className={`relative aspect-square rounded-xl overflow-hidden bg-white/5 mb-2 border border-white/5 transition-colors duration-200 ${song.soundcloud ? 'hover:border-orange-500/50' : ''}`}>
             <img 
@@ -814,8 +814,8 @@ return (
               </div>
             )}
           </div>
-         <p className="text-xs text-white leading-tight line-clamp-2 min-h-[2rem]">{song.title}</p>
-<p className="text-[10px] text-gray-500 truncate">{song.artist}</p>
+          <p className="text-xs text-white leading-tight line-clamp-2">{song.title}</p>
+          <p className="text-[10px] text-gray-500 truncate">{song.artist}</p>
         </div>
       ))}
     </div>
