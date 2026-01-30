@@ -241,40 +241,62 @@ export default function RadioChat({
   };
 
   const sendMessage = async (message: string, isReaction = false) => {
-    if (!message.trim() || sending) return;
-    if (isReaction && !listenerProfile) return;
+  if (!message.trim() || sending) return;
+  if (isReaction && !listenerProfile) return;
 
-    setSending(true);
+  setSending(true);
+  const messageText = message.trim();
 
-    try {
-      const body: any = {
-        message: message.trim(),
-        is_reaction: isReaction
-      };
+  try {
+    const body: any = {
+      message: messageText,
+      is_reaction: isReaction
+    };
 
-      if (listenerProfile) {
-        body.listener_id = listenerProfile.id;
-      } else {
-        body.guest_fingerprint = fingerprint;
-        body.guest_name = guestName;
-      }
-
-      const res = await fetch('/api/radio/chat-messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (res.ok && !isReaction) {
-        setNewMessage('');
-      }
-    } catch (err) {
-      console.error('Failed to send message:', err);
+    if (listenerProfile) {
+      body.listener_id = listenerProfile.id;
+    } else {
+      body.guest_fingerprint = fingerprint;
+      body.guest_name = guestName;
     }
 
-    setSending(false);
-    setShowReactions(false);
-  };
+    const res = await fetch('/api/radio/chat-messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (res.ok) {
+      const newMsg = await res.json();
+      
+      // Optimistically add to local state immediately
+      setMessages(prev => {
+        // Avoid duplicates (in case subscription also catches it)
+        if (prev.some(m => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
+
+      // Show floating reaction if it's a reaction
+      if (isReaction) {
+        const reactionId = `${newMsg.id}-${Date.now()}`;
+        const x = 20 + Math.random() * 60;
+        setFloatingReactions(prev => [...prev, { id: reactionId, emoji: messageText, x }]);
+        setTimeout(() => {
+          setFloatingReactions(prev => prev.filter(r => r.id !== reactionId));
+        }, 2000);
+      }
+
+      if (!isReaction) {
+        setNewMessage('');
+      }
+    }
+  } catch (err) {
+    console.error('Failed to send message:', err);
+  }
+
+  setSending(false);
+  setShowReactions(false);
+};
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
