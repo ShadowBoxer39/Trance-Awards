@@ -33,7 +33,7 @@ interface RadioLeaderboardProps {
 export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {

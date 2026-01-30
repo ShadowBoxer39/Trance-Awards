@@ -537,10 +537,21 @@ if (data.song_history && newTrackTitle !== currentTrackTitle) {
 useEffect(() => {
   const fetchTopTracks = async () => {
     try {
-      const res = await fetch('/api/radio/top-tracks?limit=5');
+      const res = await fetch('/api/radio/top-tracks?limit=10');
       if (res.ok) {
         const data = await res.json();
         setTopTracks(data);
+        
+        // Pre-fetch artist images for top tracks
+        data.forEach(async (track: { artist: string }) => {
+          const cacheKey = track.artist.toLowerCase();
+          if (!artistCacheRef.current.has(cacheKey)) {
+            const details = await fetchArtistDetails(track.artist);
+            if (details) {
+              artistCacheRef.current.set(cacheKey, details);
+            }
+          }
+        });
       }
     } catch (err) {
       console.error('Failed to fetch top tracks:', err);
@@ -1045,51 +1056,81 @@ return (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <RadioLeaderboard currentUserId={listenerProfile?.id} />
               
-              {/* Top Liked Tracks */}
-              {topTracks.length > 0 && (
-                <div className="bg-black/20 rounded-2xl p-4 border border-white/5 overflow-hidden">
-                  <div className="flex items-center gap-2 mb-4">
-                    <FaHeart className="text-pink-500" />
-                    <h3 className="text-sm font-bold text-white">הטראקים האהובים</h3>
-                    <span className="text-xs text-gray-500">Top 5</span>
-                  </div>
-                  <div className="space-y-2">
-                    {topTracks.slice(0, 5).map((track, i) => (
-                      <div 
-                        key={i} 
-                        className={`flex items-center gap-3 p-2 rounded-xl transition-all ${
-                          i === 0 
-                            ? 'bg-gradient-to-r from-yellow-500/10 to-amber-500/5 border border-yellow-500/20' 
-                            : 'bg-white/5 border border-transparent'
-                        }`}
-                      >
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                          i === 0 ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black' :
-                          i === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-black' :
-                          i === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' :
-                          'bg-white/10 text-gray-400'
-                        }`}>
-                          {i + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium leading-tight truncate ${i === 0 ? 'text-yellow-400' : 'text-white'}`}>
-                            {track.track}
-                          </p>
-                          <p className="text-[10px] text-gray-500 truncate">{track.artist}</p>
-                        </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <FaHeart className={`${i === 0 ? 'text-pink-400' : 'text-pink-500/70'} text-xs`} />
-                          <span className={`text-sm font-bold ${i === 0 ? 'text-pink-400' : 'text-white'}`}>
-                            {track.likes}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+           {/* Top Liked Tracks */}
+{topTracks.length > 0 && (
+  <div className="bg-black/20 rounded-2xl p-4 border border-white/5 overflow-hidden">
+    <div className="flex items-center gap-2 mb-4">
+      <FaHeart className="text-pink-500" />
+      <h3 className="text-sm font-bold text-white">הטראקים האהובים</h3>
+      <span className="text-xs text-gray-500">Top 10</span>
+    </div>
+    <div className="space-y-2">
+      {topTracks.slice(0, 10).map((track, i) => {
+        const cachedArtist = artistCacheRef.current.get(track.artist.toLowerCase());
+        const artistImage = cachedArtist?.image_url;
+        
+        return (
+          <div 
+            key={i} 
+          className={`flex items-center gap-3 p-2.5 rounded-xl transition-all border ${
+  i === 0 
+    ? 'bg-gradient-to-r from-yellow-500/20 to-amber-500/10 border-yellow-500/40' 
+    : i === 1
+    ? 'bg-gradient-to-r from-gray-400/20 to-gray-500/10 border-gray-400/40'
+    : i === 2
+    ? 'bg-gradient-to-r from-amber-600/20 to-amber-700/10 border-amber-600/40'
+    : 'bg-white/5 border-white/10'
+}`}
+          >
+            {/* Rank */}
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+              i === 0 ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black' :
+              i === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-black' :
+              i === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' :
+              'bg-white/10 text-gray-400'
+            }`}>
+              {i + 1}
+            </div>
+
+            {/* Artist Image */}
+            <div className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden border ${
+              i === 0 ? 'border-yellow-500/30' :
+              i === 1 ? 'border-gray-400/30' :
+              i === 2 ? 'border-amber-600/30' :
+              'border-white/10'
+            } bg-white/5`}>
+              {artistImage ? (
+                <img src={artistImage} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <FaHeart className="text-pink-500/50 text-xs" />
               )}
             </div>
+
+            {/* Track Info */}
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium leading-tight truncate ${i === 0 ? 'text-yellow-400' : 'text-white'}`}>
+                {track.track}
+              </p>
+              <p className="text-[10px] text-gray-500 truncate">{track.artist}</p>
+            </div>
+
+            {/* Likes */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <FaHeart className={`${i === 0 ? 'text-pink-400' : 'text-pink-500/70'} text-sm`} />
+              <span className={`text-sm font-bold ${i === 0 ? 'text-pink-400' : 'text-white'}`}>
+                {track.likes}
+              </span>
+            </div>
           </div>
+        );
+      })}
+    </div>
+  </div>
+)}
+
+</div>
+</div>
+
 
          {/* RIGHT COLUMN - Login/Chat (1 col on desktop) - DESKTOP ONLY */}
 <div className="hidden lg:flex lg:flex-col lg:col-span-1 gap-6">
