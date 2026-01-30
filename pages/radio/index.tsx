@@ -894,11 +894,14 @@ return (
 
             {/* Chat - MOBILE ONLY */}
             <div className="lg:hidden">
-              <RadioChat
-                listenerProfile={listenerProfile}
-                onLoginClick={handleGoogleLogin}
-                fingerprint={fingerprint}
-              />
+             <RadioChat
+  listenerProfile={listenerProfile}
+  onLoginClick={handleGoogleLogin}
+  fingerprint={fingerprint}
+  currentTrackTitle={currentSong?.title}
+  currentArtist={currentSong?.artist}
+  currentUserId={user?.id}
+/>
             </div>
 
             {/* Leaderboard + Top Tracks Row */}
@@ -1016,11 +1019,14 @@ return (
             )}
 
             {/* Chat */}
-            <RadioChat
-              listenerProfile={listenerProfile}
-              onLoginClick={handleGoogleLogin}
-              fingerprint={fingerprint}
-            />
+           <RadioChat
+  listenerProfile={listenerProfile}
+  onLoginClick={handleGoogleLogin}
+  fingerprint={fingerprint}
+  currentTrackTitle={currentSong?.title}
+  currentArtist={currentSong?.artist}
+  currentUserId={user?.id}
+/>
           </div>
         </div>
 

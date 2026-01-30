@@ -1,13 +1,19 @@
 // components/radio/RadioChat.tsx
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { FaPaperPlane, FaCrown, FaCheck, FaSignInAlt } from 'react-icons/fa';
-import { HiSparkles } from 'react-icons/hi';
+import { FaPaperPlane, FaCrown, FaCheck, FaSignInAlt, FaMicrophone } from 'react-icons/fa';
+import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+// Admin user IDs
+const ADMIN_USER_IDS = [
+  'd26b3cb3-ee66-4a56-b267-9c95becec35e',
+  '79159aff-8cb8-4446-bfe8-a6e6c2d2bc29'
+];
 
 // Hebrew guest name generator
 const HEBREW_ADJECTIVES = [
@@ -19,15 +25,17 @@ const HEBREW_NOUNS = [
   { name: 'ינשוף', emoji: '🦉' },
   { name: 'זאב', emoji: '🐺' },
   { name: 'שועל', emoji: '🦊' },
+  { name: 'חתול', emoji: '🐱' },
   { name: 'נמר', emoji: '🐯' },
   { name: 'אריה', emoji: '🦁' },
+  { name: 'צפרדע', emoji: '🐸' },
   { name: 'פרפר', emoji: '🦋' },
   { name: 'גל', emoji: '🌊' },
   { name: 'להבה', emoji: '🔥' },
   { name: 'ברק', emoji: '⚡' },
   { name: 'ירח', emoji: '🌙' },
   { name: 'כוכב', emoji: '⭐' },
-  { name: 'עננה', emoji: '☁️' },
+  { name: 'ענן', emoji: '☁️' },
   { name: 'צליל', emoji: '🎵' },
   { name: 'קצב', emoji: '🎧' },
   { name: 'הד', emoji: '🔮' },
@@ -43,8 +51,10 @@ interface ChatMessage {
   created_at: string;
   guest_name: string | null;
   guest_fingerprint: string | null;
+  type?: 'system'; // For local "now playing" messages
   listener: {
     id: string;
+    user_id: string;
     nickname: string;
     avatar_url: string;
     total_seconds: number;
@@ -63,6 +73,9 @@ interface RadioChatProps {
   listenerProfile: ListenerProfile | null;
   onLoginClick: () => void;
   fingerprint: string;
+  currentTrackTitle?: string;
+  currentArtist?: string;
+  currentUserId?: string;
 }
 
 // Get listener level based on total seconds
@@ -76,7 +89,6 @@ const getListenerLevel = (totalSeconds: number) => {
 
 // Generate consistent guest name from fingerprint
 const generateGuestName = (fingerprint: string): string => {
-  // Create a simple hash from fingerprint
   let hash = 0;
   for (let i = 0; i < fingerprint.length; i++) {
     hash = ((hash << 5) - hash) + fingerprint.charCodeAt(i);
@@ -93,7 +105,20 @@ const generateGuestName = (fingerprint: string): string => {
   return `${noun.name} ${adj} ${noun.emoji}`;
 };
 
-export default function RadioChat({ listenerProfile, onLoginClick, fingerprint }: RadioChatProps) {
+// Check if user is admin
+const isAdmin = (userId: string | undefined): boolean => {
+  if (!userId) return false;
+  return ADMIN_USER_IDS.includes(userId);
+};
+
+export default function RadioChat({ 
+  listenerProfile, 
+  onLoginClick, 
+  fingerprint,
+  currentTrackTitle,
+  currentArtist,
+  currentUserId
+}: RadioChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -101,8 +126,41 @@ export default function RadioChat({ listenerProfile, onLoginClick, fingerprint }
   const [floatingReactions, setFloatingReactions] = useState<{ id: string; emoji: string; x: number }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previousTrackRef = useRef<string | null>(null);
 
   const guestName = generateGuestName(fingerprint);
+
+  // Handle "Now Playing" system messages
+  useEffect(() => {
+    if (!currentTrackTitle || !currentArtist) return;
+    
+    const trackKey = `${currentTrackTitle}-${currentArtist}`;
+    
+    // Skip if same track or first load
+    if (previousTrackRef.current === null) {
+      previousTrackRef.current = trackKey;
+      return;
+    }
+    
+    if (previousTrackRef.current !== trackKey) {
+      previousTrackRef.current = trackKey;
+      
+      // Insert local system message
+      const systemMessage: ChatMessage = {
+        id: `system-${Date.now()}`,
+        message: `${currentArtist} - ${currentTrackTitle}`,
+        is_reaction: false,
+        created_at: new Date().toISOString(),
+        guest_name: null,
+        guest_fingerprint: null,
+        type: 'system',
+        listener: null
+      };
+      
+      setMessages(prev => [...prev, systemMessage]);
+    }
+  }, [currentTrackTitle, currentArtist]);
 
   // Fetch initial messages
   useEffect(() => {
@@ -132,22 +190,19 @@ export default function RadioChat({ listenerProfile, onLoginClick, fingerprint }
           table: 'radio_chat_messages'
         },
         async (payload) => {
-          // Fetch the full message with listener data
           const res = await fetch(`/api/radio/chat-messages?limit=1`);
           if (res.ok) {
             const data = await res.json();
             const newMsg = data.find((m: ChatMessage) => m.id === payload.new.id);
             if (newMsg) {
               setMessages(prev => {
-                // Avoid duplicates
                 if (prev.some(m => m.id === newMsg.id)) return prev;
                 return [...prev, newMsg];
               });
 
-              // Show floating reaction if it's a reaction
               if (newMsg.is_reaction) {
                 const reactionId = `${newMsg.id}-${Date.now()}`;
-                const x = 20 + Math.random() * 60; // Random horizontal position
+                const x = 20 + Math.random() * 60;
                 setFloatingReactions(prev => [...prev, { id: reactionId, emoji: newMsg.message, x }]);
                 setTimeout(() => {
                   setFloatingReactions(prev => prev.filter(r => r.id !== reactionId));
@@ -164,17 +219,29 @@ export default function RadioChat({ listenerProfile, onLoginClick, fingerprint }
     };
   }, []);
 
- // Auto-scroll to bottom
-useEffect(() => {
-  if (chatContainerRef.current) {
-    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-  }
-}, [messages]);
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // Handle mention click
+  const handleMentionClick = (nickname: string) => {
+    const mention = `@${nickname} `;
+    setNewMessage(prev => prev + mention);
+    inputRef.current?.focus();
+  };
+
+  // Check if message mentions current user
+  const isMentioningCurrentUser = (message: string): boolean => {
+    if (!listenerProfile?.nickname) return false;
+    const mentionPattern = new RegExp(`@${listenerProfile.nickname}\\b`, 'i');
+    return mentionPattern.test(message);
+  };
 
   const sendMessage = async (message: string, isReaction = false) => {
     if (!message.trim() || sending) return;
-
-    // Guests can't send reactions
     if (isReaction && !listenerProfile) return;
 
     setSending(true);
@@ -222,12 +289,13 @@ useEffect(() => {
   };
 
   return (
-<div className="flex flex-col bg-black/20 rounded-2xl border border-white/5 overflow-hidden lg:h-full">     {/* Header */}
+    <div className="flex flex-col bg-black/20 rounded-2xl border border-white/5 overflow-hidden lg:h-full">
+      {/* Header */}
       <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HiSparkles className="text-purple-400" />
           <span className="font-bold text-white text-sm">צ׳אט חי</span>
-          <span className="text-xs text-gray-500">({messages.filter(m => !m.is_reaction).length})</span>
+          <span className="text-xs text-gray-500">({messages.filter(m => !m.is_reaction && m.type !== 'system').length})</span>
         </div>
         {!listenerProfile && (
           <button
@@ -241,10 +309,10 @@ useEffect(() => {
       </div>
 
       {/* Messages */}
-   <div
-  ref={chatContainerRef}
-  className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 relative"
->
+      <div
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 relative"
+      >
         {/* Floating reactions */}
         {floatingReactions.map((reaction) => (
           <div
@@ -263,20 +331,49 @@ useEffect(() => {
           </div>
         ) : (
           messages.filter(m => !m.is_reaction).map((msg) => {
+            // System message (Now Playing)
+            if (msg.type === 'system') {
+              return (
+                <div key={msg.id} className="flex items-center gap-3 py-2 animate-fade-in">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20">
+                    <HiMusicNote className="text-purple-400 text-xs" />
+                    <span className="text-xs text-purple-300 font-medium">עכשיו מתנגן:</span>
+                    <span className="text-xs text-white">{msg.message}</span>
+                  </div>
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+                </div>
+              );
+            }
+
             const isLoggedIn = !!msg.listener;
             const displayName = isLoggedIn ? msg.listener!.nickname : msg.guest_name || 'אורח';
             const avatar = isLoggedIn ? msg.listener!.avatar_url : null;
             const level = isLoggedIn ? getListenerLevel(msg.listener!.total_seconds) : null;
             const isEmojiAvatar = avatar && avatar.length <= 4;
+            const isAdminUser = isLoggedIn && isAdmin(msg.listener!.user_id);
+            const isMentioned = listenerProfile && isMentioningCurrentUser(msg.message);
 
             return (
-              <div key={msg.id} className="flex items-start gap-2 group animate-fade-in">
+              <div 
+                key={msg.id} 
+                className={`flex items-start gap-2 group animate-fade-in rounded-lg transition-all ${
+                  isMentioned 
+                    ? 'bg-amber-500/10 border-r-2 border-amber-500 pr-2 -mr-2' 
+                    : ''
+                }`}
+              >
                 {/* Avatar */}
-                <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden ${
-                  isLoggedIn 
-                    ? 'bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-purple-500/30' 
-                    : 'bg-white/10'
-                }`}>
+                <button
+                  onClick={() => isLoggedIn && handleMentionClick(msg.listener!.nickname)}
+                  className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 ${
+                    isAdminUser
+                      ? 'bg-gradient-to-br from-amber-500/30 to-orange-500/30 border border-amber-500/50'
+                      : isLoggedIn 
+                        ? 'bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-purple-500/30 cursor-pointer' 
+                        : 'bg-white/10'
+                  }`}
+                >
                   {isEmojiAvatar ? (
                     <span className="text-lg">{avatar}</span>
                   ) : avatar ? (
@@ -284,19 +381,32 @@ useEffect(() => {
                   ) : (
                     <span className="text-xs">👤</span>
                   )}
-                </div>
+                </button>
 
                 {/* Message bubble */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className={`text-sm font-medium truncate ${
-                      isLoggedIn 
-                        ? 'bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent' 
-                        : 'text-gray-400'
-                    }`}>
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <button
+                      onClick={() => isLoggedIn && handleMentionClick(msg.listener!.nickname)}
+                      className={`text-sm font-medium truncate hover:underline ${
+                       isAdminUser
+  ? 'text-yellow-300 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)] cursor-pointer font-bold'
+                          : isLoggedIn 
+                            ? 'bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent cursor-pointer' 
+                            : 'text-gray-400'
+                      }`}
+                    >
                       {displayName}
-                    </span>
-                    {isLoggedIn && (
+                    </button>
+                    {isAdminUser && (
+  <>
+    <FaMicrophone className="text-xs text-yellow-400 drop-shadow-[0_0_4px_rgba(250,204,21,0.7)]" title="יוצאים לטראק" />
+    <span className="text-[10px] bg-amber-500 text-black px-2 py-0.5 rounded-full font-bold shadow-lg">
+      יוצאים לטראק
+    </span>
+  </>
+)}
+                    {isLoggedIn && !isAdminUser && (
                       <>
                         <FaCheck className="text-[10px] text-purple-400" title="מאומת" />
                         {level && <span className="text-xs" title={level.title}>{level.badge}</span>}
@@ -358,6 +468,7 @@ useEffect(() => {
 
           {/* Message input */}
           <input
+            ref={inputRef}
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}

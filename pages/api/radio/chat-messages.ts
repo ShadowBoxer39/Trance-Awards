@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         created_at,
         guest_name,
         guest_fingerprint,
-        listener:radio_listeners(id, nickname, avatar_url, total_seconds)
+        listener:radio_listeners(id, user_id, nickname, avatar_url, total_seconds)
       `)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         created_at,
         guest_name,
         guest_fingerprint,
-        listener:radio_listeners(id, nickname, avatar_url, total_seconds)
+      listener:radio_listeners(id, user_id, nickname, avatar_url, total_seconds)
       `)
       .single();
 
