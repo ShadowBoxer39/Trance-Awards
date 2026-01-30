@@ -166,22 +166,29 @@ export default function RadioPage() {
   const [dominantColor, setDominantColor] = useState('147, 51, 234'); // Default purple
   const [glowIntensity, setGlowIntensity] = useState(0.3);
 
-  // Audio reactive glow
-  useEffect(() => {
-    if (!isPlaying) {
-      setGlowIntensity(0.3);
-      return;
-    }
-    
-    const interval = setInterval(() => {
-      // Simulate beat detection with random pulses
-      const intensity = 0.3 + Math.random() * 0.4;
-      setGlowIntensity(intensity);
-    }, 150);
-    
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
+ // Audio reactive glow - disabled on mobile for performance
+useEffect(() => {
+  if (!isPlaying) {
+    setGlowIntensity(0.3);
+    return;
+  }
+  
+  // Check if mobile
+  const isMobile = window.innerWidth < 768;
+  
+  if (isMobile) {
+    // Static glow on mobile for better performance
+    setGlowIntensity(0.5);
+    return;
+  }
+  
+  const interval = setInterval(() => {
+    const intensity = 0.3 + Math.random() * 0.4;
+    setGlowIntensity(intensity);
+  }, 150);
+  
+  return () => clearInterval(interval);
+}, [isPlaying]);
   // Initialize
   useEffect(() => {
     document.documentElement.setAttribute('dir', 'rtl');
@@ -797,27 +804,27 @@ return (
     </div>
     <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
       {songHistory.slice(0, 5).map((song, i) => (
-        <div
-          key={i}
-          onClick={() => song.soundcloud && openSoundCloud(song.soundcloud)}
-          className={`text-center transition-transform duration-200 ${song.soundcloud ? 'cursor-pointer hover:scale-105' : ''}`}
-        >
-          <div className={`relative aspect-square rounded-xl overflow-hidden bg-white/5 mb-2 border border-white/5 transition-colors duration-200 ${song.soundcloud ? 'hover:border-orange-500/50' : ''}`}>
-            <img 
-              src={song.artistImage || song.art || '/images/logo.png'} 
-              alt={song.title}
-              className="w-full h-full object-cover"
-            />
-            {song.soundcloud && (
-              <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                <FaSoundcloud className="text-orange-500 text-2xl" />
-              </div>
-            )}
-          </div>
-          <p className="text-xs text-white leading-tight line-clamp-2">{song.title}</p>
-          <p className="text-[10px] text-gray-500 truncate">{song.artist}</p>
+  <div
+    key={i}
+    onClick={() => song.soundcloud && openSoundCloud(song.soundcloud)}
+    className={`text-center transition-transform duration-200 ${song.soundcloud ? 'cursor-pointer active:scale-95' : ''}`}
+  >
+    <div className="relative aspect-square rounded-xl overflow-hidden bg-white/5 mb-2 border border-white/5">
+      <img 
+        src={song.artistImage || song.art || '/images/logo.png'} 
+        alt={song.title}
+        className="w-full h-full object-cover"
+      />
+      {song.soundcloud && (
+        <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
+          <FaSoundcloud className="text-white text-xs" />
         </div>
-      ))}
+      )}
+    </div>
+    <p className="text-xs text-white leading-tight line-clamp-2">{song.title}</p>
+    <p className="text-[10px] text-gray-500 truncate">{song.artist}</p>
+  </div>
+))}
     </div>
   </div>
 )}
