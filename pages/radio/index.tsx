@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';
 import RadioChat from '@/components/radio/RadioChat';
+import { FaWhatsapp, FaLink, FaShareAlt } from 'react-icons/fa';
 import RadioLeaderboard from '@/components/radio/RadioLeaderboard';
 import ListenerProfileModal from '@/components/radio/ListenerProfileModal';
 import ListeningTimeTracker from '@/components/radio/ListeningTimeTracker';
-import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUpload, FaInstagram, FaSoundcloud, FaChevronDown, FaChevronUp, FaHeart, FaRegHeart, FaHistory, FaCrown, FaForward } from 'react-icons/fa';
+import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUpload, FaInstagram, FaSoundcloud, FaChevronDown, FaChevronUp, FaHeart, FaRegHeart, FaHistory, FaCrown, FaForward, FaCheck } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
 const supabase = createClient(
@@ -138,6 +139,128 @@ const Visualizer = ({ isPlaying, color }: { isPlaying: boolean; color: string })
     </div>
   );
 };
+
+// Share Button Component
+const ShareButton = ({ trackTitle, artist }: { trackTitle?: string; artist?: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  const shareUrl = 'https://tracktrip.co.il/radio';
+  
+  const shareText = trackTitle && artist
+    ? `🎧 מאזין עכשיו לרדיו יוצאים לטראק!\n🎵 מתנגן: ${artist} - ${trackTitle}\nהצטרפו אליי ▶️`
+    : `🎧 בואו להאזין לרדיו יוצאים לטראק!\nטראנס ישראלי 24/7 🔥\nהצטרפו ▶️`;
+
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareText + ' ' + shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'רדיו יוצאים לטראק',
+          text: shareText,
+          url: shareUrl
+        });
+        setIsOpen(false);
+      } catch (err) {
+        // User cancelled or error
+      }
+    }
+  };
+
+  const supportsNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+
+  return (
+    <div className="relative" ref={popoverRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-gray-300 hover:text-white transition-all"
+      >
+        <FaShareAlt className="text-sm" />
+        <span className="font-medium text-sm">שתפו</span>
+      </button>
+
+      {/* Popover */}
+{isOpen && (
+  <div className="absolute bottom-full mb-2 right-0 bg-[#1a1a2e]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl shadow-black/50 z-[100] min-w-[180px] animate-fade-in">
+         {/* WhatsApp */}
+<a
+  href={whatsappUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  onClick={() => setIsOpen(false)}
+  className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group"
+>
+  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+    <FaWhatsapp className="text-white text-lg" />
+  </div>
+  <span className="text-white font-medium text-sm">WhatsApp</span>
+</a>
+
+          {/* Copy Link */}
+          <button
+            onClick={handleCopy}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group"
+          >
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all group-hover:scale-110 ${
+              copied ? 'bg-green-500' : 'bg-white/10'
+            }`}>
+              {copied ? (
+                <FaCheck className="text-white text-sm" />
+              ) : (
+                <FaLink className="text-gray-300 text-sm" />
+              )}
+            </div>
+            <span className={`font-medium text-sm ${copied ? 'text-green-400' : 'text-white'}`}>
+              {copied ? 'הועתק! ✓' : 'העתקת קישור'}
+            </span>
+          </button>
+
+          {/* Native Share (mobile) */}
+          {supportsNativeShare && (
+            <button
+              onClick={handleNativeShare}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all group"
+            >
+              <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <FaShareAlt className="text-purple-400 text-sm" />
+              </div>
+              <span className="text-white font-medium text-sm">שיתוף</span>
+            </button>
+          )}
+
+          {/* Little arrow indicator */}
+<div className="absolute -bottom-2 right-6 w-4 h-4 bg-[#1a1a2e]/95 border-b border-l border-white/10 rotate-[-45deg]" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 export default function RadioPage() {
   // Auth & Profile state
@@ -628,25 +751,26 @@ return (
                 {currentSong?.artist || 'יוצאים לטראק'}
               </p>
 
-              {/* Like + Visualizer Row */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <button
-                  onClick={handleLike}
-                  disabled={likeLoading || userLiked}
-                  className={`group flex items-center gap-2 px-5 py-2.5 rounded-full transition-all ${
-                    userLiked 
-                      ? 'bg-pink-500/20 border border-pink-500/30 text-pink-400' 
-                      : 'bg-white/5 hover:bg-pink-500/20 border border-white/10 hover:border-pink-500/30 text-gray-400 hover:text-pink-400'
-                  }`}
-                >
-                  {userLiked ? <FaHeart className="text-pink-500" /> : <FaRegHeart className={likeLoading ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'} />}
-                  <span className="font-medium text-sm">{userLiked ? 'אהבת!' : 'אהבתי'}</span>
-                  {trackLikes > 0 && <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">{trackLikes}</span>}
-                </button>
-                
-                <Visualizer isPlaying={isPlaying} color={dominantColor} />
-              </div>
+             {/* Like + Share + Visualizer Row */}
+<div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+  <button
+    onClick={handleLike}
+    disabled={likeLoading || userLiked}
+    className={`group flex items-center gap-2 px-5 py-2.5 rounded-full transition-all ${
+      userLiked 
+        ? 'bg-pink-500/20 border border-pink-500/30 text-pink-400' 
+        : 'bg-white/5 hover:bg-pink-500/20 border border-white/10 hover:border-pink-500/30 text-gray-400 hover:text-pink-400'
+    }`}
+  >
+    {userLiked ? <FaHeart className="text-pink-500" /> : <FaRegHeart className={likeLoading ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'} />}
+    <span className="font-medium text-sm">{userLiked ? 'אהבת!' : 'אהבתי'}</span>
+    {trackLikes > 0 && <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">{trackLikes}</span>}
+  </button>
 
+  <ShareButton trackTitle={currentSong?.title} artist={currentSong?.artist} />
+  
+  <Visualizer isPlaying={isPlaying} color={dominantColor} />
+</div>
               {/* Volume */}
               <div className="flex items-center gap-3 mt-4 max-w-xs mx-auto lg:mx-0">
                 <button onClick={() => setIsMuted(!isMuted)} className="text-gray-400 hover:text-white transition">
@@ -760,8 +884,8 @@ return (
                       {artistDetails?.name || currentSong?.artist || 'יוצאים לטראק'}
                     </h4>
                     {artistDetails?.podcast_featured && (
-                      <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        🎙️ פודקאסט
+                      <span className="bg-gradient-to-r from-amber-500 to-orange-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        🎙️ התארח בפודקאסט
                       </span>
                     )}
                   </div>
