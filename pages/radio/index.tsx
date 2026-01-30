@@ -288,6 +288,7 @@ export default function RadioPage() {
   const [topTracks, setTopTracks] = useState<{track: string; artist: string; likes: number}[]>([]);
   const [dominantColor, setDominantColor] = useState('147, 51, 234'); // Default purple
   const [glowIntensity, setGlowIntensity] = useState(0.3);
+  const artistCacheRef = useRef<Map<string, ArtistDetails | null>>(new Map());
 
  // Audio reactive glow - disabled on mobile for performance
 useEffect(() => {
@@ -386,23 +387,35 @@ checkAuth();
 
   // Fetch artist details
   const fetchArtistDetails = async (artistName: string, trackTitle?: string): Promise<ArtistDetails | null> => {
-    try {
-      if (!artistName || artistName === 'Track Trip Radio' || artistName === 'Unknown Artist') {
-        return null;
-      }
-      let url = '/api/radio/get-artist-details?name=' + encodeURIComponent(artistName);
-      if (trackTitle) {
-        url += '&track=' + encodeURIComponent(trackTitle);
-      }
-      const res = await fetch(url);
-      if (res.ok) {
-        return await res.json();
-      }
-      return null;
-    } catch {
+  try {
+    if (!artistName || artistName === 'Track Trip Radio' || artistName === 'Unknown Artist') {
       return null;
     }
-  };
+    
+    // Check cache first (only for calls without trackTitle, since track info varies)
+    const cacheKey = artistName.toLowerCase();
+    if (!trackTitle && artistCacheRef.current.has(cacheKey)) {
+      return artistCacheRef.current.get(cacheKey) || null;
+    }
+    
+    let url = '/api/radio/get-artist-details?name=' + encodeURIComponent(artistName);
+    if (trackTitle) {
+      url += '&track=' + encodeURIComponent(trackTitle);
+    }
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      // Cache the result (without track-specific info)
+      if (!trackTitle) {
+        artistCacheRef.current.set(cacheKey, data);
+      }
+      return data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
 
   const updateArtistSpotlight = async (artistName: string, trackTitle?: string) => {
     const details = await fetchArtistDetails(artistName, trackTitle);
@@ -490,22 +503,22 @@ checkAuth();
           setNextArtistDetails(nextDetails);
         }
         
-        // Update song history with artist images
-        if (data.song_history) {
-          const historyWithImages: HistoryTrack[] = await Promise.all(
-            data.song_history.slice(0, 5).map(async (h: any) => {
-              const details = await fetchArtistDetails(h.song.artist);
-              return {
-                title: h.song.title,
-                artist: h.song.artist,
-                art: h.song.art,
-                artistImage: details?.image_url || h.song.art,
-                soundcloud: details?.soundcloud || null
-              };
-            })
-          );
-          setSongHistory(historyWithImages);
-        }
+       // Update song history with artist images (only on track change)
+if (data.song_history && newTrackTitle !== currentTrackTitle) {
+  const historyWithImages: HistoryTrack[] = await Promise.all(
+    data.song_history.slice(0, 5).map(async (h: any) => {
+      const details = await fetchArtistDetails(h.song.artist);
+      return {
+        title: h.song.title,
+        artist: h.song.artist,
+        art: h.song.art,
+        artistImage: details?.image_url || h.song.art,
+        soundcloud: details?.soundcloud || null
+      };
+    })
+  );
+  setSongHistory(historyWithImages);
+}
         
         setNowPlaying(data);
       }
