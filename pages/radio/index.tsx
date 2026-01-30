@@ -692,11 +692,11 @@ return (
           </div>
         </div>
 
-        {/* ========== TWO COLUMN LAYOUT ========== */}
-        <div className="grid lg:grid-cols-5 gap-6 mb-6">
+      {/* ========== TWO COLUMN LAYOUT ========== */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-6">
           
-          {/* LEFT COLUMN - Artist + History (3 cols) */}
-          <div className="lg:col-span-3 space-y-6">
+          {/* LEFT COLUMN - Artist + History (2 cols on desktop) */}
+          <div className="lg:col-span-2 space-y-6">
             
             {/* Artist Spotlight */}
             <div 
@@ -795,43 +795,164 @@ return (
               </div>
             </div>
 
-         {/* Song History */}
-{songHistory.length > 0 && (
-  <div className="glass-card rounded-2xl p-5 border border-white/5">
-    <div className="flex items-center gap-2 mb-4">
-      <FaHistory className="text-cyan-400" />
-      <h3 className="text-sm font-bold text-white">שודר לאחרונה</h3>
-    </div>
-    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-      {songHistory.slice(0, 5).map((song, i) => (
-  <div
-    key={i}
-    onClick={() => song.soundcloud && openSoundCloud(song.soundcloud)}
-    className={`text-center transition-transform duration-200 ${song.soundcloud ? 'cursor-pointer active:scale-95' : ''}`}
-  >
-    <div className="relative aspect-square rounded-xl overflow-hidden bg-white/5 mb-2 border border-white/5">
-      <img 
-        src={song.artistImage || song.art || '/images/logo.png'} 
-        alt={song.title}
-        className="w-full h-full object-cover"
-      />
-      {song.soundcloud && (
-        <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
-          <FaSoundcloud className="text-white text-xs" />
-        </div>
-      )}
-    </div>
-    <p className="text-xs text-white leading-tight line-clamp-2">{song.title}</p>
-    <p className="text-[10px] text-gray-500 truncate">{song.artist}</p>
-  </div>
-))}
-    </div>
-  </div>
-)}
-  </div>
+            {/* Song History */}
+            {songHistory.length > 0 && (
+              <div className="glass-card rounded-2xl p-5 border border-white/5">
+                <div className="flex items-center gap-2 mb-4">
+                  <FaHistory className="text-cyan-400" />
+                  <h3 className="text-sm font-bold text-white">שודר לאחרונה</h3>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {songHistory.slice(0, 5).map((song, i) => (
+                    <div
+                      key={i}
+                      onClick={() => song.soundcloud && openSoundCloud(song.soundcloud)}
+                      className={`text-center transition-transform duration-200 ${song.soundcloud ? 'cursor-pointer active:scale-95' : ''}`}
+                    >
+                      <div className="relative aspect-square rounded-xl overflow-hidden bg-white/5 mb-2 border border-white/5">
+                        <img 
+                          src={song.artistImage || song.art || '/images/logo.png'} 
+                          alt={song.title}
+                          className="w-full h-full object-cover"
+                        />
+                        {song.soundcloud && (
+                          <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
+                            <FaSoundcloud className="text-white text-xs" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-white leading-tight line-clamp-2">{song.title}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{song.artist}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          {/* RIGHT COLUMN - Chat + Leaderboard (2 cols) */}
-          <div className="lg:col-span-2 space-y-6">
+            {/* Login/User Card - MOBILE ONLY */}
+            <div className="lg:hidden">
+              {!user ? (
+                <div 
+                  className="glass-card rounded-2xl p-4 border"
+                  style={{ 
+                    borderColor: `rgba(${dominantColor}, 0.3)`,
+                    background: `linear-gradient(135deg, rgba(${dominantColor}, 0.1), rgba(${dominantColor}, 0.05))`
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                      <FaCrown className="text-yellow-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-bold text-white mb-1">הצטרפו לקהילה!</h4>
+                      <p className="text-xs text-gray-400 mb-3">שם צבעוני, אימוג׳י בצ׳אט וטבלת המאזינים</p>
+                      <button
+                        onClick={handleGoogleLogin}
+                        className="w-full bg-white hover:bg-gray-100 text-gray-900 font-medium py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm"
+                      >
+                        <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+                        התחברות עם Google
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : listenerProfile && (
+                <div className="glass-card rounded-2xl p-4 border border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-12 h-12 rounded-full border-2 flex items-center justify-center overflow-hidden"
+                      style={{ 
+                        borderColor: `rgba(${dominantColor}, 0.5)`,
+                        background: `linear-gradient(135deg, rgba(${dominantColor}, 0.3), rgba(${dominantColor}, 0.1))`
+                      }}
+                    >
+                      {listenerProfile.avatar_url.length <= 4 ? (
+                        <span className="text-2xl">{listenerProfile.avatar_url}</span>
+                      ) : (
+                        <img src={listenerProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p 
+                        className="text-sm font-bold truncate"
+                        style={{ color: `rgb(${dominantColor})` }}
+                      >
+                        {listenerProfile.nickname}
+                      </p>
+                      <p className="text-xs text-gray-500">{Math.floor(listenerProfile.total_seconds / 3600)} שעות האזנה</p>
+                    </div>
+                    <button
+                      onClick={() => { setIsNewUser(false); setShowProfileModal(true); }}
+                      className="text-xs text-gray-400 hover:text-white transition"
+                    >
+                      עריכה
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Chat - MOBILE ONLY */}
+            <div className="lg:hidden">
+              <RadioChat
+                listenerProfile={listenerProfile}
+                onLoginClick={handleGoogleLogin}
+                fingerprint={fingerprint}
+              />
+            </div>
+
+            {/* Leaderboard + Top Tracks Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <RadioLeaderboard currentUserId={listenerProfile?.id} />
+              
+              {/* Top Liked Tracks */}
+              {topTracks.length > 0 && (
+                <div className="bg-black/20 rounded-2xl p-4 border border-white/5 overflow-hidden">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FaHeart className="text-pink-500" />
+                    <h3 className="text-sm font-bold text-white">הטראקים האהובים</h3>
+                    <span className="text-xs text-gray-500">Top 5</span>
+                  </div>
+                  <div className="space-y-2">
+                    {topTracks.slice(0, 5).map((track, i) => (
+                      <div 
+                        key={i} 
+                        className={`flex items-center gap-3 p-2 rounded-xl transition-all ${
+                          i === 0 
+                            ? 'bg-gradient-to-r from-yellow-500/10 to-amber-500/5 border border-yellow-500/20' 
+                            : 'bg-white/5 border border-transparent'
+                        }`}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                          i === 0 ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black' :
+                          i === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-black' :
+                          i === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' :
+                          'bg-white/10 text-gray-400'
+                        }`}>
+                          {i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium leading-tight truncate ${i === 0 ? 'text-yellow-400' : 'text-white'}`}>
+                            {track.track}
+                          </p>
+                          <p className="text-[10px] text-gray-500 truncate">{track.artist}</p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <FaHeart className={`${i === 0 ? 'text-pink-400' : 'text-pink-500/70'} text-xs`} />
+                          <span className={`text-sm font-bold ${i === 0 ? 'text-pink-400' : 'text-white'}`}>
+                            {track.likes}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+         {/* RIGHT COLUMN - Login/Chat (1 col on desktop) - DESKTOP ONLY */}
+<div className="hidden lg:flex lg:flex-col lg:col-span-1 gap-6">
             
             {/* Login prompt OR User card */}
             {!user ? (
@@ -894,73 +1015,17 @@ return (
               </div>
             )}
 
-            {/* Chat + Leaderboard side by side on mobile, stacked on desktop */}
-            <div className="grid grid-cols-1 gap-6">
-              <RadioChat
-                listenerProfile={listenerProfile}
-                onLoginClick={handleGoogleLogin}
-                fingerprint={fingerprint}
-              />
-              <RadioLeaderboard currentUserId={listenerProfile?.id} />
-            </div>
+            {/* Chat */}
+            <RadioChat
+              listenerProfile={listenerProfile}
+              onLoginClick={handleGoogleLogin}
+              fingerprint={fingerprint}
+            />
           </div>
         </div>
 
-  {/* Top Liked Tracks */}
-{topTracks.length > 0 && (
-  <div 
-    className="glass-card rounded-2xl p-5 border mb-6"
-    style={{ borderColor: `rgba(${dominantColor}, 0.2)` }}
-  >
-    <div className="flex items-center gap-2 mb-4">
-      <FaHeart className="text-pink-500" />
-      <h3 className="text-sm font-bold text-white">הטראקים האהובים</h3>
-      <span className="text-xs text-gray-500">Top 5</span>
-    </div>
-    <div className="space-y-3">
-      {topTracks.map((track, i) => (
-        <div 
-          key={i} 
-          className={`flex items-center gap-4 p-3 rounded-xl transition-all ${
-            i === 0 
-              ? 'bg-gradient-to-r from-yellow-500/10 to-amber-500/5 border border-yellow-500/20' 
-              : 'bg-white/5 hover:bg-white/10 border border-transparent'
-          }`}
-        >
-          {/* Rank */}
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-            i === 0 ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black' :
-            i === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-black' :
-            i === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' :
-            'bg-white/10 text-gray-400'
-          }`}>
-            {i + 1}
-          </div>
-          
-          {/* Track info */}
-          <div className="flex-1 min-w-0">
-            <p className={`font-medium leading-tight line-clamp-1 ${i === 0 ? 'text-yellow-400' : 'text-white'}`}>
-              {track.track}
-            </p>
-            <p className="text-xs text-gray-500 truncate mt-0.5">{track.artist}</p>
-          </div>
-          
-          {/* Likes - emphasized */}
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0 ${
-            i === 0 
-              ? 'bg-pink-500/20 border border-pink-500/30' 
-              : 'bg-white/5'
-          }`}>
-            <FaHeart className={`${i === 0 ? 'text-pink-400 text-base' : 'text-pink-500/70 text-sm'}`} />
-            <span className={`font-bold ${i === 0 ? 'text-pink-400 text-lg' : 'text-white text-sm'}`}>
-              {track.likes}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+        {/* ========== ARTIST CTA (Full Width Banner) ========== */}
+
 
         {/* ========== ARTIST CTA (Full Width Banner) ========== */}
         <Link 

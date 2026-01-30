@@ -1,6 +1,6 @@
 // components/radio/RadioLeaderboard.tsx
 import { useState, useEffect } from 'react';
-import { FaTrophy, FaCrown, FaHeadphones } from 'react-icons/fa';
+import { FaTrophy, FaCrown, FaHeadphones, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 interface LeaderboardEntry {
   id: string;
@@ -9,13 +9,12 @@ interface LeaderboardEntry {
   total_seconds: number;
 }
 
-// Same level function as chat - keep in sync!
 const getListenerLevel = (totalSeconds: number) => {
   const hours = totalSeconds / 3600;
-  if (hours >= 100) return { badge: '💎', title: 'אגדה', color: 'from-cyan-400 to-blue-500' };
-  if (hours >= 50) return { badge: '🥇', title: 'סופרפאן', color: 'from-yellow-400 to-amber-500' };
-  if (hours >= 10) return { badge: '🥈', title: 'סבבה', color: 'from-gray-300 to-gray-400' };
-  return { badge: '🥉', title: 'חדש/ה', color: 'from-amber-600 to-amber-700' };
+  if (hours >= 50) return { badge: '💎', title: 'אין טראק שלא שמע', color: 'from-cyan-400 to-blue-500' };
+  if (hours >= 20) return { badge: '🥇', title: 'מכור לקיק באס', color: 'from-yellow-400 to-amber-500' };
+  if (hours >= 5) return { badge: '🥈', title: 'טראנסאווי אמיתי', color: 'from-gray-300 to-gray-400' };
+  return { badge: '🥉', title: 'חדש פה', color: 'from-amber-600 to-amber-700' };
 };
 
 const formatHours = (totalSeconds: number): string => {
@@ -34,6 +33,7 @@ interface RadioLeaderboardProps {
 export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -50,8 +50,6 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
     };
 
     fetchLeaderboard();
-    
-    // Refresh every 5 minutes
     const interval = setInterval(fetchLeaderboard, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
@@ -90,7 +88,7 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
           <span className="font-bold text-white text-sm">טבלת המאזינים</span>
         </div>
         <div className="space-y-2">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(3)].map((_, i) => (
             <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
           ))}
         </div>
@@ -100,7 +98,7 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
 
   if (leaderboard.length === 0) {
     return (
-     <div className="bg-black/20 rounded-2xl border border-white/5 p-4 overflow-hidden">
+      <div className="bg-black/20 rounded-2xl border border-white/5 p-4 overflow-hidden">
         <div className="flex items-center gap-2 mb-4">
           <FaTrophy className="text-yellow-500" />
           <span className="font-bold text-white text-sm">טבלת המאזינים</span>
@@ -114,18 +112,22 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
     );
   }
 
+  // Show top 3 by default, all 10 when expanded
+  const displayedEntries = expanded ? leaderboard : leaderboard.slice(0, 3);
+  const hasMore = leaderboard.length > 3;
+
   return (
     <div className="bg-black/20 rounded-2xl border border-white/5 p-4 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <FaTrophy className="text-yellow-500" />
         <span className="font-bold text-white text-sm">טבלת המאזינים</span>
-        <span className="text-xs text-gray-500">Top 10</span>
+        <span className="text-xs text-gray-500">Top {expanded ? 10 : 3}</span>
       </div>
 
       {/* Leaderboard list */}
       <div className="space-y-2">
-        {leaderboard.map((entry, index) => {
+        {displayedEntries.map((entry, index) => {
           const level = getListenerLevel(entry.total_seconds);
           const isCurrentUser = currentUserId === entry.id;
           const isEmojiAvatar = entry.avatar_url && entry.avatar_url.length <= 4;
@@ -133,7 +135,7 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
           return (
             <div
               key={entry.id}
-             className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-xl border transition overflow-hidden ${getRankStyle(index)} ${
+              className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-xl border transition overflow-hidden ${getRankStyle(index)} ${
                 isCurrentUser ? 'ring-2 ring-purple-500/50' : ''
               }`}
             >
@@ -167,16 +169,36 @@ export default function RadioLeaderboard({ currentUserId }: RadioLeaderboardProp
               </div>
 
               {/* Hours */}
-<div className="flex-shrink-0 w-[65px]">
-  <p className="text-xs sm:text-sm font-bold text-white whitespace-nowrap text-center">{formatHours(entry.total_seconds)}</p>
-</div>
+              <div className="flex-shrink-0 w-[65px]">
+                <p className="text-xs sm:text-sm font-bold text-white whitespace-nowrap text-center">{formatHours(entry.total_seconds)}</p>
+              </div>
             </div>
           );
         })}
       </div>
 
+      {/* Expand/Collapse button */}
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-full mt-3 py-2 text-xs text-gray-400 hover:text-white transition flex items-center justify-center gap-1 bg-white/5 hover:bg-white/10 rounded-xl"
+        >
+          {expanded ? (
+            <>
+              <FaChevronUp className="text-[10px]" />
+              <span>הצג פחות</span>
+            </>
+          ) : (
+            <>
+              <FaChevronDown className="text-[10px]" />
+              <span>הצג עוד ({leaderboard.length - 3})</span>
+            </>
+          )}
+        </button>
+      )}
+
       {/* Footer hint */}
-      <div className="mt-4 pt-3 border-t border-white/5 text-center">
+      <div className="mt-3 pt-3 border-t border-white/5 text-center">
         <p className="text-[10px] text-gray-500">
           🎧 האזינו כדי לעלות בדירוג!
         </p>

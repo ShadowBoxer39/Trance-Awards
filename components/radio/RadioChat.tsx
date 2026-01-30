@@ -222,8 +222,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-black/20 rounded-2xl border border-white/5 overflow-hidden">
-      {/* Header */}
+<div className="flex flex-col bg-black/20 rounded-2xl border border-white/5 overflow-hidden h-full lg:flex-1">     {/* Header */}
       <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HiSparkles className="text-purple-400" />
@@ -242,11 +241,11 @@ useEffect(() => {
       </div>
 
       {/* Messages */}
-      <div
-        ref={chatContainerRef}
-      className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 relative"
-style={{ minHeight: '250px', maxHeight: '350px' }}
-      >
+    <div
+  ref={chatContainerRef}
+  className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 relative"
+  style={{ minHeight: '200px', maxHeight: '400px', height: '400px' }}
+>
         {/* Floating reactions */}
         {floatingReactions.map((reaction) => (
           <div
