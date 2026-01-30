@@ -521,28 +521,41 @@ export default function RadioChat({
       </div>
 
       {/* CSS for floating reactions */}
-      <style jsx>{`
-        @keyframes float-up {
-          0% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-100px) scale(1.5);
-          }
-        }
-        .animate-float-up {
-          animation: float-up 2s ease-out forwards;
-        }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
-        }
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+     <style jsx>{`
+  @keyframes float-up {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-100px) scale(1.5);
+    }
+  }
+  .animate-float-up {
+    animation: float-up 2s ease-out forwards;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  div::-webkit-scrollbar {
+    width: 6px;
+  }
+  div::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  div::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 3px;
+  }
+  div::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.5);
+  }
+`}</style>
     </div>
   );
 }
