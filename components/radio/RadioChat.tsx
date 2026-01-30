@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import { FaPaperPlane, FaCrown, FaCheck, FaSignInAlt, FaMicrophone } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
+
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -51,13 +53,14 @@ interface ChatMessage {
   created_at: string;
   guest_name: string | null;
   guest_fingerprint: string | null;
-  type?: 'system'; // For local "now playing" messages
+  type?: 'system';
   listener: {
     id: string;
     user_id: string;
     nickname: string;
     avatar_url: string;
     total_seconds: number;
+    is_artist: boolean;
   } | null;
 }
 
@@ -374,6 +377,7 @@ export default function RadioChat({
             const level = isLoggedIn ? getListenerLevel(msg.listener!.total_seconds) : null;
             const isEmojiAvatar = avatar && avatar.length <= 4;
             const isAdminUser = isLoggedIn && isAdmin(msg.listener!.user_id);
+            const isArtistUser = isLoggedIn && !isAdminUser && msg.listener!.is_artist;
             const isMentioned = listenerProfile && isMentioningCurrentUser(msg.message);
 
             return (
@@ -427,6 +431,12 @@ export default function RadioChat({
       יוצאים לטראק
     </span>
   </>
+)}
+
+{isArtistUser && (
+  <span className="text-[10px] bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full font-bold">
+    אמן
+  </span>
 )}
                     {isLoggedIn && !isAdminUser && (
                       <>
