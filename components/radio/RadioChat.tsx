@@ -314,8 +314,7 @@ export default function RadioChat({
   };
 
   return (
-    <div className="flex flex-col bg-black/20 rounded-2xl border border-white/5 overflow-hidden lg:h-full">
-      {/* Header */}
+<div className="flex flex-col bg-black/20 rounded-2xl border border-white/5 overflow-hidden h-[600px] lg:h-[900px]">      {/* Header */}
       <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HiSparkles className="text-purple-400" />
