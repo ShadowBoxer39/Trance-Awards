@@ -127,12 +127,24 @@ export default function RadioChat({
   const [sending, setSending] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [floatingReactions, setFloatingReactions] = useState<{ id: string; emoji: string; x: number }[]>([]);
+  const [emojiShower, setEmojiShower] = useState<{ id: string; emoji: string; x: number; y: number; delay: number }[]>([]);
+  const [reactionCooldown, setReactionCooldown] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const previousTrackRef = useRef<string | null>(null);
 
   const guestName = generateGuestName(fingerprint);
+
+  // Cooldown timer countdown
+  useEffect(() => {
+    if (reactionCooldown > 0) {
+      const timer = setInterval(() => {
+        setReactionCooldown(prev => Math.max(0, prev - 1));
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [reactionCooldown]);
 
   // Handle "Now Playing" system messages
   useEffect(() => {
@@ -198,15 +210,10 @@ export default function RadioChat({
             const newMessages = data.filter((m: ChatMessage) => !existingIds.has(m.id));
 
             if (newMessages.length > 0) {
-              // Handle reactions from polling
+              // Handle reactions from polling - create emoji shower
               newMessages.forEach((msg: ChatMessage) => {
                 if (msg.is_reaction) {
-                  const reactionId = `${msg.id}-${Date.now()}`;
-                  const x = 20 + Math.random() * 60;
-                  setFloatingReactions(prev => [...prev, { id: reactionId, emoji: msg.message, x }]);
-                  setTimeout(() => {
-                    setFloatingReactions(prev => prev.filter(r => r.id !== reactionId));
-                  }, 2000);
+                  createEmojiShower(msg.message);
                 }
               });
               return [...prev, ...newMessages];
@@ -244,12 +251,7 @@ export default function RadioChat({
                     });
 
                     if (newMsg.is_reaction) {
-                      const reactionId = `${newMsg.id}-${Date.now()}`;
-                      const x = 20 + Math.random() * 60;
-                      setFloatingReactions(prev => [...prev, { id: reactionId, emoji: newMsg.message, x }]);
-                      setTimeout(() => {
-                        setFloatingReactions(prev => prev.filter(r => r.id !== reactionId));
-                      }, 2000);
+                      createEmojiShower(newMsg.message);
                     }
                   }
                 }
@@ -317,9 +319,39 @@ export default function RadioChat({
     return mentionPattern.test(message);
   };
 
+  // Create emoji shower effect - everyone sees this
+  const createEmojiShower = (emoji: string) => {
+    const newEmojis: { id: string; emoji: string; x: number; y: number; delay: number }[] = [];
+    // Create 15-25 emojis falling from top
+    const count = 15 + Math.floor(Math.random() * 10);
+
+    for (let i = 0; i < count; i++) {
+      newEmojis.push({
+        id: `shower-${Date.now()}-${i}`,
+        emoji,
+        x: Math.random() * 100, // Random x position across screen
+        y: -10 - Math.random() * 20, // Start above screen
+        delay: Math.random() * 1000 // Stagger the start times
+      });
+    }
+
+    setEmojiShower(newEmojis);
+
+    // Clear after animation completes (3 seconds)
+    setTimeout(() => {
+      setEmojiShower([]);
+    }, 4000);
+  };
+
   const sendMessage = async (message: string, isReaction = false) => {
   if (!message.trim() || sending) return;
   if (isReaction && !listenerProfile) return;
+
+  // Check cooldown for reactions
+  if (isReaction && reactionCooldown > 0) {
+    alert(`אנא המתן ${reactionCooldown} שניות לפני שליחת תגובה נוספת`);
+    return;
+  }
 
   setSending(true);
   const messageText = message.trim();
@@ -337,8 +369,6 @@ export default function RadioChat({
       body.guest_name = guestName;
     }
 
-    console.log('Sending reaction:', { messageText, isReaction, body });
-
     const res = await fetch('/api/radio/chat-messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -347,7 +377,6 @@ export default function RadioChat({
 
     if (res.ok) {
       const newMsg = await res.json();
-      console.log('Reaction sent successfully:', newMsg);
 
       // Optimistically add to local state immediately
       setMessages(prev => {
@@ -356,14 +385,11 @@ export default function RadioChat({
         return [...prev, newMsg];
       });
 
-      // Show floating reaction if it's a reaction
+      // Show emoji shower if it's a reaction
       if (isReaction) {
-        const reactionId = `${newMsg.id}-${Date.now()}`;
-        const x = 20 + Math.random() * 60;
-        setFloatingReactions(prev => [...prev, { id: reactionId, emoji: messageText, x }]);
-        setTimeout(() => {
-          setFloatingReactions(prev => prev.filter(r => r.id !== reactionId));
-        }, 2000);
+        createEmojiShower(messageText);
+        // Start 30-second cooldown
+        setReactionCooldown(30);
       }
 
       if (!isReaction) {
@@ -396,7 +422,27 @@ export default function RadioChat({
   };
 
   return (
-<div className="flex flex-col bg-black/20 rounded-2xl border border-white/5 overflow-hidden h-[600px] lg:h-[900px]">      {/* Header */}
+<div className="flex flex-col bg-black/20 rounded-2xl border border-white/5 overflow-hidden h-[600px] lg:h-[900px] relative">
+      {/* Emoji Shower Overlay - Full screen effect */}
+      {emojiShower.length > 0 && (
+        <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+          {emojiShower.map((item) => (
+            <div
+              key={item.id}
+              className="absolute text-4xl animate-emoji-fall"
+              style={{
+                left: `${item.x}%`,
+                top: `${item.y}%`,
+                animationDelay: `${item.delay}ms`
+              }}
+            >
+              {item.emoji}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Header */}
       <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HiSparkles className="text-purple-400" />
@@ -558,18 +604,30 @@ export default function RadioChat({
           {listenerProfile && (
             <div className="relative">
               <button
-                onClick={() => setShowReactions(!showReactions)}
-                className="p-2 text-gray-400 hover:text-purple-400 transition rounded-lg hover:bg-white/5"
+                onClick={() => reactionCooldown === 0 && setShowReactions(!showReactions)}
+                disabled={reactionCooldown > 0}
+                className={`p-2 rounded-lg transition relative ${
+                  reactionCooldown > 0
+                    ? 'text-gray-600 cursor-not-allowed'
+                    : 'text-gray-400 hover:text-purple-400 hover:bg-white/5'
+                }`}
+                title={reactionCooldown > 0 ? `המתן ${reactionCooldown} שניות` : 'שלח תגובה'}
               >
                 ✨
+                {reactionCooldown > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {reactionCooldown}
+                  </span>
+                )}
               </button>
-              {showReactions && (
+              {showReactions && reactionCooldown === 0 && (
                 <div className="absolute bottom-full right-0 mb-2 bg-[#1a1a2e] border border-white/10 rounded-xl p-2 flex gap-1 shadow-xl">
                   {REACTION_EMOJIS.map((emoji) => (
                     <button
                       key={emoji}
                       onClick={() => sendMessage(emoji, true)}
-                      className="text-xl hover:scale-125 transition p-1"
+                      className="text-2xl hover:scale-125 transition p-1.5"
+                      title="לחץ לשליחת גשם של אימוג׳י!"
                     >
                       {emoji}
                     </button>
@@ -602,7 +660,7 @@ export default function RadioChat({
         </div>
       </div>
 
-      {/* CSS for floating reactions */}
+      {/* CSS for animations */}
      <style jsx>{`
   @keyframes float-up {
     0% {
@@ -614,8 +672,29 @@ export default function RadioChat({
       transform: translateY(-100px) scale(1.5);
     }
   }
+  @keyframes emoji-fall {
+    0% {
+      opacity: 0;
+      transform: translateY(0) rotate(0deg) scale(0.5);
+    }
+    10% {
+      opacity: 1;
+      transform: translateY(10vh) rotate(20deg) scale(1);
+    }
+    90% {
+      opacity: 1;
+      transform: translateY(100vh) rotate(-20deg) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(110vh) rotate(0deg) scale(0.8);
+    }
+  }
   .animate-float-up {
     animation: float-up 2s ease-out forwards;
+  }
+  .animate-emoji-fall {
+    animation: emoji-fall 3s ease-in forwards;
   }
   .animate-fade-in {
     animation: fade-in 0.3s ease-out;
