@@ -67,6 +67,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return m;
     });
 
+    // Cache for 60 seconds with stale-while-revalidate
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
     return res.status(200).json(messagesWithArtistFlag);
   }
 

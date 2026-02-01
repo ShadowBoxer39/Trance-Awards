@@ -291,6 +291,25 @@ export default function RadioPage() {
   const [glowIntensity, setGlowIntensity] = useState(0.3);
   const artistCacheRef = useRef<Map<string, ArtistDetails | null>>(new Map());
 
+  // Load artist cache from localStorage on mount
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem('radio_artist_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        const now = Date.now();
+        // Only load cache entries less than 1 hour old
+        Object.entries(data).forEach(([key, value]: [string, any]) => {
+          if (value.timestamp && (now - value.timestamp) < 3600000) {
+            artistCacheRef.current.set(key, value.data);
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load artist cache:', err);
+    }
+  }, []);
+
  // Audio reactive glow - disabled on mobile for performance
 useEffect(() => {
   if (!isPlaying) {
@@ -404,13 +423,13 @@ checkAuth();
     if (!artistName || artistName === 'Track Trip Radio' || artistName === 'Unknown Artist') {
       return null;
     }
-    
+
     // Check cache first (only for calls without trackTitle, since track info varies)
     const cacheKey = artistName.toLowerCase();
     if (!trackTitle && artistCacheRef.current.has(cacheKey)) {
       return artistCacheRef.current.get(cacheKey) || null;
     }
-    
+
     let url = '/api/radio/get-artist-details?name=' + encodeURIComponent(artistName);
     if (trackTitle) {
       url += '&track=' + encodeURIComponent(trackTitle);
@@ -418,9 +437,25 @@ checkAuth();
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
-      // Cache the result (without track-specific info)
+      // Cache the result (without track-specific info) and save to localStorage
       if (!trackTitle) {
         artistCacheRef.current.set(cacheKey, data);
+
+        // Persist to localStorage (throttle writes to avoid performance issues)
+        setTimeout(() => {
+          try {
+            const cacheToSave: any = {};
+            artistCacheRef.current.forEach((value, key) => {
+              cacheToSave[key] = {
+                data: value,
+                timestamp: Date.now()
+              };
+            });
+            localStorage.setItem('radio_artist_cache', JSON.stringify(cacheToSave));
+          } catch (err) {
+            // Ignore quota errors
+          }
+        }, 1000);
       }
       return data;
     }

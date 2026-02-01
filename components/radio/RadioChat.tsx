@@ -193,14 +193,17 @@ export default function RadioChat({
     fetchMessages();
   }, []);
 
-  // Subscribe to new messages with error handling and fallback polling
+  // Subscribe to new messages with error handling and smart fallback polling
   useEffect(() => {
     let channel: any;
-    let pollInterval: NodeJS.Timeout;
-    let isSubscribed = false;
+    let pollInterval: NodeJS.Timeout | null = null;
+    let subscriptionStatus: 'SUBSCRIBED' | 'FAILED' | 'CONNECTING' = 'CONNECTING';
 
-    // Fallback polling function (runs every 10 seconds as backup)
+    // Fallback polling function (only runs when subscription fails)
     const pollMessages = async () => {
+      // Only poll if subscription failed
+      if (subscriptionStatus === 'SUBSCRIBED') return;
+
       try {
         const res = await fetch('/api/radio/chat-messages?limit=10');
         if (res.ok) {
@@ -223,6 +226,16 @@ export default function RadioChat({
         }
       } catch (err) {
         console.error('Polling error:', err);
+      }
+    };
+
+    // Start/stop polling based on subscription status
+    const updatePolling = (shouldPoll: boolean) => {
+      if (shouldPoll && !pollInterval) {
+        pollInterval = setInterval(pollMessages, 10000);
+      } else if (!shouldPoll && pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
       }
     };
 
@@ -262,33 +275,44 @@ export default function RadioChat({
           )
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
-              console.log('✅ Chat real-time subscription active');
-              isSubscribed = true;
+              console.log('✅ Chat real-time subscription active - stopping fallback polling');
+              subscriptionStatus = 'SUBSCRIBED';
+              updatePolling(false); // Stop polling when subscription works
             } else if (status === 'CHANNEL_ERROR') {
-              console.error('❌ Chat subscription error - falling back to polling');
-              isSubscribed = false;
+              console.error('❌ Chat subscription error - starting fallback polling');
+              subscriptionStatus = 'FAILED';
+              updatePolling(true); // Start polling on error
             } else if (status === 'TIMED_OUT') {
-              console.error('⏱️ Chat subscription timed out - falling back to polling');
-              isSubscribed = false;
+              console.error('⏱️ Chat subscription timed out - starting fallback polling');
+              subscriptionStatus = 'FAILED';
+              updatePolling(true); // Start polling on timeout
             } else if (status === 'CLOSED') {
-              console.warn('🔌 Chat subscription closed');
-              isSubscribed = false;
+              console.warn('🔌 Chat subscription closed - starting fallback polling');
+              subscriptionStatus = 'FAILED';
+              updatePolling(true); // Start polling when closed
             }
           });
       } catch (err) {
         console.error('Failed to set up subscription:', err);
-        isSubscribed = false;
+        subscriptionStatus = 'FAILED';
+        updatePolling(true); // Start polling if setup fails
       }
     };
 
     // Initialize subscription
     setupSubscription();
 
-    // Start fallback polling (runs regardless of subscription status)
-    pollInterval = setInterval(pollMessages, 10000);
+    // Start with one-time polling check after 5 seconds (in case subscription is slow)
+    const initialPollTimeout = setTimeout(() => {
+      if (subscriptionStatus !== 'SUBSCRIBED') {
+        pollMessages();
+        updatePolling(true);
+      }
+    }, 5000);
 
     // Cleanup
     return () => {
+      clearTimeout(initialPollTimeout);
       if (channel) {
         supabase.removeChannel(channel);
       }

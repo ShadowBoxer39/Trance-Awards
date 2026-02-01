@@ -23,6 +23,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .maybeSingle();
 
     if (error) return res.status(500).json({ error: error.message });
+
+    // Cache for 5 minutes - profile data changes infrequently
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
     return res.status(200).json(data);
   }
 
