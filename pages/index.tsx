@@ -90,14 +90,16 @@ function getYouTubeId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+// Removed chat message interface - focusing on radio player only
+
 // Compact Radio Player for Hero
 function HeroRadioPlayer() {
   const [nowPlaying, setNowPlaying] = useState<NowPlayingData | null>(null);
   const [artistDetails, setArtistDetails] = useState<{ image_url: string } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-const [isLoading, setIsLoading] = useState(true);
-const [displayListeners, setDisplayListeners] = useState(25);
-const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [displayListeners, setDisplayListeners] = useState(25);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const updateArtistSpotlight = async (artistName: string) => {
     try {
@@ -137,12 +139,12 @@ const audioRef = useRef<HTMLAudioElement | null>(null);
   };
 
   useEffect(() => {
-  fetchNowPlaying();
-  const interval = setInterval(fetchNowPlaying, 15000);
-  return () => clearInterval(interval);
-}, []);
+    fetchNowPlaying();
+    const interval = setInterval(fetchNowPlaying, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
-// Simulate natural listener fluctuation
+  // Simulate natural listener fluctuation
 useEffect(() => {
   const updateListeners = () => {
     setDisplayListeners(prev => {
@@ -183,113 +185,149 @@ useEffect(() => {
 
   const currentSong = nowPlaying?.now_playing?.song;
   const realListeners = nowPlaying?.listeners?.current || 0;
-const listeners = Math.max(displayListeners, realListeners);
+  const listeners = Math.max(displayListeners, realListeners);
 
   return (
-    <div className="glass-card rounded-2xl p-6 border-2 border-purple-500/30 hover:border-purple-500/50 transition-all max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-center gap-2 mb-4">
-        <span className="text-2xl">🎧</span>
-        <h3 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-          הרדיו של יוצאים לטראק
-        </h3>
-      </div>
-      
-      <p className="text-center text-gray-400 text-sm mb-5">טראנס ישראלי 24/7 | תוצרת הארץ 🇮🇱</p>
+    <div className="max-w-6xl mx-auto">
+      {/* Stunning Single Radio Player */}
+      <div className="relative">
+        {/* Animated background glow */}
+        <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 via-cyan-600/20 to-pink-600/20 rounded-3xl blur-2xl animate-gradient-x"></div>
 
-      {/* Now Playing */}
-      <div className="flex items-center gap-4 bg-black/30 rounded-xl p-4 mb-5">
-        {/* Album Art */}
-        <div className="relative flex-shrink-0">
-          <div className={`absolute -inset-1 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-xl blur opacity-40 ${isPlaying ? 'animate-pulse' : ''}`}></div>
-          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 border-white/20">
-            <img
-  src={(() => {
-    const art = currentSong?.art;
-    const isDefaultArt = !art || 
-      art.includes('/static/img/generic_song') || 
-      (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
-    if (!isDefaultArt) return art;
-    return artistDetails?.image_url || '/images/logo.png';
-  })()}
-  alt="Now Playing"
-  className="w-full h-full object-cover"
-/>
-          </div>
-        </div>
+        <div className="relative glass-card rounded-3xl border-2 border-purple-500/40 overflow-hidden">
+          {/* Top gradient accent */}
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 via-cyan-500 to-pink-500"></div>
 
-        {/* Track Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`relative flex h-2 w-2 ${isPlaying ? '' : 'opacity-50'}`}>
-              <span className={`${isPlaying ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75`}></span>
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${isPlaying ? 'bg-red-500' : 'bg-gray-500'}`}></span>
-            </span>
-            <span className="text-xs text-gray-400">{isPlaying ? 'משדר עכשיו' : 'לחצו להאזנה'}</span>
-          </div>
-          
-          {isLoading ? (
-            <div className="space-y-2">
-              <div className="h-4 bg-gray-700 rounded w-3/4 animate-pulse"></div>
-              <div className="h-3 bg-gray-700 rounded w-1/2 animate-pulse"></div>
-            </div>
-          ) : (
-            <>
-              <h4 className="font-bold text-white truncate text-sm md:text-base">
-                {currentSong?.title || 'Track Trip Radio'}
-              </h4>
-              <p className="text-purple-400 text-xs md:text-sm truncate">
-                {currentSong?.artist || 'יוצאים לטראק'}
+          <div className="p-8 md:p-10">
+            {/* Header Section */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-3 mb-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-purple-500 rounded-full blur-lg opacity-50 animate-pulse"></div>
+                  <span className="relative text-4xl">🎧</span>
+                </div>
+                <h3 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-cyan-400 to-pink-400 bg-clip-text text-transparent animate-gradient-x">
+                  הרדיו של יוצאים לטראק
+                </h3>
+              </div>
+              <p className="text-gray-300 text-lg flex items-center justify-center gap-2">
+                <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                טראנס ישראלי 24/7 | תוצרת הארץ 🇮🇱
               </p>
-            </>
-          )}
-        </div>
+            </div>
 
-        {/* Play Button */}
-        <button
-          onClick={togglePlay}
-          className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all shadow-lg transform hover:scale-110 ${
-            isPlaying
-              ? 'bg-white/90 text-gray-900 hover:bg-white'
-              : 'bg-gradient-to-r from-purple-600 to-cyan-600 text-white shadow-purple-500/50'
-          }`}
-        >
-          {isPlaying ? <FaPause className="text-lg" /> : <FaPlay className="text-lg ml-0.5" />}
-        </button>
-      </div>
+            {/* Main Player Section */}
+            <div className="grid md:grid-cols-[auto,1fr,auto] gap-6 items-center bg-gradient-to-br from-black/40 via-purple-900/20 to-black/40 rounded-2xl p-6 md:p-8 mb-8 border border-white/10">
 
-      {/* Stats Row */}
-      <div className="flex flex-wrap justify-center gap-4 mb-5 text-sm">
-        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
-          <FaHeadphones className="text-purple-400" />
-          <span className="text-gray-300">{listeners} מאזינים</span>
-        </div>
-        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
-          <span className="text-lg">🎤</span>
-          <span className="text-gray-300"><span className="font-bold text-white">50+</span> אמנים</span>
-        </div>
-        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full">
-          <span className="text-lg">🎵</span>
-          <span className="text-gray-300">24/7</span>
-        </div>
-      </div>
+              {/* Large Album Art */}
+              <div className="relative mx-auto md:mx-0">
+                <div className={`absolute -inset-3 bg-gradient-to-r from-purple-500 via-cyan-500 to-pink-500 rounded-2xl blur-xl opacity-60 ${isPlaying ? 'animate-pulse' : ''}`}></div>
+                <div className={`relative w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden border-4 border-white/30 shadow-2xl ${isPlaying ? 'animate-spin-slow' : ''}`}
+                     style={{ animationDuration: '20s' }}>
+                  <img
+                    src={(() => {
+                      const art = currentSong?.art;
+                      const isDefaultArt = !art ||
+                        art.includes('/static/img/generic_song') ||
+                        (art.includes('/api/station/') && !art.match(/\.(jpg|jpeg|png|webp)$/i));
+                      if (!isDefaultArt) return art;
+                      return artistDetails?.image_url || '/images/logo.png';
+                    })()}
+                    alt="Now Playing"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Overlay when playing */}
+                  {isPlaying && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-purple-600/30 to-transparent"></div>
+                  )}
+                </div>
+              </div>
 
-      {/* CTA Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <Link
-          href="/radio"
-          className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30"
-        >
-          <span>🎧</span>
-          לרדיו המלא
-        </Link>
-        <Link
-          href="/radio/register"
-          className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-3 rounded-xl font-medium transition-all"
-        >
-          <span>🚀</span>
-          שלחו טראק
-        </Link>
+              {/* Track Info */}
+              <div className="flex-1 min-w-0 text-center md:text-right space-y-3">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                  <span className={`relative flex h-3 w-3`}>
+                    <span className={`${isPlaying ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75`}></span>
+                    <span className={`relative inline-flex rounded-full h-3 w-3 ${isPlaying ? 'bg-red-500' : 'bg-gray-500'}`}></span>
+                  </span>
+                  <span className="text-sm font-semibold text-red-400">{isPlaying ? 'ON AIR' : 'לחצו להאזנה'}</span>
+                </div>
+
+                {isLoading ? (
+                  <div className="space-y-3">
+                    <div className="h-8 bg-gray-700 rounded-lg w-3/4 animate-pulse mx-auto md:mx-0"></div>
+                    <div className="h-6 bg-gray-700 rounded-lg w-1/2 animate-pulse mx-auto md:mx-0"></div>
+                  </div>
+                ) : (
+                  <>
+                    <h4 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                      {currentSong?.title || 'Track Trip Radio'}
+                    </h4>
+                    <p className="text-xl md:text-2xl bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent font-semibold">
+                      {currentSong?.artist || 'יוצאים לטראק'}
+                    </p>
+                  </>
+                )}
+
+                {/* Stats Pills */}
+                <div className="flex flex-wrap justify-center md:justify-start gap-3 pt-2">
+                  <div className="flex items-center gap-2 bg-purple-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-500/30">
+                    <FaHeadphones className="text-purple-300 text-lg" />
+                    <span className="text-white font-bold">{listeners}</span>
+                    <span className="text-gray-300 text-sm">מאזינים</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-cyan-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-cyan-500/30">
+                    <span className="text-xl">🎤</span>
+                    <span className="text-white font-bold">100+</span>
+                    <span className="text-gray-300 text-sm">אמנים</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-pink-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-pink-500/30">
+                    <span className="text-xl">🎵</span>
+                    <span className="text-white font-bold">24/7</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Large Play Button */}
+              <button
+                onClick={togglePlay}
+                className="relative group mx-auto md:mx-0"
+              >
+                <div className={`absolute -inset-2 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition-opacity ${isPlaying ? 'animate-pulse' : ''}`}></div>
+                <div className={`relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all transform group-hover:scale-110 shadow-2xl ${
+                  isPlaying
+                    ? 'bg-white text-gray-900'
+                    : 'bg-gradient-to-br from-purple-600 via-pink-600 to-cyan-600 text-white'
+                }`}>
+                  {isPlaying ? (
+                    <FaPause className="text-3xl md:text-4xl" />
+                  ) : (
+                    <FaPlay className="text-3xl md:text-4xl ml-1" />
+                  )}
+                </div>
+              </button>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link
+                href="/radio"
+                className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 hover:from-purple-500 hover:via-pink-500 hover:to-cyan-500 px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-xl shadow-purple-500/40 min-w-[240px]"
+              >
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl blur opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <span className="relative text-2xl">🎧</span>
+                <span className="relative">לרדיו המלא</span>
+              </Link>
+              <Link
+                href="/radio/register"
+                className="inline-flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border-2 border-white/30 hover:border-white/50 px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 min-w-[240px]"
+              >
+                <span className="text-2xl">🚀</span>
+                <span>שלחו טראק</span>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1304,6 +1342,29 @@ export default function Home({
           display: none !important;
           width: 0 !important;
           height: 0 !important;
+        }
+        @keyframes spin-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 20s linear infinite;
+        }
+        @keyframes gradient-x {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+        .animate-gradient-x {
+          background-size: 200% 200%;
+          animation: gradient-x 3s ease infinite;
         }
       `}</style>
     </>
