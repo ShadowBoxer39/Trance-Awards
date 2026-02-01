@@ -714,8 +714,10 @@ return (
       <style jsx global>{`
         @keyframes float-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
         .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
         .animate-gradient { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
+        .animate-breathe { animation: breathe 4s ease-in-out infinite; }
         .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -835,119 +837,226 @@ return (
         )}
 
         {/* ========== MAIN PLAYER (Full Width) ========== */}
-        <div 
-          className="glass-card rounded-3xl p-6 mb-6 border transition-all duration-300"
-          style={{ 
-            borderColor: `rgba(${dominantColor}, 0.3)`,
-            boxShadow: isPlaying ? `0 0 60px rgba(${dominantColor}, ${glowIntensity * 0.3})` : 'none'
-          }}
-        >
-          <div className="flex flex-col lg:flex-row items-center gap-6">
-            
-            {/* Album Art */}
-            <div className="relative flex-shrink-0">
-              <div 
-                className="absolute -inset-3 rounded-2xl blur-xl transition-all duration-300"
-                style={{ 
-                  background: `rgba(${dominantColor}, ${isPlaying ? glowIntensity : 0.2})` 
-                }}
-              />
-              <div className="relative w-40 h-40 lg:w-48 lg:h-48">
-                <img
-                  src={getAlbumArt()}
-                  alt="Album Art"
-                  className="w-full h-full object-cover rounded-2xl border-2 border-white/10 shadow-2xl"
-                />
-                <button
-                  onClick={togglePlay}
-                  className="absolute inset-0 m-auto w-14 h-14 rounded-full flex items-center justify-center transition-all transform hover:scale-110"
+        <div className="relative mb-6">
+          {/* Animated background glow */}
+          <div
+            className="absolute -inset-4 rounded-3xl blur-2xl transition-all duration-300"
+            style={{
+              background: `radial-gradient(circle at center, rgba(${dominantColor}, ${isPlaying ? glowIntensity * 0.4 : 0.15}), transparent 70%)`,
+            }}
+          />
+
+          <div
+            className="relative glass-card rounded-3xl p-6 md:p-8 border-2 transition-all duration-300"
+            style={{
+              borderColor: `rgba(${dominantColor}, 0.4)`,
+              boxShadow: isPlaying ? `0 0 40px rgba(${dominantColor}, ${glowIntensity * 0.2})` : 'none'
+            }}
+          >
+            {/* Top gradient accent */}
+            <div
+              className="absolute top-0 inset-x-0 h-1 rounded-t-3xl"
+              style={{ background: `linear-gradient(90deg, transparent, rgb(${dominantColor}), transparent)` }}
+            />
+
+            <div className="grid lg:grid-cols-[auto,1fr,auto] gap-8 items-center">
+
+              {/* Large Album Art with Rotation */}
+              <div className="relative mx-auto lg:mx-0">
+                <div
+                  className={`absolute -inset-4 rounded-2xl blur-2xl transition-all duration-300 ${isPlaying ? 'animate-pulse' : ''}`}
                   style={{
-                    background: isPlaying ? 'rgba(255,255,255,0.9)' : `linear-gradient(135deg, rgba(${dominantColor}, 1), rgba(${dominantColor}, 0.7))`,
-                    color: isPlaying ? '#111' : '#fff',
-                    boxShadow: `0 4px 20px rgba(${dominantColor}, 0.5)`
+                    background: `radial-gradient(circle, rgba(${dominantColor}, ${isPlaying ? glowIntensity * 0.8 : 0.3}), transparent 70%)`
+                  }}
+                />
+                <div
+                  className={`relative w-48 h-48 md:w-56 md:h-56 rounded-2xl overflow-hidden border-4 border-white/20 shadow-2xl ${isPlaying ? 'animate-breathe' : ''}`}
+                >
+                  <img
+                    src={getAlbumArt()}
+                    alt="Album Art"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Overlay when playing */}
+                  {isPlaying && (
+                    <div
+                      className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"
+                      style={{ background: `linear-gradient(to top, rgba(${dominantColor}, 0.3), transparent)` }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Track Info - Center Section */}
+              <div className="flex-1 min-w-0 text-center lg:text-right space-y-4">
+                {/* ON AIR Badge */}
+                <div className="flex items-center justify-center lg:justify-start gap-2">
+                  <span className={`relative flex h-3 w-3`}>
+                    <span className={`${isPlaying ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75`}></span>
+                    <span className={`relative inline-flex rounded-full h-3 w-3 ${isPlaying ? 'bg-red-500' : 'bg-gray-500'}`}></span>
+                  </span>
+                  <span
+                    className="text-sm font-bold tracking-wider"
+                    style={{ color: isPlaying ? 'rgb(239, 68, 68)' : 'rgb(156, 163, 175)' }}
+                  >
+                    {isPlaying ? 'ON AIR' : 'לחצו להאזנה'}
+                  </span>
+                </div>
+
+                {/* Track Title - Large and Bold */}
+                <h2
+                  className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight bg-gradient-to-r from-white via-white to-gray-300 bg-clip-text text-transparent pb-1"
+                  style={{
+                    textShadow: `0 0 30px rgba(${dominantColor}, 0.3)`,
+                    lineHeight: '1.3'
                   }}
                 >
-                  {isPlaying ? <FaPause className="text-xl" /> : <FaPlay className="text-xl ml-1" />}
-                </button>
-              </div>
-            </div>
+                  {currentSong?.title || 'טוען...'}
+                </h2>
 
-            {/* Track Info */}
-            <div className="flex-1 text-center lg:text-right">
-              <p className="text-sm font-medium mb-2" style={{ color: `rgb(${dominantColor})` }}>מתנגן עכשיו</p>
-              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-1 leading-tight">
-                {currentSong?.title || 'טוען...'}
-              </h2>
-              <p className="text-lg text-gray-300 mb-4">
-                {currentSong?.artist || 'יוצאים לטראק'}
-              </p>
-
-             {/* Like + Share + Visualizer Row */}
-<div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
-  <button
-    onClick={handleLike}
-    disabled={likeLoading || userLiked}
-    className={`group flex items-center gap-2 px-5 py-2.5 rounded-full transition-all ${
-      userLiked 
-        ? 'bg-pink-500/20 border border-pink-500/30 text-pink-400' 
-        : 'bg-white/5 hover:bg-pink-500/20 border border-white/10 hover:border-pink-500/30 text-gray-400 hover:text-pink-400'
-    }`}
-  >
-    {userLiked ? <FaHeart className="text-pink-500" /> : <FaRegHeart className={likeLoading ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'} />}
-    <span className="font-medium text-sm">{userLiked ? 'אהבת!' : 'אהבתי'}</span>
-    {trackLikes > 0 && <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">{trackLikes}</span>}
-  </button>
-
-  <ShareButton trackTitle={currentSong?.title} artist={currentSong?.artist} />
-  
-  <Visualizer isPlaying={isPlaying} color={dominantColor} />
-</div>
-              {/* Volume */}
-              <div className="flex items-center gap-3 mt-4 max-w-xs mx-auto lg:mx-0">
-                <button onClick={() => setIsMuted(!isMuted)} className="text-gray-400 hover:text-white transition">
-                  {isMuted || volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
-                </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={isMuted ? 0 : volume}
-                  onChange={(e) => { setVolume(parseFloat(e.target.value)); setIsMuted(false); }}
-                  className="flex-1 h-1.5 bg-white/10 rounded-full cursor-pointer accent-purple-500"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-           {/* Next Up */}
-            {nextSong && (
-              <div className="hidden lg:block w-px h-32 bg-white/10" />
-            )}
-            {nextSong && (
-              <div className="flex-shrink-0 text-center lg:text-right min-w-[180px] max-w-[200px]">
-                <p className="text-xs text-gray-500 mb-2 flex items-center justify-center lg:justify-start gap-1">
-                  <FaForward className="text-[10px]" /> הבא בתור
+                {/* Artist Name - Gradient */}
+                <p
+                  className="text-2xl md:text-3xl font-semibold bg-clip-text text-transparent pb-1"
+                  style={{
+                    backgroundImage: `linear-gradient(135deg, rgb(${dominantColor}), rgba(${dominantColor}, 0.7))`,
+                    lineHeight: '1.3'
+                  }}
+                >
+                  {currentSong?.artist || 'יוצאים לטראק'}
                 </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
-                    <img 
-                      src={nextArtistDetails?.image_url || nextSong.art || '/images/logo.png'} 
-                      alt="" 
-                      className="w-full h-full object-cover"
+
+                {/* Action Buttons with Enhanced Styling */}
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                  <button
+                    onClick={handleLike}
+                    disabled={likeLoading || userLiked}
+                    className={`group relative flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all transform hover:scale-105 ${
+                      userLiked
+                        ? 'text-pink-400'
+                        : 'text-gray-400 hover:text-pink-400'
+                    }`}
+                    style={{
+                      background: userLiked
+                        ? 'rgba(236, 72, 153, 0.2)'
+                        : 'rgba(255, 255, 255, 0.05)',
+                      border: userLiked
+                        ? '1px solid rgba(236, 72, 153, 0.3)'
+                        : '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
+                  >
+                    {userLiked ? (
+                      <FaHeart className="text-pink-500" />
+                    ) : (
+                      <FaRegHeart className={likeLoading ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'} />
+                    )}
+                    <span className="text-sm">{userLiked ? 'אהבת!' : 'אהבתי'}</span>
+                    {trackLikes > 0 && (
+                      <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">{trackLikes}</span>
+                    )}
+                  </button>
+
+                  <ShareButton trackTitle={currentSong?.title} artist={currentSong?.artist} />
+
+                  <Visualizer isPlaying={isPlaying} color={dominantColor} />
+                </div>
+
+                {/* Volume Slider with Gradient */}
+                <div className="flex items-center gap-3 max-w-xs mx-auto lg:mx-0">
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="text-gray-400 hover:text-white transition-colors transform hover:scale-110"
+                  >
+                    {isMuted || volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
+                  </button>
+                  <div className="flex-1 relative">
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => {
+                        setVolume(parseFloat(e.target.value));
+                        setIsMuted(false);
+                      }}
+                      className="w-full h-2 bg-white/10 rounded-full cursor-pointer appearance-none"
+                      style={{
+                        background: `linear-gradient(to left, rgba(${dominantColor}, 0.8) ${volume * 100}%, rgba(255,255,255,0.1) ${volume * 100}%)`
+                      }}
+                      dir="ltr"
                     />
-                  </div>
-                  <div className="text-right min-w-0 flex-1">
-                    <p className="text-sm text-white font-medium line-clamp-2 leading-tight">{nextSong.title}</p>
-                    <p className="text-xs text-gray-500 truncate mt-1">{nextSong.artist}</p>
                   </div>
                 </div>
               </div>
-            )}
+
+              {/* Large Play Button - Right Side */}
+              <button
+                onClick={togglePlay}
+                className="relative group mx-auto lg:mx-0"
+              >
+                <div
+                  className={`absolute -inset-3 rounded-full blur-xl opacity-75 group-hover:opacity-100 transition-opacity ${isPlaying ? 'animate-pulse' : ''}`}
+                  style={{ background: `rgba(${dominantColor}, 0.6)` }}
+                />
+                <div
+                  className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center transition-all transform group-hover:scale-110 shadow-2xl`}
+                  style={{
+                    background: isPlaying
+                      ? 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85))'
+                      : `linear-gradient(135deg, rgba(${dominantColor}, 1), rgba(${dominantColor}, 0.8))`,
+                    color: isPlaying ? '#111' : '#fff',
+                  }}
+                >
+                  {isPlaying ? (
+                    <FaPause className="text-3xl md:text-4xl" />
+                  ) : (
+                    <FaPlay className="text-3xl md:text-4xl ml-1" />
+                  )}
+                </div>
+              </button>
+            </div>
+
+            {/* Next Up & Sign Up - Compact Row */}
+            <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between gap-4 flex-wrap">
+              {/* Next Up - Compact */}
+              {nextSong && (
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <FaForward className="text-xs flex-shrink-0" style={{ color: `rgb(${dominantColor})` }} />
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
+                    <img
+                      src={nextArtistDetails?.image_url || nextSong.art || '/images/logo.png'}
+                      alt="Next"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500">הבא בתור</p>
+                    <p className="text-sm text-white font-medium truncate">{nextSong.title}</p>
+                    <p className="text-xs text-gray-400 truncate">{nextSong.artist}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Submit Track CTA - Compact */}
+              <Link
+                href="/radio/register"
+                className="relative overflow-hidden rounded-lg px-4 py-2 border transition-all group hover:scale-[1.02] flex-shrink-0"
+                style={{
+                  background: `linear-gradient(135deg, rgba(${dominantColor}, 0.15), rgba(${dominantColor}, 0.08))`,
+                  borderColor: `rgba(${dominantColor}, 0.3)`
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <div className="relative flex items-center gap-2">
+                  <span className="text-lg">🚀</span>
+                  <span className="text-sm font-semibold text-white">שלחו טראק לרדיו!</span>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
 
-      {/* ========== TWO COLUMN LAYOUT ========== */}
+        {/* ========== TWO COLUMN LAYOUT ========== */}
         <div className="grid lg:grid-cols-3 gap-6 mb-6">
           
           {/* LEFT COLUMN - Artist + History (2 cols on desktop) */}
