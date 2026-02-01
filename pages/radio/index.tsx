@@ -771,7 +771,7 @@ return (
             </span>
             <span className="text-sm font-medium text-gray-300">{isPlaying ? 'משדר עכשיו' : 'לחצו להאזנה'}</span>
            {nowPlaying?.listeners && (
-  <span className="text-xs text-gray-500">• {nowPlaying.listeners.current * 3} מאזינים</span>
+  <span className="text-xs text-gray-500">• {nowPlaying.listeners.current} מאזינים</span>
 )}
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-1">

@@ -98,7 +98,6 @@ function HeroRadioPlayer() {
   const [artistDetails, setArtistDetails] = useState<{ image_url: string } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [displayListeners, setDisplayListeners] = useState(25);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const updateArtistSpotlight = async (artistName: string) => {
@@ -144,23 +143,6 @@ function HeroRadioPlayer() {
     return () => clearInterval(interval);
   }, []);
 
-  // Simulate natural listener fluctuation
-useEffect(() => {
-  const updateListeners = () => {
-    setDisplayListeners(prev => {
-      const change = Math.floor(Math.random() * 7) - 3; // -3 to +3
-      const trendBias = Math.random() > 0.5 ? 1 : -1; // slight trend
-      let newVal = prev + change + trendBias;
-      // Keep within 20-45 range
-      if (newVal < 20) newVal = 20 + Math.floor(Math.random() * 5);
-      if (newVal > 45) newVal = 45 - Math.floor(Math.random() * 5);
-      return newVal;
-    });
-  };
-  
-  const interval = setInterval(updateListeners, 20000 + Math.random() * 15000); // 20-35 seconds
-  return () => clearInterval(interval);
-}, []);
 
   useEffect(() => {
     audioRef.current = new Audio(STREAM_URL);
@@ -184,8 +166,7 @@ useEffect(() => {
   };
 
   const currentSong = nowPlaying?.now_playing?.song;
-  const realListeners = nowPlaying?.listeners?.current || 0;
-  const listeners = Math.max(displayListeners, realListeners);
+  const listeners = nowPlaying?.listeners?.current || 0;
 
   return (
     <div className="max-w-6xl mx-auto">
