@@ -181,44 +181,118 @@ export default function RadioChat({
     fetchMessages();
   }, []);
 
-  // Subscribe to new messages
+  // Subscribe to new messages with error handling and fallback polling
   useEffect(() => {
-    const channel = supabase
-      .channel('radio_chat')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'radio_chat_messages'
-        },
-        async (payload) => {
-          const res = await fetch(`/api/radio/chat-messages?limit=1`);
-          if (res.ok) {
-            const data = await res.json();
-            const newMsg = data.find((m: ChatMessage) => m.id === payload.new.id);
-            if (newMsg) {
-              setMessages(prev => {
-                if (prev.some(m => m.id === newMsg.id)) return prev;
-                return [...prev, newMsg];
-              });
+    let channel: any;
+    let pollInterval: NodeJS.Timeout;
+    let isSubscribed = false;
 
-              if (newMsg.is_reaction) {
-                const reactionId = `${newMsg.id}-${Date.now()}`;
-                const x = 20 + Math.random() * 60;
-                setFloatingReactions(prev => [...prev, { id: reactionId, emoji: newMsg.message, x }]);
-                setTimeout(() => {
-                  setFloatingReactions(prev => prev.filter(r => r.id !== reactionId));
-                }, 2000);
+    // Fallback polling function (runs every 10 seconds as backup)
+    const pollMessages = async () => {
+      try {
+        const res = await fetch('/api/radio/chat-messages?limit=10');
+        if (res.ok) {
+          const data = await res.json();
+          setMessages(prev => {
+            const existingIds = new Set(prev.map(m => m.id));
+            const newMessages = data.filter((m: ChatMessage) => !existingIds.has(m.id));
+
+            if (newMessages.length > 0) {
+              // Handle reactions from polling
+              newMessages.forEach((msg: ChatMessage) => {
+                if (msg.is_reaction) {
+                  const reactionId = `${msg.id}-${Date.now()}`;
+                  const x = 20 + Math.random() * 60;
+                  setFloatingReactions(prev => [...prev, { id: reactionId, emoji: msg.message, x }]);
+                  setTimeout(() => {
+                    setFloatingReactions(prev => prev.filter(r => r.id !== reactionId));
+                  }, 2000);
+                }
+              });
+              return [...prev, ...newMessages];
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    };
+
+    // Set up real-time subscription
+    const setupSubscription = async () => {
+      try {
+        channel = supabase
+          .channel('radio_chat')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'radio_chat_messages'
+            },
+            async (payload) => {
+              try {
+                const res = await fetch(`/api/radio/chat-messages?limit=1`);
+                if (res.ok) {
+                  const data = await res.json();
+                  const newMsg = data.find((m: ChatMessage) => m.id === payload.new.id);
+                  if (newMsg) {
+                    setMessages(prev => {
+                      if (prev.some(m => m.id === newMsg.id)) return prev;
+                      return [...prev, newMsg];
+                    });
+
+                    if (newMsg.is_reaction) {
+                      const reactionId = `${newMsg.id}-${Date.now()}`;
+                      const x = 20 + Math.random() * 60;
+                      setFloatingReactions(prev => [...prev, { id: reactionId, emoji: newMsg.message, x }]);
+                      setTimeout(() => {
+                        setFloatingReactions(prev => prev.filter(r => r.id !== reactionId));
+                      }, 2000);
+                    }
+                  }
+                }
+              } catch (err) {
+                console.error('Error processing real-time message:', err);
               }
             }
-          }
-        }
-      )
-      .subscribe();
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ Chat real-time subscription active');
+              isSubscribed = true;
+            } else if (status === 'CHANNEL_ERROR') {
+              console.error('❌ Chat subscription error - falling back to polling');
+              isSubscribed = false;
+            } else if (status === 'TIMED_OUT') {
+              console.error('⏱️ Chat subscription timed out - falling back to polling');
+              isSubscribed = false;
+            } else if (status === 'CLOSED') {
+              console.warn('🔌 Chat subscription closed');
+              isSubscribed = false;
+            }
+          });
+      } catch (err) {
+        console.error('Failed to set up subscription:', err);
+        isSubscribed = false;
+      }
+    };
 
+    // Initialize subscription
+    setupSubscription();
+
+    // Start fallback polling (runs regardless of subscription status)
+    pollInterval = setInterval(pollMessages, 10000);
+
+    // Cleanup
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
     };
   }, []);
 
@@ -263,6 +337,8 @@ export default function RadioChat({
       body.guest_name = guestName;
     }
 
+    console.log('Sending reaction:', { messageText, isReaction, body });
+
     const res = await fetch('/api/radio/chat-messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -271,7 +347,8 @@ export default function RadioChat({
 
     if (res.ok) {
       const newMsg = await res.json();
-      
+      console.log('Reaction sent successfully:', newMsg);
+
       // Optimistically add to local state immediately
       setMessages(prev => {
         // Avoid duplicates (in case subscription also catches it)
@@ -292,9 +369,14 @@ export default function RadioChat({
       if (!isReaction) {
         setNewMessage('');
       }
+    } else {
+      const errorData = await res.json().catch(() => ({}));
+      console.error('Failed to send reaction - Status:', res.status, 'Error:', errorData);
+      alert(`שגיאה בשליחת התגובה: ${errorData.error || 'Unknown error'}`);
     }
   } catch (err) {
     console.error('Failed to send message:', err);
+    alert('שגיאה בשליחת התגובה. בדוק את החיבור לאינטרנט.');
   }
 
   setSending(false);

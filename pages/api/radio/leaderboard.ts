@@ -21,5 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .limit(limit);
 
   if (error) return res.status(500).json({ error: error.message });
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
   return res.status(200).json(data);
 }

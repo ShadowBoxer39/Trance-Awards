@@ -68,6 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     trackInfo = trackData;
   }
 
+  res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=120');
   return res.status(200).json({
     ...data,
     track_description: trackInfo?.description || null,

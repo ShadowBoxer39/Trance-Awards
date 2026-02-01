@@ -39,9 +39,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         userLiked = !!existingLike;
       }
 
-      return res.status(200).json({ 
-        likes: count || 0, 
-        userLiked 
+      res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=10');
+      return res.status(200).json({
+        likes: count || 0,
+        userLiked
       });
     } catch (error: any) {
       console.error('Error fetching likes:', error);
