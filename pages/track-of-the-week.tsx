@@ -752,7 +752,7 @@ export default function TrackOfTheWeekPage({
               <Link href="/" className="text-gray-400 hover:text-gray-300 transition">
                 חזרה לדף הבית
               </Link>
-              <div className="text-sm text-gray-600 mt-4">© 2025 יוצאים לטראק</div>
+              <div className="text-sm text-gray-600 mt-4">© 2026 יוצאים לטראק</div>
             </div>
           </div>
         </footer>

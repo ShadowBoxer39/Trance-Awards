@@ -21,11 +21,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
   try {
     if (req.method === 'GET') {
-      // Fetch all artist signups
-      const { data, error } = await supabase
+      // Fetch all artist signups (only unprocessed by default)
+      const showAll = req.query.showAll === 'true';
+
+      let query = supabase
         .from('young_artists') // Reads from the table used by the submission form
-        .select('*')
-        .order('submitted_at', { ascending: false });
+        .select('*');
+
+      // Only show unprocessed signups unless explicitly requested
+      if (!showAll) {
+        query = query.or('processed.is.null,processed.eq.false');
+      }
+
+      const { data, error } = await query.order('submitted_at', { ascending: false });
 
       if (error) throw error;
       return res.status(200).json({ ok: true, signups: data || [] });

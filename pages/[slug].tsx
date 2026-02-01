@@ -1223,7 +1223,7 @@ const seoDescription = bioText.slice(0, 155) + (bioText.length > 155 ? '...' : '
         {/* FOOTER */}
         <footer className="border-t border-white/15 bg-black/90">
           <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3 text-gray-400 text-xs">
-            <div>© 2025 יוצאים לטראק • כל הזכויות שמורות</div>
+            <div>© 2026 יוצאים לטראק • כל הזכויות שמורות</div>
             <div className="flex gap-4">
               <Link href="/" className="hover:text-white transition">
                 בית

@@ -287,7 +287,7 @@ export default function Episodes() {
         <footer className="border-t border-gray-800 mt-16">
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-              <div>© 2025 יוצאים לטראק</div>
+              <div>© 2026 יוצאים לטראק</div>
               <div className="flex gap-6">
                 <Link href="/" className="hover:text-gray-300 transition">בית</Link>
                 <Link href="/episodes" className="hover:text-gray-300 transition">פרקים</Link>

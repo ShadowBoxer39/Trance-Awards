@@ -25,17 +25,6 @@ interface Signup {
   created_at?: string;
 }
 
-interface TrackSubmission {
-  id: string;
-  name: string;
-  photo_url: string | null;
-  track_title: string;
-  youtube_url: string;
-  description: string;
-  created_at: string;
-  is_approved: boolean;
-}
-
 interface AdminArtist {
   id: number;
   slug: string;
@@ -81,13 +70,8 @@ export default function Admin() {
   const [signups, setSignups] = React.useState<Signup[]>([]);
   const [signupsLoading, setSignupsLoading] = React.useState(false);
   const [selectedSignup, setSelectedSignup] = React.useState<Signup | null>(null);
-  
-  const [trackSubs, setTrackSubs] = React.useState<TrackSubmission[]>([]);
-  const [trackSubsLoading, setTrackSubsLoading] = React.useState(false);
-  const [selectedTrackSub, setSelectedTrackSub] = React.useState<TrackSubmission | null>(null);
-  
-  const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "track-submissions" | "artists">("signups");
-  const [showVotesArchive, setShowVotesArchive] = React.useState(false);
+
+  const [activeTab, setActiveTab] = React.useState<"signups" | "analytics" | "artists">("signups");
 
   const [adminArtists, setAdminArtists] = React.useState<AdminArtist[]>([]);
   const [artistsLoading, setArtistsLoading] = React.useState(false);
@@ -125,7 +109,6 @@ export default function Admin() {
   React.useEffect(() => {
     if (tally) {
       if (activeTab === "signups") fetchSignups();
-      else if (activeTab === "track-submissions") fetchTrackSubmissions();
       else if (activeTab === "artists") fetchArtists();
     }
   }, [tally, activeTab]);
@@ -154,18 +137,6 @@ export default function Admin() {
       setSignups(j.signups);
     } catch { alert("שגיאה בטעינת הרשמות"); }
     finally { setSignupsLoading(false); }
-  };
-
-  const fetchTrackSubmissions = async () => {
-    if (!key) return;
-    setTrackSubsLoading(true);
-    try {
-      const r = await fetch(`/api/track-submissions?key=${encodeURIComponent(key)}&_t=${Date.now()}`);
-      const j = await r.json();
-      if (!r.ok || !j?.ok) throw new Error(j?.error);
-      setTrackSubs(j.submissions);
-    } catch (err: any) { alert("שגיאה: " + err.message); }
-    finally { setTrackSubsLoading(false); }
   };
 
   const fetchArtists = async () => {
@@ -205,34 +176,6 @@ export default function Admin() {
     finally { setSavingArtist(false); }
   };
 
-  const approveTrack = async (trackId: string) => {
-    if (!confirm("לאשר טרק זה?")) return;
-    setLoading(true);
-    try {
-      const r = await fetch('/api/approve-track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, trackId }) });
-      const j = await r.json();
-      if (!r.ok || !j.ok) throw new Error(j.error);
-      alert("✅ הטרק אושר!");
-      setSelectedTrackSub(null);
-      fetchTrackSubmissions();
-    } catch (err: any) { alert("שגיאה: " + err.message); }
-    finally { setLoading(false); }
-  };
-
-  const deleteTrack = async (trackId: string) => {
-    if (!confirm("למחוק?")) return;
-    setLoading(true);
-    try {
-      const r = await fetch('/api/track-submissions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, trackId, action: 'delete' }) });
-      const j = await r.json();
-      if (!r.ok || !j.ok) throw new Error(j.error);
-      alert("✅ נמחק!");
-      setSelectedTrackSub(null);
-      fetchTrackSubmissions();
-    } catch (err: any) { alert("שגיאה: " + err.message); }
-    finally { setLoading(false); }
-  };
-
   const deleteSignup = async (signupId: string) => {
     if (!confirm("למחוק?")) return;
     setLoading(true);
@@ -244,6 +187,31 @@ export default function Admin() {
       setSelectedSignup(null);
       fetchSignups();
     } catch (err: any) { alert("שגיאה: " + err.message); }
+    finally { setLoading(false); }
+  };
+
+  const processAllExceptLast2 = async () => {
+    if (signups.length <= 2) {
+      alert("יש רק 2 הרשמות או פחות, אין מה לעבד");
+      return;
+    }
+
+    if (!confirm(`לסמן את כל ההרשמות כמעובדות מלבד ה-2 האחרונות? \nיסומנו: ${signups.length - 2} | יישארו: 2`)) return;
+
+    setLoading(true);
+    try {
+      const r = await fetch('/api/process-signups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, processAll: true })
+      });
+      const j = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j.error);
+      alert(`✅ ${j.message}\nסומנו: ${j.processedCount} | נותרו: ${j.remainingCount}`);
+      fetchSignups();
+    } catch (err: any) {
+      alert("שגיאה: " + err.message);
+    }
     finally { setLoading(false); }
   };
 
@@ -289,21 +257,14 @@ export default function Admin() {
               <Link href="/admin/featured-artist" className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition hover:scale-105">
                  ⭐ ניהול אמן מומלץ
               </Link>
-              <Link href="/admin/duels" className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-purple-500/50 text-purple-300 hover:bg-purple-500/20 flex items-center gap-2 transition hover:scale-105">
-                 ⚔️ ניהול דואל יומי
-              </Link>
               <Link href="/admin/radio" className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-pink-500/50 text-pink-300 hover:bg-pink-500/20 flex items-center gap-2 transition hover:scale-105">
                  📻 ניהול רדיו
               </Link>
-              <button onClick={() => setShowVotesArchive(true)} className="btn-secondary px-6 py-3 rounded-xl text-sm font-bold border-amber-500/50 text-amber-300 hover:bg-amber-500/20 flex items-center gap-2 transition hover:scale-105">
-                📊 ארכיון הצבעות 2025 ({totalVotes.toLocaleString()})
-              </button>
             </div>
 
             <div className="glass rounded-2xl p-1 flex gap-2 overflow-x-auto">
               {[
                 { id: "signups", label: `🌟 הרשמות (${signups.length})` },
-                { id: "track-submissions", label: `💬 טרקים (${trackSubs.length})` },
                 { id: "artists", label: `🎧 אמנים (${adminArtists.length})` },
                 { id: "analytics", label: `📊 סטטיסטיקות` },
               ].map(tab => (
@@ -325,6 +286,7 @@ export default function Admin() {
                 <div className="glass rounded-2xl p-4 flex justify-between items-center">
                   <h2 className="text-2xl font-semibold">הרשמות אמנים</h2>
                   <div className="flex gap-2">
+                    <button onClick={processAllExceptLast2} className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-xl px-4 py-2 text-sm transition" title="סמן את כל ההרשמות כמעובדות מלבד ה-2 האחרונות">✓ עבד הכל חוץ מ-2</button>
                     <button onClick={downloadCSV} className="btn-primary rounded-xl px-4 py-2 text-sm" disabled={!signups.length}>📥 CSV</button>
                     <button onClick={fetchSignups} className="btn-secondary rounded-xl px-4 py-2 text-sm">{signupsLoading ? "..." : "🔄"}</button>
                   </div>
@@ -373,52 +335,6 @@ export default function Admin() {
                       <p><b>השראות:</b> {selectedSignup.inspirations}</p>
                       <a href={selectedSignup.track_link} target="_blank" className="text-cyan-400 hover:underline block">🎵 {selectedSignup.track_link}</a>
                       <button onClick={() => deleteSignup(selectedSignup.id)} className="w-full bg-red-500/20 py-3 rounded-xl">🗑️ מחק</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ===== TRACK SUBMISSIONS TAB - UNCHANGED ===== */}
-            {activeTab === "track-submissions" && (
-              <div className="space-y-4">
-                <div className="glass rounded-2xl p-4 flex justify-between items-center">
-                  <h2 className="text-2xl font-semibold">טרקים להמלצה</h2>
-                  <button onClick={fetchTrackSubmissions} className="btn-primary rounded-xl px-4 py-2 text-sm">{trackSubsLoading ? "..." : "🔄"}</button>
-                </div>
-                {trackSubsLoading ? <div className="text-center p-12">⏳</div> : !trackSubs.length ? <div className="text-center p-12 text-white/50">אין טרקים</div> : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {trackSubs.map(t => (
-                      <div key={t.id} className={`glass rounded-2xl p-4 ${t.is_approved ? 'border-2 border-green-500/50' : ''}`}>
-                        <p className="text-sm text-cyan-400">{new Date(t.created_at).toLocaleDateString('he-IL')}</p>
-                        <h3 className="text-lg font-bold">{t.track_title}</h3>
-                        <p className="text-sm text-white/70">מגיש: {t.name}</p>
-                        <p className="text-xs text-white/50 line-clamp-2 mb-4">{t.description}</p>
-                        <div className="space-y-2">
-                          {t.is_approved ? <div className="bg-green-600/50 py-2 rounded-xl text-center">✅ פעיל</div> : <button onClick={() => approveTrack(t.id)} className="w-full btn-primary py-2 rounded-xl">⭐ אשר</button>}
-                          <div className="flex gap-2">
-                            <button onClick={() => setSelectedTrackSub(t)} className="btn-secondary px-3 py-2 rounded-xl flex-1">👁️</button>
-                            <button onClick={() => deleteTrack(t.id)} className="bg-red-500/20 px-3 py-2 rounded-xl">🗑️</button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {selectedTrackSub && (
-                  <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-6" onClick={() => setSelectedTrackSub(null)}>
-                    <div className="glass rounded-xl max-w-3xl w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
-                      <div className="flex justify-between"><h3 className="text-xl font-bold">{selectedTrackSub.track_title}</h3><button onClick={() => setSelectedTrackSub(null)} className="text-2xl">✕</button></div>
-                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                        <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${getYouTubeVideoId(selectedTrackSub.youtube_url)}`} allowFullScreen />
-                      </div>
-                      <p><b>מגיש:</b> {selectedTrackSub.name}</p>
-                      <p className="bg-black/30 p-4 rounded-lg">{selectedTrackSub.description}</p>
-                      <div className="flex gap-3">
-                        {!selectedTrackSub.is_approved && <button onClick={() => approveTrack(selectedTrackSub.id)} className="btn-primary px-6 py-3 rounded-xl flex-1">⭐ אשר</button>}
-                        <a href={selectedTrackSub.youtube_url} target="_blank" className="btn-secondary px-6 py-3 rounded-xl flex-1 text-center">יוטיוב</a>
-                      </div>
-                      <button onClick={() => deleteTrack(selectedTrackSub.id)} className="w-full bg-red-500/20 py-3 rounded-xl">🗑️ מחק</button>
                     </div>
                   </div>
                 )}
@@ -528,47 +444,6 @@ export default function Admin() {
               </div>
             )}
 
-            {/* ===== VOTES ARCHIVE MODAL - UNCHANGED ===== */}
-            {showVotesArchive && tally && (
-              <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4" onClick={() => setShowVotesArchive(false)}>
-                <div className="glass rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
-                  <div className="sticky top-0 bg-black/90 backdrop-blur p-6 border-b border-white/10 flex justify-between items-center">
-                    <div>
-                      <h2 className="text-2xl font-bold text-amber-400">📊 ארכיון הצבעות 2025</h2>
-                      <p className="text-white/60 text-sm mt-1">סה״כ {totalVotes.toLocaleString()} הצבעות</p>
-                    </div>
-                    <button onClick={() => setShowVotesArchive(false)} className="text-3xl hover:text-white/80 transition">✕</button>
-                  </div>
-                  <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)] space-y-6">
-                    {Object.entries(tally).map(([catId, nominees]) => {
-                      const total = Object.values(nominees).reduce((s, c) => s + c, 0);
-                      return (
-                        <div key={catId} className="glass rounded-2xl p-4">
-                          <h3 className="text-lg font-bold text-cyan-400 border-b border-white/10 pb-2 mb-3">{getCategoryTitle(catId)}</h3>
-                          <div className="space-y-2">
-                            {Object.entries(nominees).sort(([,a], [,b]) => b - a).slice(0, 5).map(([nId, count], i) => (
-                              <div key={nId} className={`flex items-center gap-3 p-2 rounded-lg ${i === 0 ? 'bg-yellow-500/10' : ''}`}>
-                                <span className="w-8 text-center">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}</span>
-                                <div className="flex-1">
-                                  <div className={`font-medium ${i === 0 ? 'text-yellow-300' : ''}`}>{getNomineeName(catId, nId)}</div>
-                                  <div className="w-full bg-gray-800 rounded-full h-1.5 mt-1">
-                                    <div className={`h-full rounded-full ${i === 0 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-cyan-500 to-purple-500'}`} style={{ width: `${total > 0 ? (count / total) * 100 : 0}%` }} />
-                                  </div>
-                                </div>
-                                <div className="text-left w-16">
-                                  <div className={`font-bold ${i === 0 ? 'text-yellow-300' : 'text-cyan-400'}`}>{count}</div>
-                                  <div className="text-xs text-white/50">{total > 0 ? ((count / total) * 100).toFixed(1) : 0}%</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
