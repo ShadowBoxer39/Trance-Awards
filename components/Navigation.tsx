@@ -17,7 +17,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
   const isFeaturedActive = currentPage === "featured-artist" || currentPage === "featured-artists";
   
   // Check if any "More" menu page is active
-  const isMoreActive = ["episodes", "young-artists", "track-of-the-week", "submit-track", "about", "advertisers", "radio", "merch"].includes(currentPage || "");
+  const isMoreActive = ["episodes", "young-artists", "track-of-the-week", "submit-track", "about", "advertisers", "legends", "merch"].includes(currentPage || "");
 
   return (
     <nav className="border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
@@ -58,22 +58,22 @@ export default function Navigation({ currentPage }: NavigationProps) {
                 האמנים
               </Link>
 
-              <Link
-                href="/legends"
+             <Link
+                href="/radio"
                 className={`text-base font-medium transition whitespace-nowrap ${
-                  isActive("legends") ? "text-white" : "text-gray-300 hover:text-white"
+                  isActive("radio") ? "text-white" : "text-gray-300 hover:text-white"
                 }`}
               >
-                אגדות
+                רדיו
               </Link>
 
-              <Link
+             <Link
                 href="/featured-artists"
                 className={`text-base font-medium transition whitespace-nowrap ${
                   isFeaturedActive ? "text-white" : "text-gray-300 hover:text-white"
                 }`}
               >
-                אמנים צעירים
+                האמנים המומלצים שלנו
               </Link>
 
               {/* More Dropdown */}
@@ -136,14 +136,14 @@ export default function Navigation({ currentPage }: NavigationProps) {
                      
 
                                         <Link
-  href="/radio/register"
+  href="/legends"
   className={`block px-4 py-3 text-sm transition ${
-    isActive("radio")
+    isActive("legends")
       ? "text-purple-400 bg-gray-800"
       : "text-gray-300 hover:bg-gray-800 hover:text-white"
   }`}
 >
-  📻 רדיו
+  👑 אגדות
 </Link>
                       <Link
                         href="/about"
@@ -231,16 +231,16 @@ export default function Navigation({ currentPage }: NavigationProps) {
               🎤 האמנים
             </Link>
 
-            <Link
-              href="/legends"
+           <Link
+              href="/radio"
               className={`block px-4 py-3 rounded-lg transition ${
-                isActive("legends") 
+                isActive("radio") 
                   ? "text-white bg-gray-800" 
                   : "text-gray-300 hover:bg-gray-800 hover:text-white"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              👑 אגדות
+              📻 רדיו
             </Link>
 
             <Link
@@ -252,7 +252,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              ⭐ אמנים צעירים
+              ⭐האמנים המומלצים שלנו
             </Link>
 
             {/* More Section */}
@@ -312,15 +312,15 @@ export default function Navigation({ currentPage }: NavigationProps) {
               </Link>
 
 <Link
-  href="/radio/register"
+  href="/legends"
   className={`block px-4 py-3 rounded-lg transition ${
-    isActive("radio") 
+    isActive("legends") 
       ? "text-white bg-gray-800" 
       : "text-gray-300 hover:bg-gray-800 hover:text-white"
   }`}
   onClick={() => setMobileMenuOpen(false)}
 >
-  📻 רדיו
+  👑 אגדות
 </Link>
 
               <Link

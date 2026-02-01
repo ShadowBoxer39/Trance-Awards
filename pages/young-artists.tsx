@@ -1,88 +1,26 @@
-// pages/young-artists.tsx - Landing Page for "פרק במה לאמנים 2"
-import { GetServerSideProps } from 'next';
-import { createClient } from "@supabase/supabase-js";
+// pages/young-artists.tsx - Landing Page for Artist Stage submissions
 import Head from "next/head";
 import Link from "next/link";
 import React from "react";
 import Navigation from "../components/Navigation";
 import SEO from "@/components/SEO";
-import { FaInstagram, FaSpotify, FaSoundcloud, FaYoutube, FaWhatsapp, FaCheck, FaChevronDown } from "react-icons/fa";
-
-interface AlumniArtist {
-  id: number;
-  artist_id: string;
-  name: string;
-  stage_name: string;
-  bio: string;
-  profile_photo_url: string;
-  instagram_url?: string;
-  soundcloud_profile_url?: string;
-  spotify_url?: string;
-}
-
-interface PageProps {
-  alumniArtists: AlumniArtist[];
-}
-
-const ARTIST_QUOTES: { [key: string]: string } = {
-  nardia: "ההזדמנות הזו פתחה לי דלתות שלא ידעתי שקיימות",
-  modulation: "הפרק היה נקודת מפנה בקריירה שלנו",
-  shaprut: "הקהילה של יוצאים לטראק היא משפחה אמיתית",
-  tanoma: "חוויה שלא אשכח לעולם",
-};
+import { FaCheck, FaChevronDown } from "react-icons/fa";
 
 const FAQ_ITEMS = [
-  { question: "מתי הפרק מוקלט?", answer: "הפרק יוקלט באביב 2025, התאריך המדויק יפורסם בקרוב לאמנים שייבחרו." },
-  { question: "איך תהליך הבחירה עובד?", answer: "אנחנו מאזינים לכל הטראקים שנשלחים, ובוחרים 4 אמנים שהמוזיקה שלהם מדברת אלינו. אנחנו מחפשים מקוריות, איכות הפקה ופוטנציאל." },
-  { question: "איך אדע אם התקבלתי?", answer: "ניצור איתכם קשר ישירות דרך הטלפון או הוואטסאפ. אם לא שמעתם מאיתנו אתם מוזמנים לשלוח הודעה בקהילה." },
+  { question: "מי יכול להגיש מועמדות?", answer: "כל אמן/ית טראנס שמפיק/ה מוזיקה ורוצה לקבל במה. לא משנה כמה טראקים יש לכם בחוץ - אנחנו מחפשים פוטנציאל ואיכות." },
+  { question: "איך תהליך הבחירה עובד?", answer: "אנחנו מאזינים לכל הטראקים שנשלחים, ובוחרים אמנים שהמוזיקה שלהם מדברת אלינו. אנחנו מחפשים מקוריות, איכות הפקה ופוטנציאל." },
+  { question: "איך אדע אם התקבלתי?", answer: "ניצור איתכם קשר ישירות דרך הטלפון שתשאירו בטופס. אם לא שמעתם מאיתנו תוך מספר שבועות, אתם מוזמנים לשלוח לנו הודעה." },
   { question: "איפה מקליטים את הפרק?", answer: "ההקלטה מתבצעת באולפן מקצועי באזור המרכז. הפרטים המדויקים יימסרו לאמנים שייבחרו." },
-  { question: "האם אני צריך כמות מסוימת של טראקים בחוץ?", answer: "לא! אנחנו מחפשים פוטנציאל ואיכות, לא כמות. גם אם יש לכם רק טראק אחד או שניים, שלחו אותם." },
+  { question: "כמה אמנים משתתפים בכל פרק?", answer: "בדרך כלל אנחנו אמן אחד בכל פרק רגיל. המספר המדויק משתנה בהתאם לפורמט של הפרק." },
 ];
 
-const DEADLINE_DATE = new Date('2026-01-31T23:59:59');
-
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
+export default function YoungArtistsLanding() {
   const [formData, setFormData] = React.useState({ fullName: "", stageName: "", age: "", phone: "", experienceYears: "", inspirations: "", trackLink: "" });
   const [formSubmitted, setFormSubmitted] = React.useState(false);
   const [formLoading, setFormLoading] = React.useState(false);
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = React.useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [isExpired, setIsExpired] = React.useState(false);
 
   React.useEffect(() => { document.documentElement.setAttribute("dir", "rtl"); }, []);
-
-  React.useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const difference = DEADLINE_DATE.getTime() - now.getTime();
-
-      if (difference <= 0) {
-        setIsExpired(true);
-        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-      }
-
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / (1000 * 60)) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-      };
-    };
-
-    setTimeLeft(calculateTimeLeft());
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,9 +51,9 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
 
   return (
     <>
-      <SEO title="פרק במה לאמנים 2 | יוצאים לטראק" description="הצטרפו לפרק המיוחד השני של יוצאים לטראק! 4 אמנים צעירים יקבלו במה להציג את המוזיקה שלהם. אביב 2025." url="https://www.tracktrip.co.il/young-artists" />
+      <SEO title="במה לאמנים | יוצאים לטראק" description="אמנים צעירים? הגישו מועמדות והצטרפו לפרק של יוצאים לטראק. הבמה שלכם מחכה." url="https://www.tracktrip.co.il/young-artists" />
       <Head>
-        <title>פרק במה לאמנים 2 | יוצאים לטראק</title>
+        <title>במה לאמנים | יוצאים לטראק</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/images/logo.png" />
       </Head>
@@ -124,170 +62,69 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
         <Navigation currentPage="young-artists" />
 
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+        <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-black to-cyan-900/20" />
             <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] animate-pulse" />
             <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-cyan-600/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
           </div>
 
-          <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-            <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 rounded-full text-amber-300 text-sm font-medium mb-8">
-              <span className="text-lg">🌟</span>
-              <span>אביב 2025</span>
+          <div className="relative z-10 max-w-4xl mx-auto px-6 text-center py-20">
+            <div className="inline-flex items-center gap-2 px-5 py-2 bg-purple-500/15 border border-purple-500/30 rounded-full text-purple-300 text-sm font-medium mb-8">
+              <span className="text-lg">🎤</span>
+              <span>הגשות פתוחות</span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight">
-              <span className="block bg-gradient-to-l from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">פרק במה לאמנים</span>
-              <span className="block text-white mt-2">2</span>
+            <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
+              <span className="bg-gradient-to-l from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">במה לאמנים</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-gray-300 mb-4 font-light">4 אמנים. במה אחת. הזדמנות אמיתית.</p>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">קהילת יוצאים לטראק מזמינה אמנים צעירים ומבטיחים להצטרף לפרק מיוחד שיתן לכם במה להציג את המוזיקה שלכם בפני אלפי אנשים</p>
-
-            {/* Countdown Timer */}
-            {!isExpired && (
-              <div className="mb-10">
-                <p className="text-gray-400 text-sm mb-4">⏰ ההגשות נסגרות בעוד:</p>
-                <div className="inline-flex items-center gap-3 md:gap-4" dir="ltr">
-                  <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-purple-600/30 to-purple-800/30 border border-purple-500/40 flex items-center justify-center">
-                      <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
-                    </div>
-                    <span className="text-xs text-gray-500 mt-2">ימים</span>
-                  </div>
-                  <span className="text-2xl text-purple-400 font-bold mb-5">:</span>
-                  <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-pink-600/30 to-pink-800/30 border border-pink-500/40 flex items-center justify-center">
-                      <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
-                    </div>
-                    <span className="text-xs text-gray-500 mt-2">שעות</span>
-                  </div>
-                  <span className="text-2xl text-pink-400 font-bold mb-5">:</span>
-                  <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-cyan-600/30 to-cyan-800/30 border border-cyan-500/40 flex items-center justify-center">
-                      <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                    </div>
-                    <span className="text-xs text-gray-500 mt-2">דקות</span>
-                  </div>
-                  <span className="text-2xl text-cyan-400 font-bold mb-5">:</span>
-                  <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-amber-600/30 to-amber-800/30 border border-amber-500/40 flex items-center justify-center">
-                      <span className="text-2xl md:text-3xl font-black text-white">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                    </div>
-                    <span className="text-xs text-gray-500 mt-2">שניות</span>
-                  </div>
-                </div>
-                <p className="text-gray-500 text-xs mt-4">תאריך אחרון להגשה: 31 בינואר 2026</p>
-              </div>
-            )}
-
-            {isExpired && (
-              <div className="mb-10 inline-flex items-center gap-2 px-6 py-3 bg-red-500/20 border border-red-500/50 rounded-full text-red-300 text-lg font-medium">
-                <span>⏰</span>
-                <span>ההגשות נסגרו</span>
-              </div>
-            )}
+            <p className="text-xl md:text-2xl text-gray-300 mb-4 font-light">הבמה שלכם מחכה.</p>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+              אנחנו מחפשים אמני טראנס מוכשרים שרוצים לקבל במה בפרק  של יוצאים לטראק,
+              שלחו לנו את המוזיקה שלכם ואולי נראה אתכם בפרק הבא
+            </p>
 
             <button onClick={scrollToForm} className="group inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105">
               להגשת מועמדות
               <svg className="w-5 h-5 transform group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
             </button>
           </div>
-
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-            <svg className="w-8 h-8 text-purple-400/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-          </div>
         </section>
 
-        {/* Episode 1 Success Section */}
+        {/* How It Works Section */}
         <section className="py-20 px-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/20 to-black" />
-          <div className="relative max-w-6xl mx-auto">
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/10 to-black" />
+          <div className="relative max-w-5xl mx-auto">
             <div className="text-center mb-16">
-              <span className="text-4xl mb-4 block">🎉</span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4"><span className="bg-gradient-to-l from-purple-400 to-cyan-400 bg-clip-text text-transparent">הפרק הראשון היה הצלחה אדירה</span></h2>
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">בפרק הראשון אירחנו 4 אמנים מוכשרים שקיבלו במה וסיפרו לנו ולקהל על המסע שלהם</p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4"><span className="bg-gradient-to-l from-purple-400 to-cyan-400 bg-clip-text text-transparent">איך זה עובד?</span></h2>
+              <p className="text-gray-400 text-lg">שני צעדים פשוטים וההרשמה שלכם תישלח אלינו</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-              <div className="glass-card rounded-2xl p-8 text-center border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 hover:scale-105">
-                <div className="text-5xl mb-3">🎧</div>
-                <div className="text-4xl font-black text-purple-400 mb-2">10,000+</div>
-                <div className="text-gray-400">צפיות והאזנות</div>
-              </div>
-              <div className="glass-card rounded-2xl p-8 text-center border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300 hover:scale-105">
-                <div className="text-5xl mb-3">🎤</div>
-                <div className="text-4xl font-black text-cyan-400 mb-2">4</div>
-                <div className="text-gray-400">אמנים שקיבלו במה</div>
-              </div>
-              <div className="glass-card rounded-2xl p-8 text-center border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300 hover:scale-105">
-                <div className="text-5xl mb-3">📸</div>
-                <div className="text-4xl font-black text-pink-400 mb-2">אלפי צפיות</div>
-                <div className="text-gray-400">ברשתות החברתיות</div>
-              </div>
-            </div>
-
-            <div className="max-w-4xl mx-auto">
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition duration-500" />
-                <div className="relative bg-black rounded-2xl overflow-hidden border border-gray-800">
-                  <div className="aspect-video">
-                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/leIABciiXK4?start=1450" title="פרק במה לאמנים 1" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full" />
-                  </div>
-                  <div className="p-6 bg-gradient-to-t from-gray-900 to-transparent">
-                    <a href="https://www.youtube.com/watch?v=leIABciiXK4" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition font-medium">
-                      <FaYoutube className="text-xl" />צפו בפרק המלא ביוטיוב
-                    </a>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="glass-card rounded-2xl p-8 text-center border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center mx-auto mb-5">
+                  <span className="text-2xl font-bold text-white">1</span>
                 </div>
+                <h3 className="text-xl font-bold text-white mb-3">שלחו מועמדות</h3>
+                <p className="text-gray-400 leading-relaxed">מלאו את הטופס עם הפרטים שלכם ולינק למוזיקה שלכם</p>
               </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Alumni Artists Section */}
-        <section className="py-20 px-6 relative">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <span className="text-4xl mb-4 block">⭐</span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4"><span className="bg-gradient-to-l from-amber-400 to-orange-400 bg-clip-text text-transparent">הכירו את האמנים מהפרק הראשון</span></h2>
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">4 אמנים מוכשרים שקיבלו במה והפכו לחלק מהמשפחה</p>
-            </div>
+              <div className="glass-card rounded-2xl p-8 text-center border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-600 to-pink-800 flex items-center justify-center mx-auto mb-5">
+                  <span className="text-2xl font-bold text-white">2</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">אנחנו מאזינים</h3>
+                <p className="text-gray-400 leading-relaxed">הצוות שלנו מאזין לכל הגשה ובוחר את האמנים לפרק הבא</p>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {alumniArtists.map((artist) => (
-                <Link key={artist.id} href={`/artist/${artist.artist_id}`} className="group relative block">
-                  <div className="absolute -inset-1 bg-gradient-to-br from-purple-600/50 to-cyan-600/50 rounded-3xl blur-lg opacity-0 group-hover:opacity-30 transition duration-500" />
-                  <div className="relative glass-card rounded-2xl overflow-hidden border border-gray-800 group-hover:border-purple-500/50 transition-all duration-300">
-                    <div className="flex flex-col sm:flex-row">
-                      <div className="relative w-full sm:w-48 h-64 sm:h-auto flex-shrink-0 overflow-hidden">
-                        <img src={artist.profile_photo_url} alt={artist.stage_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-black/60 via-transparent to-transparent" />
-                      </div>
-                      <div className="flex-1 p-6 flex flex-col">
-                        <div className="mb-4">
-                          <span className="text-2xl font-bold text-white group-hover:text-purple-400 transition">{artist.stage_name}</span>
-                          <p className="text-gray-400 text-sm">{artist.name}</p>
-                        </div>
-                        <blockquote className="text-gray-300 italic mb-4 flex-1">&ldquo;{ARTIST_QUOTES[artist.artist_id] || "חוויה מדהימה להיות חלק מהפרק"}&rdquo;</blockquote>
-                        <div className="flex items-center gap-3">
-                          {artist.soundcloud_profile_url && <div className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center"><FaSoundcloud className="text-white" /></div>}
-                          {artist.spotify_url && <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center"><FaSpotify className="text-white" /></div>}
-                          {artist.instagram_url && <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center"><FaInstagram className="text-white" /></div>}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Link href="/featured-artists" className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition font-medium">
-                לכל האמנים הצעירים שלנו
-                <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-              </Link>
+              <div className="glass-card rounded-2xl p-8 text-center border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-600 to-cyan-800 flex items-center justify-center mx-auto mb-5">
+                  <span className="text-2xl font-bold text-white">3</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">עולים לאוויר</h3>
+                <p className="text-gray-400 leading-relaxed">אם נבחרתם, ניצור איתכם קשר ונזמין אתכם לאולפן להקלטת פרק</p>
+              </div>
             </div>
           </div>
         </section>
@@ -297,8 +134,7 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
           <div className="absolute inset-0 bg-gradient-to-b from-black via-cyan-950/10 to-black" />
           <div className="relative max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <span className="text-4xl mb-4 block">🎁</span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4"><span className="bg-gradient-to-l from-cyan-400 to-purple-400 bg-clip-text text-transparent">מה מקבלים?</span></h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4"><span className="bg-gradient-to-l from-cyan-400 to-purple-400 bg-clip-text text-transparent">מה מקבלים?</span></h2>
               <p className="text-gray-400 text-lg max-w-2xl mx-auto">להיבחר לפרק במה לאמנים זה הרבה יותר מסתם הופעה בפודקאסט</p>
             </div>
 
@@ -322,14 +158,14 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
         {/* Apply Section */}
         <section id="apply-section" className="py-20 px-6 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/20 to-black" />
-          <div className="relative max-w-4xl mx-auto">
+          <div className="relative max-w-3xl mx-auto">
             <div className="text-center mb-12">
               <span className="text-4xl mb-4 block">📝</span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4"><span className="bg-gradient-to-l from-purple-400 to-pink-400 bg-clip-text text-transparent">הגישו מועמדות</span></h2>
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto">שני צעדים פשוטים וההרשמה שלכם תישלח אלינו</p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4"><span className="bg-gradient-to-l from-purple-400 to-pink-400 bg-clip-text text-transparent">הגישו מועמדות</span></h2>
+              <p className="text-gray-400 text-lg">ספרו לנו על עצמכם ושלחו לנו את המוזיקה שלכם</p>
             </div>
 
-            {/* Step 1: WhatsApp */}
+           {/* Step 1: WhatsApp */}
             <div className="mb-8">
               <div className="glass-card rounded-2xl p-8 border-2 border-green-500/30 bg-gradient-to-br from-green-500/10 to-green-600/5">
                 <div className="flex items-start gap-4">
@@ -338,7 +174,8 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
                     <h3 className="text-xl font-bold text-white mb-2">הצטרפו לקהילת הוואטסאפ</h3>
                     <p className="text-gray-300 mb-6 leading-relaxed">חובה להיות חבר בקהילת הוואטסאפ שלנו כדי להגיש מועמדות. זה המקום שבו אנחנו מתקשרים עם האמנים ומפרסמים עדכונים.</p>
                     <a href="https://chat.whatsapp.com/LSZaHTgYXPn4HRvrsCnmTc" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 bg-green-600 hover:bg-green-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg shadow-green-500/30">
-                      <FaWhatsapp className="text-2xl" />הצטרפו לקהילה
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.818-6.303-2.187l-.44-.362-3.091 1.036 1.036-3.091-.362-.44A9.953 9.953 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                      הצטרפו לקהילה
                     </a>
                   </div>
                 </div>
@@ -388,9 +225,10 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
                     <input type="url" id="trackLink" name="trackLink" required value={formData.trackLink} onChange={handleChange} className="w-full px-5 py-4 bg-black/50 border-2 border-gray-700 focus:border-purple-500 rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors" placeholder="https://soundcloud.com/... או https://youtube.com/..." />
                     <p className="text-xs text-gray-500 mt-2">SoundCloud, YouTube, Spotify או כל פלטפורמה אחרת</p>
                   </div>
-                  <button type="submit" disabled={formLoading || isExpired} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-lg py-5 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3">
-                    {formLoading ? (<><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>שולח...</>) : isExpired ? (<>ההגשות נסגרו</>) : (<>שלח מועמדות<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></>)}
+                  <button type="submit" disabled={formLoading} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-lg py-5 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3">
+                    {formLoading ? (<><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>שולח...</>) : (<>שלח מועמדות<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></>)}
                   </button>
+                  
                 </form>
               ) : (
                 <div className="text-center py-16">
@@ -407,7 +245,6 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
         <section className="py-20 px-6 relative">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-4xl mb-4 block">❓</span>
               <h2 className="text-3xl md:text-4xl font-bold mb-4"><span className="bg-gradient-to-l from-purple-400 to-cyan-400 bg-clip-text text-transparent">שאלות נפוצות</span></h2>
             </div>
             <div className="space-y-4">
@@ -422,24 +259,6 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="py-20 px-6 relative">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition duration-500" />
-              <div className="relative glass-card rounded-3xl p-12 border border-gray-800">
-                <div className="text-6xl mb-6">🚀</div>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">מוכנים להתחיל את המסע?</h2>
-                <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">אל תפספסו את ההזדמנות להיות חלק מהפרק הבא. הגישו מועמדות עכשיו!</p>
-                <button onClick={scrollToForm} className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-lg py-4 px-10 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105">
-                  להגשת מועמדות
-                  <svg className="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                </button>
-              </div>
             </div>
           </div>
         </section>
@@ -469,26 +288,3 @@ export default function YoungArtistsLanding({ alumniArtists }: PageProps) {
     </>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-  const alumniIds = ['nardia', 'modulation', 'shaprut', 'tanoma'];
-
-  try {
-    const { data: artists, error } = await supabase
-      .from('featured_artists')
-      .select('id, artist_id, name, stage_name, bio, profile_photo_url, instagram_url, soundcloud_profile_url, spotify_url')
-      .in('artist_id', alumniIds);
-
-    if (error) {
-      console.error('Error fetching alumni artists:', error);
-      return { props: { alumniArtists: [] } };
-    }
-
-    const sortedArtists = alumniIds.map(id => artists?.find(a => a.artist_id === id)).filter(Boolean) as AlumniArtist[];
-    return { props: { alumniArtists: sortedArtists } };
-  } catch (err) {
-    console.error('getServerSideProps error:', err);
-    return { props: { alumniArtists: [] } };
-  }
-};

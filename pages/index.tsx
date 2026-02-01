@@ -823,11 +823,11 @@ export default function Home({
                 </Link>
                 
                 <Link 
-                  href="/young-artists" 
+                  href="/featured-artists" 
                   className="px-10 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg text-white hover:bg-white/20 transition-all duration-300 hover:scale-105 flex items-center gap-2 justify-center min-w-[200px]"
                 >
-                  <span className="text-2xl">🌟</span>
-           הרשמה לאמנים צעירים
+                  <span className="text-2xl">⭐</span>
+                  האמנים המומלצים שלנו
                 </Link>
               </div>
 
