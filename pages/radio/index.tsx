@@ -269,6 +269,7 @@ export default function RadioPage() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [fingerprint, setFingerprint] = useState('');
+  const [ctaDismissed, setCtaDismissed] = useState(false);
 
   // Player state
   const [nowPlaying, setNowPlaying] = useState<NowPlayingData | null>(null);
@@ -317,6 +318,18 @@ useEffect(() => {
   useEffect(() => {
     document.documentElement.setAttribute('dir', 'rtl');
     setFingerprint(getFingerprint());
+
+    // Check if CTA was previously dismissed (24-hour expiry)
+    const dismissed = localStorage.getItem('radio_cta_dismissed');
+    if (dismissed) {
+      const dismissedTime = parseInt(dismissed);
+      const hoursSince = (Date.now() - dismissedTime) / (1000 * 60 * 60);
+      if (hoursSince < 24) {
+        setCtaDismissed(true);
+      } else {
+        localStorage.removeItem('radio_cta_dismissed');
+      }
+    }
     
     const checkAuth = async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -651,6 +664,11 @@ const currentSong = nowPlaying?.now_playing?.song;
 const nextSong = nowPlaying?.playing_next?.song;
 const bioIsLong = artistDetails?.bio && artistDetails.bio.length > 150;
 
+const handleDismissCta = () => {
+  setCtaDismissed(true);
+  localStorage.setItem('radio_cta_dismissed', Date.now().toString());
+};
+
 return (
   <div className="min-h-screen bg-[#0a0a12] text-gray-100 overflow-x-hidden">
       <Head>
@@ -726,6 +744,60 @@ return (
           </h1>
           <p className="text-gray-500 text-sm">טראנס ישראלי 24/7</p>
         </div>
+
+        {/* ========== ARTIST CTA (Top Banner - Slim & Dismissible) ========== */}
+        {!ctaDismissed && (
+          <Link
+            href="/radio/register"
+            className="block relative overflow-hidden rounded-xl mb-6 transition-all hover:scale-[1.005] group animate-fade-in"
+            style={{
+              background: `linear-gradient(90deg, rgba(${dominantColor}, 0.15), rgba(${dominantColor}, 0.08))`,
+              border: `1px solid rgba(${dominantColor}, 0.25)`
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+
+            <div className="relative flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105"
+                  style={{ background: `linear-gradient(135deg, rgb(${dominantColor}), rgba(${dominantColor}, 0.7))` }}
+                >
+                  <FaUpload className="text-base md:text-lg text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm md:text-base font-bold text-white mb-0.5 truncate">אתם יוצרים? 🎵</h4>
+                  <p className="text-xs md:text-sm text-gray-400 truncate">שלחו את הטראק שלכם לשידור - בחינם!</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full font-medium text-xs md:text-sm transition-all group-hover:gap-3"
+                  style={{
+                    background: `rgb(${dominantColor})`,
+                    color: '#fff'
+                  }}
+                >
+                  שליחת טראק
+                  <span className="group-hover:translate-x-1 transition-transform">←</span>
+                </div>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDismissCta();
+                  }}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+                  title="סגור"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </Link>
+        )}
 
         {/* ========== MAIN PLAYER (Full Width) ========== */}
         <div 
@@ -1208,45 +1280,6 @@ return (
           </div>
         </div>
 
-        {/* ========== ARTIST CTA (Full Width Banner) ========== */}
-
-
-        {/* ========== ARTIST CTA (Full Width Banner) ========== */}
-        <Link 
-          href="/radio/register" 
-          className="block relative overflow-hidden rounded-2xl p-6 transition-all hover:scale-[1.01] group"
-          style={{
-            background: `linear-gradient(135deg, rgba(${dominantColor}, 0.2), rgba(${dominantColor}, 0.05))`,
-            border: `1px solid rgba(${dominantColor}, 0.3)`
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-          
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div 
-                className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3"
-                style={{ background: `linear-gradient(135deg, rgb(${dominantColor}), rgba(${dominantColor}, 0.7))` }}
-              >
-                <FaUpload className="text-xl text-white" />
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-white mb-1">אתם יוצרים? 🎵</h4>
-                <p className="text-sm text-gray-400">שלחו את הטראק שלכם לשידור ברדיו - בחינם!</p>
-              </div>
-            </div>
-            <div 
-              className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full font-medium text-sm transition-all group-hover:gap-3"
-              style={{ 
-                background: `rgb(${dominantColor})`,
-                color: '#fff'
-              }}
-            >
-              שליחת טראק
-              <span className="group-hover:translate-x-1 transition-transform">←</span>
-            </div>
-          </div>
-        </Link>
 
       </main>
     </div>
