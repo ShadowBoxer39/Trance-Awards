@@ -6,7 +6,9 @@
       "Bash(curl:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(npm run dev:*)",
+      "Bash(echo \"Open Chrome DevTools \\(F12\\) and check:\n1. Application → Manifest \\(should show manifest.json\\)\n2. Application → Service Workers \\(should show sw.js registered\\)\n3. Console \\(should see ''✅ Service Worker registered''\\)\n\nThe install button won''t show on localhost without HTTPS, but everything is ready for production!\")"
     ]
   }
 }
