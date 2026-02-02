@@ -9,6 +9,7 @@ import { FaWhatsapp, FaLink, FaShareAlt } from 'react-icons/fa';
 import ActivityFeed from '@/components/radio/ActivityFeed';
 import ListenerProfileModal from '@/components/radio/ListenerProfileModal';
 import ListeningTimeTracker from '@/components/radio/ListeningTimeTracker';
+import InstallAppButton from '@/components/InstallAppButton';
 import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUpload, FaInstagram, FaSoundcloud, FaChevronDown, FaChevronUp, FaHeart, FaRegHeart, FaHistory, FaCrown, FaForward, FaCheck } from 'react-icons/fa';
 import { HiSparkles, HiMusicNote } from 'react-icons/hi';
 
@@ -765,15 +766,18 @@ return (
         
         {/* ========== HEADER ========== */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-white/10 mb-3">
-            <span className={'relative flex h-2.5 w-2.5 ' + (isPlaying ? '' : 'opacity-50')}>
-              <span className={(isPlaying ? 'animate-ping ' : '') + 'absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75'}></span>
-              <span className={'relative inline-flex rounded-full h-2.5 w-2.5 ' + (isPlaying ? 'bg-red-500' : 'bg-gray-500')}></span>
-            </span>
-            <span className="text-sm font-medium text-gray-300">{isPlaying ? 'משדר עכשיו' : 'לחצו להאזנה'}</span>
-           {nowPlaying?.listeners && (
-  <span className="text-xs text-gray-500">• {nowPlaying.listeners.current} מאזינים</span>
-)}
+          <div className="flex flex-col items-center gap-3 mb-3">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-white/10">
+              <span className={'relative flex h-2.5 w-2.5 ' + (isPlaying ? '' : 'opacity-50')}>
+                <span className={(isPlaying ? 'animate-ping ' : '') + 'absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75'}></span>
+                <span className={'relative inline-flex rounded-full h-2.5 w-2.5 ' + (isPlaying ? 'bg-red-500' : 'bg-gray-500')}></span>
+              </span>
+              <span className="text-sm font-medium text-gray-300">{isPlaying ? 'משדר עכשיו' : 'לחצו להאזנה'}</span>
+              {nowPlaying?.listeners && (
+                <span className="text-xs text-gray-500">• {nowPlaying.listeners.current} מאזינים</span>
+              )}
+            </div>
+            <InstallAppButton />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-1">
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
