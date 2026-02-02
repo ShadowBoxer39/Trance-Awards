@@ -107,12 +107,14 @@ export default function AdminRadioPage() {
   const [loading, setLoading] = useState(false);
   const [artists, setArtists] = useState<RadioArtist[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [activeTab, setActiveTab] = useState<'submissions' | 'artists'>('submissions');
+  const [activeTab, setActiveTab] = useState<'submissions' | 'artists' | 'stats'>('submissions');
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped'); 
   const [filter, setFilter] = useState<'all' | 'pending' | 'pending_whitelist' | 'approved' | 'declined'>('pending');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+  const [stats, setStats] = useState<any>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
   const audioPlayer = useAudioPlayer();
 
   useEffect(() => {
@@ -141,6 +143,20 @@ export default function AdminRadioPage() {
     const res = await fetch(`/api/admin/radio?key=${adminKey}`);
     const data = await res.json();
     if (data.ok) { setArtists(data.artists || []); setSubmissions(data.submissions || []); }
+  };
+
+  const loadStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/radio-stats?key=${adminKey}`);
+      const data = await res.json();
+      if (data.ok) {
+        setStats(data.stats);
+      }
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+    }
+    setStatsLoading(false);
   };
 
   const handleSubmissionAction = async (submissionId: string, action: 'approve' | 'decline' | 'delete', notes?: string) => {
@@ -328,6 +344,7 @@ export default function AdminRadioPage() {
               <div className="flex gap-4 p-1 bg-white/5 rounded-2xl">
                 <button onClick={() => setActiveTab('submissions')} className={`px-8 py-3 rounded-xl transition ${activeTab === 'submissions' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:text-white'}`}>הגשות</button>
                 <button onClick={() => setActiveTab('artists')} className={`px-8 py-3 rounded-xl transition ${activeTab === 'artists' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:text-white'}`}>אמנים</button>
+                <button onClick={() => { setActiveTab('stats'); if (!stats) loadStats(); }} className={`px-8 py-3 rounded-xl transition ${activeTab === 'stats' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'text-gray-500 hover:text-white'}`}>סטטיסטיקות</button>
               </div>
 
               {activeTab === 'submissions' && (
@@ -382,6 +399,162 @@ export default function AdminRadioPage() {
             {activeTab === 'artists' && (
               <div className="grid grid-cols-1 gap-4">
                 {artists.map(a => <ArtistCard key={a.id} artist={a} onToggleApproval={() => handleArtistApproval(a.id, !a.approved)} />)}
+              </div>
+            )}
+
+            {/* Stats Tab */}
+            {activeTab === 'stats' && (
+              <div className="space-y-8">
+                {statsLoading ? (
+                  <div className="text-center py-20 text-gray-500">טוען סטטיסטיקות...</div>
+                ) : !stats ? (
+                  <div className="text-center py-20 text-gray-500">לא נטענו סטטיסטיקות</div>
+                ) : (
+                  <>
+                    {/* Key Metrics */}
+                    <div>
+                      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                        <HiSparkles className="text-purple-400" />
+                        מדדי ביצועים ראשיים
+                      </h2>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-purple-400 mb-2">{stats.totalListeners}</div>
+                          <div className="text-gray-500 text-sm">סך מאזינים</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-cyan-400 mb-2">{stats.pwaInstalls}</div>
+                          <div className="text-gray-500 text-sm">הורדות אפליקציה</div>
+                          <div className="text-xs text-cyan-400 mt-1">{stats.pwaAdoptionRate}% מהמאזינים</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-green-400 mb-2">{stats.avgListeningHours}</div>
+                          <div className="text-gray-500 text-sm">שעות האזנה ממוצעות</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-yellow-400 mb-2">{stats.retentionRate}%</div>
+                          <div className="text-gray-500 text-sm">שיעור שימור</div>
+                          <div className="text-xs text-gray-600 mt-1">מאזינים שחזרו</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Activity Metrics */}
+                    <div>
+                      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                        📊 פעילות ומעורבות
+                      </h2>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-blue-400 mb-2">{stats.activeListeners7d}</div>
+                          <div className="text-gray-500 text-sm">פעילים ב-7 ימים</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-indigo-400 mb-2">{stats.activeListeners30d}</div>
+                          <div className="text-gray-500 text-sm">פעילים ב-30 ימים</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-pink-400 mb-2">{stats.newListeners30d}</div>
+                          <div className="text-gray-500 text-sm">מאזינים חדשים (30 ימים)</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-orange-400 mb-2">{stats.totalListeningHours}</div>
+                          <div className="text-gray-500 text-sm">סה״כ שעות האזנה</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Milestones */}
+                    <div>
+                      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                        🏆 הישגים ואבני דרך
+                      </h2>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-yellow-400 mb-2">{stats.totalMilestones}</div>
+                          <div className="text-gray-500 text-sm">סך אבני דרך</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-purple-400 mb-2">{stats.listeningMilestones}</div>
+                          <div className="text-gray-500 text-sm">אבני דרך האזנה</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-blue-400 mb-2">{stats.voteMilestones}</div>
+                          <div className="text-gray-500 text-sm">אבני דרך הצבעות</div>
+                        </div>
+                        <div className="glass-warm rounded-2xl p-6">
+                          <div className="text-4xl font-bold text-green-400 mb-2">{stats.recentActivity30d}</div>
+                          <div className="text-gray-500 text-sm">הישגים חדשים (30 ימים)</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Top Listeners */}
+                    <div>
+                      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                        🎧 מאזינים מובילים
+                      </h2>
+                      <div className="glass-warm rounded-3xl p-6 border border-white/5">
+                        <div className="space-y-3">
+                          {stats.topListeners.length === 0 ? (
+                            <div className="text-center py-10 text-gray-600">אין נתונים עדיין</div>
+                          ) : (
+                            stats.topListeners.map((listener: any, index: number) => (
+                              <div key={listener.user_id} className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                                  index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
+                                  index === 1 ? 'bg-gray-400/20 text-gray-400' :
+                                  index === 2 ? 'bg-orange-500/20 text-orange-400' :
+                                  'bg-white/10 text-gray-500'
+                                }`}>
+                                  #{index + 1}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="text-white font-medium">מאזין {listener.user_id.slice(0, 8)}</div>
+                                  <div className="text-xs text-gray-500">
+                                    {listener.last_active ? `פעילות אחרונה: ${new Date(listener.last_active).toLocaleDateString('he-IL')}` : 'לא ידוע'}
+                                  </div>
+                                </div>
+                                <div className="text-left">
+                                  <div className="text-2xl font-bold text-purple-400">{listener.hours}</div>
+                                  <div className="text-xs text-gray-500">שעות</div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Top Listening Milestones */}
+                    {stats.topListeningMilestones.length > 0 && (
+                      <div>
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                          🌟 אבני דרך מובילות שהושגו
+                        </h2>
+                        <div className="glass-warm rounded-3xl p-6 border border-white/5">
+                          <div className="flex gap-3 flex-wrap">
+                            {stats.topListeningMilestones.map((hours: number, index: number) => (
+                              <div key={index} className="px-6 py-3 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl border border-purple-500/30">
+                                <div className="text-2xl font-bold text-purple-400">{hours}</div>
+                                <div className="text-xs text-gray-400">שעות</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-center pt-6">
+                      <button
+                        onClick={loadStats}
+                        className="px-8 py-3 bg-white/5 hover:bg-white/10 rounded-xl transition text-gray-400 hover:text-white"
+                      >
+                        🔄 רענן נתונים
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

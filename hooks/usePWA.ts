@@ -42,12 +42,37 @@ export function usePWA() {
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
+
+      // Track PWA installation
+      trackPWAInstall();
     });
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  const trackPWAInstall = async () => {
+    try {
+      // Get user info from localStorage
+      const userStr = localStorage.getItem('radioUser');
+      if (!userStr) return;
+
+      const user = JSON.parse(userStr);
+
+      await fetch('/api/radio/track-pwa-install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          nickname: user.user_metadata?.nickname || user.email,
+          avatar_url: user.user_metadata?.avatar_url
+        })
+      });
+    } catch (err) {
+      console.error('Failed to track PWA install:', err);
+    }
+  };
 
   const installApp = async () => {
     if (!deferredPrompt) return false;
