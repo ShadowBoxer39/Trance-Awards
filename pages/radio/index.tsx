@@ -290,6 +290,7 @@ export default function RadioPage() {
   const [topTracks, setTopTracks] = useState<{track: string; artist: string; likes: number}[]>([]);
   const [dominantColor, setDominantColor] = useState('147, 51, 234'); // Default purple
   const [glowIntensity, setGlowIntensity] = useState(0.3);
+  const [playlistStats, setPlaylistStats] = useState<{num_songs: number} | null>(null);
   const artistCacheRef = useRef<Map<string, ArtistDetails | null>>(new Map());
 
   // Load artist cache from localStorage on mount
@@ -612,6 +613,24 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
+// Fetch playlist stats
+useEffect(() => {
+  const fetchPlaylistStats = async () => {
+    try {
+      const res = await fetch('/api/radio/playlist-stats');
+      if (res.ok) {
+        const data = await res.json();
+        setPlaylistStats(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch playlist stats:', err);
+    }
+  };
+  fetchPlaylistStats();
+  const interval = setInterval(fetchPlaylistStats, 2 * 60 * 60 * 1000); // Update every 2 hours
+  return () => clearInterval(interval);
+}, []);
+
   // Audio setup
   useEffect(() => {
     audioRef.current = new Audio(STREAM_URL);
@@ -894,18 +913,26 @@ return (
 
               {/* Track Info - Center Section */}
               <div className="flex-1 min-w-0 text-center lg:text-right space-y-4">
-                {/* ON AIR Badge */}
-                <div className="flex items-center justify-center lg:justify-start gap-2">
-                  <span className={`relative flex h-3 w-3`}>
-                    <span className={`${isPlaying ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75`}></span>
-                    <span className={`relative inline-flex rounded-full h-3 w-3 ${isPlaying ? 'bg-red-500' : 'bg-gray-500'}`}></span>
-                  </span>
-                  <span
-                    className="text-sm font-bold tracking-wider"
-                    style={{ color: isPlaying ? 'rgb(239, 68, 68)' : 'rgb(156, 163, 175)' }}
-                  >
-                    {isPlaying ? 'ON AIR' : 'לחצו להאזנה'}
-                  </span>
+                {/* ON AIR Badge & Track Count */}
+                <div className="flex items-center justify-center lg:justify-start gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className={`relative flex h-3 w-3`}>
+                      <span className={`${isPlaying ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75`}></span>
+                      <span className={`relative inline-flex rounded-full h-3 w-3 ${isPlaying ? 'bg-red-500' : 'bg-gray-500'}`}></span>
+                    </span>
+                    <span
+                      className="text-sm font-bold tracking-wider"
+                      style={{ color: isPlaying ? 'rgb(239, 68, 68)' : 'rgb(156, 163, 175)' }}
+                    >
+                      {isPlaying ? 'ON AIR' : 'לחצו להאזנה'}
+                    </span>
+                  </div>
+                  {playlistStats && (
+                    <div className="flex items-center gap-2 text-white/60 text-sm">
+                      <HiMusicNote className="w-4 h-4" />
+                      <span>{playlistStats.num_songs} טראקים מנוגנים</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Track Title - Large and Bold */}
