@@ -300,7 +300,7 @@ export default function AdminRadioPage() {
                 <Link href="/radio" className="text-sm text-purple-400 hover:text-purple-300 transition">
                   לרדיו →
                 </Link>
-                <button onClick={() => { localStorage.removeItem('adminKey'); setIsAuthed(false); }} className="text-sm text-gray-500 hover:text-white transition">
+                <button onClick={() => { localStorage.removeItem('adminKey'); localStorage.removeItem('ADMIN_KEY'); setIsAuthed(false); }} className="text-sm text-gray-500 hover:text-white transition">
                   התנתק
                 </button>
               </div>
