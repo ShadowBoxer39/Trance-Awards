@@ -146,34 +146,21 @@ export default function RadioChat({
     }
   }, [reactionCooldown]);
 
-  // Handle "Now Playing" system messages
+  // Track changes disabled - no longer showing system messages for new tracks
   useEffect(() => {
     if (!currentTrackTitle || !currentArtist) return;
-    
+
     const trackKey = `${currentTrackTitle}-${currentArtist}`;
-    
-    // Skip if same track or first load
+
+    // Just update the ref, but don't show system messages
     if (previousTrackRef.current === null) {
       previousTrackRef.current = trackKey;
       return;
     }
-    
+
     if (previousTrackRef.current !== trackKey) {
       previousTrackRef.current = trackKey;
-      
-      // Insert local system message
-      const systemMessage: ChatMessage = {
-        id: `system-${Date.now()}`,
-        message: `${currentArtist} - ${currentTrackTitle}`,
-        is_reaction: false,
-        created_at: new Date().toISOString(),
-        guest_name: null,
-        guest_fingerprint: null,
-        type: 'system',
-        listener: null
-      };
-      
-      setMessages(prev => [...prev, systemMessage]);
+      // System messages removed
     }
   }, [currentTrackTitle, currentArtist]);
 

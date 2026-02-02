@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';
 import RadioChat from '@/components/radio/RadioChat';
 import { FaWhatsapp, FaLink, FaShareAlt } from 'react-icons/fa';
-import RadioLeaderboard from '@/components/radio/RadioLeaderboard';
+import ActivityFeed from '@/components/radio/ActivityFeed';
 import ListenerProfileModal from '@/components/radio/ListenerProfileModal';
 import ListeningTimeTracker from '@/components/radio/ListeningTimeTracker';
 import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaUpload, FaInstagram, FaSoundcloud, FaChevronDown, FaChevronUp, FaHeart, FaRegHeart, FaHistory, FaCrown, FaForward, FaCheck } from 'react-icons/fa';
@@ -499,17 +499,18 @@ checkAuth();
   const handleLike = async () => {
     const currentSong = nowPlaying?.now_playing?.song;
     if (!currentSong || likeLoading || userLiked) return;
-    
+
     setLikeLoading(true);
     try {
-      const fp = getFingerprint();
+      // Use user_id if logged in, otherwise use fingerprint
+      const identifier = user?.id || getFingerprint();
       const res = await fetch('/api/radio/track-likes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           track: currentSong.title,
           artist: currentSong.artist,
-          fingerprint: fp
+          fingerprint: identifier
         })
       });
       
@@ -1268,9 +1269,9 @@ return (
 />
             </div>
 
-            {/* Leaderboard + Top Tracks Row */}
+            {/* Activity Feed + Top Tracks Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <RadioLeaderboard currentUserId={listenerProfile?.id} />
+              <ActivityFeed maxItems={10} />
               
            {/* Top Liked Tracks */}
 {topTracks.length > 0 && (

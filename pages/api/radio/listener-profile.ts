@@ -37,6 +37,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'user_id, email, and nickname required' });
     }
 
+    // Check if this user already exists (to detect first signup)
+    const { data: existingUser } = await supabase
+      .from('radio_listeners')
+      .select('id, user_id')
+      .eq('user_id', user_id)
+      .maybeSingle();
+
+    const isFirstSignup = !existingUser;
+
     // Check if nickname is taken by another user
     const { data: existing } = await supabase
       .from('radio_listeners')
@@ -64,6 +73,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
+
+    // If this is a first signup, create a milestone
+    if (isFirstSignup) {
+      await supabase
+        .from('radio_milestones')
+        .insert({
+          user_id,
+          nickname,
+          avatar_url,
+          milestone_type: 'first_signup',
+          metadata: {}
+        });
+    }
+
     return res.status(200).json(data);
   }
 

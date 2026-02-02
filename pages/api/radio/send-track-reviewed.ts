@@ -53,7 +53,7 @@ const createTrackApprovedEmailHTML = (artistName: string, trackName: string) => 
                 </h3>
                 <ul style="color: #cbd5e1; font-size: 14px; line-height: 2; margin: 0; padding: 0 20px 0 0; list-style: none;">
                   <li style="margin-bottom: 8px;">📻 הטראק משודר ברדיו ברוטציה</li>
-                  <li style="margin-bottom: 8px;">📺 גם בשידור החי ביוטיוב</li>
+                   <li style="margin-bottom: 8px;">📺 עם קרדיט מלא וחשיפה לכל הקהל שלנו</li>
                   <li>📤 רוצה להעלות עוד? תמיד אפשר!</li>
                 </ul>
               </div>

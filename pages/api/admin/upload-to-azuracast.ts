@@ -131,10 +131,10 @@ const base64File = finalBuffer.toString('base64');
     // 6. Update Database
     await supabase
       .from('radio_submissions')
-      .update({ 
-        status: 'approved', 
+      .update({
+        status: 'approved',
         reviewed_at: new Date().toISOString(),
-        is_file_deleted: true 
+        is_file_deleted: true
       })
       .eq('id', submissionId);
 

@@ -83,9 +83,74 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .eq('track_name', track)
         .eq('artist_name', artist);
 
-      return res.status(200).json({ 
-        success: true, 
-        likes: count || 0 
+      const likeCount = count || 0;
+
+      // Get user info for the milestone (if logged in)
+      const { data: listener, error: listenerError } = await supabase
+        .from('radio_listeners')
+        .select('user_id, nickname, avatar_url')
+        .eq('user_id', fingerprint)
+        .maybeSingle();
+
+      if (listenerError) {
+        console.error('Error fetching listener for milestone:', listenerError);
+      }
+
+      // Track "user liked a track" milestone
+      if (listener) {
+        const { error: milestoneError } = await supabase
+          .from('radio_milestones')
+          .insert({
+            user_id: listener.user_id,
+            nickname: listener.nickname,
+            avatar_url: listener.avatar_url,
+            milestone_type: 'track_liked',
+            metadata: { track_name: track, artist_name: artist }
+          });
+
+        if (milestoneError) {
+          console.error('Error creating track_liked milestone:', milestoneError);
+        }
+      }
+
+      // Check if this is the track's first like
+      if (likeCount === 1 && listener) {
+        const { error: firstLikeError } = await supabase
+          .from('radio_milestones')
+          .insert({
+            user_id: listener.user_id,
+            nickname: listener.nickname,
+            avatar_url: listener.avatar_url,
+            milestone_type: 'track_first_like',
+            metadata: { track_name: track, artist_name: artist }
+          });
+
+        if (firstLikeError) {
+          console.error('Error creating track_first_like milestone:', firstLikeError);
+        }
+      }
+
+      // Check if track reached milestone like counts: 5, 10, 25, 50
+      const likeMilestones = [5, 10, 25, 50];
+      for (const milestone of likeMilestones) {
+        if (likeCount === milestone) {
+          // Track hit a like milestone!
+          await supabase
+            .from('radio_milestones')
+            .insert({
+              user_id: null, // System event
+              nickname: null,
+              avatar_url: null,
+              milestone_type: 'track_milestone_likes',
+              metadata: { track_name: track, artist_name: artist, like_count: milestone }
+            });
+          break;
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        likes: likeCount
       });
     } catch (error: any) {
       console.error('Error adding like:', error);

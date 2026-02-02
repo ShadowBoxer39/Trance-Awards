@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { error } = await supabase
-      .from('young_artists') 
+      .from('young_artists')
       .insert([
         {
           full_name: fullName,
