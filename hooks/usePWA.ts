@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -54,19 +55,36 @@ export function usePWA() {
 
   const trackPWAInstall = async () => {
     try {
-      // Get user info from localStorage
-      const userStr = localStorage.getItem('radioUser');
-      if (!userStr) return;
+      const supabase = createClientComponentClient();
+      const { data: { session } } = await supabase.auth.getSession();
 
-      const user = JSON.parse(userStr);
+      // Track with user info if logged in, otherwise track as anonymous
+      const user = session?.user;
+
+      // Also get listener profile if available
+      let nickname = 'אנונימי';
+      let avatarUrl = null;
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('radio_listener_profiles')
+          .select('nickname, avatar_url')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          nickname = profile.nickname;
+          avatarUrl = profile.avatar_url;
+        }
+      }
 
       await fetch('/api/radio/track-pwa-install', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: user.id,
-          nickname: user.user_metadata?.nickname || user.email,
-          avatar_url: user.user_metadata?.avatar_url
+          user_id: user?.id || `anon_${Date.now()}`,
+          nickname,
+          avatar_url: avatarUrl
         })
       });
     } catch (err) {
