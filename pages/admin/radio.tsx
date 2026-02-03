@@ -411,139 +411,69 @@ export default function AdminRadioPage() {
                   <div className="text-center py-20 text-gray-500">לא נטענו סטטיסטיקות</div>
                 ) : (
                   <>
-                    {/* Key Metrics */}
-                    <div>
-                      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                        <HiSparkles className="text-purple-400" />
-                        מדדי ביצועים ראשיים
-                      </h2>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-purple-400 mb-2">{stats.totalListeners}</div>
-                          <div className="text-gray-500 text-sm">סך מאזינים</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-cyan-400 mb-2">{stats.pwaInstalls}</div>
-                          <div className="text-gray-500 text-sm">הורדות אפליקציה</div>
-                          <div className="text-xs text-cyan-400 mt-1">{stats.pwaAdoptionRate}% מהמאזינים</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-green-400 mb-2">{stats.avgListeningHours}</div>
-                          <div className="text-gray-500 text-sm">שעות האזנה ממוצעות</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-yellow-400 mb-2">{stats.retentionRate}%</div>
-                          <div className="text-gray-500 text-sm">שיעור שימור</div>
-                          <div className="text-xs text-gray-600 mt-1">מאזינים שחזרו</div>
+                    {/* Main Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {/* App Downloads */}
+                      <div className="glass-warm rounded-3xl p-8 border border-white/5">
+                        <div className="text-sm text-gray-500 mb-2">הורדות אפליקציה</div>
+                        <div className="text-5xl font-bold text-cyan-400 mb-1">{stats.pwaInstalls}</div>
+                        <div className="text-xs text-gray-600">סך הכל הורדות</div>
+                      </div>
+
+                      {/* Average Time Per User */}
+                      <div className="glass-warm rounded-3xl p-8 border border-white/5">
+                        <div className="text-sm text-gray-500 mb-2">זמן ממוצע למשתמש</div>
+                        <div className="text-5xl font-bold text-green-400 mb-1">{stats.avgTimePerUser}</div>
+                        <div className="text-xs text-gray-600">שעות האזנה ממוצעות</div>
+                      </div>
+
+                      {/* Peak Concurrent Listeners */}
+                      <div className="glass-warm rounded-3xl p-8 border border-white/5">
+                        <div className="text-sm text-gray-500 mb-2">שיא מאזינים במקביל</div>
+                        <div className="text-5xl font-bold text-purple-400 mb-1">{stats.peakConcurrentListeners}</div>
+                        <div className="text-xs text-gray-600">מקסימום בו-זמנית</div>
+                      </div>
+
+                      {/* Average Concurrent Listeners */}
+                      <div className="glass-warm rounded-3xl p-8 border border-white/5">
+                        <div className="text-sm text-gray-500 mb-2">ממוצע מאזינים במקביל</div>
+                        <div className="text-5xl font-bold text-blue-400 mb-1">{stats.avgConcurrentListeners}</div>
+                        <div className="text-xs text-gray-600">ממוצע בו-זמנית</div>
+                      </div>
+
+                      {/* Current Listeners */}
+                      <div className="glass-warm rounded-3xl p-8 border border-white/5">
+                        <div className="text-sm text-gray-500 mb-2">מאזינים כרגע</div>
+                        <div className="text-5xl font-bold text-yellow-400 mb-1">{stats.currentConcurrentListeners}</div>
+                        <div className="text-xs text-gray-600 flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${stats.isLive ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}></span>
+                          {stats.isLive ? 'שידור חי' : 'לא פעיל'}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Activity Metrics */}
-                    <div>
-                      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                        📊 פעילות ומעורבות
-                      </h2>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-blue-400 mb-2">{stats.activeListeners7d}</div>
-                          <div className="text-gray-500 text-sm">פעילים ב-7 ימים</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-indigo-400 mb-2">{stats.activeListeners30d}</div>
-                          <div className="text-gray-500 text-sm">פעילים ב-30 ימים</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-pink-400 mb-2">{stats.newListeners30d}</div>
-                          <div className="text-gray-500 text-sm">מאזינים חדשים (30 ימים)</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-orange-400 mb-2">{stats.totalListeningHours}</div>
-                          <div className="text-gray-500 text-sm">סה״כ שעות האזנה</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Milestones */}
-                    <div>
-                      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                        🏆 הישגים ואבני דרך
-                      </h2>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-yellow-400 mb-2">{stats.totalMilestones}</div>
-                          <div className="text-gray-500 text-sm">סך אבני דרך</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-purple-400 mb-2">{stats.listeningMilestones}</div>
-                          <div className="text-gray-500 text-sm">אבני דרך האזנה</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-blue-400 mb-2">{stats.voteMilestones}</div>
-                          <div className="text-gray-500 text-sm">אבני דרך הצבעות</div>
-                        </div>
-                        <div className="glass-warm rounded-2xl p-6">
-                          <div className="text-4xl font-bold text-green-400 mb-2">{stats.recentActivity30d}</div>
-                          <div className="text-gray-500 text-sm">הישגים חדשים (30 ימים)</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Top Listeners */}
-                    <div>
-                      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                        🎧 מאזינים מובילים
-                      </h2>
-                      <div className="glass-warm rounded-3xl p-6 border border-white/5">
-                        <div className="space-y-3">
-                          {stats.topListeners.length === 0 ? (
-                            <div className="text-center py-10 text-gray-600">אין נתונים עדיין</div>
-                          ) : (
-                            stats.topListeners.map((listener: any, index: number) => (
-                              <div key={listener.user_id} className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                                  index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
-                                  index === 1 ? 'bg-gray-400/20 text-gray-400' :
-                                  index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                                  'bg-white/10 text-gray-500'
-                                }`}>
-                                  #{index + 1}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="text-white font-medium">מאזין {listener.user_id.slice(0, 8)}</div>
-                                  <div className="text-xs text-gray-500">
-                                    {listener.last_active ? `פעילות אחרונה: ${new Date(listener.last_active).toLocaleDateString('he-IL')}` : 'לא ידוע'}
-                                  </div>
-                                </div>
-                                <div className="text-left">
-                                  <div className="text-2xl font-bold text-purple-400">{listener.hours}</div>
-                                  <div className="text-xs text-gray-500">שעות</div>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Top Listening Milestones */}
-                    {stats.topListeningMilestones.length > 0 && (
-                      <div>
-                        <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                          🌟 אבני דרך מובילות שהושגו
-                        </h2>
-                        <div className="glass-warm rounded-3xl p-6 border border-white/5">
-                          <div className="flex gap-3 flex-wrap">
-                            {stats.topListeningMilestones.map((hours: number, index: number) => (
-                              <div key={index} className="px-6 py-3 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl border border-purple-500/30">
-                                <div className="text-2xl font-bold text-purple-400">{hours}</div>
-                                <div className="text-xs text-gray-400">שעות</div>
-                              </div>
-                            ))}
+                      {/* New Listeners Breakdown */}
+                      <div className="glass-warm rounded-3xl p-8 border border-white/5">
+                        <div className="text-sm text-gray-500 mb-2">מאזינים חדשים</div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600">24 שעות:</span>
+                            <span className="text-lg font-bold text-pink-400">{stats.newListeners24h}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600">7 ימים:</span>
+                            <span className="text-lg font-bold text-pink-400">{stats.newListeners7d}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600">30 ימים:</span>
+                            <span className="text-lg font-bold text-pink-400">{stats.newListeners30d}</span>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-white/10">
+                            <span className="text-xs text-gray-600">סה״כ:</span>
+                            <span className="text-2xl font-bold text-pink-400">{stats.newListenersAllTime}</span>
                           </div>
                         </div>
                       </div>
-                    )}
+                    </div>
 
                     <div className="flex justify-center pt-6">
                       <button

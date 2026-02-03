@@ -229,11 +229,11 @@ export default function ActivityFeed({ maxItems = 10 }: ActivityFeedProps) {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-white/90 truncate leading-tight">
+                    <p className="text-xs text-white/90 leading-tight break-words">
                       {display.text}
                     </p>
                     {display.subtitle && (
-                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                      <p className="text-xs text-gray-500 mt-0.5 break-words">
                         {display.subtitle}
                       </p>
                     )}

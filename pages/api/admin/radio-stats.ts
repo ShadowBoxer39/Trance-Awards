@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get total listeners and their stats
     const { data: listeners, error: listenersError } = await supabase
       .from('radio_listeners')
-      .select('user_id, total_seconds, last_listened_at, created_at');
+      .select('user_id, total_seconds, last_seen');
 
     if (listenersError) throw listenersError;
 
@@ -43,13 +43,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Active listeners (listened in last 7 days)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const activeListeners = listeners?.filter(l =>
-      l.last_listened_at && new Date(l.last_listened_at) > new Date(sevenDaysAgo)
+      l.last_seen && new Date(l.last_seen) > new Date(sevenDaysAgo)
     ).length || 0;
 
     // Active listeners (listened in last 30 days)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const activeListeners30d = listeners?.filter(l =>
-      l.last_listened_at && new Date(l.last_listened_at) > new Date(thirtyDaysAgo)
+      l.last_seen && new Date(l.last_seen) > new Date(thirtyDaysAgo)
     ).length || 0;
 
     // Get milestone stats
@@ -82,13 +82,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .map(l => ({
         user_id: l.user_id,
         hours: ((l.total_seconds || 0) / 3600).toFixed(1),
-        last_active: l.last_listened_at
+        last_active: l.last_seen
       })) || [];
 
-    // New listeners in last 30 days
-    const newListeners = listeners?.filter(l =>
-      l.created_at && new Date(l.created_at) > new Date(thirtyDaysAgo)
-    ).length || 0;
+    // Get new listeners from milestones with time breakdowns
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: newListeners24h } = await supabase
+      .from('radio_milestones')
+      .select('user_id')
+      .eq('milestone_type', 'first_signup')
+      .gte('created_at', oneDayAgo);
+
+    const { data: newListeners7d } = await supabase
+      .from('radio_milestones')
+      .select('user_id')
+      .eq('milestone_type', 'first_signup')
+      .gte('created_at', sevenDaysAgo);
+
+    const { data: newListeners30d } = await supabase
+      .from('radio_milestones')
+      .select('user_id')
+      .eq('milestone_type', 'first_signup')
+      .gte('created_at', thirtyDaysAgo);
+
+    const { data: allNewListeners } = await supabase
+      .from('radio_milestones')
+      .select('user_id')
+      .eq('milestone_type', 'first_signup');
 
     // PWA adoption rate
     const pwaAdoptionRate = totalListeners > 0 ? ((pwaInstalls / totalListeners) * 100).toFixed(1) : '0';
@@ -99,24 +120,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ).length || 0;
     const retentionRate = totalListeners > 0 ? ((retention / totalListeners) * 100).toFixed(1) : '0';
 
+    // Fetch AzuraCast concurrent listener stats
+    let azuraStats = null;
+    try {
+      const azuraRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/admin/azuracast-stats?key=${process.env.ADMIN_KEY}`);
+      if (azuraRes.ok) {
+        const azuraData = await azuraRes.json();
+        azuraStats = azuraData.stats;
+      }
+    } catch (err) {
+      console.error('Failed to fetch AzuraCast stats:', err);
+    }
+
     return res.status(200).json({
       ok: true,
       stats: {
-        totalListeners,
+        // App downloads
         pwaInstalls,
-        pwaAdoptionRate: parseFloat(pwaAdoptionRate),
-        avgListeningHours: parseFloat(avgListeningHours),
+
+        // Average time per user (in hours)
+        avgTimePerUser: parseFloat(avgListeningHours),
+
+        // Peak concurrent listeners (from AzuraCast if available)
+        peakConcurrentListeners: azuraStats?.peakListeners || 0,
+
+        // Current concurrent listeners (from AzuraCast if available)
+        currentConcurrentListeners: azuraStats?.currentListeners || 0,
+
+        // Average concurrent listeners (estimated from unique listeners)
+        avgConcurrentListeners: azuraStats?.uniqueListeners || 0,
+
+        // New listeners breakdown
+        newListeners24h: newListeners24h?.length || 0,
+        newListeners7d: newListeners7d?.length || 0,
+        newListeners30d: newListeners30d?.length || 0,
+        newListenersAllTime: allNewListeners?.length || 0,
+
+        // Additional context
+        totalListeners,
         activeListeners7d: activeListeners,
         activeListeners30d: activeListeners30d,
-        newListeners30d: newListeners,
-        totalMilestones: milestones?.length || 0,
-        listeningMilestones: listeningMilestones.length,
-        voteMilestones: voteMilestones.length,
-        topListeningMilestones,
-        recentActivity30d: recentMilestones,
-        topListeners,
         totalListeningHours: (totalListeningSeconds / 3600).toFixed(0),
-        retentionRate: parseFloat(retentionRate)
+        isLive: azuraStats?.isLive || false
       }
     });
   } catch (error: any) {
