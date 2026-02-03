@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -55,7 +60,6 @@ export function usePWA() {
 
   const trackPWAInstall = async () => {
     try {
-      const supabase = createClientComponentClient();
       const { data: { session } } = await supabase.auth.getSession();
 
       // Track with user info if logged in, otherwise track as anonymous
