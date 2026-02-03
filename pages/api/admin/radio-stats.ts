@@ -120,13 +120,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ).length || 0;
     const retentionRate = totalListeners > 0 ? ((retention / totalListeners) * 100).toFixed(1) : '0';
 
-    // Fetch AzuraCast concurrent listener stats
+    // Fetch AzuraCast concurrent listener stats directly
     let azuraStats = null;
     try {
-      const azuraRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/admin/azuracast-stats?key=${process.env.ADMIN_KEY}`);
-      if (azuraRes.ok) {
-        const azuraData = await azuraRes.json();
-        azuraStats = azuraData.stats;
+      const AZURACAST_STATION_URL = 'https://a12.asurahosting.com/api/station/track_trip_radio';
+      const AZURACAST_API_KEY = process.env.AZURACAST_API_KEY || '';
+
+      const stationRes = await fetch(AZURACAST_STATION_URL, {
+        headers: { 'X-API-Key': AZURACAST_API_KEY },
+      });
+
+      if (stationRes.ok) {
+        const stationData = await stationRes.json();
+
+        azuraStats = {
+          currentListeners: stationData.listeners?.current || 0,
+          peakListeners: stationData.listeners?.unique || stationData.listeners?.current || 0,
+          uniqueListeners: stationData.listeners?.unique || 0,
+          isLive: stationData.is_online || false,
+        };
       }
     } catch (err) {
       console.error('Failed to fetch AzuraCast stats:', err);
