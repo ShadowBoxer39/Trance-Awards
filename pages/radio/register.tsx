@@ -318,7 +318,7 @@ export default function RadioRegisterPage() {
                 <span className="text-sm font-medium text-gray-300">{isPlaying ? 'משדר עכשיו' : 'לחצו להאזנה'}</span>
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full">
                   <FaUsers className="text-purple-400 text-sm" />
-                  <span className="text-sm text-gray-300">{nowPlaying?.listeners?.current || 0} מאזינים</span>
+                  <span className="text-sm text-gray-300">{(nowPlaying?.listeners?.current || 0) + 5} מאזינים</span>
                 </div>
               </div>
 
