@@ -660,6 +660,37 @@ useEffect(() => {
     }
   };
 
+  // Media Session API - shows track info in system media controls (lock screen, notification, etc.)
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    const song = nowPlaying?.now_playing?.song;
+    if (!song) return;
+
+    const artwork = getAlbumArt();
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title || 'Track Trip Radio',
+      artist: song.artist || 'Trance Israel',
+      album: 'Track Trip Radio',
+      artwork: artwork ? [
+        { src: artwork, sizes: '512x512', type: 'image/png' }
+      ] : []
+    });
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      audioRef.current?.play().then(() => setIsPlaying(true)).catch(console.error);
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    });
+    navigator.mediaSession.setActionHandler('stop', () => {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    });
+  }, [nowPlaying, artistDetails]);
+
   // Album art with fallback
   const getAlbumArt = () => {
     const art = nowPlaying?.now_playing?.song?.art;
