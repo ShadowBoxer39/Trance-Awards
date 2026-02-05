@@ -824,7 +824,7 @@ return (
               </span>
               <span className="text-sm font-medium text-gray-300">{isPlaying ? 'משדר עכשיו' : 'לחצו להאזנה'}</span>
               {nowPlaying?.listeners && (
-                <span className="text-xs text-gray-500">• {nowPlaying.listeners.current + 5} מאזינים</span>
+                <span className="text-xs text-gray-500">• {nowPlaying.listeners.current + 10} מאזינים</span>
               )}
             </div>
             <InstallAppButton />

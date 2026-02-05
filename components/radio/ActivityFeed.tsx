@@ -87,10 +87,17 @@ const getMilestoneDisplay = (milestone: Milestone) => {
         subtitle: metadata.artist_name
       };
 
+    case 'pwa_installed':
+      return {
+        icon: '📲',
+        text: `${nickname} התקין את האפליקציה!`,
+        gradient: 'from-blue-500 to-indigo-500'
+      };
+
     default:
       return {
         icon: '✨',
-        text: 'משהו מעניין קרה!',
+        text: `${nickname || 'אנונימי'}: ${milestone_type}`,
         gradient: 'from-gray-500 to-slate-500'
       };
   }
