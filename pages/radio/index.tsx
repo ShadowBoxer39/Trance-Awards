@@ -758,10 +758,10 @@ const handleDismissCta = () => {
 };
 
 return (
-  <div className="min-h-screen bg-[#0a0a12] text-gray-100 overflow-x-hidden">
+  <div className="min-h-screen bg-[#0a0a12] text-gray-100 overflow-hidden w-full max-w-[100vw]">
       <Head>
         <title>רדיו יוצאים לטראק | טראנס ישראלי 24/7</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
@@ -814,7 +814,7 @@ return (
         isNewUser={isNewUser}
       />
 
-      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-20 pb-8 font-['Rubik',sans-serif]">
+      <main className="relative max-w-7xl w-full mx-auto px-4 sm:px-6 pt-20 pb-8 font-['Rubik',sans-serif] overflow-hidden">
         
         {/* ========== HEADER ========== */}
         <div className="text-center mb-6">
@@ -1231,7 +1231,7 @@ return (
                   <FaHistory className="text-cyan-400" />
                   <h3 className="text-sm font-bold text-white">שודר לאחרונה</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                   {songHistory.slice(0, 5).map((song, i) => (
                     <div
                       key={i}
