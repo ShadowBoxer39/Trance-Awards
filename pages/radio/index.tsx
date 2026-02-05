@@ -534,44 +534,45 @@ checkAuth();
       if (response.ok) {
         const data = await response.json();
         const currentTrackTitle = nowPlaying?.now_playing?.song?.title;
-        const newTrackTitle = data.now_playing.song.title;
-        const newArtistName = data.now_playing.song.artist;
-        
-        // Track changed
-        if (newTrackTitle !== currentTrackTitle) {
+        const newTrackTitle = data?.now_playing?.song?.title;
+        const newArtistName = data?.now_playing?.song?.artist;
+
+        // Set now playing data immediately so the UI updates
+        setNowPlaying(data);
+
+        // Track changed - update artist details and history in background
+        if (newTrackTitle && newTrackTitle !== currentTrackTitle) {
           updateArtistSpotlight(newArtistName, newTrackTitle);
-          
+
           // Extract color from album art
-          const artUrl = data.now_playing.song.art;
+          const artUrl = data.now_playing?.song?.art;
           if (artUrl && !artUrl.includes('/static/img/generic_song')) {
             extractColor(artUrl, setDominantColor);
           }
         }
-        
+
         // Update next track artist
         if (data.playing_next?.song?.artist) {
           const nextDetails = await fetchArtistDetails(data.playing_next.song.artist);
           setNextArtistDetails(nextDetails);
         }
-        
-       // Update song history with artist images (only on track change)
-if (data.song_history && newTrackTitle !== currentTrackTitle) {
-  const historyWithImages: HistoryTrack[] = await Promise.all(
-    data.song_history.slice(0, 5).map(async (h: any) => {
-      const details = await fetchArtistDetails(h.song.artist);
-      return {
-        title: h.song.title,
-        artist: h.song.artist,
-        art: h.song.art,
-        artistImage: details?.image_url || h.song.art,
-        soundcloud: details?.soundcloud || null
-      };
-    })
-  );
-  setSongHistory(historyWithImages);
-}
-        
-        setNowPlaying(data);
+
+        // Update song history with artist images (only on track change)
+        if (data.song_history && newTrackTitle && newTrackTitle !== currentTrackTitle) {
+          const historyWithImages: HistoryTrack[] = await Promise.all(
+            data.song_history.slice(0, 5).map(async (h: any) => {
+              const details = await fetchArtistDetails(h.song.artist);
+              return {
+                title: h.song.title,
+                artist: h.song.artist,
+                art: h.song.art,
+                artistImage: details?.image_url || h.song.art,
+                soundcloud: details?.soundcloud || null
+              };
+            })
+          );
+          setSongHistory(historyWithImages);
+        }
       }
     } catch (err) {
       console.log('Stream offline or blocked');
@@ -760,6 +761,7 @@ return (
   <div className="min-h-screen bg-[#0a0a12] text-gray-100 overflow-x-hidden">
       <Head>
         <title>רדיו יוצאים לטראק | טראנס ישראלי 24/7</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
@@ -1229,7 +1231,7 @@ return (
                   <FaHistory className="text-cyan-400" />
                   <h3 className="text-sm font-bold text-white">שודר לאחרונה</h3>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {songHistory.slice(0, 5).map((song, i) => (
                     <div
                       key={i}
