@@ -766,6 +766,7 @@ return (
       </Head>
 
       <style jsx global>{`
+        html, body { overflow-x: hidden; max-width: 100vw; }
         @keyframes float-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
@@ -894,7 +895,7 @@ return (
         )}
 
         {/* ========== MAIN PLAYER (Full Width) ========== */}
-        <div className="relative mb-6">
+        <div className="relative mb-6 overflow-hidden">
           {/* Animated background glow */}
           <div
             className="absolute -inset-4 rounded-3xl blur-2xl transition-all duration-300"
@@ -1122,14 +1123,14 @@ return (
         </div>
 
         {/* ========== TWO COLUMN LAYOUT ========== */}
-        <div className="grid lg:grid-cols-3 gap-6 mb-6">
-          
+        <div className="grid lg:grid-cols-3 gap-6 mb-6 min-w-0">
+
           {/* LEFT COLUMN - Artist + History (2 cols on desktop) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 min-w-0">
             
             {/* Artist Spotlight */}
-            <div 
-              className="glass-card rounded-2xl p-5 border transition-all duration-300"
+            <div
+              className="glass-card rounded-2xl p-5 border transition-all duration-300 min-w-0 overflow-hidden"
               style={{ borderColor: `rgba(${dominantColor}, 0.2)` }}
             >
               <div className="flex items-center gap-2 mb-4">
@@ -1226,12 +1227,12 @@ return (
 
             {/* Song History */}
             {songHistory.length > 0 && (
-              <div className="glass-card rounded-2xl p-5 border border-white/5">
+              <div className="glass-card rounded-2xl p-5 border border-white/5 min-w-0 overflow-hidden">
                 <div className="flex items-center gap-2 mb-4">
                   <FaHistory className="text-cyan-400" />
                   <h3 className="text-sm font-bold text-white">שודר לאחרונה</h3>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 min-w-0">
                   {songHistory.slice(0, 5).map((song, i) => (
                     <div
                       key={i}
