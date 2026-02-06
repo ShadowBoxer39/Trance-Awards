@@ -52,13 +52,21 @@ async function sendApprovalEmail(artistId: string, trackName: string) {
   }
 }
 
+// Helper to check if key is valid for radio admin access
+function isValidRadioAdminKey(key: string | undefined): boolean {
+  if (!key) return false;
+  const ADMIN_KEY = process.env.ADMIN_KEY;
+  const RADIO_ADMIN_KEY = process.env.RADIO_ADMIN_KEY;
+  return key === ADMIN_KEY || key === RADIO_ADMIN_KEY;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { submissionId, adminKey } = req.body;
-    
-    if (!adminKey || adminKey !== process.env.ADMIN_KEY) {
+
+    if (!isValidRadioAdminKey(adminKey)) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 

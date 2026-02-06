@@ -49,12 +49,19 @@ async function sendReviewEmail(
   }
 }
 
+// Helper to check if key is valid for radio admin access
+function isValidRadioAdminKey(key: string | string[] | undefined): boolean {
+  if (!key || Array.isArray(key)) return false;
+  const ADMIN_KEY = process.env.ADMIN_KEY;
+  const RADIO_ADMIN_KEY = process.env.RADIO_ADMIN_KEY;
+  return key === ADMIN_KEY || key === RADIO_ADMIN_KEY;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Get key from query (GET) or body (POST)
   const key = req.method === 'GET' ? req.query.key : req.body?.key;
-  const ADMIN_KEY = process.env.ADMIN_KEY;
 
-  if (!key || key !== ADMIN_KEY) {
+  if (!isValidRadioAdminKey(key)) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 

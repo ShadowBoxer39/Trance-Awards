@@ -7,13 +7,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Helper to check if key is valid for radio admin access
+function isValidRadioAdminKey(key: string | string[] | undefined): boolean {
+  if (!key || Array.isArray(key)) return false;
+  const ADMIN_KEY = process.env.ADMIN_KEY;
+  const RADIO_ADMIN_KEY = process.env.RADIO_ADMIN_KEY;
+  return key === ADMIN_KEY || key === RADIO_ADMIN_KEY;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { key } = req.query;
-  if (key !== process.env.ADMIN_KEY) {
+  if (!isValidRadioAdminKey(key)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
