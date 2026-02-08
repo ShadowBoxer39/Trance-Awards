@@ -1,6 +1,6 @@
 // Service Worker for PWA
 // Update version to force cache refresh on all installed PWAs
-const CACHE_VERSION = '3';
+const CACHE_VERSION = '4';
 const CACHE_NAME = `tracktrip-radio-v${CACHE_VERSION}`;
 const urlsToCache = [
   '/radio',
