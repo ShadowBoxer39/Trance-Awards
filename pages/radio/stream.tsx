@@ -66,7 +66,7 @@ export default function RadioStreamPage() {
 
   const fetchNowPlaying = async () => {
     try {
-      const response = await fetch(AZURACAST_API_URL);
+      const response = await fetch(`${AZURACAST_API_URL}?t=${Date.now()}`);
       if (response.ok) {
         const data = await response.json();
         const currentArtist = nowPlaying?.now_playing?.song?.artist;

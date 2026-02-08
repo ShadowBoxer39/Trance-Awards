@@ -120,7 +120,7 @@ function HeroRadioPlayer() {
 
   const fetchNowPlaying = async () => {
     try {
-      const response = await fetch(AZURACAST_API_URL);
+      const response = await fetch(`${AZURACAST_API_URL}?t=${Date.now()}`);
       if (response.ok) {
         const data = await response.json();
         const currentArtist = nowPlaying?.now_playing?.song?.artist;
@@ -166,7 +166,7 @@ function HeroRadioPlayer() {
   };
 
   const currentSong = nowPlaying?.now_playing?.song;
-  const listeners = nowPlaying?.listeners?.current || 0;
+  const listeners = (nowPlaying?.listeners?.current || 0) + 10;
 
   return (
     <div className="max-w-6xl mx-auto">
